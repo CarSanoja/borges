@@ -7,7 +7,7 @@ const STAGE_LABELS: Record<StageName, string> = {
   baseline: "Walking the original path",
   single_flips: "Forking every decision",
   adversary: "The adversary argues",
-  pair_flips: "Combining decisions",
+  combination_flips: "Combining decisions",
   verifying: "Verifying the flip",
   narrating: "Writing the report",
 };

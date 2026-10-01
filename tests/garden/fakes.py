@@ -177,7 +177,7 @@ def install_fake_harness(monkeypatch: pytest.MonkeyPatch) -> None:
 async def build_garden(
     plan: AnalysisPlan, backend: FakeBackend, with_pairs: bool = False
 ) -> tuple[GardenExecutor, Garden]:
-    from borges.garden.search import pair_flip_choices, single_flip_choices
+    from borges.garden.search import combination_flip_choices, single_flip_choices
 
     executor = GardenExecutor(backend, plan, b"data")
     await executor.setup()
@@ -188,6 +188,6 @@ async def build_garden(
     for choices in single_flip_choices(plan):
         garden.add(await executor.run_universe(choices, "single"))
     if with_pairs:
-        for choices in pair_flip_choices(plan, garden, 10):
-            garden.add(await executor.run_universe(choices, "pair"))
+        for choices in combination_flip_choices(plan, garden, 2, 10):
+            garden.add(await executor.run_universe(choices, "combination"))
     return executor, garden

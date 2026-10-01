@@ -73,7 +73,7 @@ export interface StepTrace {
   note: string;
 }
 
-export type UniverseKind = "baseline" | "single" | "adversary" | "pair" | "verification";
+export type UniverseKind = "baseline" | "single" | "adversary" | "combination" | "verification";
 export type UniverseStatus = "pending" | "running" | "done" | "failed";
 
 export interface Universe {
@@ -168,7 +168,7 @@ export type StageName =
   | "baseline"
   | "single_flips"
   | "adversary"
-  | "pair_flips"
+  | "combination_flips"
   | "verifying"
   | "narrating";
 

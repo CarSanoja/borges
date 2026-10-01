@@ -29,7 +29,7 @@ StageName = Literal[
     "baseline",
     "single_flips",
     "adversary",
-    "pair_flips",
+    "combination_flips",
     "verifying",
     "narrating",
 ]

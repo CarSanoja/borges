@@ -101,26 +101,28 @@ async def test_budget_exceeded_fails_the_run_with_message(
     assert rig.backend.closed
 
 
-async def test_pair_flips_only_without_a_single_flip(tmp_path: Path, scenario: Scenario) -> None:
+async def test_combination_flips_only_without_a_single_flip(
+    tmp_path: Path, scenario: Scenario
+) -> None:
     scenario.effects = {("s1", "b"): -0.6, ("s2", "y"): -0.6}
-    scenario.pair_choices = [{"s1": "b", "s2": "y"}]
+    scenario.combination_choices = [{"s1": "b", "s2": "y"}]
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
-    assert ("pair_flips", "started") in stages(rig, "r_test")
-    assert scenario.pair_limits == [7]
+    assert ("combination_flips", "started") in stages(rig, "r_test")
+    assert scenario.combination_calls == [(2, 7)]
     assert snapshot.flip is not None and len(snapshot.flip.changes) == 2
-    assert any(u.kind == "pair" for u in snapshot.garden.universes.values())
+    assert any(u.kind == "combination" for u in snapshot.garden.universes.values())
 
 
-async def test_no_pair_stage_when_flip_exists_and_no_verify_without_flip(
+async def test_no_combination_stage_when_flip_exists_and_no_verify_without_flip(
     tmp_path: Path, scenario: Scenario
 ) -> None:
     rig = make_rig(tmp_path)
     await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
-    assert "pair_flips" not in [s for s, _ in stages(rig, "r_test")]
+    assert "combination_flips" not in [s for s, _ in stages(rig, "r_test")]
 
     scenario.effects = {}
-    scenario.pair_choices = []
+    scenario.combination_choices = []
     await rig.orchestrator.execute("r_none", RunRequest(case_id="demo"))
     assert "flip.found" not in types(rig, "r_none")
     assert "verifying" not in [s for s, _ in stages(rig, "r_none")]

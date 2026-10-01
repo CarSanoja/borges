@@ -38,7 +38,7 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
    independent judge scores how defensible each one is, and only defensible ones enter the
    garden.
 4. **Finds the minimal flip.** Borges searches for the smallest set of defensible changes
-   (one decision, then pairs) that turns your decision around, and re-executes it from scratch
+   (one decision, then two, then three) that turns your decision around, and re-executes it from scratch
    to prove it reproduces.
 5. **Lets you step into any universe.** Every universe is a reproducible checkpoint chain with
    its exact code, row counts and result.

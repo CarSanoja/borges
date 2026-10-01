@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from borges.analysis.models import AnalysisResult, StepTrace
 
-UniverseKind = Literal["baseline", "single", "adversary", "pair", "verification"]
+UniverseKind = Literal["baseline", "single", "adversary", "combination", "verification"]
 UniverseStatus = Literal["pending", "running", "done", "failed"]
 
 

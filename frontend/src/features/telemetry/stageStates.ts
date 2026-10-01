@@ -9,7 +9,7 @@ export const STAGES: ReadonlyArray<{ name: StageName; label: string }> = [
   { name: "baseline", label: "Baseline" },
   { name: "single_flips", label: "Single flips" },
   { name: "adversary", label: "Adversary" },
-  { name: "pair_flips", label: "Pair flips" },
+  { name: "combination_flips", label: "Combinations" },
   { name: "verifying", label: "Verifying" },
   { name: "narrating", label: "Narrating" },
 ];

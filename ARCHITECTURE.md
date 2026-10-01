@@ -64,8 +64,11 @@ universes share every checkpoint before the step they change.
 2. single flips (one non-default option, defaults elsewhere);
 3. adversary round: new options from real intermediate state, judged for defensibility,
    then single flips of the accepted ones;
-4. pair flips, ranked by how far each single change moved the estimate toward the
-   threshold (only if no single flip was found, or the budget allows);
+4. combination flips, only while no flip has been found: a beam search by level. Level *k*
+   extends every finished universe with *k − 1* changes by one more single change, ranks the
+   candidates by the measured movement toward the opposite verdict of the parent plus that
+   of the added change, and runs the top ten. It stops at the first level that flips, or
+   when the universe budget is spent;
 5. verification of the minimal flip: re-execution from the root with no prefix cache, and
    the result must match exactly.
 

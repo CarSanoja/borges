@@ -37,10 +37,10 @@ class Scenario:
     plan_error: Exception | None = None
     hang: bool = False
     entered_plan: asyncio.Event = field(default_factory=asyncio.Event)
-    pair_choices: list[dict[str, str]] = field(default_factory=list)
+    combination_choices: list[dict[str, str]] = field(default_factory=list)
     executors: list[FakeExecutor] = field(default_factory=list)
     calls: list[str] = field(default_factory=list)
-    pair_limits: list[int] = field(default_factory=list)
+    combination_calls: list[tuple[int, int]] = field(default_factory=list)
 
 
 class FakeExecutor:
@@ -193,9 +193,9 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
             if not o.is_default
         ]
 
-    def pair_flip_choices(plan: AnalysisPlan, garden: Garden, limit: int):
-        scenario.pair_limits.append(limit)
-        return scenario.pair_choices
+    def combination_flip_choices(plan: AnalysisPlan, garden: Garden, size: int, limit: int):
+        scenario.combination_calls.append((size, limit))
+        return scenario.combination_choices if size == 2 else []
 
     async def verify_flip(backend: Any, plan: Any, data: bytes, flip: Flip, garden: Garden) -> Flip:
         scenario.calls.append("verify")
@@ -226,7 +226,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         (pipeline, "code_plan", code_plan),
         (pipeline, "GardenExecutor", FakeExecutor),
         (pipeline, "single_flip_choices", single_flip_choices),
-        (pipeline, "pair_flip_choices", pair_flip_choices),
+        (pipeline, "combination_flip_choices", combination_flip_choices),
         (pipeline, "minimal_flip", fake_minimal_flip),
         (pipeline, "verify_flip", verify_flip),
         (pipeline, "build_report", build_report),

@@ -6,8 +6,8 @@ from borges.garden.executor import universe_id
 from borges.garden.models import Garden
 from borges.garden.search import (
     changes_for,
+    combination_flip_choices,
     minimal_flip,
-    pair_flip_choices,
     single_flip_choices,
 )
 from tests.garden.fakes import FakeBackend, build_garden, install_fake_harness, make_plan
@@ -39,32 +39,49 @@ def test_single_flip_choices_cover_every_non_default_option() -> None:
     ]
 
 
-async def test_pair_flip_choices_rank_by_movement_and_skip_existing() -> None:
+async def test_combination_pairs_rank_by_movement() -> None:
     plan = make_plan()
     _, garden = await build_garden(plan, FakeBackend(plan))
     base = plan.default_choices()
-    pairs = pair_flip_choices(plan, garden, 10)
+    pairs = combination_flip_choices(plan, garden, 2, 10)
     assert len(pairs) == 5
     assert pairs[0] == {**base, "s2": "y", "s3": "o"}
     assert pairs[-1] == {**base, "s1": "b", "s3": "n"}
     assert all(len([k for k in p if p[k] != base[k]]) == 2 for p in pairs)
-    assert len(pair_flip_choices(plan, garden, 2)) == 2
-    assert pair_flip_choices(plan, garden, 0) == []
+    assert len(combination_flip_choices(plan, garden, 2, 2)) == 2
+    assert combination_flip_choices(plan, garden, 2, 0) == []
 
 
-async def test_pair_flip_choices_skip_pairs_already_in_garden() -> None:
+async def test_combination_choices_skip_universes_already_in_garden() -> None:
     plan = make_plan()
     executor, garden = await build_garden(plan, FakeBackend(plan))
-    top = pair_flip_choices(plan, garden, 1)[0]
-    garden.add(await executor.run_universe(top, "pair"))
-    remaining = pair_flip_choices(plan, garden, 10)
+    top = combination_flip_choices(plan, garden, 2, 1)[0]
+    garden.add(await executor.run_universe(top, "combination"))
+    remaining = combination_flip_choices(plan, garden, 2, 10)
     assert top not in remaining
     assert universe_id(top) in garden.universes
     assert len(remaining) == 4
 
 
-def test_pair_flip_choices_without_baseline_is_empty() -> None:
-    assert pair_flip_choices(make_plan(), Garden(), 5) == []
+def test_combination_choices_without_baseline_are_empty() -> None:
+    assert combination_flip_choices(make_plan(), Garden(), 2, 5) == []
+
+
+async def test_combination_choices_below_size_two_are_empty() -> None:
+    plan = make_plan()
+    _, garden = await build_garden(plan, FakeBackend(plan))
+    assert combination_flip_choices(plan, garden, 1, 5) == []
+
+
+async def test_combination_triples_extend_finished_pairs_with_one_more_step() -> None:
+    plan = make_plan()
+    _, garden = await build_garden(plan, FakeBackend(plan), with_pairs=True)
+    base = plan.default_choices()
+    triples = combination_flip_choices(plan, garden, 3, 10)
+    assert triples
+    assert all(sum(t[k] != base[k] for k in t) == 3 for t in triples)
+    assert all(universe_id(t) not in garden.universes for t in triples)
+    assert len({universe_id(t) for t in triples}) == len(triples)
 
 
 async def test_minimal_flip_prefers_fewest_changes_then_defensibility_then_move() -> None:
