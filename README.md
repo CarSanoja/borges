@@ -78,7 +78,7 @@ make test             # ruff, pytest, frontend typecheck, tests and build
 The web app has a recorded replay of both cases, a "Run it now" button (scripted models,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
 live on Nemotron" (curated cases only; the button says why when it is disabled). The hosted
-demo replays a recorded run and runs scripted. Uploading your own dataset is API-only
+demo replays a scripted demo run (hand-built, not a live model run) and runs scripted. Uploading your own dataset is API-only
 (`POST /api/uploads`, then `POST /api/runs` with `upload_id`), needs live mode, and on a
 public instance needs `BORGES_BACKEND=contree` and `BORGES_LIVE_TOKEN`.
 

@@ -17,9 +17,14 @@ function safeName(identifier: string): string {
 
 export function reproduceCommandFor(snapshot: RunSnapshot, universeId: string): string {
   const flip = snapshot.flip;
-  if (flip && flip.universe_id === universeId && flip.reproduce_command) return flip.reproduce_command;
   const universe = snapshot.garden.universes[universeId];
   const steps = snapshot.plan?.steps ?? [];
+  if (steps.length === 0) {
+    if (flip && flip.universe_id === universeId && flip.reproduce_command) {
+      return flip.reproduce_command.replace(/^from checkpoint [^:]*:\s*/, "");
+    }
+    return "";
+  }
   return steps
     .map((step) => {
       const option = pickOption(step, universe?.choices[step.id]);

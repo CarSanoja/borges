@@ -104,8 +104,8 @@ Borges is finished when all of these hold, on a clean clone:
    - see the verdict card flip;
    - step into the flipping universe;
    - read the spec curve and the decision influence.
-   Recorded runs replay offline, so the hosted demo never breaks and costs nothing. The
-   hosted demo replays a recorded run and runs scripted on local subprocess sandboxes. Live
+   Scripted demo runs replay offline, so the hosted demo never breaks and costs nothing. The
+   hosted demo replays a scripted demo run (hand-built, not a live model run) and runs scripted on local subprocess sandboxes. Live
    Nemotron runs are on curated cases only, and stop when the spend cap is used up.
 5. `make test` is green: Python unit and integration tests, ruff, the frontend type-check,
    tests and build, and an in-process end-to-end API test (a scripted run over HTTP, SSE

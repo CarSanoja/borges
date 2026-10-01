@@ -159,7 +159,7 @@ backend), taken from `run.started`. The landing footer follows `/api/health`.
 
 ### Public deployment
 
-The hosted demo replays a recorded run and runs scripted on the local backend. The server,
+The hosted demo replays a scripted demo run (hand-built, not a live model run) and runs scripted on the local backend. The server,
 not the client, chooses the backend. `POST /api/runs` applies a policy: it clamps
 `max_universes` to `BORGES_MAX_UNIVERSES`, answers 429 when `BORGES_MAX_ACTIVE_RUNS` runs are
 active or `BORGES_MAX_LIVE_RUNS` live runs are active, and rejects live runs when there is

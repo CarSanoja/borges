@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildSampleRun } from "../../fixtures/sampleRun";
 import { foldEvents } from "../run/reducer";
-import { deriveDetail } from "./derive";
+import { deriveDetail, reproduceCommandFor } from "./derive";
 
 const snapshot = foldEvents("r1", buildSampleRun("r1"));
 
@@ -33,6 +33,22 @@ describe("deriveDetail", () => {
       })
       .join(" && ");
     expect(command).toBe(expected);
+  });
+
+  it("never returns a checkpoint-prefixed command for the flip universe", () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    const withPrefix = {
+      ...snapshot,
+      flip: snapshot.flip && {
+        ...snapshot.flip,
+        reproduce_command: "from checkpoint ck_05837668a5c9: python steps/a__b.py",
+      },
+    };
+    const command = deriveDetail(withPrefix, flipId)?.reproduce_command ?? "";
+    expect(command).not.toContain("from checkpoint");
+    expect(command.startsWith("python steps/")).toBe(true);
+    const noPlan = { ...withPrefix, plan: null };
+    expect(reproduceCommandFor(noPlan, flipId)).toBe("python steps/a__b.py");
   });
 
   it("marks nothing changed for the baseline", () => {

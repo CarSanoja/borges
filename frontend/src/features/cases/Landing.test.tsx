@@ -85,7 +85,8 @@ describe("Landing", () => {
     renderLanding();
     expect(await screen.findByText(/forks run in local sandboxes/)).toBeInTheDocument();
     expect(screen.queryByText(/Nebius Sandboxes/)).toBeNull();
-    expect(screen.getByText(/Replays a recorded NVIDIA Nemotron run/)).toBeInTheDocument();
+    expect(screen.getByText(/Replays a scripted demo run/)).toBeInTheDocument();
+    expect(screen.queryByText(/recorded NVIDIA Nemotron/)).toBeNull();
   });
 
   it("names ConTree sandboxes only when the server runs contree", async () => {

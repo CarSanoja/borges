@@ -10,7 +10,7 @@ function footerText(health: Health | null): string {
   const model =
     health.llm === "nebius"
       ? "Built with NVIDIA Nemotron on Nebius Token Factory"
-      : "Replays a recorded NVIDIA Nemotron run";
+      : "Replays a scripted demo run";
   return `${model} · forks run in ${backendLabel(health.backend)} sandboxes`;
 }
 

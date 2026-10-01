@@ -19,6 +19,21 @@ export class ApiError extends Error {
   }
 }
 
+function errorMessage(text: string): string {
+  try {
+    const body = JSON.parse(text) as { detail?: unknown };
+    if (typeof body.detail === "string") return body.detail;
+    if (Array.isArray(body.detail)) {
+      return body.detail
+        .map((item) => (item && typeof item === "object" && "msg" in item ? String(item.msg) : String(item)))
+        .join("; ");
+    }
+  } catch {
+    return text;
+  }
+  return text;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
     ...init,
@@ -26,7 +41,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new ApiError(response.status, text || response.statusText);
+    throw new ApiError(response.status, errorMessage(text) || response.statusText);
   }
   return (await response.json()) as T;
 }
