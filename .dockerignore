@@ -1,0 +1,14 @@
+.venv
+node_modules
+frontend/node_modules
+frontend/dist
+runs
+.borges
+data/raw
+.env
+notes
+research
+.git
+__pycache__
+.pytest_cache
+.ruff_cache
