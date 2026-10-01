@@ -146,3 +146,36 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 - `backend=contree`: Nebius Token Factory Sandboxes. Each step is `image.run(...,
   disposable=False)` on the parent image.
 - `replay`: re-stream a recorded run, with no models and no sandboxes.
+
+## 8. Exact formats shared by several domains
+
+**`Option.code`** is complete Python source that defines exactly one function:
+- `apply(df, ctx)` returning a DataFrame, for steps of kind `filter`, `transform` and
+  `feature`;
+- `estimate(df, ctx)` for the step of kind `model`, returning a dict with float keys
+  `estimate`, `ci_low`, `ci_high`, `p_value`, an int `n`, and an optional
+  `extra: dict[str, float]`.
+
+Top-level `import`/`from` of allowed modules is permitted; any other top-level statement
+is rejected by `code_guard`. `ctx` may be mutated in place (it is persisted as JSON after
+every step). Functions must be deterministic: any randomness uses a fixed seed.
+
+**Case folder** `cases/<case_id>/`:
+- `case.json`: a `CaseSpec`;
+- `data.parquet`: the dataset;
+- `fixtures/`: the scripted model responses;
+- `recorded/events.jsonl`: optional, a recorded run for offline replay.
+
+**Scripted fixtures.** A request `key` maps to the file `fixtures/<key with ":" replaced by
+"__">.json`, holding `{"model": str, "text": str, "parsed": object|null, "tokens_in": int,
+"tokens_out": int}`. Keys:
+- `planner` (parsed = `PlannerOutput`);
+- `coder:<step_id>.<option_id>` (parsed = `CoderOutput`);
+- `coder:<step_id>.<option_id>:repair` (parsed = `CoderOutput`);
+- `adversary` (parsed = `AdversaryOutput`);
+- `judge:<step_id>.<option_id>` (parsed = `JudgeOutput`);
+- `narrator` (parsed = `NarratorOutput`).
+
+Scripted calls report `cost_usd = 0` and keep the recorded token counts. A live run with
+`record_dir` writes exactly this format, so any live run can be replayed deterministically
+afterwards.
