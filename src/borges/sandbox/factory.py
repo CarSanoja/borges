@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from typing import Literal
 
 from borges.config import Settings
@@ -13,7 +14,8 @@ def make_backend(
     if chosen == "local":
         from borges.sandbox.local_backend import LocalBackend
 
-        return LocalBackend(settings.borges_home)
+        home = settings.borges_home / "sandboxes" / f"sb_{uuid.uuid4().hex[:12]}"
+        return LocalBackend(home, ephemeral=True)
     if chosen == "contree":
         from borges.sandbox.contree_backend import ContreeBackend
 

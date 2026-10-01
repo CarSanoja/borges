@@ -17,7 +17,20 @@ def _settings(tmp_path: Path, **kwargs: object) -> Settings:
 def test_local_is_default(tmp_path: Path) -> None:
     backend = make_backend(_settings(tmp_path))
     assert isinstance(backend, LocalBackend)
-    assert backend.home == tmp_path
+    assert backend.home.parent == tmp_path / "sandboxes"
+    assert backend.ephemeral
+
+
+async def test_each_local_backend_owns_a_directory_removed_on_close(tmp_path: Path) -> None:
+    first = make_backend(_settings(tmp_path))
+    second = make_backend(_settings(tmp_path))
+    assert isinstance(first, LocalBackend) and isinstance(second, LocalBackend)
+    assert first.home != second.home
+    await first.root({"data.parquet": b"x"})
+    await second.root({"data.parquet": b"y"})
+    await first.close()
+    assert not first.home.exists()
+    assert second.home.exists()
 
 
 def test_contree_requires_key(tmp_path: Path) -> None:

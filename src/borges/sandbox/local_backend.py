@@ -52,9 +52,10 @@ class LocalBackend:
 
     name = "local"
 
-    def __init__(self, home: Path, python: str = sys.executable) -> None:
+    def __init__(self, home: Path, python: str = sys.executable, ephemeral: bool = False) -> None:
         self.home = Path(home)
         self.python = python
+        self.ephemeral = ephemeral
         self._base = self.home / "checkpoints"
 
     def _fs(self, checkpoint_id: str) -> Path:
@@ -157,7 +158,8 @@ class LocalBackend:
         return await asyncio.to_thread(target.read_bytes)
 
     async def close(self) -> None:
-        return None
+        if self.ephemeral:
+            await asyncio.to_thread(shutil.rmtree, self.home, True)
 
     def cleanup(self) -> None:
         shutil.rmtree(self._base, ignore_errors=True)

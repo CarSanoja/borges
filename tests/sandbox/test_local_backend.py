@@ -108,3 +108,14 @@ async def test_cleanup_removes_checkpoints(backend: LocalBackend, tmp_path: Path
     backend.cleanup()
     assert not (tmp_path / "checkpoints").exists()
     await backend.close()
+
+
+async def test_close_keeps_a_persistent_home_and_removes_an_ephemeral_one(tmp_path: Path) -> None:
+    kept = LocalBackend(tmp_path / "kept")
+    gone = LocalBackend(tmp_path / "gone", ephemeral=True)
+    await kept.root({"a.txt": b"a"})
+    await gone.root({"a.txt": b"a"})
+    await kept.close()
+    await gone.close()
+    assert (tmp_path / "kept" / "checkpoints").is_dir()
+    assert not (tmp_path / "gone").exists()
