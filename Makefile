@@ -8,14 +8,13 @@ install:
 	$(FRONTEND) install
 
 lint:
-	uv run --no-sync ruff check src tests
-	uv run --no-sync ruff format --check src tests
+	uv run --no-sync ruff check src tests cases
+	uv run --no-sync ruff format --check src tests cases
 
-test:
-	uv run --no-sync ruff check src tests
+test: lint
 	uv run --no-sync pytest -q
 	$(FRONTEND) typecheck
-	$(FRONTEND) test
+	$(FRONTEND) test --run
 	$(FRONTEND) build
 
 demo-cli:
