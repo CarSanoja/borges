@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Sequence
 
 from borges.analysis.coder import repair_option
@@ -8,6 +7,7 @@ from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.garden.executor import GardenExecutor
 from borges.garden.models import Garden, Universe, UniverseKind
 from borges.llm.client import BudgetExceeded, LLMClient
+from borges.llm.gather import gather_cancelling
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData
 
@@ -87,4 +87,4 @@ class UniverseRunner:
         self, choice_list: Sequence[dict[str, str]], kind: UniverseKind
     ) -> list[Universe]:
         selected = list(choice_list)[: self.remaining]
-        return list(await asyncio.gather(*(self.run(c, kind) for c in selected)))
+        return list(await gather_cancelling(self.run(c, kind) for c in selected))

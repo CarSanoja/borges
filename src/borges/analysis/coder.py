@@ -8,6 +8,7 @@ from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts.coder import build_messages
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
+from borges.llm.gather import gather_cancelling
 
 OnCoded = Callable[[str, str, bool, int, str | None], Awaitable[None]]
 
@@ -55,7 +56,7 @@ async def code_plan(
 ) -> AnalysisPlan:
     semaphore = asyncio.Semaphore(concurrency)
 
-    async def work(step: Step, option: Option) -> tuple[str | None, str | None]:
+    async def work(step: Step, option: Option) -> tuple[str | None, int, str | None]:
         async with semaphore:
             try:
                 code, attempts, error = await generate_checked(llm, plan, step, option)
@@ -63,21 +64,45 @@ async def code_plan(
                 code, attempts, error = None, 1, str(exc)
         if on_coded is not None:
             await on_coded(step.id, option.id, code is not None, attempts, error)
-        return code, error
+        return code, attempts, error
 
     pending = [(s, o) for s in plan.steps for o in s.options if o.code is None]
-    results = await asyncio.gather(*(work(s, o) for s, o in pending))
+    results = await gather_cancelling(work(s, o) for s, o in pending)
 
     coded = plan.model_copy(deep=True)
-    for (step, option), (code, error) in zip(pending, results, strict=True):
+    failed_defaults: dict[str, tuple[str, str | None]] = {}
+    attempts_by_option: dict[tuple[str, str], int] = {}
+    for (step, option), (code, attempts, error) in zip(pending, results, strict=True):
         target = coded.step(step.id)
+        attempts_by_option[(step.id, option.id)] = attempts
         if code is not None:
             target.option(option.id).code = code
-        elif option.is_default:
-            raise LLMError(f"default option {step.id}.{option.id} failed coding: {error}")
-        else:
-            target.options = [o for o in target.options if o.id != option.id]
+            continue
+        if option.is_default:
+            failed_defaults[step.id] = (option.id, error)
+        target.options = [o for o in target.options if o.id != option.id]
+    for step_id, (default_id, error) in failed_defaults.items():
+        await _promote_sibling(coded, step_id, default_id, error, attempts_by_option, on_coded)
     return coded
+
+
+async def _promote_sibling(
+    coded: AnalysisPlan,
+    step_id: str,
+    default_id: str,
+    error: str | None,
+    attempts_by_option: dict[tuple[str, str], int],
+    on_coded: OnCoded | None,
+) -> None:
+    target = coded.step(step_id)
+    sibling = next((o for o in target.options if o.code is not None), None)
+    if sibling is None:
+        raise LLMError(f"default option {step_id}.{default_id} failed coding: {error}")
+    sibling.is_default = True
+    if on_coded is not None:
+        note = f"promoted to default because {default_id} failed coding: {error}"
+        attempts = attempts_by_option.get((step_id, sibling.id), 1)
+        await on_coded(step_id, sibling.id, True, attempts, note)
 
 
 async def repair_option(

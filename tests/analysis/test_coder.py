@@ -116,7 +116,9 @@ async def test_code_plan_drops_failing_non_default(monkeypatch: pytest.MonkeyPat
     assert failed[2] is False and failed[3] == 2 and "bad: BAD" in failed[4]
 
 
-async def test_code_plan_default_failure_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_code_plan_promotes_coded_sibling_when_default_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
     plan = make_plan()
     llm = FakeLLM(
@@ -128,8 +130,60 @@ async def test_code_plan_default_failure_raises(monkeypatch: pytest.MonkeyPatch)
             "coder:m1.welch": CoderOutput(code="W"),
         }
     )
+    events: list[tuple[str, str, bool, int, str | None]] = []
+
+    async def on_coded(*args) -> None:
+        events.append(args)
+
+    coded = await code_plan(llm, plan, on_coded=on_coded)
+    step = coded.step("d1")
+    assert [o.id for o in step.options] == ["trim"]
+    assert step.options[0].is_default is True
+    promoted = [e for e in events if e[1] == "trim" and e[4]]
+    assert promoted and "promoted to default" in promoted[0][4] and "keep" in promoted[0][4]
+
+
+async def test_code_plan_raises_when_no_option_of_step_codes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    llm = FakeLLM(
+        {
+            "coder:d1.keep": CoderOutput(code="BAD"),
+            "coder:d1.keep:repair": CoderOutput(code="BAD"),
+            "coder:d1.trim": CoderOutput(code="BAD"),
+            "coder:d1.trim:repair": CoderOutput(code="BAD"),
+            "coder:m1.ols": CoderOutput(code="O"),
+            "coder:m1.welch": CoderOutput(code="W"),
+        }
+    )
     with pytest.raises(LLMError, match="d1.keep"):
-        await code_plan(llm, plan)
+        await code_plan(llm, make_plan())
+
+
+async def test_code_plan_failure_cancels_in_flight_siblings() -> None:
+    import asyncio
+
+    from borges.llm.client import BudgetExceeded
+
+    started: list[str] = []
+    finished: list[str] = []
+
+    class Failing(FakeLLM):
+        async def complete(self, role, messages, *, key, **kwargs):
+            started.append(key)
+            if key == "coder:d1.keep":
+                raise BudgetExceeded("cap")
+            await asyncio.sleep(0.2)
+            finished.append(key)
+            return await super().complete(role, messages, key=key, **kwargs)
+
+    keys = ["coder:d1.keep", "coder:d1.trim", "coder:m1.ols", "coder:m1.welch"]
+    llm = Failing({k: CoderOutput(code="C") for k in keys})
+    with pytest.raises(BudgetExceeded):
+        await code_plan(llm, make_plan())
+    await asyncio.sleep(0.3)
+    assert len(started) == 4 and finished == []
 
 
 async def test_code_plan_respects_concurrency() -> None:

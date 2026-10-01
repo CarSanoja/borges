@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import asyncio
-
 from borges.analysis.adversary import propose_options
 from borges.analysis.coder import code_option
 from borges.analysis.judge import judge_option
 from borges.analysis.models import AnalysisPlan, Option, Proposal
 from borges.garden.models import Universe
-from borges.llm.client import BudgetExceeded, LLMClient
+from borges.llm.client import BudgetExceeded, LLMClient, LLMError
+from borges.llm.gather import gather_cancelling
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData, OptionJudgedData
 from borges.runs.runner import UniverseRunner, publish_plan
@@ -18,7 +17,18 @@ async def _judge_and_code(
 ) -> tuple[str, Option] | None:
     step = plan.step(proposal.step_id)
     option = proposal.option
-    judgement = await judge_option(llm, plan, step, option)
+    try:
+        judgement = await judge_option(llm, plan, step, option)
+    except LLMError as exc:
+        rejected = OptionJudgedData(
+            step_id=step.id,
+            option_id=option.id,
+            defensibility=0.0,
+            accepted=False,
+            reason=f"judge failed: {exc}",
+        )
+        await emitter.emit("option.judged", rejected.model_dump(mode="json"))
+        return None
     judged = OptionJudgedData(
         step_id=step.id,
         option_id=option.id,
@@ -56,15 +66,15 @@ async def run_adversary_round(
     baseline: Universe,
 ) -> list[Universe]:
     """Propose options from the real baseline state, judge them, then flip each accepted one."""
-    proposals = [
-        p
-        for p in await propose_options(llm, plan, baseline)
-        if any(s.id == p.step_id for s in plan.steps)
-    ]
+    try:
+        proposed = await propose_options(llm, plan, baseline)
+    except LLMError:
+        return []
+    proposals = [p for p in proposed if any(s.id == p.step_id for s in plan.steps)]
     for proposal in proposals:
         payload = {"step_id": proposal.step_id, "option": proposal.option.model_dump(mode="json")}
         await emitter.emit("option.proposed", payload)
-    outcomes = await asyncio.gather(*(_judge_and_code(llm, plan, emitter, p) for p in proposals))
+    outcomes = await gather_cancelling(_judge_and_code(llm, plan, emitter, p) for p in proposals)
     accepted = [o for o in outcomes if o is not None]
     for step_id, option in accepted:
         plan.step(step_id).options.append(option)
