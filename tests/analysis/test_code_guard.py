@@ -154,3 +154,34 @@ def test_reject_attribute_and_exit_escapes(body: str) -> None:
 def test_allowed_from_imports_still_pass() -> None:
     code = "from scipy import stats\nfrom math import sqrt\n" + VALID_APPLY
     assert check_code(code, "filter") == []
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "pd.eval(\"pd.read_csv('/x', sep='@@@')\", engine='python')\nreturn df",
+        "df.eval('@pd.io.common.os.popen(1).read()', engine='python')\nreturn df",
+        "return df.query('x > 0')",
+        "return df.query('@pd.io.common.os.popen(1)')",
+        "'{0.__class__}'.format(df)\nreturn df",
+        "'{0}'.format_map(df)\nreturn df",
+        "df.to_numpy().dump('/x')\nreturn df",
+        "np.ndarray.dumps(df)\nreturn df",
+        "scipy.sparse.save_npz('/x', m)\nreturn df",
+        "scipy.sparse.load_npz('/x')\nreturn df",
+        "statsmodels.datasets.get_rdataset('x')\nreturn df",
+        "statsmodels.iolib.foo\nreturn df",
+        "pd.HDFStore('/x')\nreturn df",
+        "pd.ExcelFile('/x')\nreturn df",
+        "pd.ExcelWriter('/x')\nreturn df",
+        "sm.datasets.webuse('x')\nreturn df",
+        "x = 'a__b'\nreturn df",
+        "x = 'a@b'\nreturn df",
+    ],
+)
+def test_reject_eval_io_and_string_bypasses(body: str) -> None:
+    assert check_code(wrap(body), "filter")
+
+
+def test_plain_strings_still_accepted() -> None:
+    assert check_code(wrap("x = 'plain text'\nreturn df[df['a'] > 0]"), "filter") == []

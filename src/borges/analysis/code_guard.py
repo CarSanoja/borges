@@ -77,6 +77,21 @@ FORBIDDEN_ATTRIBUTES = frozenset(
         "f2py",
         "system",
         "popen",
+        "eval",
+        "query",
+        "format",
+        "format_map",
+        "dump",
+        "dumps",
+        "save_npz",
+        "load_npz",
+        "datasets",
+        "iolib",
+        "HDFStore",
+        "ExcelFile",
+        "ExcelWriter",
+        "get_rdataset",
+        "webuse",
     }
 )
 
@@ -156,6 +171,12 @@ def _name_violations(node: ast.Name) -> list[str]:
     return []
 
 
+def _constant_violations(node: ast.Constant) -> list[str]:
+    if isinstance(node.value, str) and ("__" in node.value or "@" in node.value):
+        return [f"line {node.lineno}: string constants may not contain '__' or '@'"]
+    return []
+
+
 def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     violations: list[str] = []
     for node in ast.walk(func):
@@ -165,6 +186,8 @@ def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
             violations.extend(_attribute_violations(node))
         elif isinstance(node, ast.Name):
             violations.extend(_name_violations(node))
+        elif isinstance(node, ast.Constant):
+            violations.extend(_constant_violations(node))
     return violations
 
 
