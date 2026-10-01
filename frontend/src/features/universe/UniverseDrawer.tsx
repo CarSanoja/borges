@@ -5,6 +5,7 @@ import { CopyButton } from "./CopyButton";
 import { StepDetailRow } from "./StepDetailRow";
 import { useUniverseDetail } from "./useUniverseDetail";
 import "./universe.css";
+import "./universeCode.css";
 
 interface Props {
   runId: string | null;

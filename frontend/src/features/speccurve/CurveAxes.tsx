@@ -24,7 +24,7 @@ export function CurveAxes({ layout, threshold }: Props) {
       {thresholdY !== null && (
         <g>
           <line className="sc-threshold" x1={left} x2={x2} y1={thresholdY} y2={thresholdY} />
-          <text className="sc-threshold-label" x={x2} y={thresholdY - 5} textAnchor="end">
+          <text className="sc-threshold-label" x={left + 6} y={thresholdY + 14} textAnchor="start">
             decision threshold {formatNumber(threshold ?? 0)}
           </text>
         </g>

@@ -9,6 +9,7 @@ import { buildPoints, buildRows, yDomain } from "./specCurveData";
 import { columnX, makeLayout } from "./specCurveLayout";
 import { useElementWidth } from "./useElementWidth";
 import "./speccurve.css";
+import "./specCurveTooltip.css";
 
 interface Props {
   snapshot: RunSnapshot;

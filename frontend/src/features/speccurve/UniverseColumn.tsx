@@ -16,6 +16,7 @@ interface Props {
 export function UniverseColumn({ point, rows, layout, x, selected, hovered, onSelect, onHover }: Props) {
   const { y, step, top, curveHeight, matrixTop, rowHeight, height } = layout;
   const py = y(point.estimate);
+  const clampY = (v: number) => Math.min(top + curveHeight, Math.max(top, y(v)));
   const onKey = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
@@ -44,9 +45,9 @@ export function UniverseColumn({ point, rows, layout, x, selected, hovered, onSe
     >
       <rect className="sc-col__band" x={-step / 2} y={top - 6} width={step} height={height - top} />
       <line className="sc-col__guide" y1={top} y2={top + curveHeight} />
-      <line className="sc-whisker" y1={y(point.low)} y2={y(point.high)} />
-      <line className="sc-cap" x1={-3} x2={3} y1={y(point.low)} y2={y(point.low)} />
-      <line className="sc-cap" x1={-3} x2={3} y1={y(point.high)} y2={y(point.high)} />
+      <line className="sc-whisker" y1={clampY(point.low)} y2={clampY(point.high)} />
+      <line className="sc-cap" x1={-3} x2={3} y1={clampY(point.low)} y2={clampY(point.low)} />
+      <line className="sc-cap" x1={-3} x2={3} y1={clampY(point.high)} y2={clampY(point.high)} />
       {point.tone === "baseline" && <circle className="sc-baseline-ring" cy={py} r={radius + 5} />}
       <circle className="sc-dot" cy={py} r={radius} />
       {rows.map((row, i) =>

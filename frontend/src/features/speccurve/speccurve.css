@@ -77,6 +77,13 @@
   fill: var(--paper-500);
 }
 
+.sc-threshold-label {
+  paint-order: stroke;
+  stroke: var(--ink-800);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
 .sc-matrix__label {
   font-family: var(--font-ui);
   font-size: 11.5px;
@@ -100,22 +107,6 @@
 .sc-reference__label {
   font-family: var(--font-ui);
   fill: var(--paper-300);
-}
-
-.sc-reference__tick {
-  stroke: var(--paper-300);
-  stroke-width: 1.6;
-  opacity: 0.85;
-}
-
-.sc-reference__ci {
-  stroke: var(--paper-500);
-  stroke-width: 1;
-  opacity: 0.6;
-}
-
-.sc-reference [data-significant="false"] .sc-reference__tick {
-  stroke: var(--paper-700);
 }
 
 .sc-col {
@@ -193,48 +184,3 @@
   fill: var(--tone);
 }
 
-.sc-tip {
-  position: absolute;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 170px;
-  max-width: 260px;
-  padding: var(--space-2) var(--space-3);
-  transform: translate(-50%, calc(-100% - 14px));
-  background: var(--ink-950);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
-  pointer-events: none;
-  font-size: var(--text-xs);
-}
-
-.sc-tip__verdict {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  color: var(--verdigris);
-}
-
-.sc-tip[data-tone="flip"] .sc-tip__verdict {
-  color: var(--vermilion);
-}
-
-.sc-tip[data-tone="baseline"] .sc-tip__verdict {
-  color: var(--gold);
-}
-
-.sc-tip__changes {
-  color: var(--paper-300);
-}
-
-.sc-tip__nums {
-  color: var(--paper-500);
-}
-
-@keyframes sc-in {
-  from {
-    opacity: 0;
-  }
-}

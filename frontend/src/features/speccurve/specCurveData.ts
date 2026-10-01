@@ -70,10 +70,19 @@ export function yDomain(
   threshold: number | null,
   reference: readonly ReferenceEstimate[],
 ): [number, number] {
-  const values: number[] = threshold === null ? [] : [threshold];
-  for (const p of points) values.push(p.low, p.high, p.estimate);
-  for (const r of reference) values.push(r.estimate, r.ci_low ?? r.estimate, r.ci_high ?? r.estimate);
-  if (values.length === 0) return [-1, 1];
+  const core: number[] = threshold === null ? [] : [threshold];
+  for (const p of points) core.push(p.estimate);
+  for (const r of reference) core.push(r.estimate);
+  if (core.length === 0) return [-1, 1];
+  const coreMin = Math.min(...core);
+  const coreMax = Math.max(...core);
+  const span = coreMax - coreMin || Math.abs(coreMax) || 1;
+  const floor = coreMin - span * 0.25;
+  const ceil = coreMax + span * 0.25;
+  const values = [...core];
+  const bound = (v: number) => Math.min(ceil, Math.max(floor, v));
+  for (const p of points) values.push(bound(p.low), bound(p.high));
+  for (const r of reference) values.push(bound(r.ci_low ?? r.estimate), bound(r.ci_high ?? r.estimate));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const pad = (max - min || Math.abs(max) || 1) * 0.08;
