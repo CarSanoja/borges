@@ -37,3 +37,21 @@ async def test_health_tolerates_corrupt_spend(tmp_path) -> None:
     (tmp_path / "spend.json").write_text("{nope")
     async with client_for(Settings(borges_home=tmp_path)) as client:
         assert (await client.get("/api/health")).json()["spend_usd"] == 0
+
+
+async def test_health_unavailable_reasons(tmp_path) -> None:
+    async with client_for(Settings(borges_home=tmp_path, nebius_api_key=None)) as client:
+        assert (await client.get("/api/health")).json()["live_unavailable_reason"] == "no_key"
+    (tmp_path / "spend.json").write_text(json.dumps({"total_usd": 5.0}))
+    settings = Settings(borges_home=tmp_path, nebius_api_key="k", borges_spend_cap_usd=5.0)
+    async with client_for(settings) as client:
+        body = (await client.get("/api/health")).json()
+    assert body["live_unavailable_reason"] == "budget_spent"
+    assert body["llm_live_available"] is False
+
+
+async def test_health_live_available_has_no_reason(tmp_path) -> None:
+    async with client_for(Settings(borges_home=tmp_path, nebius_api_key="k")) as client:
+        body = (await client.get("/api/health")).json()
+    assert body["live_unavailable_reason"] is None
+    assert body["llm_live_available"] is True

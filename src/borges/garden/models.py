@@ -67,6 +67,8 @@ class Report(BaseModel):
     n_flipped: int
     narrative: str = ""
     caveats: list[str] = Field(default_factory=list)
+    n_failed: int = 0
+    failed: list[str] = Field(default_factory=list)
 
 
 class Garden(BaseModel):

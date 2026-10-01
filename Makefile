@@ -23,10 +23,12 @@ demo-cli:
 demo-red-cards:
 	$(BORGES) run --case red_cards --llm scripted
 
+serve: export BORGES_ALLOW_UNTRUSTED_LOCAL=true
 serve:
 	$(FRONTEND) build
 	$(BORGES) serve
 
+dev: export BORGES_ALLOW_UNTRUSTED_LOCAL=true
 dev:
 	$(BORGES) serve --reload & pid=$$!; \
 	trap 'kill $$pid' EXIT INT TERM; \

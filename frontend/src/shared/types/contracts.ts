@@ -133,6 +133,8 @@ export interface Report {
   n_flipped: number;
   narrative: string;
   caveats: string[];
+  n_failed?: number;
+  failed?: string[];
 }
 
 export interface Garden {
@@ -199,6 +201,8 @@ export interface RunSnapshot {
   title: string;
   question: string;
   decision_rule: DecisionRule | null;
+  llm?: "nebius" | "scripted" | null;
+  backend?: string | null;
   stages: Partial<Record<StageName, "started" | "done">>;
   plan: AnalysisPlan | null;
   checkpoints: CheckpointNode[];
@@ -259,6 +263,7 @@ export interface Health {
   backend: string;
   spend_usd: number;
   spend_cap_usd: number;
+  live_unavailable_reason?: "no_key" | "budget_spent" | null;
 }
 
 interface EventBase<T extends string, D> {

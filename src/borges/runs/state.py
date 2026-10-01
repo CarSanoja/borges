@@ -48,6 +48,8 @@ def _apply(snapshot: RunSnapshot, event: Event) -> None:
             snapshot.title = data.get("title", "")
             snapshot.question = data.get("question", "")
             snapshot.decision_rule = DecisionRule.model_validate(data["decision_rule"])
+            snapshot.llm = data.get("llm")
+            snapshot.backend = data.get("backend")
         case "stage":
             snapshot.stages[data["name"]] = data["status"]
         case "plan.ready":

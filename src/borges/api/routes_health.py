@@ -24,11 +24,19 @@ def read_spend(settings: Settings) -> float:
 
 @router.get("/health")
 def health(settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, Any]:
+    spend = read_spend(settings)
+    if not settings.nebius_api_key:
+        reason = "no_key"
+    elif spend >= settings.borges_spend_cap_usd:
+        reason = "budget_spent"
+    else:
+        reason = None
     return {
         "status": "ok",
         "llm": settings.borges_llm,
-        "llm_live_available": bool(settings.nebius_api_key),
+        "llm_live_available": reason is None,
+        "live_unavailable_reason": reason,
         "backend": settings.borges_backend,
-        "spend_usd": read_spend(settings),
+        "spend_usd": spend,
         "spend_cap_usd": settings.borges_spend_cap_usd,
     }

@@ -14,7 +14,7 @@ RunStatus = Literal["running", "completed", "failed"]
 class RunRequest(BaseModel):
     case_id: str | None = None
     upload_id: str | None = None
-    question: str | None = None
+    question: str | None = Field(default=None, max_length=1000)
     decision_rule: DecisionRule | None = None
     llm: Literal["nebius", "scripted"] | None = None
     backend: Literal["local", "contree"] | None = None
@@ -50,6 +50,8 @@ class RunSnapshot(BaseModel):
     title: str = ""
     question: str = ""
     decision_rule: DecisionRule | None = None
+    llm: Literal["nebius", "scripted"] | None = None
+    backend: str | None = None
     stages: dict[StageName, Literal["started", "done"]] = Field(default_factory=dict)
     plan: AnalysisPlan | None = None
     checkpoints: list[CheckpointNode] = Field(default_factory=list)

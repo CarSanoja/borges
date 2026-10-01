@@ -57,6 +57,8 @@ def test_run_started_and_stages() -> None:
         "title": "T",
         "question": "Q?",
         "decision_rule": RULE.model_dump(mode="json"),
+        "llm": "nebius",
+        "backend": "contree",
     }
     snapshot = fold(
         [
@@ -68,6 +70,7 @@ def test_run_started_and_stages() -> None:
     assert (snapshot.run_id, snapshot.case_id, snapshot.title) == ("r_1", "c", "T")
     assert snapshot.question == "Q?" and snapshot.decision_rule == RULE
     assert snapshot.stages == {"planning": "done"} and snapshot.last_seq == 3
+    assert (snapshot.llm, snapshot.backend) == ("nebius", "contree")
 
 
 def test_plan_ready_replaces_plan() -> None:
