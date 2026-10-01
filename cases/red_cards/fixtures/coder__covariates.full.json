@@ -1,0 +1,9 @@
+{
+  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    ctx[\\\"covariates\\\"] = [\\\"position\\\", \\\"leagueCountry\\\", \\\"height\\\", \\\"weight\\\"]\\n    return df\\n\"}",
+  "parsed": {
+    "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    ctx[\"covariates\"] = [\"position\", \"leagueCountry\", \"height\", \"weight\"]\n    return df\n"
+  },
+  "tokens_in": 920,
+  "tokens_out": 43
+}

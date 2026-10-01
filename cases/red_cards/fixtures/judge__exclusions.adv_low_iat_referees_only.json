@@ -1,0 +1,12 @@
+{
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "text": "{\"defensibility\": 0.35, \"accepted\": false, \"reason\": \"Keeping only low-bias referees changes the population and tests the question where bias is least likely, so a null there says nothing about referees in general.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.35,
+    "accepted": false,
+    "reason": "Keeping only low-bias referees changes the population and tests the question where bias is least likely, so a null there says nothing about referees in general.",
+    "source": null
+  },
+  "tokens_in": 1480,
+  "tokens_out": 230
+}

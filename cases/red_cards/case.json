@@ -1,0 +1,224 @@
+{
+  "id": "red_cards",
+  "title": "Red cards and skin tone",
+  "subtitle": "29 research teams. Same data. Opposite answers.",
+  "question": "Are soccer referees more likely to give red cards to dark-skin-toned players than to light-skin-toned players?",
+  "decision_rule": {
+    "metric": "odds ratio of a red card per game, dark vs light skin tone",
+    "comparator": "gt",
+    "threshold": 1.0,
+    "alpha": 0.05,
+    "positive_label": "BIAS DETECTED",
+    "negative_label": "NO CLEAR EVIDENCE"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "crowdstorming_dyads",
+  "max_universes": 48,
+  "reference_label": "29 human research teams (Silberzahn et al., 2018)",
+  "reference": [
+    {
+      "label": "Team 1: Ordinary least squares with robust standard errors, logistic regression",
+      "estimate": 1.179,
+      "ci_low": 0.952,
+      "ci_high": 1.405,
+      "significant": false
+    },
+    {
+      "label": "Team 2: Linear probability model, logistic regression",
+      "estimate": 1.341,
+      "ci_low": 1.1,
+      "ci_high": 1.63,
+      "significant": true
+    },
+    {
+      "label": "Team 3: Multilevel Binomial Logistic Regression using bayesian inference",
+      "estimate": 1.31,
+      "ci_low": 1.09,
+      "ci_high": 1.57,
+      "significant": true
+    },
+    {
+      "label": "Team 4: Spearman correlation",
+      "estimate": 1.20508398861786,
+      "ci_low": 1.20453766734877,
+      "ci_high": 1.20563055767242,
+      "significant": true
+    },
+    {
+      "label": "Team 5: Generalized linear mixed models",
+      "estimate": 1.38,
+      "ci_low": 1.1,
+      "ci_high": 1.75,
+      "significant": true
+    },
+    {
+      "label": "Team 6: Linear Probability Model",
+      "estimate": 1.283,
+      "ci_low": 0.771,
+      "ci_high": 2.133,
+      "significant": false
+    },
+    {
+      "label": "Team 7: Dirichlet process Bayesian clustering",
+      "estimate": 1.71,
+      "ci_low": 1.7,
+      "ci_high": 1.72,
+      "significant": true
+    },
+    {
+      "label": "Team 8: Negative binomial regression with a log link analysis",
+      "estimate": 1.391,
+      "ci_low": 1.174,
+      "ci_high": 1.648,
+      "significant": true
+    },
+    {
+      "label": "Team 9: Generalized linear mixed effects models with a logit link function ",
+      "estimate": 1.48,
+      "ci_low": 1.2,
+      "ci_high": 1.84,
+      "significant": true
+    },
+    {
+      "label": "Team 10: Multilevel regression and logistic regression",
+      "estimate": 1.02944695231468,
+      "ci_low": 1.01094227872411,
+      "ci_high": 1.05210335953285,
+      "significant": true
+    },
+    {
+      "label": "Team 11: Multiple linear regression",
+      "estimate": 1.25221141615404,
+      "ci_low": 1.05209812238872,
+      "ci_high": 1.49038706312524,
+      "significant": true
+    },
+    {
+      "label": "Team 12: Zero-inflated Poisson regression",
+      "estimate": 0.8878,
+      "ci_low": 0.4941,
+      "ci_high": 1.595,
+      "significant": false
+    },
+    {
+      "label": "Team 13: Poisson Multi-level modeling",
+      "estimate": 1.41,
+      "ci_low": 1.13,
+      "ci_high": 1.75,
+      "significant": true
+    },
+    {
+      "label": "Team 14: Weighted least squares regression with referee fixed-effects and clustered standard errors",
+      "estimate": 1.21445,
+      "ci_low": 0.97011,
+      "ci_high": 1.45677,
+      "significant": false
+    },
+    {
+      "label": "Team 15: Hierarchical log-linear modeling",
+      "estimate": 1.016,
+      "ci_low": 0.999,
+      "ci_high": 1.033,
+      "significant": false
+    },
+    {
+      "label": "Team 16: Hierarchical Poisson Regression",
+      "estimate": 1.32,
+      "ci_low": 1.06,
+      "ci_high": 1.63,
+      "significant": true
+    },
+    {
+      "label": "Team 17: Bayesian logistic regression",
+      "estimate": 0.956,
+      "ci_low": 0.771,
+      "ci_high": 1.184,
+      "significant": false
+    },
+    {
+      "label": "Team 18: Hierarchical Bayes model",
+      "estimate": 1.101,
+      "ci_low": 0.983,
+      "ci_high": 1.265,
+      "significant": false
+    },
+    {
+      "label": "Team 20: Cross-classified multilevel negative binomial model ",
+      "estimate": 1.4,
+      "ci_low": 1.15,
+      "ci_high": 1.71,
+      "significant": true
+    },
+    {
+      "label": "Team 21: Tobit regression",
+      "estimate": 2.88074698162271,
+      "ci_low": 1.02630933116147,
+      "ci_high": 11.4723466697569,
+      "significant": true
+    },
+    {
+      "label": "Team 23: Mixed model logistic regression",
+      "estimate": 1.31,
+      "ci_low": 1.1,
+      "ci_high": 1.56,
+      "significant": true
+    },
+    {
+      "label": "Team 24: Multilevel logistic regression",
+      "estimate": 1.38,
+      "ci_low": 1.11,
+      "ci_high": 1.72,
+      "significant": true
+    },
+    {
+      "label": "Team 25: Multilevel logistic binomial regression",
+      "estimate": 1.42,
+      "ci_low": 1.19,
+      "ci_high": 1.71,
+      "significant": true
+    },
+    {
+      "label": "Team 26: Three-level hierarchical generalized linear modeling with Poisson sampling",
+      "estimate": 1.3,
+      "ci_low": 1.08,
+      "ci_high": 1.56,
+      "significant": true
+    },
+    {
+      "label": "Team 27: Poisson regression",
+      "estimate": 2.931,
+      "ci_low": 0.1085,
+      "ci_high": 78.6596,
+      "significant": false
+    },
+    {
+      "label": "Team 28: Mixed effects logistic regression",
+      "estimate": 1.382,
+      "ci_low": 1.12,
+      "ci_high": 1.705,
+      "significant": true
+    },
+    {
+      "label": "Team 30: Clustered robust binomial logistic regression",
+      "estimate": 1.28,
+      "ci_low": 1.04,
+      "ci_high": 1.57,
+      "significant": true
+    },
+    {
+      "label": "Team 31: Logistic regression",
+      "estimate": 1.1226,
+      "ci_low": 0.881,
+      "ci_high": 1.4304,
+      "significant": false
+    },
+    {
+      "label": "Team 32: Generalized linear models for binary data",
+      "estimate": 1.39,
+      "ci_low": 1.1,
+      "ci_high": 1.75,
+      "significant": true
+    }
+  ],
+  "story": "Twenty-nine teams analysed this dataset and disagreed on whether referees card dark-skinned players more. The default analysis gives OR 1.34 (95% CI 1.13 to 1.58): bias detected. No single analytic choice reverses that and no pair does; it takes three together, such as a full covariate set, frequent referees only and player-clustered errors, to land on no clear evidence (OR 1.20 to 1.25). The one single flip that existed, restricting to low-bias referees, is not defensible."
+}

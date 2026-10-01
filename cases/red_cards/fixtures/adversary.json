@@ -1,0 +1,26 @@
+{
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "text": "{\"proposals\": [{\"step_id\": \"covariates\", \"id\": \"adv_full_plus_bias\", \"label\": \"Full set plus referee-country bias scores\", \"rationale\": \"Referee-country implicit and explicit bias could confound who is carded; several teams in the published study adjusted for them.\", \"spec\": \"covariates = [position, leagueCountry, height, weight, meanIAT, meanExp].\", \"source\": \"Silberzahn et al. (2018), Advances in Methods and Practices in Psychological Science\"}, {\"step_id\": \"exclusions\", \"id\": \"adv_low_iat_referees_only\", \"label\": \"Only referees from low implicit-bias countries\", \"rationale\": \"Cleaner comparison among referees with less measured bias.\", \"spec\": \"Drop unrated rows, keep referees whose country meanIAT is below median.\", \"source\": null}]}",
+  "parsed": {
+    "proposals": [
+      {
+        "step_id": "covariates",
+        "id": "adv_full_plus_bias",
+        "label": "Full set plus referee-country bias scores",
+        "rationale": "Referee-country implicit and explicit bias could confound who is carded; several teams in the published study adjusted for them.",
+        "spec": "covariates = [position, leagueCountry, height, weight, meanIAT, meanExp].",
+        "source": "Silberzahn et al. (2018), Advances in Methods and Practices in Psychological Science"
+      },
+      {
+        "step_id": "exclusions",
+        "id": "adv_low_iat_referees_only",
+        "label": "Only referees from low implicit-bias countries",
+        "rationale": "Cleaner comparison among referees with less measured bias.",
+        "spec": "Drop unrated rows, keep referees whose country meanIAT is below median.",
+        "source": null
+      }
+    ]
+  },
+  "tokens_in": 3120,
+  "tokens_out": 640
+}
