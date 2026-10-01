@@ -127,14 +127,16 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 ## 6. Demo (what the judges see)
 
 1. **Landing.** "29 teams. Same data. Opposite answers." There are two case cards (checkout
-   A/B test, red cards) and an upload card.
+   A/B test, red cards). Uploads are API-only (`POST /api/uploads`); there is no upload card.
 2. **Live garden.** A radial labyrinth grows from the dataset at the centre: one ring per
    step, one branch per option, every node a real sandbox checkpoint. Counters show
    universes, forks, tokens and dollars.
 3. **The flip.** The verdict card turns from SHIP to DON'T SHIP, the minimal-flip path lights
    up, and the justification and its source appear.
 4. **Step into the universe.** A drawer shows the exact code, row counts at each step, the
-   result, the checkpoint ids and "reproduced ✓".
+   result, the checkpoint ids and the command chain that reproduces the universe
+   ("reproduced ✓" appears on the verified flip). A flip that did not reproduce is marked
+   as unconfirmed.
 5. **Specification curve.** Every universe's estimate with its CI against the decision
    threshold. On the red-cards case the 29 human teams are overlaid.
 6. **Decision influence.** The decisions ranked by how much they move the answer.
@@ -145,10 +147,39 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
   CI and the offline demo.
 - `llm=nebius`: live Nemotron through Token Factory, with cache and spend cap.
 - `backend=local`: a directory per checkpoint (copy-on-write clone where available) and a
-  subprocess with timeout. Used for development and CI.
+  subprocess with timeout, a scrubbed environment and the AST guard. It is not an
+  isolation boundary. Used for development, CI and the hosted scripted demo.
 - `backend=contree`: Nebius Token Factory Sandboxes. Each step is `image.run(...,
-  disposable=False)` on the parent image.
+  disposable=False)` on the parent image. VM isolation; only checked live by a test that
+  skips without credentials.
 - `replay`: re-stream a recorded run, with no models and no sandboxes.
+
+The run header shows the mode of each run (`Scripted replay` or `Live on Nemotron`, plus the
+backend), taken from `run.started`. The landing footer follows `/api/health`.
+
+### Public deployment
+
+The hosted demo replays a recorded run and runs scripted on the local backend. The server,
+not the client, chooses the backend. `POST /api/runs` applies a policy: it clamps
+`max_universes` to `BORGES_MAX_UNIVERSES`, answers 429 when `BORGES_MAX_ACTIVE_RUNS` runs are
+active or `BORGES_MAX_LIVE_RUNS` live runs are active, and rejects live runs when there is
+no key (400) or the spend cap is used up (403). `/api/health` reports
+`llm_live_available` and `live_unavailable_reason` (`no_key` or `budget_spent`), and the
+case cards disable the live button with that reason. Uploads are API-only and need live
+mode; the local backend accepts them only with `BORGES_ALLOW_UNTRUSTED_LOCAL=true`, and when
+`BORGES_LIVE_TOKEN` is set the header `X-Borges-Live-Token` must match it.
+
+| Variable | Public instance |
+|---|---|
+| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` (the image default). `make dev` and `make serve` set `true`. |
+| `BORGES_BACKEND` | `contree` if uploads should run live; `local` otherwise. |
+| `BORGES_LIVE_TOKEN` | Set it to gate uploads. |
+| `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrent run limits (defaults 2 and 2). |
+| `CONTREE_PROJECT_ID` | ConTree project (falls back to `NEBIUS_PROJECT_ID`). |
+| `/app/.borges` volume | Holds `spend.json` and the LLM cache; without a volume the spend ledger resets on every redeploy. |
+
+`runs/` is not part of the image, so run ids vanish on redeploy; the UI says so when it
+opens a run that no longer exists.
 
 ## 8. Exact formats shared by several domains
 

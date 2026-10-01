@@ -30,9 +30,11 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
 1. **Plans the analysis like an expert.** Nemotron reads the data profile and writes the
    analysis as a sequence of steps. At every step where competent analysts disagree, it lists
    the defensible alternatives: exclusions, outcome definitions, covariates, models.
-2. **Forks reality.** Every step runs in an isolated, VM-backed sandbox. At each decision
-   point Borges snapshots the exact execution state and branches one universe per
-   alternative. Shared prefixes are computed once.
+2. **Forks reality.** Every step runs in a sandbox. At each decision point Borges
+   snapshots the exact execution state and branches one universe per alternative. Shared
+   prefixes are computed once. On the ConTree backend each checkpoint is a VM-isolated
+   sandbox image. The default local backend is a subprocess per step (scrubbed environment,
+   AST code guard, per-step timeout) and is not VM isolation.
 3. **Argues against you, with code.** An adversarial analyst inspects the real intermediate
    state and proposes new defensible choices aimed at reversing the conclusion. An
    independent judge scores how defensible each one is, and only defensible ones enter the
@@ -40,8 +42,8 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
 4. **Finds the minimal flip.** Borges searches for the smallest set of defensible changes
    (one decision, then two, then three) that turns your decision around, and re-executes it from scratch
    to prove it reproduces.
-5. **Lets you step into any universe.** Every universe is a reproducible checkpoint chain with
-   its exact code, row counts and result.
+5. **Lets you step into any universe.** Every universe shows its exact code, row counts,
+   result, checkpoint ids and the chain of step scripts that reproduces it.
 
 The output is a **fragility report**:
 - the original verdict;
@@ -75,8 +77,11 @@ minimal flip.
   - Nano 30B writes the code for every branch (cheap and massively parallel);
   - Ultra 550B, with 1M of context, reads the whole garden and writes the report.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
-  checkpoints. Every universe is a branch, and every flip is replayable.
-- **Nebius AI Cloud:** hosts the app.
+  checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
+  and contract-tested; the only live check is a test that skips without credentials, and
+  the hosted demo does not use it.
+- **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
+  repository deploys it.
 - **Tavily (optional):** grounds an alternative's justification in methodological sources.
 
 ## Goal of the hackathon build (definition of done)
@@ -90,17 +95,33 @@ Borges is finished when all of these hold, on a clean clone:
 2. The **red-cards case** (Silberzahn data) runs end to end. Its specification curve spans
    the range of the 29 human teams, and the report names the decisions that split
    "bias detected" from "no clear evidence".
-3. With `NEBIUS_API_KEY` set, the same runs work **live on Nemotron via Token Factory**, under
-   a hard spend cap, with the token and dollar cost shown.
+3. With `NEBIUS_API_KEY` set, the curated cases run **live on Nemotron via Token Factory**,
+   under a hard spend cap, with the token and dollar cost shown. Live runs on a curated case
+   use its own question and decision rule.
 4. `make serve` opens the web app:
    - pick a case;
    - watch the garden grow live as sandboxes fork;
    - see the verdict card flip;
    - step into the flipping universe;
    - read the spec curve and the decision influence.
-   Recorded runs replay offline, so the hosted demo never breaks and costs nothing.
-5. `make test` is green: Python unit and integration tests, ruff, the frontend type-check and
-   build, and an end-to-end smoke test of the API serving the UI.
-6. `docker build` produces one image that serves API and UI, ready for Nebius AI Cloud.
+   Recorded runs replay offline, so the hosted demo never breaks and costs nothing. The
+   hosted demo replays a recorded run and runs scripted on local subprocess sandboxes. Live
+   Nemotron runs are on curated cases only, and stop when the spend cap is used up.
+5. `make test` is green: Python unit and integration tests, ruff, the frontend type-check,
+   tests and build, and an in-process end-to-end API test (a scripted run over HTTP, SSE
+   events, the universe detail and the SPA fallback route).
+6. `docker build` produces one image that serves API and UI. It defaults to the local
+   backend and the scripted model.
 7. The ConTree backend is implemented against `contree-sdk` and contract-tested. A live smoke
    test runs when sandbox credentials are present.
+
+## Uploads
+
+Uploading your own dataset is an API feature (`POST /api/uploads`, then `POST /api/runs`
+with `upload_id`); the web app has no upload card. Uploaded datasets need live mode
+(`llm=nebius` with `NEBIUS_API_KEY`), because there are no recorded responses for them. On
+a public instance they should run only on isolated sandboxes (`BORGES_BACKEND=contree`),
+and `BORGES_LIVE_TOKEN` should be set so that only callers who know the token can start
+them. The local backend runs generated code on the server's own machine, so it accepts
+uploads only when `BORGES_ALLOW_UNTRUSTED_LOCAL=true` (set by `make dev` and `make serve`,
+meant for a private machine).

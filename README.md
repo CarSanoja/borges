@@ -5,7 +5,8 @@ others, and shows you the one defensible choice that flips your decision.**
 
 Built for the [Nebius x NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/)
 on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step runs as a
-branch of a sandbox (Nebius Token Factory Sandboxes, or a local copy-on-write backend).
+branch of a sandbox: a local subprocess backend by default (no VM isolation), or Nebius
+Token Factory Sandboxes (ConTree, VM-isolated) with `BORGES_BACKEND=contree`.
 
 ---
 
@@ -30,9 +31,9 @@ conversion lift is positive with p < 0.05"*.
 1. **Nemotron plans the analysis like a senior statistician.** At every step where experts
    disagree it lists the defensible alternatives, and the conventional choice is the
    default.
-2. **Every choice forks a real sandbox.** Each step runs in an isolated sandbox. Each
-   alternative branches from the exact filesystem state of the step before, and universes
-   that share a prefix share its checkpoints.
+2. **Every choice forks a real sandbox.** Each step runs in a sandbox (a subprocess on the
+   local backend, a VM on ConTree). Each alternative branches from the exact filesystem
+   state of the step before, and universes that share a prefix share its checkpoints.
 3. **An adversarial analyst argues against your conclusion, with code.** It reads what the
    real data did at each step (row counts, the estimate) and proposes new options; an
    independent judge scores how defensible each one is, and only defensible ones enter the
@@ -75,7 +76,11 @@ make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
 The web app has a recorded replay of both cases, a "Run it now" button (scripted models,
-real sandboxes) and, when a key is configured, "Run live on Nemotron".
+local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
+live on Nemotron" (curated cases only; the button says why when it is disabled). The hosted
+demo replays a recorded run and runs scripted. Uploading your own dataset is API-only
+(`POST /api/uploads`, then `POST /api/runs` with `upload_id`), needs live mode, and on a
+public instance needs `BORGES_BACKEND=contree` and `BORGES_LIVE_TOKEN`.
 
 ### Running live on Nemotron
 
@@ -85,15 +90,18 @@ uv run borges run --case checkout_ab --llm nebius --record
 ```
 
 Spend is capped twice, per run (`BORGES_RUN_CAP_USD`, default $0.50) and in total
-(`BORGES_SPEND_CAP_USD`, default $5). Each call reserves its worst-case cost before it is
+(`BORGES_SPEND_CAP_USD`, default $5). When the total is used up, the web app disables the
+live button and says so. Each call reserves its worst-case cost before it is
 sent, so concurrent calls cannot overshoot the cap. Identical requests are served from a
 disk cache. `--record` saves every response in the scripted fixture format, so a live run
 can be replayed exactly at no cost.
 
 ### Running on Nebius Sandboxes
 
-Set `CONTREE_API_KEY` (or reuse `NEBIUS_API_KEY`) and `CONTREE_BASE_URL`, then pass
-`--backend contree`. The first run builds a runner image with the scientific Python stack
+Set `CONTREE_API_KEY` (or reuse `NEBIUS_API_KEY`), `CONTREE_BASE_URL` and, if your account
+needs it, `CONTREE_PROJECT_ID`, then pass `--backend contree` (or set
+`BORGES_BACKEND=contree` on a server). The ConTree backend is contract-tested, and a live
+test runs only when credentials are present; the hosted demo does not use it. The first run builds a runner image with the scientific Python stack
 once; after that, every analysis step is a non-disposable `image.run` on its parent image,
 so each checkpoint is a real sandbox image you can branch from again.
 
@@ -102,6 +110,21 @@ so each checkpoint is a real sandbox image you can branch from again.
 ```bash
 make docker && make docker-run    # one image serves the API and the web app on :8000
 ```
+
+The image defaults to the scripted model and the local backend, with
+`BORGES_ALLOW_UNTRUSTED_LOCAL=false`. Public-deploy settings (see `.env.example`):
+
+| Variable | Purpose |
+|---|---|
+| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run live on the local backend. `make dev` and `make serve` set it to `true` |
+| `BORGES_LIVE_TOKEN` | When set, uploads need the header `X-Borges-Live-Token` |
+| `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
+| `BORGES_BACKEND` | `contree` for isolated sandboxes |
+| `CONTREE_PROJECT_ID` | ConTree project |
+
+Mount a volume on `/app/.borges` (it is declared as a `VOLUME`): the spend ledger lives
+there, and without it the live budget resets on every redeploy. Run history is not kept:
+`runs/` is not in the image, so old run links stop working after a redeploy.
 
 ## How it is built
 
