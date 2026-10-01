@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from borges.analysis.models import DecisionRule
+from borges.cases.registry import CaseRegistry
+from borges.config import Settings
+from borges.runs.inputs import resolve_run
+from borges.runs.models import RunRequest
+from tests.runs.fakes import parquet_bytes, write_case
+
+
+@pytest.fixture
+def registry(tmp_path: Path) -> CaseRegistry:
+    write_case(tmp_path / "cases")
+    return CaseRegistry(tmp_path / "cases")
+
+
+def settings() -> Settings:
+    return Settings(_env_file=None, borges_max_universes=17)
+
+
+def test_case_defaults_and_overrides(registry: CaseRegistry) -> None:
+    resolved = resolve_run(RunRequest(case_id="demo"), registry, settings())
+    assert resolved.title == "Demo case" and resolved.max_universes == 10
+    assert resolved.fixtures_dir == registry.fixtures_dir("demo")
+    assert resolved.data == parquet_bytes()
+    custom = resolve_run(
+        RunRequest(case_id="demo", question="other?", max_universes=4), registry, settings()
+    )
+    assert custom.question == "other?" and custom.max_universes == 4
+
+
+def test_upload_uses_settings_budget(registry: CaseRegistry) -> None:
+    request = RunRequest(question="q", decision_rule=DecisionRule(metric="m"))
+    resolved = resolve_run(request, registry, settings(), data=b"x", dataset_name="f.csv")
+    assert resolved.case_id is None and resolved.max_universes == 17
+    assert resolved.dataset_name == "f.csv" and resolved.fixtures_dir is None
+
+
+def test_invalid_requests(registry: CaseRegistry) -> None:
+    with pytest.raises(KeyError):
+        resolve_run(RunRequest(case_id="nope"), registry, settings())
+    with pytest.raises(ValueError):
+        resolve_run(RunRequest(), registry, settings())
+    with pytest.raises(ValueError):
+        resolve_run(RunRequest(question="q"), registry, settings(), data=b"x")

@@ -1,0 +1,186 @@
+from __future__ import annotations
+
+import asyncio
+import secrets
+import time
+from collections.abc import Callable
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Literal, cast
+
+from borges.cases.registry import CaseRegistry
+from borges.config import Settings
+from borges.llm.client import DEFAULT_ROLE_MODELS
+from borges.llm.factory import make_llm
+from borges.runs.bus import EventBus
+from borges.runs.detail import build_universe_detail
+from borges.runs.emitter import RunEmitter
+from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
+from borges.runs.inputs import ResolvedRun, resolve_run
+from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
+from borges.runs.pipeline import Pipeline
+from borges.runs.state import fold
+from borges.runs.store import RunStore
+from borges.sandbox.backend import BranchBackend
+from borges.sandbox.factory import make_backend
+
+
+def new_run_id() -> str:
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+    return f"r_{stamp}_{secrets.token_hex(3)}"
+
+
+class RunOrchestrator:
+    def __init__(
+        self,
+        settings: Settings,
+        store: RunStore,
+        bus: EventBus,
+        registry: CaseRegistry,
+        llm_factory: Callable = make_llm,
+        backend_factory: Callable = make_backend,
+        record_dir: Path | None = None,
+    ) -> None:
+        self.settings = settings
+        self.store = store
+        self.bus = bus
+        self.registry = registry
+        self.llm_factory = llm_factory
+        self.backend_factory = backend_factory
+        self.record_dir = record_dir
+        self.tasks: dict[str, asyncio.Task[RunSnapshot]] = {}
+
+    def _modes(self, request: RunRequest) -> tuple[str, str]:
+        return (
+            request.llm or self.settings.borges_llm,
+            request.backend or self.settings.borges_backend,
+        )
+
+    def _register(self, run_id: str, request: RunRequest, resolved: ResolvedRun) -> None:
+        llm, backend = self._modes(request)
+        self.store.create(
+            run_id,
+            {
+                "case_id": resolved.case_id,
+                "title": resolved.title,
+                "status": "running",
+                "created_at": time.time(),
+                "llm": llm,
+                "backend": backend,
+                "cost_usd": 0.0,
+                "n_universes": 0,
+                "verdict": None,
+                "flipped_verdict": None,
+            },
+        )
+        self.bus.open(run_id)
+
+    async def start(
+        self,
+        request: RunRequest,
+        data: bytes | None = None,
+        dataset_name: str | None = None,
+    ) -> str:
+        resolved = resolve_run(request, self.registry, self.settings, data, dataset_name)
+        run_id = new_run_id()
+        self._register(run_id, request, resolved)
+        task = asyncio.create_task(self.execute(run_id, request, data, dataset_name))
+        self.tasks[run_id] = task
+        task.add_done_callback(lambda _: self.tasks.pop(run_id, None))
+        return run_id
+
+    async def wait(self, run_id: str) -> RunSnapshot:
+        task = self.tasks.get(run_id)
+        if task is not None:
+            await asyncio.shield(task)
+        return self.snapshot(run_id)
+
+    async def shutdown(self) -> None:
+        pending = list(self.tasks.values())
+        for task in pending:
+            task.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+
+    def snapshot(self, run_id: str) -> RunSnapshot:
+        return fold(self.store.events(run_id), run_id)
+
+    def universe_detail(self, run_id: str, universe_id: str) -> UniverseDetail:
+        return build_universe_detail(self.snapshot(run_id), universe_id)
+
+    async def _announce(
+        self, emitter: RunEmitter, request: RunRequest, resolved: ResolvedRun
+    ) -> None:
+        llm, backend = self._modes(request)
+        started = RunStartedData(
+            case_id=resolved.case_id,
+            title=resolved.title,
+            question=resolved.question,
+            decision_rule=resolved.decision_rule.model_dump(mode="json"),
+            mode="live",
+            llm=cast(Literal["nebius", "scripted"], llm),
+            backend=backend,
+            models={role.value: spec.id for role, spec in DEFAULT_ROLE_MODELS.items()},
+            max_universes=resolved.max_universes,
+        )
+        await emitter.emit("run.started", started.model_dump(mode="json"))
+
+    async def _finish(
+        self, emitter: RunEmitter, started_at: float, error: str | None, pipeline: Pipeline | None
+    ) -> None:
+        status = "failed" if error else "completed"
+        if error:
+            await emitter.emit("run.failed", RunFailedData(error=error).model_dump())
+        elapsed = time.monotonic() - started_at
+        finished = RunFinishedData(status=status, elapsed_s=elapsed)
+        meta: dict[str, object] = {"status": status}
+        if pipeline is not None:
+            meta.update(_outcome_meta(pipeline))
+        self.store.update_meta(emitter.run_id, **meta)
+        await emitter.emit("run.finished", finished.model_dump(mode="json"))
+
+    async def execute(
+        self,
+        run_id: str,
+        request: RunRequest,
+        data: bytes | None = None,
+        dataset_name: str | None = None,
+    ) -> RunSnapshot:
+        resolved = resolve_run(request, self.registry, self.settings, data, dataset_name)
+        if not self.store.exists(run_id):
+            self._register(run_id, request, resolved)
+        self.bus.open(run_id)
+        started_at = time.monotonic()
+        emitter = RunEmitter(run_id, self.store, self.bus)
+        pipeline: Pipeline | None = None
+        backend: BranchBackend | None = None
+        error: str | None = None
+        try:
+            await self._announce(emitter, request, resolved)
+            llm_options: dict[str, Path | None] = {"fixtures_dir": resolved.fixtures_dir}
+            if self.record_dir is not None:
+                llm_options["record_dir"] = self.record_dir
+            llm = self.llm_factory(self.settings, request.llm, **llm_options)
+            backend = self.backend_factory(self.settings, request.backend)
+            pipeline = Pipeline(self.settings, llm, backend, emitter, resolved)
+            await pipeline.run()
+        except asyncio.CancelledError:
+            await self._finish(emitter, started_at, "run cancelled", pipeline)
+            raise
+        except Exception as exc:
+            error = f"{type(exc).__name__}: {exc}"
+        finally:
+            if backend is not None:
+                await backend.close()
+        await self._finish(emitter, started_at, error, pipeline)
+        return self.snapshot(run_id)
+
+
+def _outcome_meta(pipeline: Pipeline) -> dict[str, object]:
+    report = pipeline.report
+    flip = pipeline.flip
+    return {
+        "cost_usd": pipeline.llm.totals.cost_usd,
+        "n_universes": len(pipeline.garden.universes),
+        "verdict": report.original_verdict if report else None,
+        "flipped_verdict": flip.flipped_verdict if flip else None,
+    }

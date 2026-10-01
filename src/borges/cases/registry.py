@@ -1,0 +1,60 @@
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import pyarrow.parquet as pq
+
+from borges.cases.models import CaseCard, CaseSpec
+from borges.runs.events import Event
+
+_SAFE_ID = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+class CaseRegistry:
+    """Curated cases on disk: `<cases_dir>/<id>/{case.json,data.parquet,fixtures/,recorded/}`."""
+
+    def __init__(self, cases_dir: Path) -> None:
+        self.cases_dir = Path(cases_dir)
+
+    def _dir(self, case_id: str) -> Path:
+        directory = self.cases_dir / case_id
+        if not _SAFE_ID.match(case_id) or not (directory / "case.json").is_file():
+            raise KeyError(case_id)
+        return directory
+
+    def get(self, case_id: str) -> CaseSpec:
+        directory = self._dir(case_id)
+        spec = CaseSpec.model_validate_json((directory / "case.json").read_text(encoding="utf-8"))
+        return spec.model_copy(update={"id": case_id})
+
+    def data_bytes(self, case_id: str) -> bytes:
+        return (self._dir(case_id) / self.get(case_id).dataset_file).read_bytes()
+
+    def fixtures_dir(self, case_id: str) -> Path:
+        return self._dir(case_id) / "fixtures"
+
+    def _recording_path(self, case_id: str) -> Path:
+        return self._dir(case_id) / "recorded" / "events.jsonl"
+
+    def recording(self, case_id: str) -> list[Event] | None:
+        path = self._recording_path(case_id)
+        if not path.is_file():
+            return None
+        lines = path.read_text(encoding="utf-8").splitlines()
+        return [Event.model_validate_json(line) for line in lines if line.strip()]
+
+    def card(self, case_id: str) -> CaseCard:
+        spec = self.get(case_id)
+        dataset = self._dir(case_id) / spec.dataset_file
+        n_rows = pq.ParquetFile(dataset).metadata.num_rows
+        fields = spec.model_dump(include=set(CaseCard.model_fields) - {"n_rows", "has_recording"})
+        return CaseCard(
+            **fields, n_rows=n_rows, has_recording=self._recording_path(case_id).is_file()
+        )
+
+    def list(self) -> list[CaseCard]:
+        if not self.cases_dir.is_dir():
+            return []
+        ids = sorted(p.name for p in self.cases_dir.iterdir() if (p / "case.json").is_file())
+        return [self.card(case_id) for case_id in ids]
