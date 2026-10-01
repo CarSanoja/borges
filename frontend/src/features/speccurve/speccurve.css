@@ -1,0 +1,240 @@
+.sc-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  margin-bottom: var(--space-3);
+}
+
+.sc-legend {
+  display: flex;
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-xs);
+  color: var(--paper-500);
+}
+
+.sc-legend li::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--paper-500);
+}
+
+.sc-legend [data-tone="baseline"]::before {
+  background: var(--gold);
+}
+
+.sc-legend [data-tone="agree"]::before {
+  background: var(--verdigris);
+}
+
+.sc-legend [data-tone="flip"]::before {
+  background: var(--vermilion);
+}
+
+.sc-count {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--paper-500);
+}
+
+.sc-body {
+  position: relative;
+  min-width: 0;
+}
+
+.sc-body svg {
+  display: block;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.sc-empty {
+  padding: var(--space-6) 0;
+  text-align: center;
+  color: var(--paper-500);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-lg);
+}
+
+.sc-grid {
+  stroke: var(--line);
+}
+
+.sc-tick,
+.sc-matrix__label,
+.sc-threshold-label,
+.sc-reference__label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  fill: var(--paper-500);
+}
+
+.sc-matrix__label {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  fill: var(--paper-300);
+}
+
+.sc-threshold {
+  stroke: var(--paper-300);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 5;
+}
+
+.sc-matrix__rule {
+  stroke: var(--line);
+}
+
+.sc-reference__rail {
+  stroke: var(--line-strong);
+}
+
+.sc-reference__label {
+  font-family: var(--font-ui);
+  fill: var(--paper-300);
+}
+
+.sc-reference__tick {
+  stroke: var(--paper-300);
+  stroke-width: 1.6;
+  opacity: 0.85;
+}
+
+.sc-reference__ci {
+  stroke: var(--paper-500);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.sc-reference [data-significant="false"] .sc-reference__tick {
+  stroke: var(--paper-700);
+}
+
+.sc-col {
+  cursor: pointer;
+  outline: none;
+  transition: transform var(--dur-slow) var(--ease-out);
+  --tone: var(--verdigris);
+  animation: sc-in var(--dur-slow) var(--ease-out) both;
+}
+
+.sc-col[data-tone="flip"] {
+  --tone: var(--vermilion);
+}
+
+.sc-col[data-tone="baseline"] {
+  --tone: var(--gold);
+}
+
+.sc-col__band {
+  fill: var(--paper-100);
+  opacity: 0;
+  transition: opacity var(--dur-fast) linear;
+}
+
+.sc-col[data-hovered="true"] .sc-col__band {
+  opacity: 0.05;
+}
+
+.sc-col[data-selected="true"] .sc-col__band {
+  opacity: 0.1;
+  fill: var(--tone);
+}
+
+.sc-col:focus-visible .sc-col__band {
+  opacity: 0.12;
+}
+
+.sc-col__guide {
+  stroke: var(--tone);
+  stroke-opacity: 0;
+  stroke-dasharray: 2 4;
+}
+
+.sc-col[data-selected="true"] .sc-col__guide {
+  stroke-opacity: 0.6;
+}
+
+.sc-whisker,
+.sc-cap {
+  stroke: var(--tone);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+
+.sc-dot {
+  fill: var(--tone);
+  stroke: var(--ink-900);
+  stroke-width: 1.5;
+  transition: r var(--dur-fast) linear;
+}
+
+.sc-col[data-selected="true"] .sc-dot {
+  stroke: var(--paper-100);
+  stroke-width: 2;
+}
+
+.sc-baseline-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.sc-mdot {
+  fill: var(--tone);
+}
+
+.sc-tip {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 170px;
+  max-width: 260px;
+  padding: var(--space-2) var(--space-3);
+  transform: translate(-50%, calc(-100% - 14px));
+  background: var(--ink-950);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  pointer-events: none;
+  font-size: var(--text-xs);
+}
+
+.sc-tip__verdict {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  color: var(--verdigris);
+}
+
+.sc-tip[data-tone="flip"] .sc-tip__verdict {
+  color: var(--vermilion);
+}
+
+.sc-tip[data-tone="baseline"] .sc-tip__verdict {
+  color: var(--gold);
+}
+
+.sc-tip__changes {
+  color: var(--paper-300);
+}
+
+.sc-tip__nums {
+  color: var(--paper-500);
+}
+
+@keyframes sc-in {
+  from {
+    opacity: 0;
+  }
+}

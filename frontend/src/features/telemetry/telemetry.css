@@ -1,0 +1,90 @@
+.tm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+
+.tm-counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+}
+
+.tm-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.tm-counter__value {
+  font-size: var(--text-lg);
+  color: var(--paper-100);
+}
+
+.tm-counter__label {
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper-500);
+}
+
+.tm-counter__note {
+  margin-left: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--verdigris);
+}
+
+.tm-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+}
+
+.tm-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--paper-700);
+}
+
+.tm-stage__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-700);
+  transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+
+.tm-stage[data-state="done"] {
+  color: var(--paper-300);
+}
+
+.tm-stage[data-state="done"] .tm-stage__dot {
+  background: var(--verdigris);
+  border-color: var(--verdigris);
+}
+
+.tm-stage[data-state="active"] {
+  color: var(--gold);
+}
+
+.tm-stage[data-state="active"] .tm-stage__dot {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: var(--shadow-glow-gold);
+  animation: tm-pulse 1.3s var(--ease-inout) infinite;
+}
+
+@keyframes tm-pulse {
+  50% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+}

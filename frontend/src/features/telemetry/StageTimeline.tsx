@@ -1,0 +1,23 @@
+import type { RunSnapshot } from "../../shared/types/contracts";
+import { STAGES, stageState } from "./stageStates";
+
+interface Props {
+  snapshot: RunSnapshot;
+}
+
+export function StageTimeline({ snapshot }: Props) {
+  return (
+    <ol className="tm-stages" aria-label="Stages">
+      {STAGES.map(({ name, label }) => {
+        const state = stageState(snapshot, name);
+        return (
+          <li key={name} className="tm-stage" data-state={state}>
+            <span className="tm-stage__dot" aria-hidden="true" />
+            <span className="tm-stage__label">{label}</span>
+            <span className="visually-hidden"> ({state})</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

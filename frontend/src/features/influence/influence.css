@@ -1,0 +1,92 @@
+.ib-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.ib-unit {
+  font-size: var(--text-xs);
+  color: var(--paper-700);
+}
+
+.ib-empty {
+  color: var(--paper-500);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-lg);
+}
+
+.ib-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ib-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "title value badge"
+    "track track track";
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+
+.ib-title {
+  grid-area: title;
+  font-size: var(--text-sm);
+  color: var(--paper-100);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ib-value {
+  grid-area: value;
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.ib-badge {
+  grid-area: badge;
+  min-width: 4.2rem;
+  text-align: center;
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--vermilion);
+  background: var(--vermilion-soft);
+  color: var(--vermilion);
+  font-size: var(--text-xs);
+}
+
+.ib-badge--none {
+  border-color: var(--line);
+  background: none;
+  color: var(--paper-700);
+}
+
+.ib-track {
+  grid-area: track;
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--ink-600);
+  overflow: hidden;
+}
+
+.ib-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--verdigris), var(--gold));
+  transition: width var(--dur-slow) var(--ease-out);
+}
+
+.ib-row[data-flips="true"] .ib-fill {
+  background: linear-gradient(90deg, var(--gold), var(--vermilion));
+}

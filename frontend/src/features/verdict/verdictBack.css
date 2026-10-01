@@ -1,0 +1,116 @@
+.vc-lead {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  color: var(--paper-100);
+  line-height: 1.15;
+}
+
+.vc-changes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.vc-change {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--vermilion);
+  background: rgba(243, 236, 221, 0.03);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.vc-change__label {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--paper-100);
+}
+
+.vc-change__why {
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.vc-change__source {
+  font-size: var(--text-xs);
+  color: var(--gold);
+  align-self: flex-start;
+}
+
+.vc-meter {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--paper-500);
+}
+
+.vc-meter--empty {
+  display: block;
+}
+
+.vc-meter__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--verdigris));
+  border-radius: inherit;
+}
+
+.vc-meter__value {
+  color: var(--paper-300);
+}
+
+.vc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--verdigris);
+  border-radius: var(--radius-pill);
+  background: var(--verdigris-soft);
+  color: var(--verdigris);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+}
+
+.vc-badge svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vc-command {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--paper-500);
+  overflow-wrap: anywhere;
+}
+
+.vc-toggle {
+  margin-top: var(--space-2);
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--paper-500);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.vc-toggle:hover {
+  color: var(--paper-100);
+}
+
