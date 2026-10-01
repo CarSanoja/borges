@@ -2,7 +2,7 @@ import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
-import { buildSampleRun } from "./fixtures/sampleRun";
+import { recordedRun } from "./fixtures/recordedRun";
 import { foldEvents } from "./features/run/reducer";
 
 describe("App mock run end to end", () => {
@@ -19,7 +19,7 @@ describe("App mock run end to end", () => {
   });
 
   it("grows the garden, flips the verdict, plots every universe and opens the drawer", async () => {
-    const final = foldEvents("sample", buildSampleRun("sample"));
+    const final = foldEvents("sample", recordedRun());
     const universes = Object.values(final.garden.universes);
     render(<App />);
     await act(async () => {

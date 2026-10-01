@@ -1,0 +1,76 @@
+.landing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  grid-template-areas:
+    "copy garden"
+    "steps steps";
+  align-items: center;
+  gap: var(--space-5) var(--space-6);
+  animation: landing-rise var(--dur-reveal) var(--ease-out) both;
+}
+
+.landing-copy {
+  grid-area: copy;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.landing-garden {
+  grid-area: garden;
+  height: clamp(400px, 62vh, 640px);
+  min-width: 0;
+  border-radius: var(--radius-lg);
+  background: radial-gradient(ellipse at center, var(--ink-700) 0%, transparent 70%);
+}
+
+.landing-title {
+  font-size: var(--text-hero);
+  max-width: 14ch;
+  font-weight: 500;
+}
+
+.landing-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-xl);
+  color: var(--gold);
+}
+
+.landing-steps {
+  grid-area: steps;
+  list-style: none;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-5) 0 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+}
+
+.landing-steps h2 {
+  font-size: var(--text-xl);
+  margin: var(--space-1) 0;
+}
+
+.landing-steps p {
+  color: var(--paper-300);
+  font-size: var(--text-sm);
+}
+
+.landing-step-n {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--vermilion);
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

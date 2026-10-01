@@ -1,56 +1,10 @@
 .landing {
-  max-width: 1180px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: var(--space-7) var(--gutter) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
-}
-
-.landing-hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  animation: landing-rise var(--dur-reveal) var(--ease-out) both;
-}
-
-.landing-title {
-  font-size: var(--text-hero);
-  max-width: 14ch;
-  font-weight: 500;
-}
-
-.landing-sub {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: var(--text-xl);
-  color: var(--gold);
-}
-
-.landing-steps {
-  list-style: none;
-  margin: var(--space-4) 0 0;
-  padding: var(--space-5) 0 0;
-  border-top: 1px solid var(--line);
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-5);
-}
-
-.landing-steps h2 {
-  font-size: var(--text-xl);
-  margin: var(--space-1) 0;
-}
-
-.landing-steps p {
-  color: var(--paper-300);
-  font-size: var(--text-sm);
-}
-
-.landing-step-n {
-  font-family: var(--font-display);
-  font-style: italic;
-  color: var(--vermilion);
 }
 
 .landing-cases {
@@ -183,18 +137,11 @@
   border-top: 1px solid var(--line);
 }
 
-@keyframes landing-rise {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @media (max-width: 900px) {
+  .landing-hero {
+    grid-template-columns: 1fr;
+    grid-template-areas: "copy" "garden" "steps";
+  }
   .landing-cases,
   .landing-steps {
     grid-template-columns: 1fr;
@@ -206,3 +153,4 @@
     animation: none;
   }
 }
+

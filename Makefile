@@ -35,6 +35,7 @@ dev:
 record-demos:
 	$(BORGES) record-demo --case checkout_ab --llm scripted
 	$(BORGES) record-demo --case red_cards --llm scripted
+	uv run --no-sync python scripts/export_recorded_run.py
 
 docker:
 	docker build -t borges .
