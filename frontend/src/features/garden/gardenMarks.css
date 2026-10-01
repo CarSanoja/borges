@@ -1,0 +1,163 @@
+.garden-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.garden-ring {
+  fill: none;
+  stroke: var(--paper-100);
+  stroke-opacity: 0.07;
+  stroke-width: 1;
+}
+
+.garden-ring-label {
+  fill: var(--paper-500);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.garden-core-label {
+  pointer-events: none;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--ink-900);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.garden-core-label text {
+  fill: var(--paper-100);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.garden-core-label .mono {
+  fill: var(--paper-500);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.garden-link {
+  fill: none;
+  stroke: var(--paper-500);
+  stroke-opacity: 0.42;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: garden-draw var(--dur-reveal) var(--ease-out) both;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.has-selection .garden-link--plain {
+  stroke-opacity: 0.26;
+}
+
+.garden-link--baseline {
+  stroke: var(--gold);
+  stroke-opacity: 0.95;
+  stroke-width: 2.5;
+}
+
+.garden-link--flip {
+  stroke: var(--vermilion);
+  stroke-opacity: 1;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 5px var(--vermilion));
+  animation:
+    garden-draw var(--dur-reveal) var(--ease-out) both,
+    garden-pulse 3.2s var(--ease-inout) var(--dur-reveal) infinite;
+}
+
+.garden-link--selected {
+  stroke: var(--paper-100);
+  stroke-opacity: 1;
+  stroke-width: 3;
+}
+
+.garden-wrap {
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.is-spotlight .garden-link--plain {
+  opacity: 0.1;
+}
+
+.is-spotlight .garden-wrap--plain {
+  opacity: 0.16;
+}
+
+.is-spotlight .garden-link--baseline,
+.is-spotlight .garden-wrap--baseline {
+  opacity: 0.5;
+}
+
+.garden-node {
+  cursor: default;
+  outline: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: garden-pop var(--dur-slow) var(--ease-out) both;
+}
+
+.garden-node--leaf {
+  cursor: pointer;
+}
+
+.garden-node-hit {
+  fill: transparent;
+}
+
+.garden-node-dot {
+  stroke: var(--ink-900);
+  stroke-width: 1.25;
+}
+
+.garden-node--leaf .garden-node-dot {
+  filter: drop-shadow(0 0 4px currentColor);
+  transition: filter var(--dur-base) var(--ease-out);
+}
+
+.garden-node-glow {
+  fill-opacity: 0.2;
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.garden-node--root .garden-node-dot {
+  stroke: var(--gold);
+  stroke-width: 2;
+}
+
+.garden-node-root-ring {
+  fill: none;
+  stroke: var(--gold);
+  stroke-opacity: 0.3;
+  stroke-width: 1;
+}
+
+.garden-node--leaf:hover .garden-node-dot,
+.garden-node--leaf:focus-visible .garden-node-dot {
+  filter: brightness(1.25) drop-shadow(0 0 8px currentColor);
+}
+
+.garden-node--flip .garden-node-glow {
+  fill-opacity: 0.38;
+  animation: garden-glow 3.2s var(--ease-inout) infinite;
+}
+
+.garden-node-halo {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-opacity: 0.7;
+}
+

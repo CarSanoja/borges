@@ -27,10 +27,15 @@ function checkpointsOf(universes: Record<string, Universe>, id: string | null | 
   return new Set(id ? (universes[id]?.checkpoints ?? []) : []);
 }
 
-export function useGardenModel(snapshot: RunSnapshot, selectedUniverseId: string | null): GardenModel {
+export function useGardenModel(
+  snapshot: RunSnapshot,
+  selectedUniverseId: string | null,
+  outerRadius: number,
+  aspect: number,
+): GardenModel {
   const { checkpoints, plan, garden, flip } = snapshot;
   const stepCount = plan?.steps.length ?? 0;
-  const layout = useMemo(() => computeLayout(checkpoints, stepCount), [checkpoints, stepCount]);
+  const layout = useMemo(() => computeLayout(checkpoints, stepCount, outerRadius, aspect), [checkpoints, stepCount, outerRadius, aspect]);
 
   const leafMaps = useMemo(() => {
     const leafUniverse = new Map<string, Universe>();

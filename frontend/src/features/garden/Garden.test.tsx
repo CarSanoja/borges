@@ -107,7 +107,7 @@ describe("Garden", () => {
     render(<Garden snapshot={snapshot()} selectedUniverseId={null} onSelectUniverse={() => {}} />);
     expect(screen.getAllByTestId("garden-node")).toHaveLength(3);
     expect(screen.getAllByTestId("garden-link")).toHaveLength(2);
-    expect(screen.getByText("Outliers")).toBeInTheDocument();
+    expect(screen.getAllByText("Outliers").length).toBeGreaterThan(0);
     expect(screen.getByText("5,000 rows")).toBeInTheDocument();
   });
 

@@ -1,31 +1,71 @@
 import { memo } from "react";
 import type { Step } from "../../shared/types/contracts";
-import { CENTER_RADIUS } from "./layout";
+import { pointAt, WEDGE } from "./layout";
 
 interface Props {
   steps: Step[];
-  ringGap: number;
+  radiusOf: (depth: number) => number;
+  aspect: number;
+  showLabels: boolean;
 }
 
-function RingsBase({ steps, ringGap }: Props) {
+const CHAR_WIDTH = 6.9;
+const LABEL_LIFT = 4;
+const LABEL_SPAN = WEDGE * 0.95;
+
+function arcPath(radius: number, aspect: number): string {
+  const start = pointAt(-LABEL_SPAN / 2, radius, aspect);
+  const end = pointAt(LABEL_SPAN / 2, radius, aspect);
+  return `M ${start.x} ${start.y} A ${radius * aspect} ${radius} 0 0 1 ${end.x} ${end.y}`;
+}
+
+const MAX_SQUEEZE = 1.12;
+const MIN_LABEL_RADIUS = 72;
+
+interface FittedLabel {
+  text: string;
+  textLength?: number;
+}
+
+function fit(title: string, radius: number, aspect: number): FittedLabel {
+  const arc = LABEL_SPAN * radius * aspect;
+  const room = Math.floor(arc / CHAR_WIDTH);
+  if (title.length <= room) return { text: title };
+  if (title.length <= room * MAX_SQUEEZE) return { text: title, textLength: arc * 0.96 };
+  return { text: `${title.slice(0, Math.max(room - 1, 3)).trimEnd()}…` };
+}
+
+function RingsBase({ steps, radiusOf, aspect, showLabels }: Props) {
   return (
     <g aria-hidden="true">
       {steps.map((step, index) => {
-        const r = (index + 1) * ringGap;
+        const r = radiusOf(index + 1);
+        const labelRadius = r + LABEL_LIFT;
         const pathId = `garden-ring-${step.id}`;
+        const label = fit(step.title, labelRadius, aspect);
         return (
           <g key={step.id}>
-            <circle r={r} className="garden-ring" />
-            <path id={pathId} d={`M ${-r} 0 A ${r} ${r} 0 0 1 ${r} 0`} fill="none" />
-            <text className="garden-ring-label" dy={-4}>
-              <textPath href={`#${pathId}`} startOffset="50%" textAnchor="middle">
-                {step.title}
-              </textPath>
-            </text>
+            <ellipse rx={r * aspect} ry={r} className="garden-ring" />
+            {showLabels && labelRadius >= MIN_LABEL_RADIUS && (
+              <>
+                <path id={pathId} d={arcPath(labelRadius, aspect)} fill="none" />
+                <text className="garden-ring-label">
+                  <title>{step.title}</title>
+                  <textPath
+                    href={`#${pathId}`}
+                    startOffset="50%"
+                    textAnchor="middle"
+                    textLength={label.textLength}
+                    lengthAdjust="spacing"
+                  >
+                    {label.text}
+                  </textPath>
+                </text>
+              </>
+            )}
           </g>
         );
       })}
-      <circle r={CENTER_RADIUS + 10} className="garden-ring garden-ring--core" />
     </g>
   );
 }
