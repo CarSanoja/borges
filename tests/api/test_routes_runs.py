@@ -1,0 +1,167 @@
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from typing import Any
+
+import httpx
+import pytest
+
+from borges.api.app import create_app
+from borges.config import Settings
+from borges.runs.events import Event
+from borges.runs.models import RunSnapshot, RunSummary
+
+
+def summary(run_id: str, status: str = "running", llm: str = "nebius") -> RunSummary:
+    return RunSummary(
+        run_id=run_id,
+        case_id=None,
+        title="t",
+        status=status,
+        created_at=1.0,
+        llm=llm,
+        backend="local",
+        cost_usd=0.0,
+        n_universes=0,
+        verdict=None,
+        flipped_verdict=None,
+    )
+
+
+class FakeStore:
+    def __init__(self) -> None:
+        self.runs: list[RunSummary] = [summary("r1", "completed", "scripted")]
+
+    def list_runs(self) -> list[RunSummary]:
+        return self.runs
+
+    def exists(self, run_id: str) -> bool:
+        return any(r.run_id == run_id for r in self.runs)
+
+
+class FakeOrchestrator:
+    def __init__(self) -> None:
+        self.calls: list[tuple[Any, bytes | None, str | None]] = []
+
+    async def start(self, request, data=None, dataset_name=None) -> str:
+        self.calls.append((request, data, dataset_name))
+        return "new-run"
+
+    def snapshot(self, run_id: str) -> RunSnapshot:
+        return RunSnapshot(run_id=run_id, title="hello")
+
+    def universe_detail(self, run_id: str, universe_id: str):
+        raise KeyError(universe_id)
+
+
+class FakeBus:
+    async def subscribe(self, run_id: str, from_seq: int) -> AsyncIterator[Event]:
+        for seq in range(from_seq, 3):
+            kind = "run.finished" if seq == 2 else "stage"
+            yield Event(seq=seq, ts=0, run_id=run_id, type=kind)
+
+
+class Env:
+    def __init__(self, tmp_path, key: str | None) -> None:
+        self.store = FakeStore()
+        self.orchestrator = FakeOrchestrator()
+        self.app = create_app(
+            settings=Settings(borges_home=tmp_path, nebius_api_key=key),
+            orchestrator=self.orchestrator,
+            registry=object(),
+            store=self.store,
+            bus=FakeBus(),
+        )
+
+    def client(self) -> httpx.AsyncClient:
+        return httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url="http://t")
+
+
+@pytest.fixture
+def env(tmp_path) -> Env:
+    return Env(tmp_path, key=None)
+
+
+async def test_create_run_for_case(env: Env) -> None:
+    async with env.client() as client:
+        response = await client.post("/api/runs", json={"case_id": "a"})
+    assert response.status_code == 202
+    assert response.json() == {"run_id": "new-run"}
+    assert env.orchestrator.calls[0][1:] == (None, None)
+
+
+async def test_create_run_needs_case_or_upload(env: Env) -> None:
+    async with env.client() as client:
+        assert (await client.post("/api/runs", json={})).status_code == 400
+
+
+async def test_nebius_without_key_is_400(env: Env) -> None:
+    async with env.client() as client:
+        response = await client.post("/api/runs", json={"case_id": "a", "llm": "nebius"})
+    assert response.status_code == 400
+    assert "NEBIUS_API_KEY" in response.json()["detail"]
+
+
+async def test_live_run_limit_is_429(tmp_path) -> None:
+    env = Env(tmp_path, key="k")
+    env.store.runs = [summary("a"), summary("b"), summary("c", "completed")]
+    async with env.client() as client:
+        response = await client.post("/api/runs", json={"case_id": "a", "llm": "nebius"})
+        env.store.runs.pop(0)
+        ok = await client.post("/api/runs", json={"case_id": "a", "llm": "nebius"})
+    assert response.status_code == 429
+    assert ok.status_code == 202
+
+
+async def test_upload_run_requires_question_and_rule(env: Env) -> None:
+    async with env.client() as client:
+        response = await client.post("/api/runs", json={"upload_id": "x" * 32})
+    assert response.status_code == 400
+    assert "decision_rule" in response.json()["detail"]
+
+
+async def test_upload_run_passes_bytes(env: Env) -> None:
+    env.app.state.uploads.get = lambda upload_id: (b"PQ", "d.csv")
+    body = {
+        "upload_id": "u" * 32,
+        "question": "q?",
+        "decision_rule": {"metric": "effect"},
+    }
+    async with env.client() as client:
+        response = await client.post("/api/runs", json=body)
+    assert response.status_code == 202
+    _, data, name = env.orchestrator.calls[0]
+    assert (data, name) == (b"PQ", "d.csv")
+
+
+async def test_unknown_upload_is_400(env: Env) -> None:
+    body = {"upload_id": "0" * 32, "question": "q", "decision_rule": {"metric": "m"}}
+    async with env.client() as client:
+        assert (await client.post("/api/runs", json=body)).status_code == 400
+
+
+async def test_list_and_get_run(env: Env) -> None:
+    async with env.client() as client:
+        runs = (await client.get("/api/runs")).json()
+        snap = (await client.get("/api/runs/r1")).json()
+        missing = await client.get("/api/runs/nope")
+    assert runs[0]["run_id"] == "r1"
+    assert snap["title"] == "hello"
+    assert missing.status_code == 404
+
+
+async def test_events_stream_to_run_finished(env: Env) -> None:
+    async with env.client() as client:
+        response = await client.get("/api/runs/r1/events?from_seq=1")
+        missing = await client.get("/api/runs/nope/events")
+    assert response.headers["content-type"].startswith("text/event-stream")
+    assert "id: 1" in response.text
+    assert "id: 0" not in response.text
+    assert "event: run.finished" in response.text
+    assert missing.status_code == 404
+
+
+async def test_universe_404(env: Env) -> None:
+    async with env.client() as client:
+        assert (await client.get("/api/runs/r1/universes/u9")).status_code == 404
+        assert (await client.get("/api/runs/nope/universes/u9")).status_code == 404
