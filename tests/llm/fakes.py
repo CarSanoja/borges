@@ -13,10 +13,12 @@ class Answer(BaseModel):
     label: str = "x"
 
 
-def completion(text: str, tokens_in: int = 100, tokens_out: int = 20) -> SimpleNamespace:
+def completion(
+    text: str, tokens_in: int = 100, tokens_out: int = 20, finish_reason: str = "stop"
+) -> SimpleNamespace:
     message = SimpleNamespace(content=text, reasoning_content="ignored")
     return SimpleNamespace(
-        choices=[SimpleNamespace(message=message)],
+        choices=[SimpleNamespace(message=message, finish_reason=finish_reason)],
         usage=SimpleNamespace(prompt_tokens=tokens_in, completion_tokens=tokens_out),
     )
 

@@ -18,6 +18,7 @@ class ModelSpec(BaseModel):
     id: str
     input_usd_per_m: float
     output_usd_per_m: float
+    thinking: bool = False
 
     def cost(self, tokens_in: int, tokens_out: int) -> float:
         return (tokens_in * self.input_usd_per_m + tokens_out * self.output_usd_per_m) / 1e6

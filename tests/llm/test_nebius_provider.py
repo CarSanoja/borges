@@ -158,3 +158,24 @@ async def test_request_failure_releases_the_reservation(tmp_path: Path) -> None:
     with pytest.raises(LLMError):
         await llm.complete(Role.CODER, MESSAGES, key="k", max_tokens=100)
     await llm.complete(Role.CODER, MESSAGES, key="k2", max_tokens=100)
+
+
+async def test_thinking_disabled_by_default_in_extra_body() -> None:
+    client = FakeClient(completion("hello"))
+    await make(client).complete(Role.NARRATOR, MESSAGES, key="narrator")
+    assert client.calls[0]["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+
+
+async def test_finish_reason_length_raises_without_retry() -> None:
+    client = FakeClient(completion('{"value": 1', 10, 2048, finish_reason="length"))
+    with pytest.raises(LLMError, match="coder:a.b: output truncated at max_tokens"):
+        await make(client).complete(Role.CODER, MESSAGES, key="coder:a.b", schema=Answer)
+    assert len(client.calls) == 1
+
+
+async def test_truncated_call_is_still_billed(tmp_path: Path) -> None:
+    ledger = SpendLedger(tmp_path / "spend.json", cap_usd=5)
+    client = FakeClient(completion("x", 1000, 1000, finish_reason="length"))
+    with pytest.raises(LLMError):
+        await make(client, ledger=ledger).complete(Role.CODER, MESSAGES, key="k")
+    assert ledger.total > 0

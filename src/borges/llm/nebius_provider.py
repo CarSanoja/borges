@@ -25,6 +25,10 @@ from borges.llm.spend import RunBudget, SpendLedger
 CHARS_PER_TOKEN = 3.5
 
 
+class TruncatedOutput(LLMError):
+    pass
+
+
 def with_schema_instructions(
     messages: list[dict[str, str]], schema: type[BaseModel]
 ) -> list[dict[str, str]]:
@@ -78,8 +82,8 @@ class NebiusLLM:
         cached = self.cache.get(cache_id) if self.cache else None
         if cached is not None:
             return self._finish(role, key, started, cached, cost=0.0, cached=True)
-        text, tokens_in, tokens_out, cost = await self._call(
-            spec, sent, schema, max_tokens, temperature
+        text, tokens_in, tokens_out, cost = await self._call_keyed(
+            key, spec, sent, schema, max_tokens, temperature
         )
         parsed = None
         if schema is not None:
@@ -95,8 +99,8 @@ class NebiusLLM:
                         "Answer again with only the corrected JSON object.",
                     },
                 ]
-                text, t_in, t_out, extra = await self._call(
-                    spec, retry, schema, max_tokens, temperature
+                text, t_in, t_out, extra = await self._call_keyed(
+                    key, spec, retry, schema, max_tokens, temperature
                 )
                 tokens_in, tokens_out, cost = tokens_in + t_in, tokens_out + t_out, cost + extra
                 try:
@@ -145,6 +149,20 @@ class NebiusLLM:
             latency_s=time.perf_counter() - started,
         )
 
+    async def _call_keyed(
+        self,
+        key: str,
+        spec: ModelSpec,
+        messages: list[dict[str, str]],
+        schema: type[BaseModel] | None,
+        max_tokens: int,
+        temperature: float,
+    ) -> tuple[str, int, int, float]:
+        try:
+            return await self._call(spec, messages, schema, max_tokens, temperature)
+        except TruncatedOutput as exc:
+            raise LLMError(f"{key}: output truncated at max_tokens") from exc
+
     async def _call(
         self,
         spec: ModelSpec,
@@ -183,12 +201,14 @@ class NebiusLLM:
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
+            "extra_body": {"chat_template_kwargs": {"enable_thinking": spec.thinking}},
         }
         response = await self._create(kwargs, schema)
         try:
             text = response.choices[0].message.content or ""
         except (AttributeError, IndexError) as exc:
             raise LLMError("model response has no message content") from exc
+        truncated = getattr(response.choices[0], "finish_reason", None) == "length"
         usage = getattr(response, "usage", None)
         tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0)
         tokens_out = int(getattr(usage, "completion_tokens", 0) or 0)
@@ -202,6 +222,8 @@ class NebiusLLM:
         for guard in (self.ledger, self.run_budget):
             if guard is not None:
                 await guard.settle(estimate, cost)
+        if truncated:
+            raise TruncatedOutput("output truncated at max_tokens")
         return text, tokens_in, tokens_out, cost
 
     async def _create(self, kwargs: dict[str, Any], schema: type[BaseModel] | None) -> Any:
