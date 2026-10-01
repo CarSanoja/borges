@@ -49,6 +49,13 @@ class RunOrchestrator:
         self.backend_factory = backend_factory
         self.record_dir = record_dir
         self.tasks: dict[str, asyncio.Task[RunSnapshot]] = {}
+        self._live: set[str] = set()
+
+    def active_count(self) -> int:
+        return len(self.tasks)
+
+    def live_count(self) -> int:
+        return len(self._live & self.tasks.keys())
 
     def _modes(self, request: RunRequest) -> tuple[str, str]:
         return (
@@ -86,8 +93,14 @@ class RunOrchestrator:
         self._register(run_id, request, resolved)
         task = asyncio.create_task(self.execute(run_id, request, data, dataset_name))
         self.tasks[run_id] = task
-        task.add_done_callback(lambda _: self.tasks.pop(run_id, None))
+        if self._modes(request)[0] == "nebius":
+            self._live.add(run_id)
+        task.add_done_callback(lambda _: self._forget(run_id))
         return run_id
+
+    def _forget(self, run_id: str) -> None:
+        self.tasks.pop(run_id, None)
+        self._live.discard(run_id)
 
     async def wait(self, run_id: str) -> RunSnapshot:
         task = self.tasks.get(run_id)
@@ -128,15 +141,17 @@ class RunOrchestrator:
         self, emitter: RunEmitter, started_at: float, error: str | None, pipeline: Pipeline | None
     ) -> None:
         status = "failed" if error else "completed"
-        if error:
-            await emitter.emit("run.failed", RunFailedData(error=error).model_dump())
-        elapsed = time.monotonic() - started_at
-        finished = RunFinishedData(status=status, elapsed_s=elapsed)
+        finished = RunFinishedData(status=status, elapsed_s=time.monotonic() - started_at)
         meta: dict[str, object] = {"status": status}
         if pipeline is not None:
             meta.update(_outcome_meta(pipeline))
-        self.store.update_meta(emitter.run_id, **meta)
-        await emitter.emit("run.finished", finished.model_dump(mode="json"))
+        try:
+            self.store.update_meta(emitter.run_id, **meta)
+            if error:
+                await emitter.emit("run.failed", RunFailedData(error=error).model_dump())
+            await emitter.emit("run.finished", finished.model_dump(mode="json"))
+        finally:
+            self.bus.close(emitter.run_id)
 
     async def execute(
         self,

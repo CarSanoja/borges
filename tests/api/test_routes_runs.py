@@ -39,9 +39,25 @@ class FakeStore:
         return any(r.run_id == run_id for r in self.runs)
 
 
+class FakeRegistry:
+    def list(self) -> list:
+        return []
+
+    def recording(self, case_id: str):
+        return None
+
+
 class FakeOrchestrator:
     def __init__(self) -> None:
         self.calls: list[tuple[Any, bytes | None, str | None]] = []
+        self.active = 0
+        self.live = 0
+
+    def active_count(self) -> int:
+        return self.active
+
+    def live_count(self) -> int:
+        return self.live
 
     async def start(self, request, data=None, dataset_name=None) -> str:
         self.calls.append((request, data, dataset_name))
@@ -62,13 +78,15 @@ class FakeBus:
 
 
 class Env:
-    def __init__(self, tmp_path, key: str | None) -> None:
+    def __init__(self, tmp_path, key: str | None, **overrides: Any) -> None:
         self.store = FakeStore()
         self.orchestrator = FakeOrchestrator()
         self.app = create_app(
-            settings=Settings(borges_home=tmp_path, nebius_api_key=key),
+            settings=Settings(
+                _env_file=None, borges_home=tmp_path, nebius_api_key=key, **overrides
+            ),
             orchestrator=self.orchestrator,
-            registry=object(),
+            registry=FakeRegistry(),
             store=self.store,
             bus=FakeBus(),
         )
@@ -104,26 +122,38 @@ async def test_nebius_without_key_is_400(env: Env) -> None:
 
 async def test_live_run_limit_is_429(tmp_path) -> None:
     env = Env(tmp_path, key="k")
-    env.store.runs = [summary("a"), summary("b"), summary("c", "completed")]
+    env.orchestrator.live = 2
     async with env.client() as client:
         response = await client.post("/api/runs", json={"case_id": "a", "llm": "nebius"})
-        env.store.runs.pop(0)
+        env.orchestrator.live = 1
         ok = await client.post("/api/runs", json={"case_id": "a", "llm": "nebius"})
     assert response.status_code == 429
     assert ok.status_code == 202
 
 
-async def test_upload_run_requires_question_and_rule(env: Env) -> None:
+async def test_live_count_comes_from_memory_not_meta(tmp_path) -> None:
+    env = Env(tmp_path, key="k")
+    env.store.runs = [summary("a"), summary("b"), summary("c")]
     async with env.client() as client:
-        response = await client.post("/api/runs", json={"upload_id": "x" * 32})
+        response = await client.post("/api/runs", json={"case_id": "a", "llm": "nebius"})
+    assert response.status_code == 202
+
+
+async def test_upload_run_requires_question_and_rule(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_allow_untrusted_local=True)
+    body = {"upload_id": "x" * 32, "llm": "nebius"}
+    async with env.client() as client:
+        response = await client.post("/api/runs", json=body)
     assert response.status_code == 400
     assert "decision_rule" in response.json()["detail"]
 
 
-async def test_upload_run_passes_bytes(env: Env) -> None:
+async def test_upload_run_passes_bytes(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_allow_untrusted_local=True)
     env.app.state.uploads.get = lambda upload_id: (b"PQ", "d.csv")
     body = {
         "upload_id": "u" * 32,
+        "llm": "nebius",
         "question": "q?",
         "decision_rule": {"metric": "effect"},
     }
@@ -134,8 +164,14 @@ async def test_upload_run_passes_bytes(env: Env) -> None:
     assert (data, name) == (b"PQ", "d.csv")
 
 
-async def test_unknown_upload_is_400(env: Env) -> None:
-    body = {"upload_id": "0" * 32, "question": "q", "decision_rule": {"metric": "m"}}
+async def test_unknown_upload_is_400(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_allow_untrusted_local=True)
+    body = {
+        "upload_id": "0" * 32,
+        "llm": "nebius",
+        "question": "q",
+        "decision_rule": {"metric": "m"},
+    }
     async with env.client() as client:
         assert (await client.post("/api/runs", json=body)).status_code == 400
 

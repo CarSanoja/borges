@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,6 +12,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from borges.api import routes_cases, routes_health, routes_runs, routes_uploads
+from borges.api.startup import reconcile
 from borges.api.uploads import UploadStore
 from borges.config import Settings, get_settings
 
@@ -65,7 +67,11 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _build_missing(app)
+        await asyncio.to_thread(reconcile, resolved, app.state.store, app.state.orchestrator)
         yield
+        shutdown = getattr(app.state.orchestrator, "shutdown", None)
+        if shutdown is not None:
+            await shutdown()
 
     app = FastAPI(title="Borges", lifespan=lifespan)
     app.state.settings = resolved
@@ -73,7 +79,9 @@ def create_app(
     app.state.registry = registry
     app.state.store = store
     app.state.bus = bus
-    app.state.uploads = UploadStore(resolved.borges_home / "uploads")
+    app.state.uploads = UploadStore(
+        resolved.borges_home / "uploads", resolved.borges_upload_quota_mb
+    )
 
     app.add_middleware(
         CORSMiddleware,

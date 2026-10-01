@@ -43,4 +43,4 @@ docker:
 	docker build -t borges .
 
 docker-run:
-	docker run --rm -p 8000:8000 --env-file .env borges
+	docker run --rm -p 8000:8000 $(if $(wildcard .env),--env-file .env) borges

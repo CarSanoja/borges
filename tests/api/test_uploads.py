@@ -57,3 +57,19 @@ def test_too_large_rejected(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
 def test_get_unknown_raises(tmp_path, upload_id: str) -> None:
     with pytest.raises(KeyError):
         UploadStore(tmp_path).get(upload_id)
+
+
+def test_quota_rejects_and_removes_the_overflowing_upload(tmp_path) -> None:
+    from borges.api.uploads import UploadQuotaError
+
+    store = UploadStore(tmp_path, quota_mb=0)
+    with pytest.raises(UploadQuotaError):
+        store.put(csv_bytes(), "d.csv")
+    assert list(tmp_path.glob("*.parquet")) == []
+
+
+def test_quota_allows_uploads_under_the_limit(tmp_path) -> None:
+    store = UploadStore(tmp_path, quota_mb=50)
+    store.put(csv_bytes(), "a.csv")
+    store.put(csv_bytes(), "b.csv")
+    assert len(list(tmp_path.glob("*.parquet"))) == 2

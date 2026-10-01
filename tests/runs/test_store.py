@@ -102,3 +102,12 @@ def test_snapshot_folds_events(tmp_path: Path) -> None:
     assert snapshot.last_seq == 1
     with pytest.raises(KeyError):
         store.snapshot("missing")
+
+
+def test_fail_interrupted_keeps_an_existing_terminal_pair(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {"status": "running"})
+    store.append(event("r_1", 1, "run.finished"))
+    store.fail_interrupted("r_1")
+    assert [e.seq for e in store.events("r_1")] == [1]
+    assert store.meta("r_1")["status"] == "failed"

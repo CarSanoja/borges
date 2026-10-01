@@ -25,6 +25,7 @@ RUN useradd --create-home --uid 1000 borges \
     && mkdir -p /app/runs /app/.borges \
     && chown -R borges:borges /app/runs /app/.borges
 USER borges
+VOLUME /app/.borges
 ENV BORGES_FRONTEND_DIST=/app/frontend/dist \
     BORGES_CASES_DIR=/app/cases \
     BORGES_RUNS_DIR=/app/runs \

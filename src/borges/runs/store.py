@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,7 @@ from borges.runs.events import Event
 from borges.runs.models import RunSnapshot, RunSummary
 from borges.runs.state import fold
 
+TERMINAL_TYPES = frozenset({"run.finished", "run.failed"})
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
@@ -76,6 +78,34 @@ class RunStore:
             except ValidationError:
                 continue
         return events
+
+    def fail_interrupted(
+        self, run_id: str, reason: str = "interrupted by a server restart"
+    ) -> None:
+        events = self.events(run_id)
+        seq = max((e.seq for e in events), default=0)
+        now = time.time()
+        if not any(e.type in TERMINAL_TYPES for e in events):
+            failed = Event(
+                seq=seq + 1, ts=now, run_id=run_id, type="run.failed", data={"error": reason}
+            )
+            finished = Event(
+                seq=seq + 2,
+                ts=now,
+                run_id=run_id,
+                type="run.finished",
+                data={"status": "failed", "elapsed_s": 0.0},
+            )
+            self.append(failed)
+            self.append(finished)
+        self.update_meta(run_id, status="failed")
+
+    def interrupt_running(self, active: set[str]) -> list[str]:
+        stale = [s.run_id for s in self.list_runs() if s.status == "running"]
+        stale = [run_id for run_id in stale if run_id not in active]
+        for run_id in stale:
+            self.fail_interrupted(run_id)
+        return stale
 
     def snapshot(self, run_id: str) -> RunSnapshot:
         return fold(self.events(run_id), run_id)

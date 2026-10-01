@@ -3,15 +3,18 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from borges.api.deps import (
     get_bus,
     get_orchestrator,
+    get_registry,
     get_settings,
     get_store,
     get_uploads,
 )
+from borges.api.recorded_detail import recorded_universe_detail
+from borges.api.run_policy import LIVE_TOKEN_HEADER, enforce_run_policy
 from borges.api.sse import sse_response
 from borges.api.uploads import UploadStore
 from borges.config import Settings
@@ -27,30 +30,9 @@ if TYPE_CHECKING:
     from borges.runs.store import RunStore
 
 router = APIRouter()
-MAX_LIVE_RUNS = 2
 
 Orchestrator = Annotated[Any, Depends(get_orchestrator)]
 Store = Annotated[Any, Depends(get_store)]
-
-
-def _validate_llm(request: RunRequest, settings: Settings, store: RunStore) -> None:
-    llm = request.llm or settings.borges_llm
-    if llm != "nebius":
-        return
-    if not settings.nebius_api_key:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Live runs need NEBIUS_API_KEY. Set it in .env, or request "
-                "llm=scripted for the offline demo."
-            ),
-        )
-    live = [s for s in store.list_runs() if s.status == "running" and s.llm == "nebius"]
-    if len(live) >= MAX_LIVE_RUNS:
-        raise HTTPException(
-            status_code=429,
-            detail=f"At most {MAX_LIVE_RUNS} live runs can run at once. Try again soon.",
-        )
 
 
 def _resolve_upload(request: RunRequest, uploads: UploadStore) -> tuple[bytes, str] | None:
@@ -77,13 +59,13 @@ async def _resolve(value: Any) -> Any:
 async def create_run(
     request: RunRequest,
     orchestrator: Orchestrator,
-    store: Store,
     settings: Annotated[Settings, Depends(get_settings)],
     uploads: Annotated[UploadStore, Depends(get_uploads)],
+    live_token: Annotated[str | None, Header(alias=LIVE_TOKEN_HEADER)] = None,
 ) -> RunCreated:
     if request.case_id is None and request.upload_id is None:
         raise HTTPException(status_code=400, detail="Provide a case_id or an upload_id.")
-    _validate_llm(request, settings, store)
+    request = enforce_run_policy(request, settings, orchestrator, live_token)
     upload = _resolve_upload(request, uploads)
     data, name = upload if upload else (None, None)
     try:
@@ -117,17 +99,25 @@ def run_events(
     store: Store,
     bus: Annotated[Any, Depends(get_bus)],
     from_seq: Annotated[int, Query(ge=0)] = 0,
+    last_event_id: Annotated[str | None, Header()] = None,
 ):
     _require_run(store, run_id)
+    if last_event_id is not None and last_event_id.strip().isdigit():
+        from_seq = max(from_seq, int(last_event_id))
     return sse_response(bus.subscribe(run_id, from_seq))
 
 
 @router.get("/runs/{run_id}/universes/{universe_id}")
 async def get_universe(
-    run_id: str, universe_id: str, orchestrator: Orchestrator, store: Store
+    run_id: str,
+    universe_id: str,
+    orchestrator: Orchestrator,
+    store: Store,
+    registry: Annotated[Any, Depends(get_registry)],
 ) -> UniverseDetail:
-    _require_run(store, run_id)
     try:
-        return await _resolve(orchestrator.universe_detail(run_id, universe_id))
+        if store.exists(run_id):
+            return await _resolve(orchestrator.universe_detail(run_id, universe_id))
+        return recorded_universe_detail(registry, run_id, universe_id)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Unknown universe '{universe_id}'.") from None

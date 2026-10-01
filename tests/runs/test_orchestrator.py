@@ -204,3 +204,35 @@ async def test_record_dir_is_forwarded_to_the_llm_factory(
     rig.orchestrator.record_dir = tmp_path / "rec"
     await rig.orchestrator.execute("r_rec", RunRequest(case_id="demo"))
     assert rig.factory_calls[0]["record_dir"] == tmp_path / "rec"
+
+
+async def test_active_and_live_counts_come_from_running_tasks(
+    tmp_path: Path, scenario: Scenario
+) -> None:
+    rig = make_rig(tmp_path)
+    scenario.hang = True
+    assert (rig.orchestrator.active_count(), rig.orchestrator.live_count()) == (0, 0)
+    await rig.orchestrator.start(RunRequest(case_id="demo", llm="scripted"))
+    await rig.orchestrator.start(RunRequest(case_id="demo", llm="nebius"))
+    assert (rig.orchestrator.active_count(), rig.orchestrator.live_count()) == (2, 1)
+    await rig.orchestrator.shutdown()
+    await asyncio.sleep(0)
+    assert (rig.orchestrator.active_count(), rig.orchestrator.live_count()) == (0, 0)
+
+
+async def test_failed_append_in_finish_still_drops_the_bus_channel(
+    tmp_path: Path, scenario: Scenario, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    rig = make_rig(tmp_path)
+    real_append = rig.store.append
+
+    def append(event) -> None:
+        if event.type == "run.finished":
+            raise OSError("no space left on device")
+        real_append(event)
+
+    monkeypatch.setattr(rig.store, "append", append)
+    with pytest.raises(OSError):
+        await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
+    assert not rig.bus.is_live("r_test")
+    assert rig.store.meta("r_test")["status"] == "completed"

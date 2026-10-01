@@ -94,3 +94,35 @@ async def test_cancelled_subscriber_is_unregistered(bus: EventBus) -> None:
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
     assert bus._channels["r_1"].queues == set()
+
+
+async def test_publish_after_finish_does_not_reopen_the_channel(bus: EventBus) -> None:
+    bus.open("r_1")
+    bus.publish(event(1))
+    bus.publish(event(2, "run.finished"))
+    assert not bus.is_live("r_1")
+    bus.publish(event(3))
+    assert not bus.is_live("r_1")
+
+
+async def test_stored_run_without_terminal_event_ends_with_synthetic_failure(
+    tmp_path: Path,
+) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_z", {})
+    store.append(event(1, run_id="r_z"))
+    store.append(event(2, run_id="r_z"))
+    bus = EventBus(store)
+    received = [e async for e in bus.subscribe("r_z")]
+    assert [e.type for e in received] == ["stage", "stage", "run.failed"]
+    assert received[-1].seq == 3
+
+
+async def test_close_without_terminal_event_ends_live_subscribers(bus: EventBus) -> None:
+    bus.open("r_1")
+    bus.publish(event(1))
+    task = asyncio.create_task(collect(bus))
+    await asyncio.sleep(0)
+    bus.close("r_1")
+    assert await task == [1, 2]
+    assert not bus.is_live("r_1")

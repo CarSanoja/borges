@@ -75,7 +75,7 @@ async def test_lifespan_builds_missing_objects(tmp_path, monkeypatch) -> None:
     fake("borges.runs.orchestrator", "RunOrchestrator")
     fake("borges.runs.store", "RunStore")
     settings = Settings(borges_home=tmp_path)
-    injected = object()
+    injected = types.SimpleNamespace(interrupt_running=lambda active: [])
     app = create_app(settings=settings, store=injected)
     async with app.router.lifespan_context(app):
         assert app.state.store is injected

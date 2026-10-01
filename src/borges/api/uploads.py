@@ -17,9 +17,19 @@ MIN_ROWS = 50
 _ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 
 
+class UploadQuotaError(ValueError):
+    pass
+
+
 class UploadStore:
-    def __init__(self, directory: Path) -> None:
+    def __init__(self, directory: Path, quota_mb: int | None = None) -> None:
         self.directory = Path(directory)
+        self.quota_bytes = None if quota_mb is None else quota_mb * 1024 * 1024
+
+    def _used_bytes(self) -> int:
+        if not self.directory.is_dir():
+            return 0
+        return sum(p.stat().st_size for p in self.directory.iterdir() if p.is_file())
 
     def put(self, csv_bytes: bytes, filename: str) -> tuple[str, DatasetProfile]:
         if len(csv_bytes) > MAX_BYTES:
@@ -38,7 +48,11 @@ class UploadStore:
         profile = profile_module.profile_dataframe(df, name)
         upload_id = uuid.uuid4().hex
         self.directory.mkdir(parents=True, exist_ok=True)
-        df.to_parquet(self._parquet_path(upload_id), index=False)
+        parquet = self._parquet_path(upload_id)
+        df.to_parquet(parquet, index=False)
+        if self.quota_bytes is not None and self._used_bytes() > self.quota_bytes:
+            parquet.unlink(missing_ok=True)
+            raise UploadQuotaError("The upload storage of this demo is full.")
         self._meta_path(upload_id).write_text(json.dumps({"name": name}))
         return upload_id, profile
 
