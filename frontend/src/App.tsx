@@ -8,7 +8,14 @@ export function App() {
 
   if (route.name === "run") {
     const source = mock ? ({ kind: "mock" } as const) : ({ kind: "live", runId: route.runId } as const);
-    return <RunPage key={`run:${route.runId}:${mock}`} source={source} onHome={home} />;
+    return (
+      <RunPage
+        key={`run:${route.runId}:${mock}`}
+        source={source}
+        onHome={home}
+        onOpenReplay={(caseId) => navigate(replayPath(caseId))}
+      />
+    );
   }
 
   if (route.name === "replay") {

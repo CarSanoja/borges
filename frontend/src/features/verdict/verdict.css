@@ -161,3 +161,14 @@
   color: var(--paper-500);
 }
 
+
+.vc-warning {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--vermilion);
+}
+
+.vc-robust__note--warn {
+  font-weight: 600;
+}

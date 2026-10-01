@@ -31,6 +31,11 @@ export function BackFace({ flip, hidden }: Props) {
           Reproduced from scratch
         </p>
       )}
+      {flip.reproduced === false && (
+        <p className="vc-warning" role="note">
+          Not reproduced on a fresh re-execution: treat as unconfirmed
+        </p>
+      )}
       {flip.reproduce_command && flip.reproduced !== true && <code className="vc-command">{flip.reproduce_command}</code>}
     </div>
   );

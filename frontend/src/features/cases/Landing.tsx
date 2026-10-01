@@ -1,7 +1,18 @@
+import type { Health } from "../../shared/types/contracts";
+import { backendLabel } from "../run/runLabels";
 import { CaseCardView } from "./CaseCardView";
 import { Hero } from "./Hero";
 import { useCases } from "./useCases";
 import "./landing.css";
+
+function footerText(health: Health | null): string {
+  if (!health) return "Built with NVIDIA Nemotron";
+  const model =
+    health.llm === "nebius"
+      ? "Built with NVIDIA Nemotron on Nebius Token Factory"
+      : "Replays a recorded NVIDIA Nemotron run";
+  return `${model} · forks run in ${backendLabel(health.backend)} sandboxes`;
+}
 
 interface Props {
   onOpenRun: (runId: string) => void;
@@ -10,7 +21,7 @@ interface Props {
 }
 
 export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
-  const { cases, liveAvailable } = useCases();
+  const { cases, liveAvailable, liveUnavailableReason, health } = useCases();
   return (
     <main className="landing">
       <Hero />
@@ -20,6 +31,7 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
             key={card.id}
             card={card}
             liveAvailable={liveAvailable}
+            liveUnavailableReason={liveUnavailableReason}
             onOpenRun={onOpenRun}
             onOpenReplay={onOpenReplay}
           />
@@ -30,9 +42,7 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
           Open the demo run
         </button>
       </p>
-      <footer className="landing-footer">
-        Built with NVIDIA Nemotron on Nebius Token Factory · forks run in Nebius Sandboxes
-      </footer>
+      <footer className="landing-footer">{footerText(health)}</footer>
     </main>
   );
 }

@@ -89,3 +89,10 @@
     opacity: 0.6;
   }
 }
+
+.tm-scripted {
+  margin: 0;
+  align-self: center;
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}

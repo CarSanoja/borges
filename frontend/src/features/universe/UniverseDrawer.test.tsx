@@ -28,6 +28,20 @@ describe("UniverseDrawer", () => {
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
   });
 
+  it("falls back to the decision rule metric when the result has none", () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    const universe = snapshot.garden.universes[flipId]!;
+    const blank = {
+      ...snapshot,
+      garden: {
+        ...snapshot.garden,
+        universes: { ...snapshot.garden.universes, [flipId]: { ...universe, result: { ...universe.result!, metric: "" } } },
+      },
+    };
+    render(<UniverseDrawer runId={null} snapshot={blank} universeId={flipId} onClose={() => undefined} />);
+    expect(document.querySelector(".u-result")?.textContent?.trim().startsWith(blank.decision_rule!.metric)).toBe(true);
+  });
+
   it("closes on Escape and on the close button", async () => {
     const onClose = vi.fn();
     const baselineId = snapshot.garden.baseline_id ?? "";

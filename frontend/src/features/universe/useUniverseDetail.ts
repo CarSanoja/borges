@@ -9,8 +9,8 @@ export function useUniverseDetail(
   universeId: string | null,
 ): UniverseDetail | null {
   const derived = useMemo(
-    () => (universeId ? deriveDetail(snapshot, universeId, runId) : null),
-    [snapshot, universeId, runId],
+    () => (universeId ? deriveDetail(snapshot, universeId) : null),
+    [snapshot, universeId],
   );
   const [loaded, setLoaded] = useState<{ key: string; detail: UniverseDetail } | null>(null);
   const finished = universeId ? snapshot.garden.universes[universeId]?.status : undefined;

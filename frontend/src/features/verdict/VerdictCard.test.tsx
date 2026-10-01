@@ -45,4 +45,29 @@ describe("VerdictCard", () => {
     expect(screen.getByText("No defensible flip found in 9 universes")).toBeInTheDocument();
     expect(screen.queryByText("One defensible change reverses it:")).not.toBeInTheDocument();
   });
+
+  it("warns when the flip did not reproduce", () => {
+    const snapshot = foldEvents("t", events);
+    const flip = { ...snapshot.flip!, reproduced: false };
+    render(<VerdictCard snapshot={{ ...snapshot, flip }} />);
+    expect(screen.getByText("Not reproduced on a fresh re-execution: treat as unconfirmed")).toBeInTheDocument();
+    expect(screen.queryByText("Reproduced from scratch")).toBeNull();
+  });
+
+  it("does not warn when the flip reproduced", () => {
+    render(<VerdictCard snapshot={foldEvents("t", events)} />);
+    expect(screen.queryByText(/treat as unconfirmed/)).toBeNull();
+  });
+
+  it("shows how many universes could not run", () => {
+    const snapshot = foldEvents("t", events);
+    const report = { ...snapshot.report!, n_failed: 2, failed: ["a/b: boom"] };
+    render(<VerdictCard snapshot={{ ...snapshot, report }} />);
+    expect(screen.getByText(`${report.n_universes + 2} explored, 2 could not run`)).toBeInTheDocument();
+  });
+
+  it("shows no failure line when every universe ran", () => {
+    render(<VerdictCard snapshot={foldEvents("t", events)} />);
+    expect(screen.queryByText(/could not run/)).toBeNull();
+  });
 });

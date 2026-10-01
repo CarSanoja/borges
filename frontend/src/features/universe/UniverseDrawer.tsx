@@ -64,7 +64,7 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
             {verified && <span className="u-badge">Reproduced from scratch</span>}
             {result && (
               <p className="mono u-result">
-                {result.metric} {result.estimate.toFixed(3)} [{result.ci_low.toFixed(3)}, {result.ci_high.toFixed(3)}] · p=
+                {result.metric || snapshot.decision_rule?.metric} {result.estimate.toFixed(3)} [{result.ci_low.toFixed(3)}, {result.ci_high.toFixed(3)}] · p=
                 {result.p_value.toPrecision(2)} · n={result.n.toLocaleString("en-US")}
               </p>
             )}

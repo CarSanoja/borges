@@ -7,6 +7,7 @@ interface Props {
 
 export function Robustness({ report }: Props) {
   const agree = Math.max(0, report.n_universes - report.n_flipped);
+  const failed = report.n_failed ?? 0;
   return (
     <div className="vc-robust">
       <div className="vc-robust__head">
@@ -19,6 +20,11 @@ export function Robustness({ report }: Props) {
       <p className="vc-robust__note">
         {agree} of {report.n_universes} explored universes agree
       </p>
+      {failed > 0 && (
+        <p className="vc-robust__note vc-robust__note--warn" title={report.failed?.join("\n")}>
+          {report.n_universes + failed} explored, {failed} could not run
+        </p>
+      )}
     </div>
   );
 }

@@ -7,16 +7,17 @@ import { UniverseDrawer } from "../universe/UniverseDrawer";
 import { VerdictCard } from "../verdict/VerdictCard";
 import { RunHeader } from "./RunHeader";
 import { useCaseCard } from "./useCaseCard";
-import { useRun, type RunSource } from "./useRun";
+import { RUN_GONE_MESSAGE, useRun, type RunSource } from "./useRun";
 import "./run.css";
 import "./runResponsive.css";
 
 interface Props {
   source: RunSource;
   onHome: () => void;
+  onOpenReplay?: (caseId: string) => void;
 }
 
-export function RunPage({ source, onHome }: Props) {
+export function RunPage({ source, onHome, onOpenReplay }: Props) {
   const snapshot = useRun(source);
   const card = useCaseCard(snapshot.case_id);
   const [selected, setSelected] = useState<string | null>(null);
@@ -28,6 +29,14 @@ export function RunPage({ source, onHome }: Props) {
       {snapshot.error && (
         <p className="run-error" role="alert">
           {snapshot.error}
+          {snapshot.error === RUN_GONE_MESSAGE && snapshot.case_id && onOpenReplay && (
+            <>
+              {" "}
+              <button type="button" className="link-btn" onClick={() => onOpenReplay(snapshot.case_id ?? "")}>
+                Watch the recorded run
+              </button>
+            </>
+          )}
         </p>
       )}
       <section className="run-hero" aria-label="Garden and verdict">

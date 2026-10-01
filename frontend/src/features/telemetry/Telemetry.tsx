@@ -16,19 +16,25 @@ export function Telemetry({ snapshot }: Props) {
       <div className="tm-counters">
         <Counter value={usage.universes} label="universes" format={formatCount} />
         <Counter value={usage.checkpoints} label="sandbox checkpoints" format={formatCount} />
-        <Counter
-          value={usage.llm_calls}
-          label="LLM calls"
-          format={formatCount}
-          note={usage.cached_calls > 0 ? `${formatCount(usage.cached_calls)} cached` : undefined}
-        />
-        <Counter
-          value={tokens}
-          label="tokens"
-          format={formatTokens}
-          title={`${formatCount(usage.tokens_in)} in, ${formatCount(usage.tokens_out)} out`}
-        />
-        <Counter value={usage.cost_usd} label="USD" format={formatCost} />
+        {snapshot.llm === "scripted" ? (
+          <p className="tm-scripted">scripted, no model calls</p>
+        ) : (
+          <>
+            <Counter
+              value={usage.llm_calls}
+              label="LLM calls"
+              format={formatCount}
+              note={usage.cached_calls > 0 ? `${formatCount(usage.cached_calls)} cached` : undefined}
+            />
+            <Counter
+              value={tokens}
+              label="tokens"
+              format={formatTokens}
+              title={`${formatCount(usage.tokens_in)} in, ${formatCount(usage.tokens_out)} out`}
+            />
+            <Counter value={usage.cost_usd} label="USD" format={formatCost} />
+          </>
+        )}
       </div>
       <StageTimeline snapshot={snapshot} />
     </section>

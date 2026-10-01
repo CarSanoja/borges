@@ -12,6 +12,7 @@ describe("Telemetry", () => {
     const base = foldEvents("t", events);
     const snapshot = {
       ...base,
+      llm: "nebius" as const,
       usage: { tokens_in: 12000, tokens_out: 3400, cost_usd: 0.0243, llm_calls: 14, cached_calls: 5, checkpoints: 31, universes: 8 },
     };
     render(<Telemetry snapshot={snapshot} />);
@@ -22,6 +23,16 @@ describe("Telemetry", () => {
     expect(region).toHaveTextContent("5 cached");
     expect(region).toHaveTextContent("15.4k tokens");
     expect(region).toHaveTextContent("$0.0243 USD");
+  });
+
+  it("says scripted instead of showing token counts for a scripted run", () => {
+    const snapshot = foldEvents("t", events);
+    expect(snapshot.llm).toBe("scripted");
+    render(<Telemetry snapshot={snapshot} />);
+    const region = screen.getByLabelText("Telemetry");
+    expect(region).toHaveTextContent("scripted, no model calls");
+    expect(region).not.toHaveTextContent("tokens");
+    expect(region).not.toHaveTextContent("LLM calls");
   });
 
   it("marks stages done, active and pending", () => {

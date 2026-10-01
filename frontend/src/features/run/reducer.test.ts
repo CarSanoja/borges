@@ -22,6 +22,13 @@ describe("reducer", () => {
     expect(snapshot.usage.checkpoints).toBe(30);
   });
 
+  it("takes llm and backend from run.started", () => {
+    expect(initialSnapshot("r1").llm).toBeNull();
+    const snapshot = foldEvents("r1", events);
+    expect(snapshot.llm).toBe("scripted");
+    expect(snapshot.backend).toBe("local");
+  });
+
   it("verifies the flip and reproduces it", () => {
     const flip = foldEvents("r1", events).flip;
     expect(flip?.reproduced).toBe(true);

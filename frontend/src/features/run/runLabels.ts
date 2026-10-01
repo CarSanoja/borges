@@ -19,6 +19,16 @@ export function describeRule(rule: DecisionRule): string {
   return `${rule.positive_label} if ${rule.metric} ${sign} ${rule.threshold} at p < ${rule.alpha}`;
 }
 
+export function backendLabel(backend: string): string {
+  return backend === "contree" ? "ConTree" : backend;
+}
+
+export function modeLabel(snapshot: RunSnapshot): string | null {
+  if (!snapshot.llm || !snapshot.backend) return null;
+  const sandboxes = `${backendLabel(snapshot.backend)} sandboxes`;
+  return snapshot.llm === "scripted" ? `Scripted replay · ${sandboxes}` : `Live on Nemotron · ${sandboxes}`;
+}
+
 export function currentStage(snapshot: RunSnapshot): StageName | null {
   const active = STAGE_ORDER.filter((name) => snapshot.stages[name] === "started");
   return active.length ? (active[active.length - 1] ?? null) : null;

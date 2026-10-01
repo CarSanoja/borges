@@ -3,14 +3,18 @@ import { createRun } from "../../shared/api/client";
 import type { CaseCard } from "../../shared/types/contracts";
 import { describeRule } from "./decisionRuleText";
 
+const LIVE_BUDGET_SPENT = "Live budget for this demo is used up";
+const LIVE_NEEDS_KEY = "Live mode needs a NEBIUS_API_KEY on the server";
+
 interface Props {
   card: CaseCard;
   liveAvailable: boolean;
+  liveUnavailableReason?: "no_key" | "budget_spent" | null;
   onOpenRun: (runId: string) => void;
   onOpenReplay: (caseId: string) => void;
 }
 
-export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: Props) {
+export function CaseCardView({ card, liveAvailable, liveUnavailableReason = null, onOpenRun, onOpenReplay }: Props) {
   const [busy, setBusy] = useState<"scripted" | "nebius" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,6 +29,9 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
       setBusy(null);
     }
   };
+
+  const liveReason =
+    liveUnavailableReason === "budget_spent" ? LIVE_BUDGET_SPENT : LIVE_NEEDS_KEY;
 
   return (
     <article className="case-card">
@@ -54,11 +61,11 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
           type="button"
           className="btn btn-live"
           disabled={!liveAvailable || busy !== null}
-          title={liveAvailable ? "Spends real tokens" : "Needs a Nebius API key on the server"}
+          title={liveAvailable ? "Spends real tokens" : liveReason}
           onClick={() => start("nebius")}
         >
           Run live on Nemotron
-          <span className="btn-note">{liveAvailable ? "spends real tokens" : "no API key configured"}</span>
+          <span className="btn-note">{liveAvailable ? "spends real tokens" : liveReason}</span>
         </button>
       </div>
       {error && (

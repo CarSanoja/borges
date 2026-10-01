@@ -25,6 +25,8 @@ export function initialSnapshot(runId: string): RunSnapshot {
     title: "",
     question: "",
     decision_rule: null,
+    llm: null,
+    backend: null,
     stages: {},
     plan: null,
     checkpoints: [],
@@ -62,6 +64,8 @@ function fold(snapshot: RunSnapshot, event: RunEvent): RunSnapshot {
         title: event.data.title,
         question: event.data.question,
         decision_rule: event.data.decision_rule,
+        llm: event.data.llm,
+        backend: event.data.backend,
       };
     case "stage":
       return { ...snapshot, stages: { ...snapshot.stages, [event.data.name]: event.data.status } };
