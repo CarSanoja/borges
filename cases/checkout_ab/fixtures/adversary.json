@@ -1,0 +1,26 @@
+{
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "text": "{\"proposals\": [{\"step_id\": \"model\", \"id\": \"adv_ols_cluster_user\", \"label\": \"Linear probability model, SEs clustered by user\", \"rationale\": \"Variants are assigned per user and users return several times, so session rows are correlated; standard errors that ignore this are too small. A user-clustered estimator is the standard correction.\", \"spec\": \"OLS of converted on treatment with cluster-robust standard errors grouped by user_id; report the coefficient in percentage points, its CI and p-value.\", \"source\": \"Abadie, Athey, Imbens & Wooldridge (2023), When Should You Adjust Standard Errors for Clustering?, QJE\"}, {\"step_id\": \"bot_filter\", \"id\": \"adv_engaged_only\", \"label\": \"Keep only engaged sessions (30 seconds or more)\", \"rationale\": \"Short sessions are low-intent browsing, so restricting to engaged sessions isolates users who actually considered buying.\", \"spec\": \"Keep rows where session_seconds >= 30.\", \"source\": null}]}",
+  "parsed": {
+    "proposals": [
+      {
+        "step_id": "model",
+        "id": "adv_ols_cluster_user",
+        "label": "Linear probability model, SEs clustered by user",
+        "rationale": "Variants are assigned per user and users return several times, so session rows are correlated; standard errors that ignore this are too small. A user-clustered estimator is the standard correction.",
+        "spec": "OLS of converted on treatment with cluster-robust standard errors grouped by user_id; report the coefficient in percentage points, its CI and p-value.",
+        "source": "Abadie, Athey, Imbens & Wooldridge (2023), When Should You Adjust Standard Errors for Clustering?, QJE"
+      },
+      {
+        "step_id": "bot_filter",
+        "id": "adv_engaged_only",
+        "label": "Keep only engaged sessions (30 seconds or more)",
+        "rationale": "Short sessions are low-intent browsing, so restricting to engaged sessions isolates users who actually considered buying.",
+        "spec": "Keep rows where session_seconds >= 30.",
+        "source": null
+      }
+    ]
+  },
+  "tokens_in": 2600,
+  "tokens_out": 234
+}

@@ -1,0 +1,20 @@
+{
+  "id": "checkout_ab",
+  "title": "New checkout A/B test",
+  "subtitle": "Your AI analyst says ship. Is that the only defensible answer?",
+  "question": "Does the new checkout increase the conversion rate?",
+  "decision_rule": {
+    "metric": "conversion lift, treatment minus control (percentage points)",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "SHIP",
+    "negative_label": "DON'T SHIP"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "checkout_sessions",
+  "max_universes": 40,
+  "reference_label": null,
+  "reference": [],
+  "story": "Fourteen days of checkout sessions, randomised by user. The default analysis shows a significant lift and says ship. But employees and QA testers placed test orders through the new checkout, and one defensible filter removes them and erases the lift."
+}

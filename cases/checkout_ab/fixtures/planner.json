@@ -1,0 +1,131 @@
+{
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "text": "{\"estimand\": \"Difference in conversion probability between the new and the old checkout, treatment minus control, in percentage points, over checkout sessions of genuine customers in the 14-day experiment window.\", \"steps\": [{\"id\": \"internal_traffic\", \"title\": \"Internal traffic\", \"kind\": \"filter\", \"description\": \"Decide whether employee and QA test sessions (is_internal) stay in the analysis population.\", \"options\": [{\"id\": \"keep_all\", \"label\": \"Keep all sessions\", \"rationale\": \"The experiment was randomised over every visitor, so analysing everyone is the pre-registered intent-to-treat population.\", \"spec\": \"No rows removed.\", \"is_default\": true, \"source\": null}, {\"id\": \"exclude_internal\", \"label\": \"Exclude internal accounts\", \"rationale\": \"Employee and QA sessions place test orders, are not customers and are not covered by the question. Their share is unbalanced across arms, so they can create a lift the checkout did not cause.\", \"spec\": \"Drop rows where is_internal is true.\", \"is_default\": false, \"source\": \"Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 and 21 (filter internal traffic and bots)\"}]}, {\"id\": \"bot_filter\", \"title\": \"Bot filter\", \"kind\": \"filter\", \"description\": \"Decide whether sessions too short to be human are removed.\", \"options\": [{\"id\": \"none\", \"label\": \"No bot filter\", \"rationale\": \"Bots are assigned at random like everyone else, so they only dilute both arms equally and the difference stays unbiased.\", \"spec\": \"No rows removed.\", \"is_default\": true, \"source\": null}, {\"id\": \"min_2s\", \"label\": \"Drop sessions under 2 seconds\", \"rationale\": \"Sessions shorter than two seconds cannot complete a checkout and are the usual signature of automated traffic; removing them sharpens the denominator.\", \"spec\": \"Keep rows where session_seconds >= 2.\", \"is_default\": false, \"source\": \"IAB/MRC Invalid Traffic Detection and Filtration Guidelines Addendum (2020); ABC bot-filtering guidance\"}]}, {\"id\": \"novelty_window\", \"title\": \"Novelty window\", \"kind\": \"filter\", \"description\": \"Decide whether the first days, when users react to novelty, count.\", \"options\": [{\"id\": \"all_days\", \"label\": \"Use all 14 days\", \"rationale\": \"Using the full window keeps the pre-registered sample size and avoids a post-hoc choice of cut-off.\", \"spec\": \"No rows removed.\", \"is_default\": true, \"source\": null}, {\"id\": \"drop_first_3_days\", \"label\": \"Drop days 0-2\", \"rationale\": \"A new interface attracts curiosity clicks that fade within days, so early days overstate the steady-state effect. Dropping the ramp-up estimates the lasting effect.\", \"spec\": \"Keep rows where day >= 3.\", \"is_default\": false, \"source\": \"Hohnhold, O'Brien & Tang (2015), Focusing on the Long-term, KDD; Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 (novelty and primacy effects)\"}]}, {\"id\": \"unit\", \"title\": \"Unit of analysis\", \"kind\": \"transform\", \"description\": \"Variants are assigned per user, but users return up to four times: decide whether the unit is the session or the user.\", \"options\": [{\"id\": \"sessions\", \"label\": \"All sessions\", \"rationale\": \"Conversion rate is defined per session by the product team, and every session is an opportunity to buy.\", \"spec\": \"No rows removed.\", \"is_default\": true, \"source\": null}, {\"id\": \"first_session_per_user\", \"label\": \"First session per user\", \"rationale\": \"Randomisation is by user, so repeated sessions of the same user are not independent. One row per user matches the randomisation unit and removes within-user dependence.\", \"spec\": \"Keep the earliest session (by day, then session_id) of each user.\", \"is_default\": false, \"source\": \"Deng, Lu & Litz (2017), Trustworthy Analysis of Online A/B Tests, WSDM\"}]}, {\"id\": \"model\", \"title\": \"Statistical model\", \"kind\": \"model\", \"description\": \"Estimate the conversion lift and its uncertainty.\", \"options\": [{\"id\": \"two_prop_z\", \"label\": \"Two-proportion z-test\", \"rationale\": \"The textbook test for a randomised binary outcome; it needs no model assumptions beyond large samples.\", \"spec\": \"Lift in percentage points, treatment minus control, with a normal-approximation 95% CI and a two-sided pooled z-test p-value.\", \"is_default\": true, \"source\": null}, {\"id\": \"logit_platform\", \"label\": \"Logistic regression with platform\", \"rationale\": \"Adjusting for a prognostic covariate such as platform improves precision without biasing a randomised comparison.\", \"spec\": \"Logit of converted on treatment and C(platform); the treatment effect is the average marginal effect in percentage points, with its delta-method CI and p-value.\", \"is_default\": false, \"source\": \"Lin (2013), Agnostic notes on regression adjustments, Annals of Applied Statistics\"}]}]}",
+  "parsed": {
+    "estimand": "Difference in conversion probability between the new and the old checkout, treatment minus control, in percentage points, over checkout sessions of genuine customers in the 14-day experiment window.",
+    "steps": [
+      {
+        "id": "internal_traffic",
+        "title": "Internal traffic",
+        "kind": "filter",
+        "description": "Decide whether employee and QA test sessions (is_internal) stay in the analysis population.",
+        "options": [
+          {
+            "id": "keep_all",
+            "label": "Keep all sessions",
+            "rationale": "The experiment was randomised over every visitor, so analysing everyone is the pre-registered intent-to-treat population.",
+            "spec": "No rows removed.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "exclude_internal",
+            "label": "Exclude internal accounts",
+            "rationale": "Employee and QA sessions place test orders, are not customers and are not covered by the question. Their share is unbalanced across arms, so they can create a lift the checkout did not cause.",
+            "spec": "Drop rows where is_internal is true.",
+            "is_default": false,
+            "source": "Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 and 21 (filter internal traffic and bots)"
+          }
+        ]
+      },
+      {
+        "id": "bot_filter",
+        "title": "Bot filter",
+        "kind": "filter",
+        "description": "Decide whether sessions too short to be human are removed.",
+        "options": [
+          {
+            "id": "none",
+            "label": "No bot filter",
+            "rationale": "Bots are assigned at random like everyone else, so they only dilute both arms equally and the difference stays unbiased.",
+            "spec": "No rows removed.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "min_2s",
+            "label": "Drop sessions under 2 seconds",
+            "rationale": "Sessions shorter than two seconds cannot complete a checkout and are the usual signature of automated traffic; removing them sharpens the denominator.",
+            "spec": "Keep rows where session_seconds >= 2.",
+            "is_default": false,
+            "source": "IAB/MRC Invalid Traffic Detection and Filtration Guidelines Addendum (2020); ABC bot-filtering guidance"
+          }
+        ]
+      },
+      {
+        "id": "novelty_window",
+        "title": "Novelty window",
+        "kind": "filter",
+        "description": "Decide whether the first days, when users react to novelty, count.",
+        "options": [
+          {
+            "id": "all_days",
+            "label": "Use all 14 days",
+            "rationale": "Using the full window keeps the pre-registered sample size and avoids a post-hoc choice of cut-off.",
+            "spec": "No rows removed.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "drop_first_3_days",
+            "label": "Drop days 0-2",
+            "rationale": "A new interface attracts curiosity clicks that fade within days, so early days overstate the steady-state effect. Dropping the ramp-up estimates the lasting effect.",
+            "spec": "Keep rows where day >= 3.",
+            "is_default": false,
+            "source": "Hohnhold, O'Brien & Tang (2015), Focusing on the Long-term, KDD; Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 (novelty and primacy effects)"
+          }
+        ]
+      },
+      {
+        "id": "unit",
+        "title": "Unit of analysis",
+        "kind": "transform",
+        "description": "Variants are assigned per user, but users return up to four times: decide whether the unit is the session or the user.",
+        "options": [
+          {
+            "id": "sessions",
+            "label": "All sessions",
+            "rationale": "Conversion rate is defined per session by the product team, and every session is an opportunity to buy.",
+            "spec": "No rows removed.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "first_session_per_user",
+            "label": "First session per user",
+            "rationale": "Randomisation is by user, so repeated sessions of the same user are not independent. One row per user matches the randomisation unit and removes within-user dependence.",
+            "spec": "Keep the earliest session (by day, then session_id) of each user.",
+            "is_default": false,
+            "source": "Deng, Lu & Litz (2017), Trustworthy Analysis of Online A/B Tests, WSDM"
+          }
+        ]
+      },
+      {
+        "id": "model",
+        "title": "Statistical model",
+        "kind": "model",
+        "description": "Estimate the conversion lift and its uncertainty.",
+        "options": [
+          {
+            "id": "two_prop_z",
+            "label": "Two-proportion z-test",
+            "rationale": "The textbook test for a randomised binary outcome; it needs no model assumptions beyond large samples.",
+            "spec": "Lift in percentage points, treatment minus control, with a normal-approximation 95% CI and a two-sided pooled z-test p-value.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "logit_platform",
+            "label": "Logistic regression with platform",
+            "rationale": "Adjusting for a prognostic covariate such as platform improves precision without biasing a randomised comparison.",
+            "spec": "Logit of converted on treatment and C(platform); the treatment effect is the average marginal effect in percentage points, with its delta-method CI and p-value.",
+            "is_default": false,
+            "source": "Lin (2013), Agnostic notes on regression adjustments, Annals of Applied Statistics"
+          }
+        ]
+      }
+    ]
+  },
+  "tokens_in": 1850,
+  "tokens_out": 1181
+}

@@ -1,0 +1,14 @@
+{
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "text": "{\"narrative\": \"The default analysis reports a conversion lift of +0.53 pp (95% CI +0.14 to +0.92, p = 0.008) across 29,926 sessions, which clears the rule and says SHIP. That lift does not survive one defensible decision. 339 sessions come from internal accounts (employees and QA), 76% of them landed in the treatment arm, and 59% of them converted because they were test orders. Excluding internal accounts leaves 29,587 sessions and a lift of -0.14 pp (95% CI -0.50 to +0.21, p = 0.434), which says DON'T SHIP. This is the single decision that moves the estimate most (0.67 pp); the next largest, 0.26 pp, leaves the verdict unchanged.\", \"caveats\": [\"Influence is measured by switching one decision at a time from the defaults; it is a statement about this analysis, not a causal claim about the world.\", \"The no-effect reading rests on the 339 flagged sessions being test traffic; confirm the is_internal flag with the data owner.\", \"Excluding internal accounts does not prove the new checkout has no effect, only that the data cannot distinguish it from zero.\"]}",
+  "parsed": {
+    "narrative": "The default analysis reports a conversion lift of +0.53 pp (95% CI +0.14 to +0.92, p = 0.008) across 29,926 sessions, which clears the rule and says SHIP. That lift does not survive one defensible decision. 339 sessions come from internal accounts (employees and QA), 76% of them landed in the treatment arm, and 59% of them converted because they were test orders. Excluding internal accounts leaves 29,587 sessions and a lift of -0.14 pp (95% CI -0.50 to +0.21, p = 0.434), which says DON'T SHIP. This is the single decision that moves the estimate most (0.67 pp); the next largest, 0.26 pp, leaves the verdict unchanged.",
+    "caveats": [
+      "Influence is measured by switching one decision at a time from the defaults; it is a statement about this analysis, not a causal claim about the world.",
+      "The no-effect reading rests on the 339 flagged sessions being test traffic; confirm the is_internal flag with the data owner.",
+      "Excluding internal accounts does not prove the new checkout has no effect, only that the data cannot distinguish it from zero."
+    ]
+  },
+  "tokens_in": 3200,
+  "tokens_out": 266
+}

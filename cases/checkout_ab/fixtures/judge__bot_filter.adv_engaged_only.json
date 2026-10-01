@@ -1,0 +1,12 @@
+{
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "text": "{\"defensibility\": 0.35, \"accepted\": false, \"reason\": \"Engagement is measured after exposure to the variant, so conditioning on it changes the population and can bias the comparison; not a bot filter.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.35,
+    "accepted": false,
+    "reason": "Engagement is measured after exposure to the variant, so conditioning on it changes the population and can bias the comparison; not a bot filter.",
+    "source": null
+  },
+  "tokens_in": 900,
+  "tokens_out": 54
+}

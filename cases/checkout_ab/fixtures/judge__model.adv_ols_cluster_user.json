@@ -1,0 +1,12 @@
+{
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "text": "{\"defensibility\": 0.74, \"accepted\": true, \"reason\": \"Clustering by the randomisation unit is a recognised correction when users contribute several sessions; it changes uncertainty, not the population.\", \"source\": \"Abadie, Athey, Imbens & Wooldridge (2023), When Should You Adjust Standard Errors for Clustering?, QJE\"}",
+  "parsed": {
+    "defensibility": 0.74,
+    "accepted": true,
+    "reason": "Clustering by the randomisation unit is a recognised correction when users contribute several sessions; it changes uncertainty, not the population.",
+    "source": "Abadie, Athey, Imbens & Wooldridge (2023), When Should You Adjust Standard Errors for Clustering?, QJE"
+  },
+  "tokens_in": 900,
+  "tokens_out": 79
+}
