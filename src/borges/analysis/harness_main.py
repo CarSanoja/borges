@@ -80,9 +80,20 @@ def __borges_main():
         _emit("BORGES_TRACE ", trace)
     except BaseException as exc:
         lines = [line for line in _tb.format_exc().strip().splitlines() if line.strip()]
+        roots = {_os.getcwd(), _os.path.realpath(_os.getcwd())}
+
+        def _clean(text):
+            for root in sorted(roots, key=len, reverse=True):
+                text = text.replace(root + _os.sep, "").replace(root, "")
+            return text
+
         _emit(
             "BORGES_ERROR ",
-            {"type": type(exc).__name__, "message": str(exc), "where": "\\n".join(lines[-6:])},
+            {
+                "type": type(exc).__name__,
+                "message": _clean(str(exc)),
+                "where": _clean("\\n".join(lines[-6:])),
+            },
         )
         _sys.exit(1)
 

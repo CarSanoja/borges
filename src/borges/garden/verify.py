@@ -4,7 +4,7 @@ import shlex
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, AnalysisResult
-from borges.garden.executor import GardenExecutor
+from borges.garden.executor import STEP_TIMEOUT_S, GardenExecutor
 from borges.garden.models import Flip, Garden
 from borges.sandbox.backend import BranchBackend
 
@@ -23,11 +23,18 @@ def _same(rerun: AnalysisResult | None, expected: AnalysisResult) -> bool:
 
 
 async def verify_flip(
-    backend: BranchBackend, plan: AnalysisPlan, data: bytes, flip: Flip, garden: Garden
+    backend: BranchBackend,
+    plan: AnalysisPlan,
+    data: bytes,
+    flip: Flip,
+    garden: Garden,
+    step_timeout_s: float = STEP_TIMEOUT_S,
 ) -> Flip:
     original = garden.universes[flip.universe_id]
-    executor = GardenExecutor(backend, plan, data, emit=None, reuse_prefixes=False)
-    root = await executor.setup()
+    executor = GardenExecutor(
+        backend, plan, data, emit=None, reuse_prefixes=False, step_timeout_s=step_timeout_s
+    )
+    await executor.setup()
     baseline_rerun = await executor.run_universe(plan.default_choices(), "baseline")
     rerun = await executor.run_universe(original.choices, "verification")
     reproduced = (
@@ -43,6 +50,6 @@ async def verify_flip(
     return flip.model_copy(
         update={
             "reproduced": reproduced,
-            "reproduce_command": f"from checkpoint {root.id}: " + " && ".join(commands),
+            "reproduce_command": " && ".join(commands),
         }
     )

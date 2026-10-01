@@ -25,7 +25,8 @@ async def test_verify_flip_reproduces_in_fresh_chain() -> None:
     assert backend.root_calls == 2
     assert verified.reproduced is True
     assert verified.reproduce_command is not None
-    assert verified.reproduce_command.startswith("from checkpoint cp")
+    assert "checkpoint" not in verified.reproduce_command
+    assert verified.reproduce_command.startswith("python s1:")
     assert verified.reproduce_command.endswith("python s1:a && python s2:x && python s3:o")
     assert flip.reproduced is None
     assert verified.universe_id == flip.universe_id

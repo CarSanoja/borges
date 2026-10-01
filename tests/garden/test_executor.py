@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -249,3 +250,63 @@ async def test_step_without_trace_fails() -> None:
     universe = await executor.run_universe(plan.default_choices(), "baseline")
     assert universe.status == "failed"
     assert "no trace" in (universe.error or "")
+
+
+async def test_error_prefers_parsed_exception_over_stderr_warning() -> None:
+    plan = make_plan()
+    backend = FakeBackend(plan)
+    real_run = backend.run
+
+    async def warns_then_raises(parent: Any, command: Any, **kwargs: Any) -> Any:
+        result = await real_run(parent, command, **kwargs)
+        if command[-1] == "s2:y":
+            return replace(
+                result,
+                exit_code=1,
+                stdout="ERROR ValueError: bad column",
+                stderr="UserWarning: something harmless",
+            )
+        return result
+
+    backend.run = warns_then_raises
+    executor = GardenExecutor(backend, plan, b"d")
+    await executor.setup()
+    universe = await executor.run_universe({**plan.default_choices(), "s2": "y"}, "single")
+    assert universe.status == "failed"
+    assert "ValueError: bad column" in (universe.error or "")
+    assert "harmless" not in (universe.error or "")
+
+
+async def test_error_falls_back_to_exit_code() -> None:
+    plan = make_plan()
+    backend = FakeBackend(plan)
+    real_run = backend.run
+
+    async def silent_failure(parent: Any, command: Any, **kwargs: Any) -> Any:
+        result = await real_run(parent, command, **kwargs)
+        if command[-1] == "s2:y":
+            return replace(result, exit_code=7, stdout="", stderr="")
+        return result
+
+    backend.run = silent_failure
+    executor = GardenExecutor(backend, plan, b"d")
+    await executor.setup()
+    universe = await executor.run_universe({**plan.default_choices(), "s2": "y"}, "single")
+    assert "exit code 7" in (universe.error or "")
+
+
+async def test_step_timeout_comes_from_the_constructor() -> None:
+    plan = make_plan()
+    backend = FakeBackend(plan)
+    seen: list[float] = []
+    real_run = backend.run
+
+    async def spy(parent: Any, command: Any, **kwargs: Any) -> Any:
+        seen.append(kwargs["timeout_s"])
+        return await real_run(parent, command, **kwargs)
+
+    backend.run = spy
+    executor = GardenExecutor(backend, plan, b"d", step_timeout_s=17.5)
+    await executor.setup()
+    await executor.run_universe(plan.default_choices(), "baseline")
+    assert seen and set(seen) == {17.5}

@@ -205,3 +205,18 @@ def test_numpy_bool_is_not_a_number(workdir: Path) -> None:
     step, option = make_step("s1", "model", code)
     proc = run(workdir, step, option)
     assert proc.returncode == 1
+
+
+def test_traceback_and_message_carry_no_working_directory(workdir: Path) -> None:
+    code = (
+        "import warnings\n\n\n"
+        "def apply(df, ctx):\n"
+        "    warnings.warn('harmless')\n"
+        "    raise ValueError('cannot read ' + 'x')\n"
+    )
+    step, option = make_step("s1", "filter", code)
+    proc = run(workdir, step, option)
+    message = parse_error(proc.stdout)
+    assert message is not None and "ValueError: cannot read x" in message
+    assert str(workdir) not in message
+    assert str(workdir.resolve()) not in message

@@ -18,6 +18,7 @@ EmitFn = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 STEP_TIMEOUT_S = 120.0
 ERROR_TAIL_CHARS = 400
+ERROR_HEAD_CHARS = 800
 
 
 def universe_id(choices: dict[str, str]) -> str:
@@ -38,6 +39,7 @@ class GardenExecutor:
         emit: EmitFn | None = None,
         concurrency: int = 6,
         reuse_prefixes: bool = True,
+        step_timeout_s: float = STEP_TIMEOUT_S,
     ) -> None:
         self.backend = backend
         self.plan = plan
@@ -45,6 +47,7 @@ class GardenExecutor:
         self.emit = emit
         self.concurrency = concurrency
         self.reuse_prefixes = reuse_prefixes
+        self.step_timeout_s = step_timeout_s
         self.baseline_verdict: str | None = None
         self.root: Checkpoint | None = None
         self._cache = PrefixCache()
@@ -94,12 +97,20 @@ class GardenExecutor:
         }
         command = harness.step_command(step_id, option_id)
         try:
-            run = await self.backend.run(parent, command, files=files, timeout_s=STEP_TIMEOUT_S)
+            run = await self.backend.run(
+                parent, command, files=files, timeout_s=self.step_timeout_s
+            )
         except Exception as exc:
             return PrefixNode(None, error=f"{step_id}/{option_id}: {exc}", cacheable=False)
         if not run.ok:
-            detail = _tail(run.stderr) or _tail(run.stdout) or f"exit code {run.exit_code}"
-            deterministic = harness.parse_error(run.stdout) is not None
+            parsed = harness.parse_error(run.stdout)
+            detail = (
+                (parsed[:ERROR_HEAD_CHARS] if parsed else None)
+                or _tail(run.stderr)
+                or _tail(run.stdout)
+                or f"exit code {run.exit_code}"
+            )
+            deterministic = parsed is not None
             return PrefixNode(
                 None, error=f"{step_id}/{option_id}: {detail}", cacheable=deterministic
             )
