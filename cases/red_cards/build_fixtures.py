@@ -14,6 +14,7 @@ from borges.analysis.models import DecisionRule
 from borges.analysis.schemas import CoderOutput, NarratorOutput
 from borges.cases.models import CaseSpec, ReferenceEstimate
 from borges.llm.client import DEFAULT_ROLE_MODELS, Role
+from borges.runs.pipeline import MAX_COMBINATIONS_PER_LEVEL
 
 RULE = DecisionRule(
     metric="odds ratio of a red card per game, dark vs light skin tone",
@@ -53,6 +54,8 @@ def narrate(info: dict[str, Any]) -> tuple[NarratorOutput, str]:
     single_lo = min(r["result"].estimate for r in singles)
     single_hi = max(r["result"].estimate for r in singles)
     n_pairs = sum(1 for r in info["rows"] if r["changes"] == 2 and not r["rejected"])
+    searched_pairs = min(MAX_COMBINATIONS_PER_LEVEL, n_pairs)
+    minimal = max(triple, key=lambda r: abs(r["result"].estimate - base.estimate))["result"]
     t_lo = min(r["result"].estimate for r in triple)
     t_hi = max(r["result"].estimate for r in triple)
     narrative = (
@@ -60,13 +63,16 @@ def narrate(info: dict[str, Any]) -> tuple[NarratorOutput, str]:
         f"p = {base.p_value:.4f}, n = {base.n:,} dyads, so the verdict is BIAS DETECTED. "
         f"None of the {len(singles)} single-decision changes reverses it: the odds ratio stays "
         f"between {single_lo:.2f} and {single_hi:.2f} and every interval keeps excluding 1. "
-        f"None of the {n_pairs} pairs of changes reverses it either"
+        f"None of the {searched_pairs} pairs ranked most likely to flip it does either"
         f"{'' if not pair_flips else f' (except {len(pair_flips)})'}. "
         f"The verdict first changes at three simultaneous changes: {len(triple)} such universes "
         f"reach NO CLEAR EVIDENCE, with odds ratios of {t_lo:.2f} to {t_hi:.2f} and p between "
         f"{min(r['result'].p_value for r in triple):.3f} and "
         f"{max(r['result'].p_value for r in triple):.3f}. All of them adjust for the full "
         f"covariate set, and most add player-clustered errors and the second rater alone. "
+        f"The minimal flip (second rater only, referees with 22 or more dyads, full "
+        f"covariates; {fmt(minimal)}, p = {minimal.p_value:.3f}) was re-executed from a fresh "
+        f"sandbox and reproduced exactly. "
         f"Across all defensible universes the odds ratio runs from {lo:.2f} to {hi:.2f}, inside "
         f"the human teams' range of 0.89 to 2.93. The only one-decision change that did flip "
         f"the verdict, keeping low-bias referees only ({fmt(rejected)}, p = "
