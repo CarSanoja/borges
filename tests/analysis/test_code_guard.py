@@ -1,0 +1,156 @@
+from __future__ import annotations
+
+import pytest
+
+from borges.analysis.code_guard import check_code
+
+VALID_APPLY = """
+import pandas as pd
+import numpy as np
+
+
+def apply(df, ctx):
+    ctx["n"] = int(len(df))
+    return df[df["x"] > 0].copy()
+"""
+
+VALID_ESTIMATE = '''
+"""Model."""
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from scipy import stats
+from scipy.stats import norm
+
+
+def estimate(df, ctx):
+    import math
+    fit = smf.ols("y ~ x", data=df).fit()
+    return {"estimate": float(fit.params["x"]), "n": len(df), "p_value": 0.5,
+            "ci_low": 0.0, "ci_high": 1.0, "extra": {"s": math.sqrt(2)}}
+'''
+
+
+def wrap(body: str) -> str:
+    return "def apply(df, ctx):\n" + "\n".join("    " + line for line in body.splitlines())
+
+
+def test_valid_apply_accepted() -> None:
+    assert check_code(VALID_APPLY, "filter") == []
+
+
+def test_valid_estimate_accepted() -> None:
+    assert check_code(VALID_ESTIMATE, "model") == []
+
+
+def test_syntax_error() -> None:
+    assert "syntax error" in check_code("def apply(df, ctx:", "filter")[0]
+
+
+def test_reject_os_import_top_level() -> None:
+    assert check_code("import os\n" + VALID_APPLY, "filter")
+
+
+def test_reject_os_import_inside() -> None:
+    assert check_code(wrap("import os\nreturn df"), "filter")
+
+
+def test_reject_from_import_forbidden() -> None:
+    assert check_code("from os import path\n" + VALID_APPLY, "filter")
+
+
+def test_reject_relative_import() -> None:
+    assert check_code("from . import x\n" + VALID_APPLY, "filter")
+
+
+def test_reject_open() -> None:
+    assert check_code(wrap("open('f')\nreturn df"), "filter")
+
+
+@pytest.mark.parametrize("name", ["eval", "exec", "compile", "getattr", "globals", "input"])
+def test_reject_forbidden_names(name: str) -> None:
+    assert check_code(wrap(f"{name}('x')\nreturn df"), "filter")
+
+
+def test_reject_to_csv() -> None:
+    assert check_code(wrap("df.to_csv('a.csv')\nreturn df"), "filter")
+
+
+def test_reject_read_csv() -> None:
+    assert check_code("import pandas as pd\n" + wrap("return pd.read_csv('a.csv')"), "filter")
+
+
+def test_allow_to_numpy_and_friends() -> None:
+    body = "a = df['x'].to_numpy()\nb = df.to_dict()\nreturn df"
+    assert check_code(wrap(body), "filter") == []
+
+
+def test_reject_dunder_attribute() -> None:
+    assert check_code(wrap("x = df.__class__\nreturn df"), "filter")
+
+
+def test_reject_dunder_name() -> None:
+    assert check_code(wrap("x = __builtins__\nreturn df"), "filter")
+
+
+def test_reject_forbidden_module_name() -> None:
+    assert check_code(wrap("sys.exit(1)\nreturn df"), "filter")
+
+
+def test_reject_second_top_level_statement() -> None:
+    assert check_code(VALID_APPLY + "\nx = 1\n", "filter")
+
+
+def test_reject_two_functions() -> None:
+    assert check_code(VALID_APPLY + "\n\ndef other(df, ctx):\n    return df\n", "filter")
+
+
+def test_reject_wrong_name_for_kind() -> None:
+    assert check_code(VALID_APPLY, "model")
+    assert check_code(VALID_ESTIMATE, "transform")
+
+
+def test_reject_wrong_params() -> None:
+    assert check_code("def apply(df):\n    return df\n", "filter")
+
+
+def test_reject_no_function() -> None:
+    assert check_code("import pandas as pd\n", "filter")
+
+
+def test_print_allowed() -> None:
+    assert check_code(wrap("print('hi')\nreturn df"), "filter") == []
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        "from pandas import read_csv",
+        "from numpy import load",
+        "from numpy import memmap",
+        "from pandas.io.common import os as o",
+        "from pandas.io import common",
+        "import scipy.io",
+        "import numpy.lib",
+        "from os import path",
+        "from numpy import *",
+    ],
+)
+def test_reject_import_escapes(header: str) -> None:
+    assert check_code(header + "\n" + VALID_APPLY, "filter")
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "np.DataSource().open('/etc/passwd')\nreturn df",
+        "np.memmap('/etc/passwd')\nreturn df",
+        "raise SystemExit(0)",
+    ],
+)
+def test_reject_attribute_and_exit_escapes(body: str) -> None:
+    assert check_code("import numpy as np\n" + wrap(body), "filter")
+
+
+def test_allowed_from_imports_still_pass() -> None:
+    code = "from scipy import stats\nfrom math import sqrt\n" + VALID_APPLY
+    assert check_code(code, "filter") == []
