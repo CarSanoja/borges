@@ -1,4 +1,5 @@
 .tm {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -20,7 +21,7 @@
 }
 
 .tm-counter__value {
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   color: var(--paper-100);
 }
 

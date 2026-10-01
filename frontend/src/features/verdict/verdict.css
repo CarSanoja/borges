@@ -1,9 +1,14 @@
 .vc {
   perspective: 1800px;
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .vc-inner {
+  flex: 1;
+  min-height: 0;
   display: grid;
   transform-style: preserve-3d;
   transition: transform var(--dur-reveal) var(--ease-inout);
@@ -18,7 +23,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding: var(--space-5);
+  padding: var(--space-4) var(--space-5);
   background: linear-gradient(180deg, var(--ink-700), var(--ink-800));
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -42,7 +47,7 @@
 }
 
 .vc-verdict {
-  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  font-size: clamp(2rem, 3.2vw, 3.25rem);
   line-height: 1;
   overflow-wrap: anywhere;
 }
@@ -93,7 +98,7 @@
   color: var(--paper-300);
   font-family: var(--font-display);
   font-style: italic;
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   line-height: 1.3;
 }
 

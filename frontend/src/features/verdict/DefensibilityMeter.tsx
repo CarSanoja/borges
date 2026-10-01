@@ -6,7 +6,7 @@ interface Props {
 
 export function DefensibilityMeter({ value }: Props) {
   if (value === null) {
-    return <span className="vc-meter vc-meter--empty">Defensibility not scored</span>;
+    return null;
   }
   const share = Math.min(1, Math.max(0, value));
   return (

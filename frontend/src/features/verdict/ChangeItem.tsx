@@ -12,8 +12,8 @@ function isLink(source: string): boolean {
 export function ChangeItem({ change }: Props) {
   return (
     <li className="vc-change">
-      <span className="eyebrow">{change.step_title}</span>
       <p className="vc-change__label">{change.to_label}</p>
+      <span className="eyebrow vc-change__step">{change.step_title}</span>
       <p className="vc-change__why">{change.rationale}</p>
       {change.source &&
         (isLink(change.source) ? (

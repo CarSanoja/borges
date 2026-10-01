@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import { buildSampleRun, SAMPLE_RUN_ID } from "../../fixtures/sampleRun";
+import { RECORDED_RUN_ID, recordedRun } from "../../fixtures/recordedRun";
 import { eventsUrl, recordingUrl } from "../../shared/api/client";
 import { subscribeEvents } from "../../shared/api/sse";
 import type { RunEvent, RunSnapshot } from "../../shared/types/contracts";
@@ -26,7 +26,7 @@ export function sourceKey(source: RunSource): string {
 export function sourceRunId(source: RunSource): string {
   if (source.kind === "live") return source.runId;
   if (source.kind === "replay") return `replay-${source.caseId}`;
-  return SAMPLE_RUN_ID;
+  return RECORDED_RUN_ID;
 }
 
 function reduce(snapshot: RunSnapshot, action: Action): RunSnapshot {
@@ -67,7 +67,7 @@ export function useRun(source: RunSource): RunSnapshot {
   useEffect(() => {
     dispatch({ type: "reset", runId: sourceRunId(source) });
     const emit = (event: RunEvent) => dispatch({ type: "event", event });
-    if (source.kind === "mock") return scheduleMock(buildSampleRun(), emit);
+    if (source.kind === "mock") return scheduleMock(recordedRun(), emit);
     const url =
       source.kind === "live" ? eventsUrl(source.runId, 0) : recordingUrl(source.caseId, source.speed);
     return subscribeEvents(url, emit, () => dispatch({ type: "connection_lost" }));

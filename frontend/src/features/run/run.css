@@ -1,7 +1,10 @@
 .run-page {
+  --run-header: 64px;
+  --run-footer: 52px;
+  --run-chrome: calc(var(--run-header) + var(--run-footer) + 44px);
   max-width: var(--page-max);
   margin: 0 auto;
-  padding: var(--space-4) var(--gutter) var(--space-5);
+  padding: var(--space-3) var(--gutter) 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -12,6 +15,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-5);
+  height: var(--run-header);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--line);
 }
@@ -27,15 +31,22 @@
 }
 
 .run-title {
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
+  line-height: 1.1;
+}
+
+.run-header__body {
+  min-width: 0;
 }
 
 .run-question {
   color: var(--paper-300);
   font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   font-style: italic;
-  margin-top: var(--space-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .run-header__meta {
@@ -94,95 +105,65 @@
   background: var(--vermilion-soft);
 }
 
-.run-grid {
+.run-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(320px, 28vw, 420px);
-  grid-template-areas:
-    "garden side"
-    "curve curve";
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 460px);
   gap: var(--space-4);
+  height: max(420px, calc(100dvh - var(--run-chrome)));
 }
 
 .run-garden {
-  grid-area: garden;
-  min-height: min(62vh, 640px);
   min-width: 0;
+  min-height: 0;
 }
 
 .run-side {
-  grid-area: side;
-  display: flex;
-  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.run-below {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 28vw, 460px);
+  align-items: start;
   gap: var(--space-4);
+}
+
+.run-curve,
+.run-influence {
   min-width: 0;
 }
 
-.run-curve {
-  grid-area: curve;
-  min-width: 0;
+.run-footer .tm {
+  flex-wrap: nowrap;
 }
 
 .run-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  margin: 0 calc(var(--gutter) * -1);
+  padding: 0 var(--gutter);
+  height: var(--run-footer);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
   border-top: 1px solid var(--line);
-  padding-top: var(--space-3);
+  background: rgba(11, 10, 9, 0.88);
+  backdrop-filter: blur(10px);
   color: var(--paper-500);
   font-size: var(--text-sm);
 }
 
-.garden-placeholder,
-.run-side .panel,
+.run-curve .panel,
+.run-influence .panel {
+  padding: var(--space-5);
+}
+
 .run-curve .panel {
-  padding: var(--space-4);
+  min-height: 360px;
 }
 
-@media (min-width: 1001px) and (min-height: 600px) {
-  .run-page {
-    height: 100dvh;
-    padding-top: var(--space-3);
-    padding-bottom: var(--space-3);
-    gap: var(--space-3);
-  }
-  .run-grid {
-    flex: 1;
-    min-height: 0;
-    grid-template-rows: minmax(0, 1fr) auto;
-    gap: var(--space-3);
-  }
-  .run-garden {
-    min-height: 0;
-    height: 100%;
-  }
-  .run-side {
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: none;
-  }
-  .run-title {
-    font-size: var(--text-xl);
-    line-height: 1.1;
-  }
-  .run-question {
-    font-size: var(--text-md);
-    margin-top: 0;
-  }
-  .run-header {
-    padding-bottom: var(--space-2);
-  }
-  .run-footer {
-    padding-top: var(--space-2);
-  }
-}
-
-@media (max-width: 1000px) {
-  .run-header {
-    grid-template-columns: 1fr;
-    align-items: start;
-  }
-  .run-header__meta {
-    justify-content: flex-start;
-  }
-  .run-grid {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "garden" "side" "curve";
-  }
-}

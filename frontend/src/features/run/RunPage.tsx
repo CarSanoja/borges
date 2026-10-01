@@ -9,6 +9,7 @@ import { RunHeader } from "./RunHeader";
 import { useCaseCard } from "./useCaseCard";
 import { useRun, type RunSource } from "./useRun";
 import "./run.css";
+import "./runResponsive.css";
 
 interface Props {
   source: RunSource;
@@ -29,14 +30,15 @@ export function RunPage({ source, onHome }: Props) {
           {snapshot.error}
         </p>
       )}
-      <div className="run-grid">
+      <section className="run-hero" aria-label="Garden and verdict">
         <div className="run-garden">
           <Garden snapshot={snapshot} selectedUniverseId={selected} onSelectUniverse={setSelected} />
         </div>
         <aside className="run-side">
           <VerdictCard snapshot={snapshot} />
-          <InfluenceBars snapshot={snapshot} />
         </aside>
+      </section>
+      <section className="run-below" aria-label="Evidence">
         <div className="run-curve">
           <SpecCurve
             snapshot={snapshot}
@@ -46,7 +48,10 @@ export function RunPage({ source, onHome }: Props) {
             onSelectUniverse={setSelected}
           />
         </div>
-      </div>
+        <div className="run-influence">
+          <InfluenceBars snapshot={snapshot} />
+        </div>
+      </section>
       <footer className="run-footer">
         <Telemetry snapshot={snapshot} />
       </footer>

@@ -20,7 +20,7 @@ describe("RunPage (mock source)", () => {
       await vi.advanceTimersByTimeAsync(60_000);
     });
     expect(screen.getByRole("status")).toHaveTextContent("Complete");
-    expect(screen.getByText("Checkout redesign A/B")).toBeInTheDocument();
-    expect(screen.getByLabelText("Telemetry")).toHaveTextContent("8 universes");
+    expect(screen.getByText("New checkout A/B test")).toBeInTheDocument();
+    expect(screen.getByLabelText("Telemetry")).toHaveTextContent("7 universes");
   });
 });
