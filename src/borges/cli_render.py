@@ -42,6 +42,12 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
             f"Robustness: {report.robustness:.0%} of {report.n_universes} universes "
             f"keep the original verdict ({report.n_flipped} flipped)"
         )
+        if report.n_failed:
+            lines.append(
+                f"  {report.n_universes + report.n_failed} explored, "
+                f"{report.n_failed} could not run"
+            )
+        lines.extend(f"Caveat: {caveat}" for caveat in report.caveats)
     usage = snapshot.usage
     lines.append(
         f"Universes: {usage.universes}, checkpoints: {usage.checkpoints}, "

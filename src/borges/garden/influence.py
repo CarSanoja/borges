@@ -34,11 +34,22 @@ def robustness(garden: Garden) -> float:
     return sum(1 for u in pool if u.verdict == baseline.verdict) / len(pool)
 
 
+def failed_universes(garden: Garden) -> list[str]:
+    lines = []
+    for universe in garden.universes.values():
+        if universe.status != "failed" or universe.kind == "verification":
+            continue
+        first = (universe.error or "unknown error").strip().splitlines()[0]
+        lines.append(first)
+    return lines
+
+
 def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Report:
     baseline = garden.baseline
     if baseline is None or baseline.result is None or baseline.verdict is None:
         raise ValueError("cannot build a report without a finished baseline universe")
     finished = garden.finished()
+    failed = failed_universes(garden)
     return Report(
         question=plan.question,
         original_verdict=baseline.verdict,
@@ -48,4 +59,6 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         robustness=robustness(garden),
         n_universes=len(finished),
         n_flipped=sum(1 for u in finished if u.flipped is True),
+        n_failed=len(failed),
+        failed=failed,
     )

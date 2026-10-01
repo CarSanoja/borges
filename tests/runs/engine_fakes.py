@@ -17,7 +17,9 @@ from borges.analysis.models import (
     Step,
     StepTrace,
 )
+from borges.garden.influence import failed_universes
 from borges.garden.models import Change, Flip, Garden, Report, Universe
+from borges.llm.client import LLMError
 from borges.runs import adversary_round, pipeline, runner
 from tests.runs.fakes import RULE, make_plan
 
@@ -34,6 +36,10 @@ class Scenario:
     proposals: list[Proposal] = field(default_factory=list)
     accept: bool = True
     narrate_error: Exception | None = None
+    propose_error: Exception | None = None
+    judge_errors: set[str] = field(default_factory=set)
+    verify_error: Exception | None = None
+    reproduced: bool | None = True
     plan_error: Exception | None = None
     hang: bool = False
     entered_plan: asyncio.Event = field(default_factory=asyncio.Event)
@@ -46,7 +52,9 @@ class Scenario:
 class FakeExecutor:
     scenario: Scenario
 
-    def __init__(self, backend: Any, plan: AnalysisPlan, data: bytes, emit: Any, concurrency: int):
+    def __init__(
+        self, backend: Any, plan: AnalysisPlan, data: bytes, emit: Any, concurrency: int, **_: Any
+    ):
         self.plan = plan
         self.emit = emit
         self.baseline_verdict: str | None = None
@@ -174,9 +182,13 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
 
     async def propose_options(llm: Any, plan: AnalysisPlan, baseline: Universe):
         scenario.calls.append("propose")
+        if scenario.propose_error:
+            raise scenario.propose_error
         return scenario.proposals
 
     async def judge_option(llm: Any, plan: AnalysisPlan, step: Step, option: Option):
+        if option.id in scenario.judge_errors:
+            raise LLMError(f"judge:{step.id}.{option.id}: invalid output")
         return Judgement(
             defensibility=0.8, accepted=scenario.accept, reason="ok", source="http://s"
         )
@@ -197,8 +209,14 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         scenario.combination_calls.append((size, limit))
         return scenario.combination_choices if size == 2 else []
 
-    async def verify_flip(backend: Any, plan: Any, data: bytes, flip: Flip, garden: Garden) -> Flip:
+    async def verify_flip(
+        backend: Any, plan: Any, data: bytes, flip: Flip, garden: Garden, **_: Any
+    ) -> Flip:
         scenario.calls.append("verify")
+        if scenario.verify_error:
+            raise scenario.verify_error
+        if scenario.reproduced is not True:
+            return flip.model_copy(update={"reproduced": scenario.reproduced})
         return flip.model_copy(update={"reproduced": True, "reproduce_command": "python go.py"})
 
     def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Report:
@@ -213,6 +231,8 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
             robustness=0.5,
             n_universes=len(garden.universes),
             n_flipped=sum(1 for u in garden.finished() if u.flipped),
+            n_failed=len(failed_universes(garden)),
+            failed=failed_universes(garden),
         )
 
     async def narrate(llm: Any, plan: AnalysisPlan, report: Report):

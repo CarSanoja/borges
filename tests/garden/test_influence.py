@@ -64,3 +64,26 @@ async def test_build_report_assembles_counts() -> None:
 def test_build_report_requires_baseline() -> None:
     with pytest.raises(ValueError):
         build_report(make_plan(), Garden(), None)
+
+
+async def test_build_report_lists_failed_universes_and_excludes_them_from_robustness() -> None:
+    plan = make_plan()
+    backend = FakeBackend(plan, fail={("s2", "y")})
+    _, garden = await build_garden(plan, backend)
+    report = build_report(plan, garden, minimal_flip(plan, garden))
+    assert report.n_failed == 1
+    assert len(report.failed) == 1
+    assert report.failed[0].startswith("s2/y: ")
+    assert "\n" not in report.failed[0]
+    assert report.n_universes == len(garden.finished())
+    assert report.robustness == pytest.approx(
+        sum(1 for u in garden.finished() if u.verdict == garden.baseline.verdict)
+        / len(garden.finished())
+    )
+
+
+async def test_build_report_without_failures_has_empty_failed() -> None:
+    plan = make_plan()
+    _, garden = await build_garden(plan, FakeBackend(plan))
+    report = build_report(plan, garden, None)
+    assert report.n_failed == 0 and report.failed == []

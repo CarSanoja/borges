@@ -15,10 +15,10 @@ from borges.analysis.profile import profile_dataframe
 from borges.config import Settings
 from borges.garden.executor import GardenExecutor
 from borges.garden.influence import build_report
-from borges.garden.models import Flip, Garden, Report
+from borges.garden.models import Flip, Garden, Report, Universe
 from borges.garden.search import combination_flip_choices, minimal_flip, single_flip_choices
 from borges.garden.verify import verify_flip
-from borges.llm.client import BudgetExceeded, LLMClient, UsageTotals
+from borges.llm.client import LLMClient, UsageTotals
 from borges.runs.adversary_round import run_adversary_round
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData
@@ -56,6 +56,7 @@ class Pipeline:
         self.executor: GardenExecutor | None = None
         self.flip: Flip | None = None
         self.report: Report | None = None
+        self.caveats: list[str] = []
         emitter.usage_probe = self._usage
 
     def _usage(self) -> tuple[UsageTotals, int]:
@@ -98,6 +99,7 @@ class Pipeline:
             self.resolved.data,
             self.emitter.emit,
             self.settings.borges_concurrency,
+            step_timeout_s=self.settings.borges_step_timeout_s,
         )
         self.executor = executor
         await executor.setup()
@@ -109,13 +111,28 @@ class Pipeline:
             if baseline.status != "done":
                 raise RuntimeError(f"the baseline analysis failed: {baseline.error}")
         async with self._stage("single_flips"):
-            await runner.run_many(single_flip_choices(plan), "single")
+            singles = single_flip_choices(plan)
+            if len(singles) > runner.remaining:
+                self.caveats.append(
+                    "The universe budget ran out before every single-decision flip was tried."
+                )
+            await runner.run_many(singles, "single")
         if runner.remaining > 0:
-            async with self._stage("adversary"):
-                await run_adversary_round(self.llm, plan, runner, self.emitter, baseline)
+            await self._adversary(plan, runner, baseline)
+        else:
+            self.caveats.append("The universe budget ran out before the adversary stage ran.")
         self.flip = minimal_flip(plan, self.garden)
         if self.flip is None and runner.remaining > 0:
             await self._combinations(plan, runner)
+
+    async def _adversary(
+        self, plan: AnalysisPlan, runner: UniverseRunner, baseline: Universe
+    ) -> None:
+        async with self._stage("adversary"):
+            try:
+                await run_adversary_round(self.llm, plan, runner, self.emitter, baseline)
+            except Exception as exc:
+                self.caveats.append(f"The adversary stage failed and was skipped: {exc}")
 
     async def _combinations(self, plan: AnalysisPlan, runner: UniverseRunner) -> None:
         async with self._stage("combination_flips"):
@@ -135,18 +152,33 @@ class Pipeline:
             return
         await self.emitter.emit("flip.found", {"flip": self.flip.model_dump(mode="json")})
         async with self._stage("verifying"):
-            self.flip = await verify_flip(
-                self.backend, plan, self.resolved.data, self.flip, self.garden
-            )
+            try:
+                self.flip = await verify_flip(
+                    self.backend,
+                    plan,
+                    self.resolved.data,
+                    self.flip,
+                    self.garden,
+                    step_timeout_s=self.settings.borges_step_timeout_s,
+                )
+            except Exception as exc:
+                self.caveats.append(
+                    f"The minimal flip could not be re-run in a fresh sandbox ({exc}); "
+                    "it is unverified."
+                )
+            if self.flip.reproduced is False:
+                self.caveats.append(
+                    "The minimal flip did not reproduce in a fresh sandbox; treat it as "
+                    "unconfirmed."
+                )
             await self.emitter.emit("flip.verified", {"flip": self.flip.model_dump(mode="json")})
 
     async def _narrate(self, plan: AnalysisPlan, report: Report) -> None:
         async with self._stage("narrating"):
             try:
                 narrative, caveats = await narrate(self.llm, plan, report)
-                report.narrative, report.caveats = narrative, caveats
-            except BudgetExceeded:
-                raise
+                report.narrative = narrative
+                report.caveats = [*report.caveats, *caveats]
             except Exception as exc:
                 report.caveats = [*report.caveats, f"Narrative unavailable: {exc}"]
             await self.emitter.emit("report.ready", {"report": report.model_dump(mode="json")})
@@ -156,5 +188,11 @@ class Pipeline:
         await self._search(plan)
         await self._verify(plan)
         self.report = build_report(plan, self.garden, self.flip)
+        if self.report.n_failed:
+            self.caveats.append(
+                f"{self.report.n_failed} universes could not run and are left out of the "
+                "robustness figure."
+            )
+        self.report.caveats = [*self.caveats, *self.report.caveats]
         await self._narrate(plan, self.report)
         return self.report

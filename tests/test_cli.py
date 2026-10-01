@@ -157,3 +157,14 @@ def test_record_demo_copies_events(monkeypatch: pytest.MonkeyPatch, tmp_path) ->
     result = runner.invoke(cli.app, ["record-demo", "--case", "checkout_ab"])
     assert result.exit_code == 0
     assert (tmp_path / "cases" / "checkout_ab" / "recorded" / "events.jsonl").read_text() == "{}\n"
+
+
+def test_run_summary_shows_failed_universes_and_caveats(captured) -> None:
+    snapshot = _completed()
+    snapshot.report.n_failed = 2
+    snapshot.report.failed = ["s1/b: boom", "s2/y: boom"]
+    snapshot.report.caveats = ["The universe budget ran out."]
+    captured.install(snapshot)
+    result = runner.invoke(cli.app, ["run", "--case", "checkout_ab"])
+    assert "10 explored, 2 could not run" in result.output
+    assert "Caveat: The universe budget ran out." in result.output
