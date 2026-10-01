@@ -1,0 +1,62 @@
+import type {
+  CaseCard,
+  Health,
+  RunCreated,
+  RunRequest,
+  RunSnapshot,
+  UniverseDetail,
+} from "../types/contracts";
+
+const BASE = "/api";
+
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new ApiError(response.status, text || response.statusText);
+  }
+  return (await response.json()) as T;
+}
+
+export function getHealth(): Promise<Health> {
+  return request<Health>("/health");
+}
+
+export function getCases(): Promise<CaseCard[]> {
+  return request<CaseCard[]>("/cases");
+}
+
+export function createRun(body: RunRequest): Promise<RunCreated> {
+  return request<RunCreated>("/runs", { method: "POST", body: JSON.stringify(body) });
+}
+
+export function getRun(runId: string): Promise<RunSnapshot> {
+  return request<RunSnapshot>(`/runs/${encodeURIComponent(runId)}`);
+}
+
+export function getUniverse(runId: string, universeId: string): Promise<UniverseDetail> {
+  return request<UniverseDetail>(
+    `/runs/${encodeURIComponent(runId)}/universes/${encodeURIComponent(universeId)}`,
+  );
+}
+
+export function eventsUrl(runId: string, fromSeq = 0): string {
+  return `${BASE}/runs/${encodeURIComponent(runId)}/events?from_seq=${fromSeq}`;
+}
+
+export function recordingUrl(caseId: string, speed = 1): string {
+  return `${BASE}/cases/${encodeURIComponent(caseId)}/recording?speed=${speed}`;
+}

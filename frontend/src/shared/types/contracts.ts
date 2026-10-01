@@ -220,6 +220,10 @@ export interface RunRequest {
   max_universes?: number | null;
 }
 
+export interface RunCreated {
+  run_id: string;
+}
+
 export interface RunSummary {
   run_id: string;
   case_id: string | null;

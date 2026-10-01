@@ -1,0 +1,70 @@
+:root {
+  --ink-950: #080706;
+  --ink-900: #0b0a09;
+  --ink-800: #12100e;
+  --ink-700: #1a1714;
+  --ink-600: #26211c;
+  --ink-500: #3a332b;
+  --paper-100: #f3ecdd;
+  --paper-300: #cfc6b3;
+  --paper-500: #968d7b;
+  --paper-700: #6b6455;
+  --gold: #d6a84f;
+  --gold-soft: rgba(214, 168, 79, 0.16);
+  --vermilion: #e0573b;
+  --vermilion-soft: rgba(224, 87, 59, 0.16);
+  --verdigris: #4fa593;
+  --verdigris-soft: rgba(79, 165, 147, 0.16);
+  --line: rgba(243, 236, 221, 0.1);
+  --line-strong: rgba(243, 236, 221, 0.22);
+
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2.25rem;
+  --text-3xl: 3.5rem;
+  --text-hero: clamp(2.75rem, 6vw, 5.5rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 0 rgba(243, 236, 221, 0.04) inset, 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+  --shadow-glow-gold: 0 0 28px rgba(214, 168, 79, 0.28);
+  --shadow-glow-vermilion: 0 0 32px rgba(224, 87, 59, 0.34);
+
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --dur-slow: 560ms;
+  --dur-reveal: 900ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --page-max: 1560px;
+  --gutter: clamp(1rem, 2.4vw, 2.5rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+    --dur-reveal: 0ms;
+  }
+}
