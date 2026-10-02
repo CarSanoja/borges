@@ -96,3 +96,12 @@ def insert_sentence(narrative: str, sentence: str) -> str:
     if len(parts) == 1:
         return f"{parts[0]} {sentence}"
     return f"{parts[0]} {sentence} {parts[1]}"
+
+
+def drop_wrong_sentences(plan: AnalysisPlan, report: Report, narrative: str) -> str:
+    kept = [
+        sentence
+        for sentence in _SENTENCE_END.split(narrative.strip())
+        if not wrong_labels(plan, report, sentence)
+    ]
+    return " ".join(kept)

@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
-from borges.analysis.narrative_flip import flip_sentence, insert_sentence, problems
+from borges.analysis.narrative_flip import (
+    drop_wrong_sentences,
+    flip_sentence,
+    insert_sentence,
+    problems,
+)
 from borges.analysis.prompts.narrator import build_messages
 from borges.analysis.schemas import NarratorOutput
 from borges.garden.models import Report
@@ -39,5 +44,5 @@ async def narrate(llm: LLMClient, plan: AnalysisPlan, report: Report) -> tuple[s
     except LLMError:
         pass
     if problems(plan, report, narrative):
-        narrative = insert_sentence(narrative, sentence)
+        narrative = insert_sentence(drop_wrong_sentences(plan, report, narrative), sentence)
     return narrative, list(out.caveats)

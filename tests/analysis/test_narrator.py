@@ -83,7 +83,7 @@ async def test_failed_retry_falls_back_to_insertion() -> None:
     bad = "The verdict is SHIP. It excludes internal and bot-like sessions."
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=["k"])})
     narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative.startswith(f"The verdict is SHIP. {SENTENCE} ")
+    assert narrative == f"The verdict is SHIP. {SENTENCE}"
     assert caveats == ["k"]
     assert llm.keys() == ["narrator", "narrator:retry"]
 
@@ -97,3 +97,14 @@ async def test_retry_that_repairs_only_the_label_still_gets_the_sentence() -> No
     )
     narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"First. {SENTENCE} Second."
+
+
+async def test_fallback_removes_sentences_that_name_another_option_of_the_flipped_step() -> None:
+    bad = (
+        "The verdict is SHIP. The flip comes from excluding internal and bot-like sessions. "
+        "Robustness is 50%."
+    )
+    llm = FakeLLM({"narrator": NarratorOutput(narrative=bad)})
+    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    assert narrative == f"The verdict is SHIP. {SENTENCE} Robustness is 50%."
+    assert "bot-like" not in narrative
