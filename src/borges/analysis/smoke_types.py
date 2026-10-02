@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from borges.analysis.models import Option, Step
@@ -31,6 +31,12 @@ Reviewer = Callable[[Step, list[ReviewEntry]], Awaitable[ReviewResult | None]]
 
 
 @dataclass
+class SmokeState:
+    parents: dict[str, Checkpoint] = field(default_factory=dict)
+    defaults: dict[str, Outcome] = field(default_factory=dict)
+
+
+@dataclass
 class SmokeConfig:
     backend: BranchBackend
     data: bytes
@@ -39,6 +45,7 @@ class SmokeConfig:
     reviewer: Reviewer | None = None
     on_review: OnReview | None = None
     result_check: Callable[[dict[str, Any]], str | None] | None = None
+    state: SmokeState = field(default_factory=SmokeState)
 
 
 @dataclass

@@ -138,3 +138,37 @@ async def review_step(
         return updated
 
     return list(await asyncio.gather(*(one(o) for o in outcomes)))
+
+
+async def review_extra(
+    config: SmokeConfig,
+    repair: Repair,
+    parent: Checkpoint,
+    step: Step,
+    default: Outcome,
+    outcome: Outcome,
+) -> Outcome:
+    if config.reviewer is None:
+        return outcome
+    result = await config.reviewer(
+        step, [ReviewEntry(outcome.option, outcome.effects, outcome.result)]
+    )
+    verdict = next(
+        (v for v in (result.verdicts if result else []) if v.option_id == outcome.option.id), None
+    )
+    if result is None or verdict is None:
+        return outcome
+    if config.on_review is not None:
+        await config.on_review(
+            step.id,
+            outcome.option.id,
+            verdict.faithful,
+            verdict.changes_estimand,
+            verdict.problem,
+            result.model,
+        )
+    if verdict.faithful and not verdict.changes_estimand:
+        return outcome
+    updated = await _handle(config, repair, parent, step, default, outcome, verdict)
+    await notify_changed(config, None, step, outcome, updated)
+    return updated

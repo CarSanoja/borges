@@ -5,7 +5,7 @@ import asyncio
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.smoke_core import sample_rows, smoke_option
-from borges.analysis.smoke_orientation import apply_orientation
+from borges.analysis.smoke_orientation import apply_orientation, effective_default
 from borges.analysis.smoke_review import review_step
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
@@ -71,6 +71,10 @@ async def smoke_plan(
         _record(summary, outcomes)
         outcomes = await apply_orientation(config, repair, parent, step, outcomes, summary)
         outcomes = await review_step(config, repair, parent, step, outcomes, summary)
+        config.state.parents[step.id] = parent
+        live_default = effective_default(step, outcomes)
+        if live_default is not None:
+            config.state.defaults[step.id] = live_default
         parent, promoted, cause = _apply(step, outcomes)
         if promoted is not None and config.on_smoke is not None:
             chosen = next(o for o in outcomes if o.option.id == promoted.id)

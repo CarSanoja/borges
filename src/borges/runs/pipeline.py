@@ -52,6 +52,7 @@ class Pipeline:
         self.report: Report | None = None
         self.caveats: list[str] = []
         self.coding = CodingSummary()
+        self.smoke: SmokeConfig | None = None
         self.search = SearchSummary(
             max_combinations_per_level=MAX_COMBINATIONS_PER_LEVEL,
             universe_budget=resolved.max_universes,
@@ -93,6 +94,7 @@ class Pipeline:
             on_review=on_review,
             result_check=scale_check(plan.decision_rule),
         )
+        self.smoke = smoke
         async with self.stage("coding"):
             plan = await code_plan(
                 self.llm,
@@ -160,7 +162,9 @@ class Pipeline:
     ) -> None:
         async with self.stage("adversary"):
             try:
-                await run_adversary_round(self.llm, plan, runner, self.emitter, baseline)
+                await run_adversary_round(
+                    self.llm, plan, runner, self.emitter, baseline, self.smoke
+                )
             except Exception as exc:
                 self.caveats.append(f"The adversary stage failed and was skipped: {exc}")
 
