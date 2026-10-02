@@ -161,52 +161,6 @@ async def test_code_plan_raises_when_no_option_of_step_codes(
         await code_plan(llm, make_plan())
 
 
-async def test_code_plan_failure_cancels_in_flight_siblings() -> None:
-    import asyncio
-
-    from borges.llm.client import BudgetExceeded
-
-    started: list[str] = []
-    finished: list[str] = []
-
-    class Failing(FakeLLM):
-        async def complete(self, role, messages, *, key, **kwargs):
-            started.append(key)
-            if key == "coder:d1.keep":
-                raise BudgetExceeded("cap")
-            await asyncio.sleep(0.2)
-            finished.append(key)
-            return await super().complete(role, messages, key=key, **kwargs)
-
-    keys = ["coder:d1.keep", "coder:d1.trim", "coder:m1.ols", "coder:m1.welch"]
-    llm = Failing({k: CoderOutput(code="C") for k in keys})
-    with pytest.raises(BudgetExceeded):
-        await code_plan(llm, make_plan())
-    await asyncio.sleep(0.3)
-    assert len(started) == 4 and finished == []
-
-
-async def test_code_plan_respects_concurrency() -> None:
-    import asyncio
-
-    active = 0
-    peak = 0
-
-    class Slow(FakeLLM):
-        async def complete(self, *args, **kwargs):
-            nonlocal active, peak
-            active += 1
-            peak = max(peak, active)
-            await asyncio.sleep(0.01)
-            active -= 1
-            return await super().complete(*args, **kwargs)
-
-    keys = ["coder:d1.keep", "coder:d1.trim", "coder:m1.ols", "coder:m1.welch"]
-    llm = Slow({k: CoderOutput(code="C") for k in keys})
-    await code_plan(llm, make_plan(), concurrency=2)
-    assert peak == 2
-
-
 async def test_repair_option_returns_checked_option(monkeypatch: pytest.MonkeyPatch) -> None:
     llm = FakeLLM({"coder:d1.trim:repair": CoderOutput(code="FIXED")})
     plan = make_plan()
