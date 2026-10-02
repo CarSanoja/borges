@@ -69,6 +69,7 @@ def _build_step(planned: PlannedStep, step_id: str) -> Step:
         kind=planned.kind,
         description=planned.description,
         options=options,
+        produces=[name.strip() for name in planned.produces if name.strip()],
     )
 
 

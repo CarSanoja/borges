@@ -68,6 +68,7 @@ class Step(BaseModel):
     kind: StepKind
     description: str
     options: list[Option]
+    produces: list[str] = Field(default_factory=list)
 
     @property
     def is_decision(self) -> bool:

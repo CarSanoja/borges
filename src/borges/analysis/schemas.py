@@ -20,6 +20,7 @@ class PlannedStep(BaseModel):
     kind: StepKind
     description: str
     options: list[PlannedOption] = Field(min_length=1)
+    produces: list[str] = Field(default_factory=list)
 
 
 class PlannerOutput(BaseModel):
