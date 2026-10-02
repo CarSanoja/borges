@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from borges.analysis.code_guard import check_code
+from borges.analysis.coder_normalise import strip_trailing_closer
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
@@ -11,6 +12,7 @@ from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
 from borges.llm.gather import gather_cancelling
 
+NORMALISED_NOTE = "removed a stray closing-bracket line at the end of the code"
 OnCoded = Callable[[str, str, bool, int, str | None, list[str]], Awaitable[None]]
 
 
@@ -22,6 +24,7 @@ async def _request_code(
     error: str | None = None,
     suffix: str = ":repair",
     models: list[str] | None = None,
+    notes: list[str] | None = None,
 ) -> str:
     key = f"coder:{step.id}.{option.id}" + (suffix if error is not None else "")
     response = await llm.complete(
@@ -33,7 +36,10 @@ async def _request_code(
     )
     if models is not None:
         models.append(response.usage.model)
-    return CoderOutput.model_validate(response.parsed).code
+    code, normalised = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)
+    if normalised and notes is not None:
+        notes.append(NORMALISED_NOTE)
+    return code
 
 
 async def generate_checked(
@@ -43,16 +49,17 @@ async def generate_checked(
     option: Option,
     models: list[str] | None = None,
 ) -> tuple[str | None, int, str | None]:
-    code = await _request_code(llm, plan, step, option, models=models)
+    notes: list[str] = []
+    code = await _request_code(llm, plan, step, option, models=models, notes=notes)
     violations = check_code(code, step.kind)
     if not violations:
-        return code, 1, None
+        return code, 1, notes[0] if notes else None
     error = "\n".join(violations)
     draft = option.model_copy(update={"code": code})
-    code = await _request_code(llm, plan, step, draft, error, models=models)
+    code = await _request_code(llm, plan, step, draft, error, models=models, notes=notes)
     violations = check_code(code, step.kind)
     if not violations:
-        return code, 2, None
+        return code, 2, notes[0] if notes else None
     return None, 2, "\n".join(violations)
 
 

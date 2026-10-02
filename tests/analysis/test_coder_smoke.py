@@ -31,6 +31,9 @@ BAD_ESTIMATE = (
 )
 
 
+real_check = coder.check_code
+
+
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(coder, "check_code", lambda code, kind: [])
@@ -178,3 +181,40 @@ def test_sample_is_small_deterministic_and_capped() -> None:
     big = pd.read_parquet(io.BytesIO(sample_rows(dataset(100_000))))
     assert len(big) == 2000
     assert sample_rows(dataset(10_000)) == sample_rows(dataset(10_000))
+
+
+async def test_syntax_error_repair_goes_through_the_guard_and_is_resent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    broken = "def apply(df, ctx):\n    return (df\n"
+    llm = FakeLLM(
+        responses(
+            **{
+                "coder:d1.trim": TRIM_RAISES,
+                "coder:d1.trim:smoke1": broken,
+                "coder:d1.trim:smoke2": TRIM_FIXED,
+            }
+        )
+    )
+    recorder = Recorder()
+    monkeypatch.setattr(coder, "check_code", real_check)
+    coded = await code_plan(llm, make_plan(), smoke=config(tmp_path, recorder))
+    assert coded.step("d1").option("trim").code == TRIM_FIXED
+    prompt = next(c for c in llm.calls if c.key == "coder:d1.trim:smoke2").messages[1]["content"]
+    assert "syntax error at line" in prompt and "return (df" in prompt
+
+
+async def test_promotion_after_smoke_failure_is_reported(tmp_path: Path) -> None:
+    llm = FakeLLM(
+        responses(
+            **{
+                "coder:d1.keep": TRIM_RAISES,
+                "coder:d1.keep:smoke1": TRIM_RAISES,
+                "coder:d1.keep:smoke2": TRIM_RAISES,
+            }
+        )
+    )
+    recorder = Recorder()
+    await code_plan(llm, make_plan(), smoke=config(tmp_path, recorder))
+    notes = [e for e in recorder.events if e[1] == "trim" and e[4]]
+    assert notes and "promoted to default because keep" in notes[0][4]

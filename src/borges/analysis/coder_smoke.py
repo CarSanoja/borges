@@ -62,7 +62,11 @@ def _error_text(run_stdout: str, run_stderr: str, exit_code: int) -> str:
 async def _execute(
     config: SmokeConfig, parent: Checkpoint, step: Step, option: Option
 ) -> tuple[Checkpoint | None, str | None]:
-    files = {harness.step_filename(step.id, option.id): harness.render_step(step, option).encode()}
+    files = {
+        harness.step_filename(step.id, option.id): harness.render_step(
+            step, option, split_half=True
+        ).encode()
+    }
     try:
         run = await config.backend.run(
             parent,
@@ -93,10 +97,10 @@ async def _smoke_option(
             return _Outcome(option, "failed", attempts + 1, str(exc), None, models)
         attempts += 1
         models.append(model)
+        option = option.model_copy(update={"code": code})
         if violation is not None:
             error = violation
             continue
-        option = option.model_copy(update={"code": code})
         checkpoint, error = await _execute(config, parent, step, option)
     if error is not None:
         return _Outcome(option, "failed", attempts, error, None, models)
@@ -131,7 +135,7 @@ def _record(summary: CodingSummary | None, outcomes: list[_Outcome]) -> None:
     summary.failed += sum(1 for o in outcomes if o.status == "failed")
 
 
-def _apply(step: Step, outcomes: list[_Outcome]) -> Checkpoint:
+def _apply(step: Step, outcomes: list[_Outcome]) -> tuple[Checkpoint, Option | None, str]:
     default_id = step.default.id
     survivors = {o.option.id: o for o in outcomes if o.status != "failed"}
     step.options = [survivors[o.id].option for o in step.options if o.id in survivors]
@@ -141,7 +145,9 @@ def _apply(step: Step, outcomes: list[_Outcome]) -> Checkpoint:
             reason = failed.error if failed else "not coded"
             raise LLMError(f"default option {step.id}.{default_id} failed its smoke run: {reason}")
         step.options[0].is_default = True
-    return survivors[step.default.id].checkpoint
+        reason = failed.error if failed and failed.error else "not coded"
+        return survivors[step.default.id].checkpoint, step.options[0], f"{default_id}: {reason}"
+    return survivors[step.default.id].checkpoint, None, ""
 
 
 async def smoke_plan(
@@ -157,5 +163,11 @@ async def smoke_plan(
     for step in smoked.steps:
         outcomes = await _smoke_step(config, repair, parent, step, semaphore)
         _record(summary, outcomes)
-        parent = _apply(step, outcomes)
+        parent, promoted, cause = _apply(step, outcomes)
+        if promoted is not None and config.on_smoke is not None:
+            chosen = next(o for o in outcomes if o.option.id == promoted.id)
+            note = f"promoted to default because {cause} failed its smoke run"
+            await config.on_smoke(
+                step.id, promoted.id, chosen.status, chosen.attempts, note, chosen.models
+            )
     return smoked

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-MAIN_TEMPLATE = """
+from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
+
+_TEMPLATE = """
 
 def __borges_main():
     import json as _json
@@ -90,6 +92,7 @@ def __borges_main():
         out["extra"] = {str(k): _finite(extra, k) for k in extra}
         return out
 
+__SPLIT_HALF_CHECK__
     try:
         state_df = _os.path.join("state", "df.parquet")
         state_ctx = _os.path.join("state", "ctx.json")
@@ -109,6 +112,8 @@ def __borges_main():
         }
         if kind == "model":
             result = _validate(estimate(df, ctx))
+            if __SPLIT_HALF__:
+                _check_split_half(df, ctx, result)
             _emit("BORGES_TRACE ", trace)
             _emit("BORGES_RESULT ", result)
             return
@@ -144,3 +149,4 @@ def __borges_main():
 
 __borges_main()
 """
+MAIN_TEMPLATE = _TEMPLATE.replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))

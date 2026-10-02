@@ -51,6 +51,7 @@ def render_step(
     option: Option,
     policy_home: str | None = None,
     policy_audit_path: str | None = None,
+    split_half: bool = False,
 ) -> str:
     if option.code is None:
         raise ValueError(f"option '{option.id}' of step '{step.id}' has no code")
@@ -59,6 +60,7 @@ def render_step(
         .replace("__OPTION_ID__", json.dumps(option.id))
         .replace("__KIND__", json.dumps(step.kind))
         .replace("__RESULT_KEYS__", repr(RESULT_KEYS))
+        .replace("__SPLIT_HALF__", repr(split_half))
     )
     return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 
