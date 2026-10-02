@@ -131,7 +131,9 @@ class RunOrchestrator:
             mode="live",
             llm=cast(Literal["nebius", "scripted"], llm),
             backend=backend,
-            models={role.value: spec.id for role, spec in DEFAULT_ROLE_MODELS.items()},
+            models={
+                r.value: s.id if llm == "nebius" else llm for r, s in DEFAULT_ROLE_MODELS.items()
+            },
             max_universes=resolved.max_universes,
         )
         await emitter.emit("run.started", started.model_dump(mode="json"))

@@ -40,6 +40,8 @@ async def test_full_run_emits_ordered_events(tmp_path: Path, scenario: Scenario)
     assert events[0].data["case_id"] == "demo"
     assert events[0].data["mode"] == "live"
     assert events[0].data["max_universes"] == 10
+    assert events[0].data["llm"] == "scripted"
+    assert set(events[0].data["models"].values()) == {"scripted"}
     assert events[-1].type == "run.finished" and events[-1].data["status"] == "completed"
     assert stages(rig, run_id) == [
         (name, status)
