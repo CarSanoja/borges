@@ -9,7 +9,6 @@ from borges.analysis import harness
 from borges.sandbox.local_backend import LocalBackend
 from tests.sandbox.policy_support import checkpoint_files, make_step, run_step
 
-
 PROBE = "/tmp/borges_policy_probe"
 
 
