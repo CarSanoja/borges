@@ -1,0 +1,19 @@
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: -4rem;
+  z-index: 60;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--gold);
+  color: var(--ink-900);
+  font-size: var(--text-sm);
+}
+
+.skip-link:focus {
+  top: var(--space-3);
+}
+
+.run-side:focus {
+  outline: none;
+}

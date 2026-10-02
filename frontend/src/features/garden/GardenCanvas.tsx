@@ -1,4 +1,5 @@
-import type { PointerEvent } from "react";
+import { useState } from "react";
+import type { KeyboardEvent, PointerEvent } from "react";
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { GardenLink } from "./GardenLink";
 import { GardenNode } from "./GardenNode";
@@ -23,6 +24,30 @@ interface Props {
 
 export function GardenCanvas({ snapshot, model, size, selectedUniverseId, interactive, showLabels, onHover, onLeave, onSelect }: Props) {
   const { plan } = snapshot;
+  const leafIds = model.layout.nodes.filter((n) => model.leafUniverse.has(n.id)).map((n) => n.id);
+  const selectedLeaf = leafIds.find((id) => model.leafUniverse.get(id)?.id === selectedUniverseId);
+  const [focused, setFocused] = useState<string | null>(null);
+  const stopId = [focused, selectedLeaf].find((id) => id && leafIds.includes(id)) ?? leafIds[0] ?? null;
+  const onKeyDown = (event: KeyboardEvent<SVGSVGElement>) => {
+    const current = (event.target as Element).closest("[data-node-id]")?.getAttribute("data-node-id") ?? null;
+    const index = current ? leafIds.indexOf(current) : -1;
+    if (index < 0) return;
+    const last = leafIds.length - 1;
+    const moves: Record<string, number> = {
+      ArrowRight: Math.min(last, index + 1),
+      ArrowDown: Math.min(last, index + 1),
+      ArrowLeft: Math.max(0, index - 1),
+      ArrowUp: Math.max(0, index - 1),
+      Home: 0,
+      End: last,
+    };
+    const target = moves[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    const id = leafIds[target] as string;
+    setFocused(id);
+    event.currentTarget.querySelector<SVGGElement>(`[data-node-id="${id}"]`)?.focus();
+  };
   const roleOf = new Map<string, LinkRole>(model.links.map((l) => [l.id, l.role]));
   return (
     <svg
@@ -31,6 +56,7 @@ export function GardenCanvas({ snapshot, model, size, selectedUniverseId, intera
       role={interactive ? "group" : undefined}
       aria-label={interactive ? "Garden of forking analysis paths" : undefined}
       aria-hidden={interactive ? undefined : true}
+      onKeyDown={interactive ? onKeyDown : undefined}
     >
       {plan && <Rings steps={plan.steps} radiusOf={model.layout.radiusOf} aspect={model.layout.aspect} showLabels={showLabels} />}
       <g>
@@ -50,7 +76,9 @@ export function GardenCanvas({ snapshot, model, size, selectedUniverseId, intera
               universeId={universe?.id ?? null}
               ariaLabel={universe ? universeAriaLabel(plan, universe) : undefined}
               selected={universe !== undefined && universe.id === selectedUniverseId}
+              tabbable={node.id === stopId}
               interactive={interactive}
+              onFocusNode={setFocused}
               onHover={onHover}
               onLeave={onLeave}
               onSelect={onSelect}

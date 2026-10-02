@@ -65,4 +65,21 @@ describe("Telemetry coding summary", () => {
     rerender(<Telemetry snapshot={{ ...base, report: { ...report, coding: undefined } }} />);
     expect(screen.getByLabelText("Telemetry")).not.toHaveTextContent("tested on a sample");
   });
+
+  it("pluralises the counters", () => {
+    const base = foldEvents("t", events);
+    const snapshot = {
+      ...base,
+      llm: "nebius" as const,
+      usage: { tokens_in: 1, tokens_out: 1, cost_usd: 0, llm_calls: 1, cached_calls: 0, checkpoints: 1, universes: 1 },
+    };
+    render(<Telemetry snapshot={snapshot} />);
+    const region = screen.getByLabelText("Telemetry");
+    expect(region).toHaveTextContent("1 universe");
+    expect(region).not.toHaveTextContent("1 universes");
+    expect(region).toHaveTextContent("1 sandbox checkpoint");
+    expect(region).not.toHaveTextContent("1 sandbox checkpoints");
+    expect(region).toHaveTextContent("1 LLM call");
+    expect(region).not.toHaveTextContent("1 LLM calls");
+  });
 });

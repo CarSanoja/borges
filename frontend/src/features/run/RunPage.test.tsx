@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RunPage } from "./RunPage";
 
@@ -56,6 +56,15 @@ describe("RunPage (mock source)", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Complete");
     expect(screen.getByText("New checkout A/B test")).toBeInTheDocument();
     expect(screen.getByLabelText("Telemetry")).toHaveTextContent("7 universes");
+  });
+
+  it("offers a first-tab skip link that moves focus to the verdict", async () => {
+    render(<RunPage source={{ kind: "mock" }} onHome={() => undefined} />);
+    const skip = screen.getByRole("link", { name: "Skip to verdict" });
+    const first = document.querySelector("main")?.querySelector("a, button, [tabindex='0']");
+    expect(first).toBe(skip);
+    fireEvent.click(skip);
+    expect(document.getElementById("verdict")).toHaveFocus();
   });
 });
 

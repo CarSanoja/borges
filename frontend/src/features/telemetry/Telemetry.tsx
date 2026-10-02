@@ -16,15 +16,15 @@ export function Telemetry({ snapshot }: Props) {
   return (
     <section aria-label="Telemetry" className="tm">
       <div className="tm-counters">
-        <Counter value={usage.universes} label="universes" format={formatCount} />
-        <Counter value={usage.checkpoints} label="sandbox checkpoints" format={formatCount} />
+        <Counter value={usage.universes} label={usage.universes === 1 ? "universe" : "universes"} format={formatCount} />
+        <Counter value={usage.checkpoints} label={usage.checkpoints === 1 ? "sandbox checkpoint" : "sandbox checkpoints"} format={formatCount} />
         {snapshot.llm === "scripted" ? (
           <p className="tm-scripted">scripted, no model calls</p>
         ) : (
           <>
             <Counter
               value={usage.llm_calls}
-              label="LLM calls"
+              label={usage.llm_calls === 1 ? "LLM call" : "LLM calls"}
               format={formatCount}
               note={usage.cached_calls > 0 ? `${formatCount(usage.cached_calls)} cached` : undefined}
             />

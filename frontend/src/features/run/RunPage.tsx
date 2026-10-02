@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { MouseEvent } from "react";
 import { Garden } from "../garden/Garden";
 import { InfluenceBars } from "../influence/InfluenceBars";
 import { SpecCurve } from "../speccurve/SpecCurve";
@@ -11,6 +12,7 @@ import { NotFound } from "../notfound/NotFound";
 import { CASE_GONE_MESSAGE, isNotFound, useRun, type RunSource } from "./useRun";
 import "./run.css";
 import "./runResponsive.css";
+import "./skipLink.css";
 
 interface Props {
   source: RunSource;
@@ -37,8 +39,16 @@ export function RunPage({ source, onHome }: Props) {
     );
   }
 
+  const skipToVerdict = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    document.getElementById("verdict")?.focus();
+  };
+
   return (
     <main className="run-page">
+      <a className="skip-link" href="#verdict" onClick={skipToVerdict}>
+        Skip to verdict
+      </a>
       <RunHeader snapshot={snapshot} onHome={onHome} />
       {snapshot.error && (
         <p className="run-error" role="alert">
@@ -49,7 +59,7 @@ export function RunPage({ source, onHome }: Props) {
         <div className="run-garden">
           <Garden snapshot={snapshot} selectedUniverseId={selected} onSelectUniverse={setSelected} />
         </div>
-        <aside className="run-side">
+        <aside className="run-side" id="verdict" tabIndex={-1} aria-label="Verdict panel">
           <VerdictCard snapshot={snapshot} />
         </aside>
       </section>

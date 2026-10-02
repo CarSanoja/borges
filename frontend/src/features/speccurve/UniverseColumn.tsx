@@ -8,12 +8,13 @@ interface Props {
   layout: Layout;
   x: number;
   selected: boolean;
+  tabbable: boolean;
   hovered: boolean;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
 }
 
-export function UniverseColumn({ point, rows, layout, x, selected, hovered, onSelect, onHover }: Props) {
+export function UniverseColumn({ point, rows, layout, x, selected, tabbable, hovered, onSelect, onHover }: Props) {
   const { y, step, top, curveHeight, matrixTop, rowHeight, height } = layout;
   const py = y(point.estimate);
   const clampY = (v: number) => Math.min(top + curveHeight, Math.max(top, y(v)));
@@ -33,7 +34,8 @@ export function UniverseColumn({ point, rows, layout, x, selected, hovered, onSe
       data-hovered={hovered}
       style={{ transform: `translate(${x}px, 0px)` }}
       role="button"
-      tabIndex={0}
+      tabIndex={tabbable ? 0 : -1}
+      data-universe-id={point.id}
       aria-label={`Universe ${point.id}, estimate ${point.estimate.toFixed(3)}, ${point.verdict}`}
       aria-pressed={selected}
       onClick={() => onSelect(point.id)}

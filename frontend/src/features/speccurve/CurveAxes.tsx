@@ -1,5 +1,5 @@
 import type { Layout } from "./specCurveLayout";
-import { wrapLabel } from "./wrapLabel";
+import { joinableLines, wrapLabel } from "./wrapLabel";
 import { formatNumber } from "../verdict/verdictFormat";
 
 interface Props {
@@ -12,7 +12,7 @@ export function CurveAxes({ layout, threshold, yLabel }: Props) {
   const { y, left, width, right, top, curveHeight } = layout;
   const x2 = width - right;
   const ticks = y.ticks(5);
-  const lines = wrapLabel(yLabel, Math.floor(curveHeight / 6.4));
+  const lines = joinableLines(wrapLabel(yLabel, Math.floor(curveHeight / 6.4)));
   const lineHeight = 13;
   const thresholdY = threshold === null ? null : y(threshold);
   return (

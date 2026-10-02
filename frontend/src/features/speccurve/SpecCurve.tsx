@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import type { KeyboardEvent } from "react";
 import type { ReferenceEstimate, RunSnapshot } from "../../shared/types/contracts";
 import { CurveAxes } from "./CurveAxes";
 import { DecisionMatrix } from "./DecisionMatrix";
@@ -33,6 +34,28 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
     () => makeLayout(width, rows.length, points.length, refs.length > 0, yDomain(points, threshold, refs)),
     [width, rows.length, points, refs, threshold],
   );
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const stopId = [focusedId, selectedUniverseId].find((id) => id && points.some((p) => p.id === id)) ?? points[0]?.id ?? null;
+  const onKeyDown = (event: KeyboardEvent<SVGSVGElement>) => {
+    const current = (event.target as Element).closest("[data-universe-id]")?.getAttribute("data-universe-id");
+    const index = points.findIndex((p) => p.id === current);
+    if (index < 0) return;
+    const last = points.length - 1;
+    const moves: Record<string, number> = {
+      ArrowRight: Math.min(last, index + 1),
+      ArrowDown: Math.min(last, index + 1),
+      ArrowLeft: Math.max(0, index - 1),
+      ArrowUp: Math.max(0, index - 1),
+      Home: 0,
+      End: last,
+    };
+    const target = moves[event.key];
+    if (target === undefined) return;
+    event.preventDefault();
+    const id = (points[target] as { id: string }).id;
+    setFocusedId(id);
+    event.currentTarget.querySelector<SVGGElement>(`[data-universe-id="${id}"]`)?.focus();
+  };
   const hoverIndex = points.findIndex((p) => p.id === hoveredId);
   const hovered = hoverIndex >= 0 ? points[hoverIndex] : undefined;
 
@@ -51,7 +74,7 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
         {points.length === 0 ? (
           <p className="sc-empty">Finished universes appear here, sorted by estimate.</p>
         ) : (
-          <svg width={width} height={layout.height} role="group" aria-label="Estimates by universe">
+          <svg width={width} height={layout.height} role="group" aria-label="Estimates by universe" onKeyDown={onKeyDown}>
             <CurveAxes layout={layout} threshold={threshold} yLabel={yLabel} />
             <DecisionMatrix layout={layout} rows={rows} />
             {refs.length > 0 && <ReferenceLane layout={layout} reference={refs} label={referenceLabel ?? "Reference"} />}
@@ -63,9 +86,13 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
                 layout={layout}
                 x={columnX(layout, i)}
                 selected={point.id === selectedUniverseId}
+                tabbable={point.id === stopId}
                 hovered={point.id === hoveredId}
                 onSelect={onSelectUniverse}
-                onHover={setHoveredId}
+                onHover={(id) => {
+                  setHoveredId(id);
+                  if (id) setFocusedId(id);
+                }}
               />
             ))}
           </svg>

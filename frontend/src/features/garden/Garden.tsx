@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { GardenCanvas } from "./GardenCanvas";
@@ -32,7 +32,7 @@ export function Garden({ snapshot, selectedUniverseId = null, onSelectUniverse, 
   const interactive = !ambient;
   const frame = useRef<HTMLDivElement>(null);
   const [stageRef, size] = useElementSize();
-  const outerRadius = Math.max(60, size.height / 2 - RING_MARGIN);
+  const outerRadius = Math.max(60, Math.min(size.height, size.width) / 2 - RING_MARGIN);
   const aspect = Math.min(MAX_ASPECT, Math.max(1, (size.width / 2 - RING_MARGIN) / outerRadius));
   const model = useGardenModel(snapshot, selectedUniverseId, outerRadius, aspect);
   const [hover, setHover] = useState<Hover | null>(null);
@@ -46,6 +46,20 @@ export function Garden({ snapshot, selectedUniverseId = null, onSelectUniverse, 
     setHover({ id, x: event.clientX - rect.left, y: event.clientY - rect.top });
   }, []);
   const onLeave = useCallback(() => setHover(null), []);
+  const hoverActive = hover !== null;
+
+  useEffect(() => {
+    setHover(null);
+  }, [selectedUniverseId]);
+
+  useEffect(() => {
+    if (!hoverActive) return;
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setHover(null);
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [hoverActive]);
   const onSelect = useCallback((id: string) => onSelectUniverse?.(id), [onSelectUniverse]);
 
   const planted = model.layout.nodes.length > 0;

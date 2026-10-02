@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wrapLabel } from "./wrapLabel";
+import { joinableLines, wrapLabel } from "./wrapLabel";
 
 describe("wrapLabel", () => {
   it("keeps the whole metric across lines instead of cutting it at 34 characters", () => {
@@ -15,5 +15,12 @@ describe("wrapLabel", () => {
     const lines = wrapLabel("one two three four five six seven eight", 8, 2);
     expect(lines).toHaveLength(2);
     expect(lines[1]?.endsWith("…")).toBe(true);
+  });
+
+  it("keeps a separator between wrapped lines so the text reads whole", () => {
+    const label = "conversion lift, treatment minus control (percentage points)";
+    const lines = joinableLines(wrapLabel(label, 25));
+    expect(lines.join("")).toBe(label);
+    expect(lines.join("")).toContain("minus control");
   });
 });

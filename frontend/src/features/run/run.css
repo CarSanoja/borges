@@ -142,9 +142,6 @@
 }
 
 .run-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 20;
   margin: 0 calc(var(--gutter) * -1);
   padding: 0 var(--gutter);
   height: var(--run-footer);
@@ -153,7 +150,6 @@
   overflow: hidden;
   border-top: 1px solid var(--line);
   background: rgba(11, 10, 9, 0.88);
-  backdrop-filter: blur(10px);
   color: var(--paper-500);
   font-size: var(--text-sm);
 }

@@ -70,4 +70,17 @@ describe("SpecCurve", () => {
     expect(screen.getByText("1 universe")).toBeInTheDocument();
     expect(screen.queryByText("1 universes")).toBeNull();
   });
+
+  it("is one tab stop with arrow-key navigation", () => {
+    render(<SpecCurve snapshot={snapshot} selectedUniverseId={null} onSelectUniverse={() => undefined} />);
+    const columns = screen.getAllByRole("button");
+    expect(columns.filter((c) => c.getAttribute("tabindex") === "0")).toHaveLength(1);
+    (columns[0] as HTMLElement).focus();
+    fireEvent.keyDown(columns[0] as HTMLElement, { key: "ArrowRight" });
+    expect(columns[1]).toHaveFocus();
+    expect(columns[1]).toHaveAttribute("tabindex", "0");
+    expect(columns[0]).toHaveAttribute("tabindex", "-1");
+    fireEvent.keyDown(columns[1] as HTMLElement, { key: "End" });
+    expect(columns[columns.length - 1]).toHaveFocus();
+  });
 });

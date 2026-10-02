@@ -21,3 +21,7 @@ export function wrapLabel(label: string, maxChars: number, maxLines = 3): string
   kept[maxLines - 1] = `${last.slice(0, Math.max(1, maxChars - 1))}…`;
   return kept;
 }
+
+export function joinableLines(lines: string[]): string[] {
+  return lines.map((line, index) => (index < lines.length - 1 ? `${line} ` : line));
+}

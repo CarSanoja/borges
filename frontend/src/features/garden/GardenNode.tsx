@@ -13,10 +13,12 @@ interface Props {
   universeId: string | null;
   ariaLabel?: string;
   selected: boolean;
+  tabbable: boolean;
   interactive: boolean;
   onHover: (id: string, event: PointerEvent<SVGGElement>) => void;
   onLeave: () => void;
   onSelect: (universeId: string) => void;
+  onFocusNode: (nodeId: string) => void;
 }
 
 const ROLE_FILL: Record<LinkRole, string> = {
@@ -32,7 +34,7 @@ function nodeRadius(isRoot: boolean, isUniverse: boolean, selected: boolean, rol
   return 4.5;
 }
 
-function GardenNodeBase({ node, tone, role, universeId, ariaLabel, selected, interactive, onHover, onLeave, onSelect }: Props) {
+function GardenNodeBase({ node, tone, role, universeId, ariaLabel, selected, tabbable, interactive, onHover, onLeave, onSelect, onFocusNode }: Props) {
   const isUniverse = universeId !== null;
   const isRoot = node.depth === 0;
   const radius = nodeRadius(isRoot, isUniverse, selected, role);
@@ -63,13 +65,14 @@ function GardenNodeBase({ node, tone, role, universeId, ariaLabel, selected, int
         data-leaf={isUniverse ? "true" : "false"}
         data-verdict={tone ?? "none"}
         role={live ? "button" : undefined}
-        tabIndex={live ? 0 : undefined}
+        tabIndex={live ? (tabbable ? 0 : -1) : undefined}
         aria-label={live ? (ariaLabel ?? `Universe ${universeId}`) : undefined}
         aria-pressed={live ? selected : undefined}
         onPointerMove={interactive ? (e) => onHover(node.id, e) : undefined}
         onPointerLeave={interactive ? onLeave : undefined}
         onClick={live ? activate : undefined}
         onKeyDown={live ? onKey : undefined}
+        onFocus={live ? () => onFocusNode(node.id) : undefined}
       >
         {interactive && <circle r={radius + 8} className="garden-node-hit" />}
         {isRoot && <circle r={radius + 7} className="garden-node-root-ring" />}
