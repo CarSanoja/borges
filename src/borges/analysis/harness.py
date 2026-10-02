@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from pathlib import Path
 
 from borges.analysis.harness_main import MAIN_TEMPLATE
 from borges.analysis.models import AnalysisResult, Option, Step, StepTrace
@@ -15,6 +16,8 @@ ERROR_PREFIX = "BORGES_ERROR "
 
 STEPS_DIR = "steps"
 _UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
+_POLICY_SOURCE = (Path(__file__).parent / "runtime_policy.py").read_text()
+POLICY_PRELUDE = f"exec(compile({_POLICY_SOURCE!r}, '<borges-policy>', 'exec'))\n"
 
 
 def _sanitise(identifier: str) -> str:
@@ -37,7 +40,7 @@ def render_step(step: Step, option: Option) -> str:
         .replace("__OPTION_ID__", json.dumps(option.id))
         .replace("__KIND__", json.dumps(step.kind))
     )
-    return option.code.rstrip("\n") + "\n" + main
+    return POLICY_PRELUDE + option.code.rstrip("\n") + "\n" + main
 
 
 def _json_lines(stdout: str, prefix: str) -> list[dict[str, object]]:

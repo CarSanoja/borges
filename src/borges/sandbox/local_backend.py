@@ -97,6 +97,7 @@ class LocalBackend:
         return {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
             "HOME": str(fs),
+            "TMPDIR": str(fs),
             "PYTHONHASHSEED": "0",
             "OMP_NUM_THREADS": "1",
             "OPENBLAS_NUM_THREADS": "1",
