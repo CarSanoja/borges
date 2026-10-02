@@ -31,6 +31,10 @@ smallest flip it found.**
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
 > agree, and, with a calibration study (`evidence/calibration.md`), how much to trust a flip.
 
+<p align="center"><img src="assets/screenshots/replay-1280.png" alt="Borges replay of the red cards case at 1280 px: the garden of forking paths, the flipped verdict and the spec curve" width="760"> <img src="assets/screenshots/replay-390.png" alt="The same replay at 390 px wide" width="170"></p>
+
+<sub>Recorded scripted replay of the red cards case (no model is called on this server); the drawer view is in `assets/screenshots/replay-drawer-1280.png`.</sub>
+
 In three lines:
 
 1. You give it a dataset, a question and the rule you will act on ("ship if the lift is
