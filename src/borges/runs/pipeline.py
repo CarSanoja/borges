@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import io
 from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
-
-import pandas as pd
 
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
 from borges.analysis.models import AnalysisPlan, CodingSummary
-from borges.analysis.narrator import narrate
 from borges.analysis.planner import plan_analysis
 from borges.analysis.profile import profile_dataframe
 from borges.analysis.scale_check import scale_check
@@ -19,26 +15,19 @@ from borges.config import Settings
 from borges.garden.executor import GardenExecutor
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary, Universe
-from borges.garden.plausibility import IMPLAUSIBLE_REASON
 from borges.garden.search import combination_flip_choices, minimal_flip, single_flip_choices
-from borges.garden.verify import verify_flip
 from borges.llm.client import BudgetExceeded, LLMClient, UsageTotals
 from borges.runs.adversary_round import run_adversary_round
 from borges.runs.emitter import RunEmitter
-from borges.runs.events import OptionCodedData, OptionReviewedData, OptionSmokeData
 from borges.runs.inputs import ResolvedRun
-from borges.runs.pipeline_caveats import mirror_caveat
+from borges.runs.pipeline_callbacks import coding_callbacks
+from borges.runs.pipeline_caveats import report_caveats
+from borges.runs.pipeline_data import load_dataframe
+from borges.runs.pipeline_finish import narrate_stage, verify_stage
 from borges.runs.runner import UniverseRunner, publish_plan
 from borges.sandbox.backend import BranchBackend
 
 MAX_COMBINATIONS_PER_LEVEL = 10
-
-
-def load_dataframe(data: bytes) -> pd.DataFrame:
-    try:
-        return pd.read_parquet(io.BytesIO(data))
-    except Exception as exc:
-        raise ValueError(f"the dataset is not a readable parquet file: {exc}") from exc
 
 
 class Pipeline:
@@ -74,7 +63,7 @@ class Pipeline:
         return self.llm.totals, created
 
     @asynccontextmanager
-    async def _stage(self, name: str, detail: str = "") -> AsyncIterator[None]:
+    async def stage(self, name: str, detail: str = "") -> AsyncIterator[None]:
         await self.emitter.stage(name, "started", detail)
         yield
         await self.emitter.stage(name, "done")
@@ -82,7 +71,7 @@ class Pipeline:
 
     async def _plan(self) -> AnalysisPlan:
         resolved = self.resolved
-        async with self._stage("profiling"):
+        async with self.stage("profiling"):
             frame = load_dataframe(resolved.data)
             profile = await asyncio.to_thread(
                 profile_dataframe,
@@ -90,64 +79,11 @@ class Pipeline:
                 resolved.dataset_name,
                 column_notes=resolved.column_notes,
             )
-        async with self._stage("planning"):
+        async with self.stage("planning"):
             plan = await plan_analysis(self.llm, profile, resolved.question, resolved.decision_rule)
             await publish_plan(self.emitter, plan)
 
-        async def on_coded(
-            step_id: str,
-            option_id: str,
-            ok: bool,
-            attempts: int,
-            error: str | None,
-            models: list[str] | None = None,
-        ) -> None:
-            payload = OptionCodedData(
-                step_id=step_id,
-                option_id=option_id,
-                ok=ok,
-                attempts=attempts,
-                error=error,
-                models=models or [],
-            )
-            await self.emitter.emit("option.coded", payload.model_dump(mode="json"))
-
-        async def on_smoke(
-            step_id: str,
-            option_id: str,
-            status: str,
-            attempts: int,
-            error: str | None,
-            models: list[str] | None = None,
-        ) -> None:
-            payload = OptionSmokeData(
-                step_id=step_id,
-                option_id=option_id,
-                status=status,
-                attempts=attempts,
-                error=error,
-                models=models or [],
-            )
-            await self.emitter.emit("option.smoke", payload.model_dump(mode="json"))
-
-        async def on_review(
-            step_id: str,
-            option_id: str,
-            faithful: bool,
-            changes_estimand: bool,
-            problem: str,
-            model: str,
-        ) -> None:
-            payload = OptionReviewedData(
-                step_id=step_id,
-                option_id=option_id,
-                faithful=faithful,
-                changes_estimand=changes_estimand,
-                problem=problem,
-                model=model,
-            )
-            await self.emitter.emit("option.reviewed", payload.model_dump(mode="json"))
-
+        on_coded, on_smoke, on_review = coding_callbacks(self.emitter)
         smoke = SmokeConfig(
             self.backend,
             resolved.data,
@@ -157,7 +93,7 @@ class Pipeline:
             on_review=on_review,
             result_check=scale_check(plan.decision_rule),
         )
-        async with self._stage("coding"):
+        async with self.stage("coding"):
             plan = await code_plan(
                 self.llm,
                 plan,
@@ -183,11 +119,11 @@ class Pipeline:
         runner = UniverseRunner(
             self.llm, plan, executor, self.garden, self.emitter, self.resolved.max_universes
         )
-        async with self._stage("baseline"):
+        async with self.stage("baseline"):
             baseline = await runner.run(plan.default_choices(), "baseline")
             if baseline.status != "done":
                 raise RuntimeError(f"the baseline analysis failed: {baseline.error}")
-        async with self._stage("single_flips"):
+        async with self.stage("single_flips"):
             singles = single_flip_choices(plan)
             if len(singles) > runner.remaining:
                 self.search.budget_exhausted = True
@@ -222,14 +158,14 @@ class Pipeline:
     async def _adversary(
         self, plan: AnalysisPlan, runner: UniverseRunner, baseline: Universe
     ) -> None:
-        async with self._stage("adversary"):
+        async with self.stage("adversary"):
             try:
                 await run_adversary_round(self.llm, plan, runner, self.emitter, baseline)
             except Exception as exc:
                 self.caveats.append(f"The adversary stage failed and was skipped: {exc}")
 
     async def _combinations(self, plan: AnalysisPlan, runner: UniverseRunner) -> None:
-        async with self._stage("combination_flips"):
+        async with self.stage("combination_flips"):
             for size in range(2, len(plan.decision_steps) + 1):
                 if self.flip is not None:
                     break
@@ -245,64 +181,14 @@ class Pipeline:
                 await runner.run_many(choices, "combination")
                 self.flip = minimal_flip(plan, self.garden)
 
-    async def _verify(self, plan: AnalysisPlan) -> None:
-        if self.flip is None:
-            return
-        await self.emitter.emit("flip.found", {"flip": self.flip.model_dump(mode="json")})
-        async with self._stage("verifying"):
-            try:
-                self.flip = await verify_flip(
-                    self.backend,
-                    plan,
-                    self.resolved.data,
-                    self.flip,
-                    self.garden,
-                    step_timeout_s=self.settings.borges_step_timeout_s,
-                )
-            except Exception as exc:
-                self.caveats.append(
-                    f"The minimal flip could not be re-run in a fresh sandbox ({exc}); "
-                    "it is unverified."
-                )
-            if self.flip.reproduced is False:
-                self.caveats.append(
-                    "The minimal flip did not reproduce in a fresh sandbox; treat it as "
-                    "unconfirmed."
-                )
-            await self.emitter.emit("flip.verified", {"flip": self.flip.model_dump(mode="json")})
-
-    async def _narrate(self, plan: AnalysisPlan, report: Report) -> None:
-        async with self._stage("narrating"):
-            try:
-                narrative, caveats = await narrate(self.llm, plan, report)
-                report.narrative = narrative
-                report.caveats = [*report.caveats, *caveats]
-            except Exception as exc:
-                report.caveats = [*report.caveats, f"Narrative unavailable: {exc}"]
-            await self.emitter.emit("report.ready", {"report": report.model_dump(mode="json")})
-
     async def run(self) -> Report:
         plan = await self._plan()
         await self._search(plan)
-        await self._verify(plan)
+        await verify_stage(self, plan)
         self.report = build_report(plan, self.garden, self.flip)
         self.report.search = self.search
         self.report.coding = self.coding if self.coding.options else None
-        if self.report.n_failed:
-            self.caveats.append(
-                f"{self.report.n_failed} universes could not run and are left out of the "
-                "robustness figure."
-            )
-        implausible = sum(1 for line in self.report.failed if line.startswith(IMPLAUSIBLE_REASON))
-        if implausible:
-            self.caveats.append(
-                f"{implausible} universes produced an implausible estimate (far outside the "
-                "scale of the baseline) and were excluded as broken implementations, not counted "
-                "as flips."
-            )
-        mirrored = mirror_caveat(self.flip, plan.decision_rule.threshold)
-        if mirrored:
-            self.caveats.append(mirrored)
+        self.caveats.extend(report_caveats(self.report, self.flip, plan.decision_rule.threshold))
         self.report.caveats = [*self.caveats, *self.report.caveats]
-        await self._narrate(plan, self.report)
+        await narrate_stage(self, plan, self.report)
         return self.report

@@ -17,7 +17,7 @@ from borges.analysis.models import (
 from borges.garden.influence import failed_universes
 from borges.garden.models import Change, Flip, Garden, Report, Universe
 from borges.llm.client import LLMError
-from borges.runs import adversary_round, pipeline, runner
+from borges.runs import adversary_round, pipeline, pipeline_finish, runner
 from tests.runs.engine_scenario import FakeExecutor, Scenario
 from tests.runs.fakes import make_plan
 
@@ -169,9 +169,9 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         (pipeline, "single_flip_choices", single_flip_choices),
         (pipeline, "combination_flip_choices", combination_flip_choices),
         (pipeline, "minimal_flip", fake_minimal_flip),
-        (pipeline, "verify_flip", verify_flip),
+        (pipeline_finish, "verify_flip", verify_flip),
         (pipeline, "build_report", build_report),
-        (pipeline, "narrate", narrate),
+        (pipeline_finish, "narrate", narrate),
         (runner, "repair_option", repair_option),
         (adversary_round, "propose_options", propose_options),
         (adversary_round, "judge_option", judge_option),

@@ -10,7 +10,6 @@ from typing import Literal, cast
 
 from borges.cases.registry import CaseRegistry
 from borges.config import Settings
-from borges.llm.client import DEFAULT_ROLE_MODELS
 from borges.llm.factory import make_llm
 from borges.runs.bus import EventBus
 from borges.runs.detail import build_universe_detail
@@ -18,6 +17,7 @@ from borges.runs.emitter import RunEmitter
 from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
+from borges.runs.orchestrator_meta import announced_models, outcome_meta
 from borges.runs.pipeline import Pipeline
 from borges.runs.state import fold
 from borges.runs.store import RunStore
@@ -119,11 +119,6 @@ class RunOrchestrator:
     def universe_detail(self, run_id: str, universe_id: str) -> UniverseDetail:
         return build_universe_detail(self.snapshot(run_id), universe_id)
 
-    def _announced_models(self, llm: str) -> dict[str, str]:
-        if llm == "local":
-            return {role.value: self.settings.borges_local_model for role in DEFAULT_ROLE_MODELS}
-        return {r.value: s.id if llm == "nebius" else llm for r, s in DEFAULT_ROLE_MODELS.items()}
-
     async def _announce(
         self, emitter: RunEmitter, request: RunRequest, resolved: ResolvedRun
     ) -> None:
@@ -136,7 +131,7 @@ class RunOrchestrator:
             mode="live",
             llm=cast(Literal["nebius", "scripted", "local"], llm),
             backend=backend,
-            models=self._announced_models(llm),
+            models=announced_models(self.settings, llm),
             max_universes=resolved.max_universes,
         )
         await emitter.emit("run.started", started.model_dump(mode="json"))
@@ -148,7 +143,7 @@ class RunOrchestrator:
         finished = RunFinishedData(status=status, elapsed_s=time.monotonic() - started_at)
         meta: dict[str, object] = {"status": status}
         if pipeline is not None:
-            meta.update(_outcome_meta(pipeline))
+            meta.update(outcome_meta(pipeline))
         try:
             self.store.update_meta(emitter.run_id, **meta)
             if error:
@@ -192,14 +187,3 @@ class RunOrchestrator:
                 await backend.close()
         await self._finish(emitter, started_at, error, pipeline)
         return self.snapshot(run_id)
-
-
-def _outcome_meta(pipeline: Pipeline) -> dict[str, object]:
-    report = pipeline.report
-    flip = pipeline.flip
-    return {
-        "cost_usd": pipeline.llm.totals.cost_usd,
-        "n_universes": len(pipeline.garden.universes),
-        "verdict": report.original_verdict if report else None,
-        "flipped_verdict": flip.flipped_verdict if flip else None,
-    }

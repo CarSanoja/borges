@@ -3,8 +3,11 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from borges.cases.live_summary import LIVE_FOLDER
 from borges.config import Settings
 from borges.runs.models import RunRequest, RunSnapshot
+
+LIVE_LLMS = ("nebius", "local")
 
 
 def list_cases(settings: Settings) -> list:
@@ -37,11 +40,12 @@ def load_snapshot(settings: Settings, run_id: str) -> RunSnapshot:
     return RunStore(settings.borges_runs_dir).snapshot(run_id)
 
 
-def copy_recording(settings: Settings, run_id: str, case_id: str) -> Path:
+def copy_recording(settings: Settings, run_id: str, case_id: str, llm: str = "scripted") -> Path:
     source = settings.borges_runs_dir / run_id / "events.jsonl"
     if not source.is_file():
         raise FileNotFoundError(f"no event log at {source}")
-    target = settings.borges_cases_dir / case_id / "recorded" / "events.jsonl"
+    folder = LIVE_FOLDER if llm in LIVE_LLMS else "recorded"
+    target = settings.borges_cases_dir / case_id / folder / "events.jsonl"
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
     return target

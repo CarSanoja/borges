@@ -18,7 +18,12 @@ ERROR_PREFIX = "BORGES_ERROR "
 RESULT_KEYS = ("estimate", "ci_low", "ci_high", "p_value", "n")
 STEPS_DIR = "steps"
 _UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
-_POLICY_PARTS = ("runtime_policy_paths.py", "runtime_policy_config.py", "runtime_policy.py")
+_POLICY_PARTS = (
+    "runtime_policy_paths.py",
+    "runtime_policy_config.py",
+    "runtime_policy_access.py",
+    "runtime_policy.py",
+)
 _SIBLING_IMPORT = re.compile(
     r"^from borges\.analysis\.runtime_policy_\w+ import (?:\([^)]*\)|[^\n]*)\n", re.MULTILINE
 )

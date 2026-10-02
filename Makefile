@@ -47,7 +47,9 @@ record-live: export BORGES_RUN_CAP_USD ?= 0.50
 record-live: live-smoke
 	$(BORGES) record-demo --case checkout_ab --llm nebius
 	$(BORGES) record-demo --case red_cards --llm nebius
-	uv run --no-sync python scripts/export_recorded_run.py
+	$(BORGES) record-demo --case marp_religiosity --llm nebius
+	$(BORGES) record-demo --case marp_norms --llm nebius
+	$(BORGES) record-demo --case bank_marketing_calls --llm nebius
 
 docker:
 	docker build -t borges .

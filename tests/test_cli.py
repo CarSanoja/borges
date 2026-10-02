@@ -179,6 +179,31 @@ def test_record_demo_copies_events(monkeypatch: pytest.MonkeyPatch, tmp_path) ->
     assert (tmp_path / "cases" / "checkout_ab" / "recorded" / "events.jsonl").read_text() == "{}\n"
 
 
+@pytest.mark.parametrize(
+    ("llm", "folder"),
+    [("scripted", "recorded"), ("nebius", "recorded-live"), ("local", "recorded-live")],
+)
+def test_record_demo_targets_folder_by_mode(
+    monkeypatch: pytest.MonkeyPatch, tmp_path, llm: str, folder: str
+) -> None:
+    from borges.config import Settings
+
+    settings = Settings(borges_runs_dir=tmp_path / "runs", borges_cases_dir=tmp_path / "cases")
+    (tmp_path / "runs" / "r1").mkdir(parents=True)
+    (tmp_path / "runs" / "r1" / "events.jsonl").write_text("{}\n")
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+
+    async def fake(settings, run_id, request, record):
+        return _completed()
+
+    monkeypatch.setattr(cli_runtime, "execute_run", fake)
+    result = runner.invoke(cli.app, ["record-demo", "--case", "checkout_ab", "--llm", llm])
+    assert result.exit_code == 0
+    assert (tmp_path / "cases" / "checkout_ab" / folder / "events.jsonl").is_file()
+    other = "recorded" if folder == "recorded-live" else "recorded-live"
+    assert not (tmp_path / "cases" / "checkout_ab" / other).exists()
+
+
 def test_run_summary_shows_failed_universes_and_caveats(captured) -> None:
     snapshot = _completed()
     snapshot.report.n_failed = 2

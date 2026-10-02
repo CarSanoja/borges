@@ -9,7 +9,7 @@ from typing import Any
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
-from borges.analysis.path_scrub import scrub_paths
+from borges.garden.executor_errors import failure_detail
 from borges.garden.models import Universe, UniverseKind
 from borges.garden.plausibility import implausible_message, is_implausible
 from borges.garden.prefix_cache import Prefix, PrefixCache, PrefixNode
@@ -19,17 +19,11 @@ from borges.sandbox.backend import BranchBackend, Checkpoint
 EmitFn = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 STEP_TIMEOUT_S = 120.0
-ERROR_TAIL_CHARS = 400
-ERROR_HEAD_CHARS = 800
 
 
 def universe_id(choices: dict[str, str]) -> str:
     canonical = json.dumps(sorted(choices.items()), separators=(",", ":"))
     return "u_" + hashlib.sha1(canonical.encode()).hexdigest()[:10]
-
-
-def _tail(text: str) -> str:
-    return text.strip()[-ERROR_TAIL_CHARS:]
 
 
 class GardenExecutor:
@@ -106,14 +100,7 @@ class GardenExecutor:
         except Exception as exc:
             return PrefixNode(None, error=f"{step_id}/{option_id}: {exc}", cacheable=False)
         if not run.ok:
-            parsed = harness.parse_error(run.stdout)
-            detail = (
-                (parsed[:ERROR_HEAD_CHARS] if parsed else None)
-                or scrub_paths(_tail(run.stderr))
-                or scrub_paths(_tail(run.stdout))
-                or f"exit code {run.exit_code}"
-            )
-            deterministic = parsed is not None
+            detail, deterministic = failure_detail(run)
             return PrefixNode(
                 None, error=f"{step_id}/{option_id}: {detail}", cacheable=deterministic
             )

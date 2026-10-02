@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import json
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
 import openai
 from pydantic import BaseModel
 
-from borges.llm.cache import DiskCache, atomic_write_text, cache_key
+from borges.llm.cache import DiskCache, cache_key
 from borges.llm.client import (
     DEFAULT_ROLE_MODELS,
     LLMError,
@@ -20,6 +19,7 @@ from borges.llm.client import (
     UsageTotals,
 )
 from borges.llm.json_output import parse_model
+from borges.llm.nebius_response import read_completion, with_reservation, write_fixture
 from borges.llm.nebius_transport import (
     TruncatedOutput,
     create_completion,
@@ -28,7 +28,6 @@ from borges.llm.nebius_transport import (
     retry_messages,
     with_schema_instructions,
 )
-from borges.llm.scripted_provider import fixture_name
 from borges.llm.spend import RunBudget, SpendLedger
 
 
@@ -70,8 +69,7 @@ class NebiusLLM:
         max_tokens: int = 2048,
         temperature: float = 0.2,
     ) -> LLMResponse:
-        started = time.perf_counter()
-        spec = self.role_models[role]
+        started, spec = time.perf_counter(), self.role_models[role]
         sent = with_schema_instructions(messages, schema) if schema else list(messages)
         cache_id = cache_key(
             spec.id, sent, schema.__name__ if schema else None, max_tokens, temperature
@@ -128,9 +126,7 @@ class NebiusLLM:
         if cached:
             self.totals.add(usage)
         if self.record_dir is not None:
-            atomic_write_text(
-                self.record_dir / fixture_name(key), json.dumps(record, ensure_ascii=False)
-            )
+            write_fixture(self.record_dir, key, record)
         return LLMResponse(
             role=role,
             text=record["text"],
@@ -168,19 +164,11 @@ class NebiusLLM:
         temperature: float,
     ) -> tuple[str, int, int, float]:
         estimate = spec.cost(estimate_prompt_tokens(messages), max_tokens)
-        guards = [g for g in (self.ledger, self.run_budget) if g is not None]
-        reserved: list[SpendLedger | RunBudget] = []
-        try:
-            for guard in guards:
-                await guard.reserve(estimate)
-                reserved.append(guard)
-            return await self._billed_call(
-                spec, messages, schema, max_tokens, temperature, estimate
-            )
-        except BaseException:
-            for guard in reserved:
-                await guard.release(estimate)
-            raise
+
+        def call() -> Awaitable[tuple[str, int, int, float]]:
+            return self._billed_call(spec, messages, schema, max_tokens, temperature, estimate)
+
+        return await with_reservation((self.ledger, self.run_budget), estimate, call)
 
     async def _billed_call(
         self,
@@ -199,16 +187,7 @@ class NebiusLLM:
             "extra_body": self.thinking_body(spec.thinking),
         }
         response = await create_completion(self.client, kwargs, schema)
-        try:
-            text = response.choices[0].message.content or ""
-        except (AttributeError, IndexError) as exc:
-            raise LLMError("model response has no message content") from exc
-        truncated = getattr(response.choices[0], "finish_reason", None) == "length"
-        usage = getattr(response, "usage", None)
-        tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0)
-        tokens_out = int(getattr(usage, "completion_tokens", 0) or 0)
-        if usage is None or not (tokens_in or tokens_out):
-            tokens_in, tokens_out = estimate_prompt_tokens(messages), max_tokens
+        text, tokens_in, tokens_out, truncated = read_completion(response, messages, max_tokens)
         cost = spec.cost(tokens_in, tokens_out)
         self.totals.add(
             Usage(model=spec.id, tokens_in=tokens_in, tokens_out=tokens_out, cost_usd=cost)

@@ -94,11 +94,11 @@ def record_demo(
     llm_mode = _validated(llm, ("scripted", "nebius", "local"), "--llm")
     settings = get_settings()
     request = RunRequest(case_id=case, llm=llm_mode)
-    snapshot = _run(settings, request, llm_mode in ("nebius", "local"))
+    snapshot = _run(settings, request, llm_mode in cli_runtime.LIVE_LLMS)
     if snapshot.status != "completed":
         typer.echo(f"run {snapshot.run_id} failed: {snapshot.error}", err=True)
         raise typer.Exit(1)
-    target = cli_runtime.copy_recording(settings, snapshot.run_id, case)
+    target = cli_runtime.copy_recording(settings, snapshot.run_id, case, llm_mode)
     typer.echo(f"recorded {snapshot.run_id} -> {target}")
 
 
