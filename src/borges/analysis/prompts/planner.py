@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from borges.analysis.models import DatasetProfile, DecisionRule
+from borges.analysis.profile_flags import describe_inclusion_candidates
 from borges.analysis.prompts import compact_json, messages
+from borges.analysis.schemas import PlannerOutput
 
 SYSTEM = """You are a senior statistician designing an analysis whose decision points are \
 exactly where competent analysts legitimately disagree.
@@ -13,6 +15,15 @@ approaches for the SAME estimand; it is the only model step.
 Rules for options:
 - Every decision step has 2 to 4 options. A step with a single option is allowed only when \
 the operation is not a judgement call.
+- Give at least 2 options to every step where a legitimate alternative exists, and make at \
+least 3 steps of the pipeline have 2 or more options. Do not pad: options must be real \
+alternatives.
+- Data inclusion is a first-class decision. When the dataset profile lists columns that look \
+like flags for test, internal, staff, bot, duplicate or excluded records, or numeric columns \
+with extreme outliers, include a filter step whose options keep those records and exclude \
+them (or treat the outliers differently, for example trim or winsorize), naming the exact \
+columns in the specs. Excluding or keeping such records can change the conclusion, so it must \
+be a visible choice.
 - Exactly one option per step has is_default=true: the conventional, quick analysis a busy \
 analyst would run first.
 - Every option must be defensible to an expert reviewer. No option may change the question \
@@ -30,14 +41,30 @@ the option.
 Return only JSON matching the requested schema."""
 
 
+def build_retry_messages(
+    base: list[dict[str, str]], previous: PlannerOutput, problems: list[str]
+) -> list[dict[str, str]]:
+    feedback = "Your plan falls short of the requirements:\n" + "\n".join(
+        f"- {p}" for p in problems
+    )
+    return [
+        *base,
+        {"role": "assistant", "content": compact_json(previous)},
+        {"role": "user", "content": feedback + "\nReturn the complete corrected plan as JSON."},
+    ]
+
+
 def build_messages(
     profile: DatasetProfile, question: str, rule: DecisionRule
 ) -> list[dict[str, str]]:
+    candidates = describe_inclusion_candidates(profile)
+    hint = f"\n{candidates}\n" if candidates else ""
     user = (
         f"Question: {question}\n"
         f"Decision rule: {compact_json(rule)}\n"
         f"The final step's estimate, ci_low, ci_high and p_value feed this rule; "
         f"the metric is {rule.metric!r}.\n"
         f"Dataset profile: {compact_json(profile)}"
+        f"{hint}"
     )
     return messages(SYSTEM, user)

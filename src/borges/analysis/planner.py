@@ -7,7 +7,8 @@ from borges.analysis.models import (
     Option,
     Step,
 )
-from borges.analysis.prompts.planner import build_messages
+from borges.analysis.planner_validation import plan_shortfalls
+from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.schemas import PlannedStep, PlannerOutput
 from borges.llm.client import LLMClient, LLMError, Role
 
@@ -58,17 +59,30 @@ def _order_model_last(planned: list[PlannedStep]) -> list[PlannedStep]:
     return [s for s in planned if s is not final] + [final]
 
 
+async def _ask(llm: LLMClient, messages: list[dict[str, str]], key: str) -> PlannerOutput:
+    response = await llm.complete(
+        Role.PLANNER, messages, key=key, schema=PlannerOutput, max_tokens=4096
+    )
+    return PlannerOutput.model_validate(response.parsed)
+
+
+async def _broaden(
+    llm: LLMClient, messages: list[dict[str, str]], out: PlannerOutput, profile: DatasetProfile
+) -> PlannerOutput:
+    problems = plan_shortfalls(out.steps, profile)
+    if not problems:
+        return out
+    try:
+        return await _ask(llm, build_retry_messages(messages, out, problems), "planner:retry")
+    except LLMError:
+        return out
+
+
 async def plan_analysis(
     llm: LLMClient, profile: DatasetProfile, question: str, rule: DecisionRule
 ) -> AnalysisPlan:
-    response = await llm.complete(
-        Role.PLANNER,
-        build_messages(profile, question, rule),
-        key="planner",
-        schema=PlannerOutput,
-        max_tokens=4096,
-    )
-    out = PlannerOutput.model_validate(response.parsed)
+    messages = build_messages(profile, question, rule)
+    out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile)
     taken: set[str] = set()
     steps = [_build_step(p, _unique(p.id, taken)) for p in _order_model_last(out.steps)]
     return AnalysisPlan(

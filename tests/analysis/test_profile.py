@@ -68,3 +68,20 @@ def test_empty_numeric_column() -> None:
 def test_profile_serialises() -> None:
     profile = profile_dataframe(_frame(), "d")
     assert profile.model_dump_json()
+
+
+def test_flagged_columns_by_name_and_outlier() -> None:
+    from borges.analysis.profile_flags import describe_inclusion_candidates, flagged_columns
+
+    df = pd.DataFrame(
+        {
+            "isBot": [True] + [False] * 59,
+            "spend": [float(i % 7) for i in range(59)] + [50000.0],
+            "score": list(range(60)),
+        }
+    )
+    flags, outliers = flagged_columns(profile_dataframe(df, "d"))
+    assert [c.name for c in flags] == ["isBot"]
+    assert [c.name for c in outliers] == ["spend"]
+    text = describe_inclusion_candidates(profile_dataframe(df, "d"))
+    assert "isBot" in text and "spend" in text and "score" not in text
