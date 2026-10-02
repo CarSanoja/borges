@@ -11,6 +11,7 @@ from borges.sandbox.backend import BranchBackend, Checkpoint
 OnSmoke = Callable[[str, str, str, int, str | None, list[str]], Awaitable[None]]
 OnReview = Callable[[str, str, bool, bool, str, str], Awaitable[None]]
 Repair = Callable[[Step, Option, str, int], Awaitable[tuple[str, str | None, str]]]
+Recode = Callable[[Step, Option, list[str]], Awaitable[tuple[str, str | None, str]]]
 Check = Callable[[dict[str, Any] | None], str | None]
 
 
@@ -34,6 +35,7 @@ Reviewer = Callable[[Step, list[ReviewEntry]], Awaitable[ReviewResult | None]]
 class SmokeState:
     parents: dict[str, Checkpoint] = field(default_factory=dict)
     defaults: dict[str, Outcome] = field(default_factory=dict)
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -58,3 +60,4 @@ class Outcome:
     models: list[str]
     effects: dict[str, Any] | None = None
     result: dict[str, Any] | None = None
+    errors: list[str] = field(default_factory=list)

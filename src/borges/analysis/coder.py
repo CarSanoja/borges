@@ -5,6 +5,7 @@ from collections.abc import Awaitable, Callable
 
 from borges.analysis.code_guard import check_code
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
+from borges.analysis.coder_recode import fresh_recode
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
@@ -136,7 +137,10 @@ async def code_plan(
     ) -> tuple[str, str | None, str]:
         return await _smoke_repair(llm, coded, step, option, error, attempt)
 
-    return await smoke_plan(smoke, coded, repair, summary, concurrency)
+    async def recode(step: Step, option: Option, errors: list[str]) -> tuple[str, str | None, str]:
+        return await fresh_recode(llm, coded, step, option, errors)
+
+    return await smoke_plan(smoke, coded, repair, summary, concurrency, recode)
 
 
 async def _promote_sibling(

@@ -6,6 +6,7 @@ from borges.analysis.code_guard_rules import ALLOWED_IMPORTS
 from borges.analysis.harness import RESULT_KEYS
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts import compact_json, messages
+from borges.analysis.prompts.coder_recode import recode_instruction
 from borges.analysis.prompts.notes import describe_column_notes
 from borges.analysis.scale_check import scale_instruction
 
@@ -58,7 +59,10 @@ place. Store only JSON-serialisable values (lists, numbers, strings).
 build new columns with `df.assign(**{name: values})` or `df.rename(columns=mapping)`.
 - For the step of kind model: compute standard errors, confidence intervals and p-values with \
 statsmodels (the formula API or the sm.stats functions), never by hand-written formulas. A \
-hand-computed standard error that is wrong makes the whole analysis wrong.
+hand-computed standard error that is wrong makes the whole analysis wrong. Take p-values and \
+confidence intervals from the fitted result (`pvalues`, `conf_int()`, or exp of them for \
+ratios), never recompute them from a hand-written distribution (`sm.norm`, `sm.t` and the \
+like do not exist).
 - Never drop columns: filters only drop rows, transforms and features keep every input column \
 and add or change columns. The one exception is a step whose spec aggregates rows (one row per \
 group, e.g. per user): it returns the group key, the grouping variables the later steps need \
@@ -120,7 +124,11 @@ def _step_requirements(plan: AnalysisPlan, step: Step) -> list[str]:
 
 
 def build_messages(
-    plan: AnalysisPlan, step: Step, option: Option, error: str | None
+    plan: AnalysisPlan,
+    step: Step,
+    option: Option,
+    error: str | None,
+    errors: list[str] | None = None,
 ) -> list[dict[str, str]]:
     columns = [{"name": c.name, "dtype": c.dtype} for c in plan.dataset.columns]
     function = "estimate" if step.kind == "model" else "apply"
@@ -139,7 +147,9 @@ def build_messages(
         *([scale_instruction(plan.decision_rule)] if step.kind == "model" else []),
         contract_reminder(step.kind),
     ]
-    if error is not None:
+    if errors:
+        parts.append(recode_instruction(errors))
+    elif error is not None:
         hints = "".join(f"\n{hint}." for hint in rejected_import_hints(error))
         parts.append(
             f"Your previous code:\n{option.code}\nIt failed with:\n{error}{hints}\nFix it."

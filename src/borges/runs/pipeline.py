@@ -107,6 +107,7 @@ class Pipeline:
                 summary=self.coding,
             )
             await publish_plan(self.emitter, plan)
+        self.caveats.extend(smoke.state.notes)
         return plan
 
     async def _search(self, plan: AnalysisPlan) -> None:

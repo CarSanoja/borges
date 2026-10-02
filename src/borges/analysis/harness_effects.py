@@ -16,7 +16,9 @@ CHECKS_SOURCE = """
             "apply() dropped the columns " + repr(lost)
             + ": filters and steps that keep the rows never drop columns, because later"
             + " steps and other options may need them; only a step that aggregates rows"
-            + " (one row per group) may return fewer columns"
+            + " (one row per group) may return fewer columns; to choose which covariates a"
+            + " later model uses, keep every column and store the list of names in ctx (for"
+            + " example ctx['covariates'] = [...]); the model step reads that list"
         )
 
     def _carry_group_attributes(before, out):
@@ -60,6 +62,16 @@ CHECKS_SOURCE = """
     def _explain(exc, seen):
         text = str(exc)
         lowered = text.lower()
+        if (
+            isinstance(exc, AttributeError)
+            and "statsmodels" in lowered
+            and any("has no attribute '" + n + "'" in lowered for n in ("norm", "t", "chi2", "f"))
+        ):
+            text = (
+                text + " | statsmodels has no probability distributions here: read p-values"
+                + " from the fitted result (result.pvalues) and intervals from"
+                + " result.conf_int(); if you really need a distribution use scipy.stats.norm"
+            )
         if seen and seen.get("missing") and (
             "nan" in lowered or "same length" in lowered or "missing" in lowered
         ):

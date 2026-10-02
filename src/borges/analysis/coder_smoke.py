@@ -6,8 +6,9 @@ from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.smoke_core import sample_rows, smoke_option
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
+from borges.analysis.smoke_recode import recode_failed_default
 from borges.analysis.smoke_review import review_step
-from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
+from borges.analysis.smoke_types import Outcome, Recode, Repair, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 
@@ -41,6 +42,17 @@ def _record(summary: CodingSummary | None, outcomes: list[Outcome]) -> None:
     summary.failed += sum(1 for o in outcomes if o.status == "failed")
 
 
+def _all_failed_message(step: Step, default_id: str, outcomes: list[Outcome]) -> str:
+    tried = ", ".join(o.option.id for o in outcomes) or default_id
+    failed = next((o for o in outcomes if o.option.id == default_id), None)
+    last = next((o.error for o in reversed(outcomes) if o.error), None)
+    reason = (failed.error if failed and failed.error else last) or "not coded"
+    return (
+        f"step {step.id}: no option passed its smoke run (default {default_id} failed "
+        f"after repairs and a fresh re-code); options tried: {tried}; last error: {reason}"
+    )
+
+
 def _apply(step: Step, outcomes: list[Outcome]) -> tuple[Checkpoint, Option | None, str]:
     default_id = step.default.id
     survivors = {o.option.id: o for o in outcomes if o.status != "failed"}
@@ -48,8 +60,7 @@ def _apply(step: Step, outcomes: list[Outcome]) -> tuple[Checkpoint, Option | No
     if default_id not in survivors:
         failed = next((o for o in outcomes if o.option.id == default_id), None)
         if not step.options:
-            reason = failed.error if failed else "not coded"
-            raise LLMError(f"default option {step.id}.{default_id} failed its smoke run: {reason}")
+            raise LLMError(_all_failed_message(step, default_id, outcomes))
         step.options[0].is_default = True
         reason = failed.error if failed and failed.error else "not coded"
         return survivors[step.default.id].checkpoint, step.options[0], f"{default_id}: {reason}"
@@ -62,6 +73,7 @@ async def smoke_plan(
     repair: Repair,
     summary: CodingSummary | None = None,
     concurrency: int = 6,
+    recode: Recode | None = None,
 ) -> AnalysisPlan:
     smoked = plan.model_copy(deep=True)
     parent = await config.backend.root({harness.DATA_FILE: sample_rows(config.data)})
@@ -69,13 +81,20 @@ async def smoke_plan(
     for step in smoked.steps:
         outcomes = await _smoke_step(config, repair, parent, step, semaphore)
         _record(summary, outcomes)
+        outcomes = await recode_failed_default(config, repair, recode, parent, step, outcomes)
         outcomes = await apply_orientation(config, repair, parent, step, outcomes, summary)
         outcomes = await review_step(config, repair, parent, step, outcomes, summary)
         config.state.parents[step.id] = parent
         live_default = effective_default(step, outcomes)
         if live_default is not None:
             config.state.defaults[step.id] = live_default
+        replaced = step.default
         parent, promoted, cause = _apply(step, outcomes)
+        if promoted is not None:
+            config.state.notes.append(
+                f"The default option {step.id}.{replaced.id} ({replaced.label}) failed its smoke "
+                f"run and was replaced by {promoted.id} ({promoted.label}): {cause}."
+            )
         if promoted is not None and config.on_smoke is not None:
             chosen = next(o for o in outcomes if o.option.id == promoted.id)
             note = f"promoted to default because {cause} failed its smoke run"

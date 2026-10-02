@@ -102,21 +102,27 @@ async def smoke_option(
     checkpoint = effects = result = None
     if resume is None:
         checkpoint, error, effects, result = await _attempt(config, parent, step, option, check)
+    seen = [error] if error is not None else []
     used = 0
     while error is not None and used < budget:
         try:
             code, violation, model = await repair(step, option, error, attempts)
         except LLMError as exc:
-            return Outcome(option, "failed", attempts + 1, str(exc), None, models)
+            return Outcome(
+                option, "failed", attempts + 1, str(exc), None, models, errors=[*seen, str(exc)]
+            )
         attempts += 1
         used += 1
         models.append(model)
         option = option.model_copy(update={"code": code})
         if violation is not None:
             error = violation
+            seen.append(error)
             continue
         checkpoint, error, effects, result = await _attempt(config, parent, step, option, check)
+        if error is not None:
+            seen.append(error)
     if error is not None:
-        return Outcome(option, "failed", attempts, error, None, models, effects, result)
+        return Outcome(option, "failed", attempts, error, None, models, effects, result, seen)
     status = "passed" if attempts == 1 else "repaired"
     return Outcome(option, status, attempts, None, checkpoint, models, effects, result)

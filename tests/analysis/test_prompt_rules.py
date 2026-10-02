@@ -174,3 +174,15 @@ def test_planner_requires_alternatives_that_fit_the_data_as_described() -> None:
     assert "never propose an alternative whose own rationale concedes it does not fit" in " ".join(
         PLANNER_SYSTEM.split()
     )
+
+
+def test_planner_makes_covariate_sets_options_of_the_model_step() -> None:
+    assert "Covariate sets are options of the model step" in PLANNER_SYSTEM
+    assert "Never create a separate step that chooses covariates by dropping columns" in (
+        PLANNER_SYSTEM
+    )
+
+
+def test_coder_takes_p_values_and_intervals_from_the_fitted_result() -> None:
+    assert "from the fitted result (`pvalues`, `conf_int()`" in CODER_SYSTEM
+    assert "never recompute them from a hand-written distribution" in CODER_SYSTEM
