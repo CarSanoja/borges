@@ -1,114 +1,21 @@
 from __future__ import annotations
 
 import ast
+import re
 
+from borges.analysis.code_guard_rules import (
+    ALLOWED_IMPORTS,
+    ALLOWED_TO_ATTRIBUTES,
+    FORBIDDEN_ATTRIBUTES,
+    FORBIDDEN_MODULES,
+    FORBIDDEN_NAMES,
+    FORMULA_CALLS,
+    IO_PREFIXES,
+)
 from borges.analysis.models import StepKind
 
-ALLOWED_IMPORTS = frozenset(
-    {
-        "pandas",
-        "numpy",
-        "math",
-        "scipy",
-        "scipy.stats",
-        "statsmodels",
-        "statsmodels.api",
-        "statsmodels.formula.api",
-    }
-)
-
-FORBIDDEN_NAMES = frozenset(
-    {
-        "eval",
-        "exec",
-        "open",
-        "compile",
-        "__import__",
-        "globals",
-        "locals",
-        "vars",
-        "getattr",
-        "setattr",
-        "delattr",
-        "input",
-        "breakpoint",
-        "exit",
-        "quit",
-        "SystemExit",
-        "KeyboardInterrupt",
-        "BaseException",
-    }
-)
-
-FORBIDDEN_MODULES = frozenset(
-    {
-        "os",
-        "sys",
-        "subprocess",
-        "socket",
-        "shutil",
-        "pathlib",
-        "requests",
-        "urllib",
-        "importlib",
-        "pickle",
-        "io",
-        "builtins",
-    }
-)
-
-FORBIDDEN_ATTRIBUTES = frozenset(
-    {
-        "load",
-        "loads",
-        "save",
-        "savez",
-        "savetxt",
-        "loadtxt",
-        "genfromtxt",
-        "fromfile",
-        "fromregex",
-        "tofile",
-        "open",
-        "memmap",
-        "DataSource",
-        "lib",
-        "ctypeslib",
-        "f2py",
-        "system",
-        "popen",
-        "eval",
-        "query",
-        "format",
-        "format_map",
-        "dump",
-        "dumps",
-        "save_npz",
-        "load_npz",
-        "datasets",
-        "iolib",
-        "HDFStore",
-        "ExcelFile",
-        "ExcelWriter",
-        "get_rdataset",
-        "webuse",
-    }
-)
-
-ALLOWED_TO_ATTRIBUTES = frozenset(
-    {
-        "to_numpy",
-        "to_dict",
-        "to_list",
-        "to_frame",
-        "to_numeric",
-        "to_datetime",
-        "to_timedelta",
-        "to_string",
-    }
-)
-
 EXPECTED_PARAMS = ["df", "ctx"]
+CALL_PATTERN = re.compile(r"([A-Za-z_][\w.]*)\s*\(")
 
 
 def _module_allowed(module: str) -> bool:
@@ -122,7 +29,7 @@ def _imported_name_violation(name: str) -> str | None:
         return f"dunder name '{name}' is not allowed"
     if name in FORBIDDEN_NAMES or name in FORBIDDEN_MODULES or name in FORBIDDEN_ATTRIBUTES:
         return f"import of name '{name}' is not allowed"
-    if name.startswith(("read_", "to_")) and name not in ALLOWED_TO_ATTRIBUTES:
+    if name.startswith(IO_PREFIXES) and name not in ALLOWED_TO_ATTRIBUTES:
         return f"import of I/O name '{name}' is not allowed"
     return None
 
@@ -154,7 +61,7 @@ def _attribute_violations(node: ast.Attribute) -> list[str]:
         return [f"{where}: dunder attribute '{attr}' is not allowed"]
     if attr in FORBIDDEN_MODULES or attr in FORBIDDEN_ATTRIBUTES:
         return [f"{where}: attribute '{attr}' is not allowed"]
-    if attr.startswith(("read_", "to_")) and attr not in ALLOWED_TO_ATTRIBUTES:
+    if attr.startswith(IO_PREFIXES) and attr not in ALLOWED_TO_ATTRIBUTES:
         return [f"{where}: I/O attribute '{attr}' is not allowed"]
     return []
 
@@ -172,8 +79,25 @@ def _name_violations(node: ast.Name) -> list[str]:
 
 
 def _constant_violations(node: ast.Constant) -> list[str]:
-    if isinstance(node.value, str) and ("__" in node.value or "@" in node.value):
+    if not isinstance(node.value, str):
+        return []
+    if "__" in node.value or "@" in node.value:
         return [f"line {node.lineno}: string constants may not contain '__' or '@'"]
+    return _formula_violations(node)
+
+
+def _formula_violations(node: ast.Constant) -> list[str]:
+    text = node.value
+    where = f"line {node.lineno}"
+    calls = CALL_PATTERN.findall(text)
+    if "~" in text:
+        if "'" in text or '"' in text or "`" in text:
+            return [f"{where}: formula strings may not contain quotes"]
+        bad = [name for name in calls if name not in FORMULA_CALLS]
+    else:
+        bad = [name for name in calls if name.split(".")[-1] in FORBIDDEN_NAMES]
+    if bad:
+        return [f"{where}: string constants may not call '{bad[0]}'"]
     return []
 
 

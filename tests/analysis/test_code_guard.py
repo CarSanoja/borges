@@ -185,3 +185,50 @@ def test_reject_eval_io_and_string_bypasses(body: str) -> None:
 
 def test_plain_strings_still_accepted() -> None:
     assert check_code(wrap("x = 'plain text'\nreturn df[df['a'] > 0]"), "filter") == []
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "np.savez_compressed('/tmp/x', a=df['x'].to_numpy())\nreturn df",
+        "np.save_anything('/tmp/x')\nreturn df",
+    ],
+)
+def test_reject_numpy_save_variants(body: str) -> None:
+    assert check_code(wrap(body), "filter")
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        "y ~ I(len(open('/etc/hosts').read()) + x)",
+        "y ~ I(len(open(x)))",
+        "y ~ I(eval(x))",
+        "y ~ system(x)",
+    ],
+)
+def test_reject_formula_code_execution(formula: str) -> None:
+    code = (
+        "import statsmodels.formula.api as smf\n\n\n"
+        "def estimate(df, ctx):\n"
+        f'    return smf.ols("{formula}", df).fit()\n'
+    )
+    assert check_code(code, "model")
+
+
+def test_reject_split_formula_call() -> None:
+    code = (
+        "import statsmodels.formula.api as smf\n\n\n"
+        "def estimate(df, ctx):\n"
+        '    return smf.ols("y ~ I(" + "len(open(x)))", df).fit()\n'
+    )
+    assert check_code(code, "model")
+
+
+def test_accept_plain_formulas() -> None:
+    code = (
+        "import statsmodels.formula.api as smf\n\n\n"
+        "def estimate(df, ctx):\n"
+        '    return smf.ols("y ~ x + I(x ** 2) + C(g) + np.log(z)", df).fit()\n'
+    )
+    assert check_code(code, "model") == []
