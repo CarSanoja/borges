@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.models import Step
 from borges.analysis.smoke_core import smoke_option
+from borges.analysis.smoke_larger import smoke_rows
 from borges.analysis.smoke_types import Outcome, Recode, Repair, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
@@ -16,6 +17,7 @@ async def _announce(config: SmokeConfig, step: Step, outcome: Outcome) -> None:
             outcome.attempts,
             outcome.error,
             outcome.models,
+            *smoke_rows(outcome),
         )
 
 

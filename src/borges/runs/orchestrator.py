@@ -18,6 +18,7 @@ from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
 from borges.runs.orchestrator_meta import announced_models, outcome_meta
+from borges.runs.ownership import owner_fields
 from borges.runs.pipeline import Pipeline
 from borges.runs.state import fold
 from borges.runs.store import RunStore
@@ -78,6 +79,7 @@ class RunOrchestrator:
                 "n_universes": 0,
                 "verdict": None,
                 "flipped_verdict": None,
+                **owner_fields(),
             },
         )
         self.bus.open(run_id)

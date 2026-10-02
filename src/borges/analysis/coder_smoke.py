@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import io
+
+import pyarrow.parquet as pq
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
-from borges.analysis.smoke_core import sample_rows, smoke_option
+from borges.analysis.smoke_core import execute, sample_rows, smoke_option
+from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
 from borges.analysis.smoke_recode import recode_failed_default
 from borges.analysis.smoke_review import review_step
@@ -27,7 +31,13 @@ async def _smoke_step(
             outcome = await smoke_option(config, repair, parent, step, option)
         if config.on_smoke is not None:
             await config.on_smoke(
-                step.id, option.id, outcome.status, outcome.attempts, outcome.error, outcome.models
+                step.id,
+                option.id,
+                outcome.status,
+                outcome.attempts,
+                outcome.error,
+                outcome.models,
+                *smoke_rows(outcome),
             )
         return outcome
 
@@ -76,7 +86,10 @@ async def smoke_plan(
     recode: Recode | None = None,
 ) -> AnalysisPlan:
     smoked = plan.model_copy(deep=True)
-    parent = await config.backend.root({harness.DATA_FILE: sample_rows(config.data)})
+    sample = sample_rows(config.data)
+    parent = await config.backend.root({harness.DATA_FILE: sample})
+    sample_n = pq.read_metadata(io.BytesIO(sample)).num_rows
+    config.larger = LargerSample(config, smoked.steps, sample_n, execute, LARGE_MAX_ROWS)
     semaphore = asyncio.Semaphore(concurrency)
     for step in smoked.steps:
         outcomes = await _smoke_step(config, repair, parent, step, semaphore)

@@ -79,6 +79,7 @@ class OptionSmokeData(BaseModel):
     attempts: int
     error: str | None = None
     models: list[str] = Field(default_factory=list)
+    sample_rows: int | None = None
 
 
 class OptionReviewedData(BaseModel):

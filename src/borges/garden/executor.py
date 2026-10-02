@@ -192,7 +192,7 @@ class GardenExecutor:
                     checkpoints,
                     full,
                 )
-                if reason is not None and self._flips(result):
+                if reason is not None:
                     error = reason
                     result = None
             if result is None:

@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import json
+import socket
+import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
 
 from borges.runs.events import Event
+from borges.runs.ownership import owner_fields
 from borges.runs.store import RunStore
 
 
@@ -111,3 +116,52 @@ def test_fail_interrupted_keeps_an_existing_terminal_pair(tmp_path: Path) -> Non
     store.fail_interrupted("r_1")
     assert [e.seq for e in store.events("r_1")] == [1]
     assert store.meta("r_1")["status"] == "failed"
+
+
+def _running(store: RunStore, run_id: str, **extra: object) -> None:
+    store.create(
+        run_id,
+        {
+            "case_id": None,
+            "title": "t",
+            "status": "running",
+            "created_at": time.time(),
+            "llm": "scripted",
+            "backend": "local",
+            "cost_usd": 0.0,
+            "n_universes": 0,
+            "verdict": None,
+            "flipped_verdict": None,
+            **extra,
+        },
+    )
+
+
+def test_run_owned_by_a_live_process_is_not_interrupted(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    _running(store, "r_cli", **owner_fields())
+    store.append(event("r_cli", 1))
+    assert store.interrupt_running(set()) == []
+    assert store.live_elsewhere(set()) == ["r_cli"]
+    assert store.meta("r_cli")["status"] == "running"
+    assert [e.type for e in store.events("r_cli")] == ["stage"]
+
+
+def test_run_owned_by_a_dead_process_is_interrupted(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    process = subprocess.Popen([sys.executable, "-c", "pass"])
+    process.wait()
+    _running(store, "r_dead", owner_pid=process.pid, owner_host=socket.gethostname())
+    store.append(Event(seq=1, ts=time.time(), run_id="r_dead", type="stage", data={}))
+    assert store.interrupt_running(set()) == ["r_dead"]
+    assert store.meta("r_dead")["status"] == "failed"
+
+
+def test_unowned_run_is_interrupted_only_after_the_cutoff(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    _running(store, "r_fresh")
+    store.append(Event(seq=1, ts=time.time(), run_id="r_fresh", type="stage", data={}))
+    _running(store, "r_old")
+    store.append(Event(seq=1, ts=time.time() - 3600, run_id="r_old", type="stage", data={}))
+    assert store.interrupt_running(set()) == ["r_old"]
+    assert store.meta("r_fresh")["status"] == "running"

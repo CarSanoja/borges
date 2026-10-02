@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from borges.runs.events import Event
 from borges.runs.models import RunSnapshot, RunSummary
+from borges.runs.ownership import is_orphan
 from borges.runs.state import fold
 
 TERMINAL_TYPES = frozenset({"run.finished", "run.failed"})
@@ -100,9 +101,28 @@ class RunStore:
             self.append(finished)
         self.update_meta(run_id, status="failed")
 
+    def _last_activity(self, run_id: str, meta: dict[str, Any]) -> float:
+        events = self.events(run_id)
+        return max((e.ts for e in events), default=float(meta.get("created_at") or 0.0))
+
+    def _unattended(self, active: set[str]) -> tuple[list[str], list[str]]:
+        orphans: list[str] = []
+        alive: list[str] = []
+        for summary in self.list_runs():
+            if summary.status != "running" or summary.run_id in active:
+                continue
+            meta = self.meta(summary.run_id)
+            if is_orphan(meta, self._last_activity(summary.run_id, meta)):
+                orphans.append(summary.run_id)
+            else:
+                alive.append(summary.run_id)
+        return orphans, alive
+
+    def live_elsewhere(self, active: set[str]) -> list[str]:
+        return self._unattended(active)[1]
+
     def interrupt_running(self, active: set[str]) -> list[str]:
-        stale = [s.run_id for s in self.list_runs() if s.status == "running"]
-        stale = [run_id for run_id in stale if run_id not in active]
+        stale, _ = self._unattended(active)
         for run_id in stale:
             self.fail_interrupted(run_id)
         return stale

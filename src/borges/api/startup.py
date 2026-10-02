@@ -17,5 +17,7 @@ def sweep_sandboxes(settings: Settings) -> None:
 
 def reconcile(settings: Settings, store: Any, orchestrator: Any) -> None:
     active = set(getattr(orchestrator, "tasks", {}))
+    live_elsewhere = getattr(store, "live_elsewhere", lambda _active: [])(active)
     store.interrupt_running(active)
-    sweep_sandboxes(settings)
+    if not live_elsewhere:
+        sweep_sandboxes(settings)

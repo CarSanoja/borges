@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
+from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 
 _TEMPLATE = """
@@ -97,6 +98,7 @@ def __borges_main():
 __SPLIT_HALF_CHECK__
 __CHECKS__
 __EFFECTS__
+__HINTS__
     seen = {}
     _np.random.seed(0)
     _random.seed(0)
@@ -114,6 +116,14 @@ __EFFECTS__
         nulls = df.isna().sum()
         seen["rows"] = int(len(df))
         seen["missing"] = {str(k): int(v) for k, v in nulls[nulls > 0].items()}
+        seen["nonnumeric"] = [
+            str(c) for c in df.columns
+            if not _pd.api.types.is_numeric_dtype(df[c]) and not _pd.api.types.is_bool_dtype(df[c])
+        ][:200]
+        seen["ctx_lists"] = [
+            str(item) for value in ctx.values() if isinstance(value, list) for item in value
+        ]
+        seen["frame"] = df
         trace = {
             "step_id": step_id,
             "option_id": option_id,
@@ -161,7 +171,7 @@ __EFFECTS__
             "BORGES_ERROR ",
             {
                 "type": type(exc).__name__,
-                "message": _clean(_explain(exc, seen)),
+                "message": _clean(_explain(exc, seen) + _encoding_hint(exc, seen, kind)),
                 "where": _clean("\\n".join(lines[-6:])),
             },
         )
@@ -174,4 +184,5 @@ MAIN_TEMPLATE = (
     _TEMPLATE.replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
+    .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
 )

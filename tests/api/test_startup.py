@@ -8,6 +8,7 @@ from borges.api.startup import reconcile, sweep_sandboxes
 from borges.config import Settings
 from borges.runs.bus import EventBus
 from borges.runs.events import Event
+from borges.runs.ownership import owner_fields
 from borges.runs.store import RunStore
 
 
@@ -87,3 +88,15 @@ async def test_lifespan_reconciles_and_awaits_shutdown(tmp_path: Path) -> None:
     async with app.router.lifespan_context(app):
         assert store.meta("r_zombie")["status"] == "failed"
     assert calls == ["shutdown"]
+
+
+def test_reconcile_spares_a_run_owned_by_a_live_process_and_its_sandbox(tmp_path: Path) -> None:
+    store = RunStore(tmp_path / "runs")
+    seed_running(store, "r_cli")
+    store.update_meta("r_cli", **owner_fields())
+    sandbox = tmp_path / "sandboxes" / "sb_live"
+    sandbox.mkdir(parents=True)
+    reconcile(Settings(_env_file=None, borges_home=tmp_path), store, object())
+    assert store.meta("r_cli")["status"] == "running"
+    assert [e.type for e in store.events("r_cli")] == ["stage", "stage"]
+    assert sandbox.exists()

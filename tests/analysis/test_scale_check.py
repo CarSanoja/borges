@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from borges.analysis import smoke_core
-from borges.analysis.models import Comparator, DecisionRule
+from borges.analysis.models import Comparator, DecisionRule, Option, Step
 from borges.analysis.scale_check import scale_check, scale_instruction
 from borges.analysis.smoke_types import SmokeConfig
 
@@ -49,6 +49,12 @@ def test_percentage_point_instruction_asks_for_a_proportion() -> None:
     assert "exactly that scale" not in text
 
 
+def make_step() -> tuple[Step, Option]:
+    option = Option(id="o", label="l", rationale="r", spec="s", is_default=True, code="x")
+    step = Step(id="s", title="t", kind="model", description="d", options=[option])
+    return step, option
+
+
 async def test_smoke_attempt_turns_a_wrong_scale_into_an_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -57,5 +63,6 @@ async def test_smoke_attempt_turns_a_wrong_scale_into_an_error(
 
     monkeypatch.setattr(smoke_core, "execute", execute)
     config = SmokeConfig(None, b"", result_check=scale_check(ODDS))  # type: ignore[arg-type]
-    _, error, _, _ = await smoke_core._attempt(config, None, None, None, None)  # type: ignore[arg-type]
+    step, option = make_step()
+    _, error, _, _ = await smoke_core._attempt(config, None, step, option, None)  # type: ignore[arg-type]
     assert error is not None and "log-scale coefficient" in error

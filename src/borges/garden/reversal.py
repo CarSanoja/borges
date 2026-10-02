@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 
 import pandas as pd
+import pyarrow.parquet as pq
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan
@@ -23,13 +24,21 @@ def reversed_message(column: str, correlation: float) -> str:
     )
 
 
-async def _frame(backend: BranchBackend, checkpoint_id: str) -> pd.DataFrame:
+async def _raw(backend: BranchBackend, checkpoint_id: str) -> bytes:
     checkpoint = Checkpoint(id=checkpoint_id, parent_id=None, backend=backend.name)
     try:
-        raw = await backend.read_file(checkpoint, STATE_FILE)
+        return await backend.read_file(checkpoint, STATE_FILE)
     except Exception:
-        raw = await backend.read_file(checkpoint, harness.DATA_FILE)
-    return pd.read_parquet(io.BytesIO(raw))
+        return await backend.read_file(checkpoint, harness.DATA_FILE)
+
+
+def _names(raw: bytes) -> list[str]:
+    return list(pq.read_schema(io.BytesIO(raw)).names)
+
+
+def _columns(raw: bytes, wanted: list[str]) -> pd.DataFrame:
+    present = [c for c in wanted if c in set(_names(raw))]
+    return pd.read_parquet(io.BytesIO(raw), columns=present)
 
 
 def worst_reversal(
@@ -55,8 +64,22 @@ def worst_reversal(
     return worst
 
 
-def _added(before: pd.DataFrame, after: pd.DataFrame) -> set[str]:
-    return set(after.columns) - set(before.columns)
+def _added(before: list[str], after: list[str]) -> set[str]:
+    return set(after) - set(before)
+
+
+def _produced_pair(
+    step_produces: list[str],
+    base_raws: tuple[bytes, bytes],
+    other_raws: tuple[bytes, bytes],
+) -> list[str]:
+    if step_produces:
+        return list(step_produces)
+    base_names = _names(base_raws[1])
+    shared = _added(_names(base_raws[0]), base_names) & _added(
+        _names(other_raws[0]), _names(other_raws[1])
+    )
+    return [c for c in base_names if c in shared]
 
 
 async def find_reversal(
@@ -75,17 +98,19 @@ async def find_reversal(
         try:
             base_prev = baseline_checkpoints[index - 1] if index else root_id
             other_prev = checkpoints[index - 1] if index else root_id
-            base_before = await _frame(backend, base_prev)
-            other_before = await _frame(backend, other_prev)
-            base = await _frame(backend, baseline_checkpoints[index])
-            other = await _frame(backend, checkpoints[index])
+            base_raws = (
+                await _raw(backend, base_prev),
+                await _raw(backend, baseline_checkpoints[index]),
+            )
+            other_raws = (
+                await _raw(backend, other_prev),
+                await _raw(backend, checkpoints[index]),
+            )
+            produced = _produced_pair(list(step.produces), base_raws, other_raws)
+            base = _columns(base_raws[1], produced)
+            other = _columns(other_raws[1], produced)
         except Exception:
             continue
-        if step.produces:
-            produced = list(step.produces)
-        else:
-            shared = _added(base_before, base) & _added(other_before, other)
-            produced = [c for c in base.columns if c in shared]
         found = worst_reversal(base, other, produced)
         if found is not None:
             return reversed_message(*found)

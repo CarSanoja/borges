@@ -51,7 +51,10 @@ def reversal_caveats(garden: Garden) -> list[str]:
         for u in garden.universes.values()
         if u.status == "failed" and (u.error or "").startswith(REVERSED_REASON)
     }
-    return [f"A candidate flip was rejected: {reason}." for reason in sorted(reasons)]
+    return [
+        f"A universe was excluded from the robustness and influence figures: {reason}."
+        for reason in sorted(reasons)
+    ]
 
 
 def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Report:

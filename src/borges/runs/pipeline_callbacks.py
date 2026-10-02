@@ -6,7 +6,7 @@ from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData, OptionReviewedData, OptionSmokeData
 
 OnCoded = Callable[[str, str, bool, int, str | None, list[str] | None], Awaitable[None]]
-OnSmoke = Callable[[str, str, str, int, str | None, list[str] | None], Awaitable[None]]
+OnSmoke = Callable[..., Awaitable[None]]
 OnReview = Callable[[str, str, bool, bool, str, str], Awaitable[None]]
 
 
@@ -36,6 +36,7 @@ def coding_callbacks(emitter: RunEmitter) -> tuple[OnCoded, OnSmoke, OnReview]:
         attempts: int,
         error: str | None,
         models: list[str] | None = None,
+        sample_rows: int | None = None,
     ) -> None:
         payload = OptionSmokeData(
             step_id=step_id,
@@ -44,8 +45,12 @@ def coding_callbacks(emitter: RunEmitter) -> tuple[OnCoded, OnSmoke, OnReview]:
             attempts=attempts,
             error=error,
             models=models or [],
+            sample_rows=sample_rows,
         )
-        await emitter.emit("option.smoke", payload.model_dump(mode="json"))
+        data = payload.model_dump(mode="json")
+        if sample_rows is None:
+            data.pop("sample_rows")
+        await emitter.emit("option.smoke", data)
 
     async def on_review(
         step_id: str,

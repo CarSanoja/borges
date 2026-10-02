@@ -87,6 +87,37 @@ async def test_sign_flipped_transform_is_not_a_flip() -> None:
     assert any("reverses a variable's direction" in c for c in report.caveats)
 
 
+async def test_sign_flipped_transform_without_a_flip_is_still_excluded(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(fakes.EFFECTS, ("s2", "y"), -0.2)
+    plan = _transform_plan()
+    values = np.arange(ROWS) * 1.0
+    frames = {("s2", "x"): _frame(values), ("s2", "y"): _frame(-values)}
+    executor, garden = await _garden(plan, FrameBackend(plan, frames))
+    universe = await executor.run_universe({"s2": "y"}, "single")
+    garden.add(universe)
+    assert universe.status == "failed"
+    assert universe.error is not None
+    assert universe.error.startswith(REVERSED_REASON)
+    report = build_report(plan, garden, None)
+    assert report.robustness == 1.0
+    assert all(row.mean_abs_delta == 0.0 for row in report.influences if row.step_id == "s2")
+    assert any("excluded" in c and "reverses a variable's direction" in c for c in report.caveats)
+
+
+async def test_agreeing_transform_without_a_flip_stays_done(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(fakes.EFFECTS, ("s2", "y"), -0.2)
+    plan = _transform_plan()
+    values = np.arange(ROWS) * 1.0
+    frames = {("s2", "x"): _frame(values), ("s2", "y"): _frame(values * 2)}
+    executor, _ = await _garden(plan, FrameBackend(plan, frames))
+    universe = await executor.run_universe({"s2": "y"}, "single")
+    assert universe.status == "done"
+
+
 async def test_unnamed_columns_are_compared_when_produces_is_empty() -> None:
     plan = make_plan()
     values = np.arange(ROWS) * 1.0

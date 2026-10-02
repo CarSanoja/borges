@@ -8,6 +8,7 @@ import numpy as np
 
 from borges.analysis.models import CodingSummary, Step
 from borges.analysis.smoke_core import smoke_option
+from borges.analysis.smoke_larger import smoke_rows
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 from borges.sandbox.backend import Checkpoint
 
@@ -86,7 +87,13 @@ async def notify_changed(
         summary.failed += int(after.status == "failed")
     if config.on_smoke is not None:
         await config.on_smoke(
-            step.id, after.option.id, after.status, after.attempts, after.error, after.models
+            step.id,
+            after.option.id,
+            after.status,
+            after.attempts,
+            after.error,
+            after.models,
+            *smoke_rows(after),
         )
 
 

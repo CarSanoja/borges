@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import socket
 from pathlib import Path
 
 import pytest
@@ -117,6 +119,8 @@ async def test_meta_is_updated_at_the_end(tmp_path: Path, scenario: Scenario) ->
     assert meta["flipped_verdict"] == "DON'T SHIP"
     assert meta["cost_usd"] == 0.01
     assert meta["n_universes"] == 3
+    assert meta["owner_pid"] == os.getpid()
+    assert meta["owner_host"] == socket.gethostname()
 
 
 async def test_start_returns_id_and_streams_to_subscribers(

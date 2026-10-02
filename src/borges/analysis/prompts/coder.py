@@ -84,6 +84,10 @@ every column the model uses (outcome, predictors, offsets, weights, cluster or g
 build the model, its groups and its weights from that same frame, and return n = len(data). \
 statsmodels fails on missing values, and cluster groups must have the same length as the rows \
 used.
+- When a model step reads its covariate list from ctx (or any list you do not know in advance), \
+other steps may have added string or categorical covariates: encode every non-numeric covariate \
+with `pd.get_dummies(..., drop_first=True, dtype=float)` before fitting and never pass raw \
+strings to the estimator.
 - Be deterministic: any randomness uses a fixed seed.
 - Use exact column names. Do not mutate the input frame in place unless copying first. Do \
 not print. No comments.

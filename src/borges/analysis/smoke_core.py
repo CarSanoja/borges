@@ -10,6 +10,7 @@ from borges.analysis import harness
 from borges.analysis.models import Option, Step
 from borges.analysis.path_scrub import scrub_paths
 from borges.analysis.result_scale import convert
+from borges.analysis.smoke_larger import is_singular_error
 from borges.analysis.smoke_types import Check, Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
@@ -86,6 +87,18 @@ async def _attempt(
     config: SmokeConfig, parent: Checkpoint, step: Step, option: Option, check: Check | None
 ) -> Executed:
     checkpoint, error, effects, result = await execute(config, parent, step, option)
+    config.state.larger_rows.pop((step.id, option.id), None)
+    if (
+        error is not None
+        and step.kind == "model"
+        and config.larger is not None
+        and is_singular_error(error)
+    ):
+        retried = await config.larger.rerun(step, option)
+        if retried is not None:
+            (checkpoint, error, effects, result), rows = retried
+            if error is None:
+                config.state.larger_rows[(step.id, option.id)] = rows
     if error is None and check is not None:
         error = check(effects)
     if error is None and result is not None and config.result_check is not None:
@@ -130,4 +143,7 @@ async def smoke_option(
     if error is not None:
         return Outcome(option, "failed", attempts, error, None, models, effects, result, seen)
     status = "passed" if attempts == 1 else "repaired"
-    return Outcome(option, status, attempts, None, checkpoint, models, effects, result)
+    rows = config.state.larger_rows.get((step.id, option.id))
+    return Outcome(
+        option, status, attempts, None, checkpoint, models, effects, result, sample_rows=rows
+    )
