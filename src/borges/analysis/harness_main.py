@@ -55,6 +55,20 @@ def __borges_main():
                 span + " does not contain the estimate " + _num(est)
             )
 
+    def _check_ctx(ctx):
+        bad = []
+        for key, value in ctx.items():
+            try:
+                _json.dumps(value)
+            except (TypeError, ValueError):
+                bad.append("ctx[" + repr(key) + "] holds a " + type(value).__name__)
+        if bad:
+            raise TypeError(
+                "; ".join(bad)
+                + ": ctx may only hold JSON values (numbers, strings, lists and dicts of them);"
+                + " return rows in the DataFrame and keep only column names or numbers in ctx"
+            )
+
     def _validate(payload):
         if not isinstance(payload, dict):
             raise ValueError("estimate() must return a dict")
@@ -101,6 +115,7 @@ def __borges_main():
         out = apply(df, ctx)
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
+        _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)
         out.to_parquet(state_df)
         with open(state_ctx, "w") as handle:
