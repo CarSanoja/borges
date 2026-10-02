@@ -17,7 +17,7 @@ from borges.analysis.models import (
 from borges.garden.influence import failed_universes
 from borges.garden.models import Change, Flip, Garden, Report, Universe
 from borges.llm.client import LLMError
-from borges.runs import adversary_round, pipeline, pipeline_finish, runner
+from borges.runs import adversary_round, pipeline, pipeline_finish, plan_judging, runner
 from tests.runs.engine_scenario import FakeExecutor, Scenario
 from tests.runs.fakes import make_plan
 
@@ -109,6 +109,18 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
             defensibility=0.8, accepted=scenario.accept, reason="ok", source="http://s"
         )
 
+    async def judge_planner_option(
+        llm: Any, plan: AnalysisPlan, step: Step, option: Option, origin: str = "adversary"
+    ):
+        scenario.planner_judged.append(f"{step.id}.{option.id}")
+        accepted = option.id not in scenario.planner_rejects
+        return Judgement(
+            defensibility=0.8 if accepted else 0.2,
+            accepted=accepted,
+            reason="ok" if accepted else "no",
+            source=None,
+        )
+
     async def code_option(llm: Any, plan: AnalysisPlan, step: Step, option: Option) -> str:
         return f"code-{option.id}"
 
@@ -175,6 +187,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         (runner, "repair_option", repair_option),
         (adversary_round, "propose_options", propose_options),
         (adversary_round, "judge_option", judge_option),
+        (plan_judging, "judge_option", judge_planner_option),
         (adversary_round, "code_option", code_option),
         (adversary_round, "review_proposal", review_proposal),
     ]

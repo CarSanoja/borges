@@ -63,6 +63,7 @@ async def _judge_and_code(
             defensibility=0.0,
             accepted=False,
             reason=f"judge failed: {exc}",
+            origin="adversary",
         )
         await emitter.emit("option.judged", rejected.model_dump(mode="json"))
         return None
@@ -72,6 +73,7 @@ async def _judge_and_code(
         defensibility=judgement.defensibility,
         accepted=judgement.accepted,
         reason=judgement.reason,
+        origin="adversary",
     )
     await emitter.emit("option.judged", judged.model_dump(mode="json"))
     if not judgement.accepted:

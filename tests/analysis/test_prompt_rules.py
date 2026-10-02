@@ -168,3 +168,9 @@ def test_constructed_scores_are_oriented_by_correlation_with_their_items() -> No
 
 def test_produced_names_say_what_is_measured_not_how() -> None:
     assert "Name what is measured, not how" in PLANNER_SYSTEM.replace("\n", " ")
+
+
+def test_planner_requires_alternatives_that_fit_the_data_as_described() -> None:
+    assert "never propose an alternative whose own rationale concedes it does not fit" in " ".join(
+        PLANNER_SYSTEM.split()
+    )

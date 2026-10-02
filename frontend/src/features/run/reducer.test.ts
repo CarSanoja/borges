@@ -55,6 +55,29 @@ describe("reducer", () => {
     expect(adversary?.defensibility).toBe(0.82);
   });
 
+  it("judges a planner option and drops it when the pruned plan arrives", () => {
+    const plan = foldEvents("r1", events).plan!;
+    const withPlan = foldEvents("r1", events.slice(0, events.findIndex((e) => e.type === "plan.ready") + 1));
+    const alternative = withPlan.plan!.steps.find((s) => s.id === "bot_filter")!.options.find((o) => !o.is_default)!;
+    const judged = applyEvent(withPlan, {
+      seq: 999,
+      ts: 0,
+      run_id: "r1",
+      type: "option.judged",
+      data: {
+        step_id: "bot_filter",
+        option_id: alternative.id,
+        defensibility: 0.2,
+        accepted: false,
+        reason: "does not fit the data",
+        origin: "planner",
+      },
+    });
+    const kept = judged.plan!.steps.find((s) => s.id === "bot_filter")!.options.find((o) => o.id === alternative.id);
+    expect(kept?.defensibility).toBe(0.2);
+    expect(plan.steps.length).toBe(judged.plan!.steps.length);
+  });
+
   it("records influences in the report", () => {
     const report = foldEvents("r1", events).report!;
     expect(report.influences[0]?.step_id).toBe("internal_traffic");

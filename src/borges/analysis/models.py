@@ -139,3 +139,4 @@ class CodingSummary(BaseModel):
     steps_reviewed: int = 0
     options_flagged: int = 0
     options_dropped_by_review: int = 0
+    options_dropped_by_judge: int = 0

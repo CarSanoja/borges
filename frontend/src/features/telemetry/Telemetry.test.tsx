@@ -66,6 +66,13 @@ describe("Telemetry coding summary", () => {
     expect(screen.getByLabelText("Telemetry")).not.toHaveTextContent("tested on a sample");
   });
 
+  it("reports options dropped by the defensibility judge", () => {
+    const base = foldEvents("t", events);
+    const coding = { options: 9, smoke_tested: 8, repaired_after_smoke: 0, failed: 0, options_dropped_by_judge: 2 };
+    render(<Telemetry snapshot={{ ...base, report: { ...base.report!, coding } }} />);
+    expect(screen.getByLabelText("Telemetry")).toHaveTextContent("2 dropped by the defensibility judge");
+  });
+
   it("pluralises the counters", () => {
     const base = foldEvents("t", events);
     const snapshot = {

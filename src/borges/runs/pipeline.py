@@ -24,6 +24,7 @@ from borges.runs.pipeline_callbacks import coding_callbacks
 from borges.runs.pipeline_caveats import report_caveats
 from borges.runs.pipeline_data import load_dataframe
 from borges.runs.pipeline_finish import narrate_stage, verify_stage
+from borges.runs.plan_judging import judge_plan_options
 from borges.runs.runner import UniverseRunner, publish_plan
 from borges.sandbox.backend import BranchBackend
 
@@ -83,6 +84,7 @@ class Pipeline:
         async with self.stage("planning"):
             plan = await plan_analysis(self.llm, profile, resolved.question, resolved.decision_rule)
             await publish_plan(self.emitter, plan)
+            await judge_plan_options(self.llm, plan, self.emitter, self.coding)
 
         on_coded, on_smoke, on_review = coding_callbacks(self.emitter)
         smoke = SmokeConfig(

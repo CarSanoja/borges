@@ -26,7 +26,11 @@ async def test_judge_failure_on_one_key_rejects_only_that_option(
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
     assert snapshot.status == "completed" and snapshot.report is not None
-    judged = [e.data for e in rig.store.events("r_test") if e.type == "option.judged"]
+    judged = [
+        e.data
+        for e in rig.store.events("r_test")
+        if e.type == "option.judged" and e.data["origin"] == "adversary"
+    ]
     assert judged and judged[0]["accepted"] is False and "judge" in judged[0]["reason"]
 
 

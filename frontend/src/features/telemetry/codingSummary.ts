@@ -6,5 +6,7 @@ export function codingSentence(coding: CodingSummary): string {
     `${coding.repaired_after_smoke} repaired after a failing test`,
   ];
   if (coding.failed > 0) parts.push(`${coding.failed} dropped`);
+  const judged = coding.options_dropped_by_judge ?? 0;
+  if (judged > 0) parts.push(`${judged} dropped by the defensibility judge`);
   return parts.join(", ");
 }

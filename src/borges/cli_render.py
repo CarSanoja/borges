@@ -56,6 +56,8 @@ def coding_line(coding: CodingSummary) -> str:
         f"sample, {coding.repaired_after_smoke} repaired after a runtime error, "
         f"{coding.failed} failed"
     )
+    if coding.options_dropped_by_judge:
+        line = f"{line}; {coding.options_dropped_by_judge} dropped by the defensibility judge"
     if not coding.steps_reviewed:
         return line
     return (

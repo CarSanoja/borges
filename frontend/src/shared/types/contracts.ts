@@ -136,6 +136,7 @@ export interface CodingSummary {
   smoke_tested: number;
   repaired_after_smoke: number;
   failed: number;
+  options_dropped_by_judge?: number;
 }
 
 export interface Report {
@@ -348,7 +349,7 @@ export type RunEvent =
   | EventBase<"option.proposed", { step_id: string; option: Option }>
   | EventBase<
       "option.judged",
-      { step_id: string; option_id: string; defensibility: number; accepted: boolean; reason: string }
+      { step_id: string; option_id: string; defensibility: number; accepted: boolean; reason: string; origin?: "planner" | "adversary" }
     >
   | EventBase<
       "checkpoint.created",

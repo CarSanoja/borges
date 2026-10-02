@@ -96,6 +96,7 @@ class OptionJudgedData(BaseModel):
     defensibility: float
     accepted: bool
     reason: str
+    origin: Literal["planner", "adversary"] = "adversary"
 
 
 class CheckpointCreatedData(BaseModel):

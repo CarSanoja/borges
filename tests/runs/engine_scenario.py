@@ -24,6 +24,8 @@ class Scenario:
     narrate_error: Exception | None = None
     propose_error: Exception | None = None
     judge_errors: set[str] = field(default_factory=set)
+    planner_rejects: set[str] = field(default_factory=set)
+    planner_judged: list[str] = field(default_factory=list)
     verify_error: Exception | None = None
     reproduced: bool | None = True
     plan_error: Exception | None = None

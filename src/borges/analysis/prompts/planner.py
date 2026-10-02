@@ -29,6 +29,9 @@ be a visible choice.
 analyst would run first.
 - Every option must be defensible to an expert reviewer. No option may change the question \
 or the estimand; options only change how the same quantity is estimated.
+- Every alternative must be one a careful analyst would choose for these data as described in \
+the column notes; never propose an alternative whose own rationale concedes it does not fit \
+the data.
 - Ids are short snake_case, unique across steps for steps and unique within a step for options.
 - spec is a precise implementation instruction that uses the exact column names of the \
 dataset, states what is written to ctx if later steps depend on it, and says what the \
