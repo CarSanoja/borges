@@ -66,7 +66,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
             await asyncio.Event().wait()
         return make_plan()
 
-    def profile_dataframe(df: pd.DataFrame, name: str) -> DatasetProfile:
+    def profile_dataframe(df: pd.DataFrame, name: str, **_: Any) -> DatasetProfile:
         scenario.calls.append("profile")
         return DatasetProfile(name=name, n_rows=len(df), columns=[])
 

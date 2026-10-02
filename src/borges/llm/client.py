@@ -12,6 +12,7 @@ class Role(StrEnum):
     REPAIRER = "repairer"
     ADVERSARY = "adversary"
     JUDGE = "judge"
+    REVIEWER = "reviewer"
     NARRATOR = "narrator"
 
 
@@ -37,6 +38,7 @@ DEFAULT_ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.REPAIRER: SUPER,
     Role.ADVERSARY: SUPER,
     Role.JUDGE: SUPER,
+    Role.REVIEWER: SUPER,
     Role.NARRATOR: ULTRA,
 }
 

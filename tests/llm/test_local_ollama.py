@@ -87,7 +87,7 @@ async def test_truncated_thinking_reply_is_a_clear_error() -> None:
 
 
 async def test_requests_disable_thinking_only_for_coder_and_narrator() -> None:
-    client = FakeClient(*[recorded("ollama_effort_none.json") for _ in range(6)])
+    client = FakeClient(*[recorded("ollama_effort_none.json") for _ in Role])
     llm = local(client)
     for role in Role:
         await llm.complete(role, MESSAGES, key=role.value)
@@ -95,6 +95,7 @@ async def test_requests_disable_thinking_only_for_coder_and_narrator() -> None:
     assert sent[Role.CODER] == {"reasoning_effort": "none"}
     assert sent[Role.NARRATOR] == {"reasoning_effort": "none"}
     assert sent[Role.PLANNER] == sent[Role.ADVERSARY] == sent[Role.JUDGE] == {}
+    assert sent[Role.REVIEWER] == {"reasoning_effort": "none"}
 
 
 async def test_nebius_keeps_chat_template_switch() -> None:

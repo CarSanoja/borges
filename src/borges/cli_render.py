@@ -47,10 +47,16 @@ def search_line(search: SearchSummary) -> str:
 
 
 def coding_line(coding: CodingSummary) -> str:
-    return (
+    line = (
         f"Coding: {coding.options} options written, {coding.smoke_tested} smoke-tested on a "
         f"sample, {coding.repaired_after_smoke} repaired after a runtime error, "
         f"{coding.failed} failed"
+    )
+    if not coding.steps_reviewed:
+        return line
+    return (
+        f"{line}; {coding.steps_reviewed} steps reviewed, {coding.options_flagged} options "
+        f"flagged, {coding.options_dropped_by_review} dropped"
     )
 
 

@@ -55,3 +55,14 @@ class JudgeOutput(BaseModel):
 class NarratorOutput(BaseModel):
     narrative: str
     caveats: list[str] = Field(default_factory=list)
+
+
+class ReviewVerdict(BaseModel):
+    option_id: str
+    faithful: bool
+    changes_estimand: bool = False
+    problem: str = ""
+
+
+class ReviewerOutput(BaseModel):
+    verdicts: list[ReviewVerdict] = Field(default_factory=list)

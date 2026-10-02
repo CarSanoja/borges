@@ -10,6 +10,7 @@ EventType = Literal[
     "plan.ready",
     "option.coded",
     "option.smoke",
+    "option.reviewed",
     "option.proposed",
     "option.judged",
     "checkpoint.created",
@@ -78,6 +79,15 @@ class OptionSmokeData(BaseModel):
     attempts: int
     error: str | None = None
     models: list[str] = Field(default_factory=list)
+
+
+class OptionReviewedData(BaseModel):
+    step_id: str
+    option_id: str
+    faithful: bool
+    changes_estimand: bool
+    problem: str = ""
+    model: str = ""
 
 
 class OptionJudgedData(BaseModel):

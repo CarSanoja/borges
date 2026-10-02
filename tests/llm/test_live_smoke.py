@@ -55,14 +55,15 @@ async def test_missing_model_id_fails() -> None:
 
 async def test_reasoning_with_thinking_disabled_fails() -> None:
     leaky = completion(OK)
-    client = SmokeClient(IDS, leaky, *[clean() for _ in range(5)])
+    client = SmokeClient(IDS, leaky, *[clean() for _ in range(len(Role) - 1)])
     report = await run_smoke(client)
     assert not report.ok
     assert report.roles[0].reasoning and "thinking disabled" in (report.roles[0].error or "")
 
 
 async def test_role_error_is_reported_without_aborting() -> None:
-    client = SmokeClient(IDS, bad_request("model not found"), *[clean() for _ in range(5)])
+    rest = [clean() for _ in range(len(Role) - 1)]
+    client = SmokeClient(IDS, bad_request("model not found"), *rest)
     report = await run_smoke(client)
     assert not report.ok
     assert "model not found" in (report.roles[0].error or "")
