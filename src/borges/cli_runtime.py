@@ -20,10 +20,12 @@ async def execute_run(
     settings: Settings, run_id: str, request: RunRequest, record: bool
 ) -> RunSnapshot:
     from borges.cases.registry import CaseRegistry
+    from borges.fleet.enforcement import enforce_registry
     from borges.runs.bus import EventBus
     from borges.runs.orchestrator import RunOrchestrator
     from borges.runs.store import RunStore
 
+    enforce_registry(settings, request.llm or settings.borges_llm)
     store = RunStore(settings.borges_runs_dir)
     bus = EventBus(store)
     registry = CaseRegistry(settings.borges_cases_dir)

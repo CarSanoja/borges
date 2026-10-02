@@ -5,6 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from borges.fleet.principal import agent_principal
 from borges.llm.client import BudgetExceeded, LLMClient, LLMResponse, Role, UsageTotals
 from borges.telemetry import hooks
 from borges.telemetry.caller import current_caller
@@ -89,7 +90,7 @@ class InstrumentedLLM:
                     "model.call",
                     decision="deny" if denied else None,
                     reason="budget exceeded" if denied else None,
-                    principal=caller.principal or f"agent:{role.value}",
+                    principal=caller.principal or agent_principal(role.value),
                     role=role.value,
                     model=model,
                     key=key,
@@ -112,7 +113,7 @@ class InstrumentedLLM:
             span.set_attribute("borges.response.sha256", response_hash)
             hooks.audit(
                 "model.call",
-                principal=caller.principal or f"agent:{role.value}",
+                principal=caller.principal or agent_principal(role.value),
                 role=role.value,
                 model=usage.model,
                 key=key,

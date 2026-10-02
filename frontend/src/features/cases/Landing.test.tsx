@@ -40,6 +40,13 @@ describe("Landing", () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false));
   });
 
+  it("links the fleet from the main navigation", async () => {
+    renderLanding();
+    await screen.findByText("Mocked checkout");
+    const nav = screen.getByRole("navigation", { name: "Main" });
+    expect(within(nav).getByRole("link", { name: "Fleet" })).toHaveAttribute("href", "/fleet");
+  });
+
   it("renders cases and hides live runs without a key", async () => {
     renderLanding();
     expect(await screen.findByText("Mocked checkout")).toBeInTheDocument();

@@ -7,6 +7,7 @@ import { Telemetry } from "../telemetry/Telemetry";
 import { UniverseDrawer } from "../universe/UniverseDrawer";
 import { VerdictCard } from "../verdict/VerdictCard";
 import { RecordingBanner } from "../recording/RecordingBanner";
+import { AgentsUsed } from "./AgentsUsed";
 import { RunHeader } from "./RunHeader";
 import { useCaseCard } from "./useCaseCard";
 import { NotFound } from "../notfound/NotFound";
@@ -87,6 +88,7 @@ export function RunPage({ source, onHome }: Props) {
         </div>
       </section>
       <footer className="run-footer">
+        <AgentsUsed agents={snapshot.agents ?? snapshot.report?.agents} />
         <Telemetry snapshot={snapshot} />
       </footer>
       <UniverseDrawer

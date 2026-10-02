@@ -12,6 +12,7 @@ from borges.api.live_rules import (
     uploads_unavailable_reason,
 )
 from borges.config import Settings
+from borges.fleet.enforcement import RegistryBlocked, enforce_registry
 from borges.runs.models import RunRequest
 
 LIVE_TOKEN_HEADER = "X-Borges-Live-Token"
@@ -44,6 +45,13 @@ def _check_live(
             429,
             f"At most {settings.borges_max_live_runs} live runs can run at once. Try again soon.",
         )
+
+
+def _check_registry(settings: Settings, llm: str) -> None:
+    try:
+        enforce_registry(settings, llm)
+    except RegistryBlocked as blocked:
+        raise _reject(409, str(blocked)) from blocked
 
 
 def _check_upload_trust(settings: Settings, live_token: str | None) -> None:
@@ -93,4 +101,5 @@ def enforce_run_policy(
         raise _reject(400, "Uploaded datasets need live mode (llm=nebius with NEBIUS_API_KEY).")
     if llm == "nebius":
         _check_live(request, settings, orchestrator, live_token)
+        _check_registry(settings, llm)
     return request

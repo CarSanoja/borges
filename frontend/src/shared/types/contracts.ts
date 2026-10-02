@@ -154,6 +154,7 @@ export interface Report {
   failed?: string[];
   search?: SearchSummary | null;
   coding?: CodingSummary | null;
+  agents?: RunAgents | null;
 }
 
 export interface Garden {
@@ -247,6 +248,7 @@ export interface RunSnapshot {
   report: Report | null;
   usage: UsageSnapshot;
   error: string | null;
+  agents?: RunAgents | null;
   last_seq: number;
 }
 
@@ -426,4 +428,99 @@ export interface TraceResponse {
   unlinked_audit: AuditRecord[];
   audit_chain: AuditChainStatus | null;
   reason: string | null;
+}
+
+export type AgentLifecycle = "active" | "shadow" | "retired";
+export type AgentApproval = "proposed" | "approved" | "retired" | "unpublished";
+
+export interface AgentUse {
+  agent_id: string;
+  version: string | null;
+  definition_sha: string;
+  approval: AgentApproval;
+  model_id: string;
+  prompt_sha: string | null;
+  principal: string;
+  lifecycle: AgentLifecycle;
+}
+
+export interface RunAgents {
+  registry_sha: string;
+  agents: AgentUse[];
+}
+
+export interface AgentCard {
+  agent_id: string;
+  display_name: string;
+  purpose: string;
+  kind: "agent" | "component";
+  role: string;
+  model_id: string;
+  lifecycle: AgentLifecycle;
+  department: string;
+  owner: string;
+  principal: string;
+  capabilities: string[];
+  prompt_sha: string | null;
+  output_schema_sha: string | null;
+  code_sha: string | null;
+  definition_sha: string;
+  version: string | null;
+  approval: AgentApproval;
+  latest_version: string | null;
+  versions: number;
+}
+
+export interface AnalysisTemplate {
+  id: string;
+  title: string;
+  owner: string;
+  question: string;
+  metric: string;
+  decision_rule: DecisionRule;
+  dataset_name: string;
+  live_only: boolean;
+}
+
+export interface RegistryBlocker {
+  agent_id: string;
+  definition_sha: string;
+  reason: string;
+}
+
+export interface AgentCatalog {
+  registry_sha: string;
+  summary: {
+    total: number;
+    by_lifecycle: Record<string, number>;
+    by_approval: Record<string, number>;
+    enforce: boolean;
+    blocked: RegistryBlocker[];
+  };
+  agents: AgentCard[];
+  templates: AnalysisTemplate[];
+}
+
+export interface AgentTransition {
+  ts: number;
+  state: AgentApproval;
+  by: string;
+  reason: string | null;
+}
+
+export interface AgentVersion {
+  agent_id: string;
+  version: string;
+  definition_sha: string;
+  state: AgentApproval;
+  bump: string;
+  changelog: string;
+  published_at: number;
+  published_by: string;
+  history: AgentTransition[];
+}
+
+export interface AgentDetail {
+  card: AgentCard;
+  versions: AgentVersion[];
 }

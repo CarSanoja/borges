@@ -1,4 +1,6 @@
 import type {
+  AgentCatalog,
+  AgentDetail,
   CaseCard,
   RecordingSource,
   Health,
@@ -52,6 +54,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getHealth(): Promise<Health> {
   return request<Health>("/health");
+}
+
+export function getAgents(): Promise<AgentCatalog> {
+  return request<AgentCatalog>("/agents");
+}
+
+export function getAgent(agentId: string): Promise<AgentDetail> {
+  return request<AgentDetail>(`/agents/${encodeURIComponent(agentId)}`);
 }
 
 export function getTrace(runId: string): Promise<TraceResponse> {

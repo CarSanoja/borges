@@ -2,6 +2,11 @@ import { describe, expect, it } from "vitest";
 import { parseLocation, replayPath, runPath, tracePath, withMock } from "./routes";
 
 describe("parseLocation", () => {
+  it("matches the fleet route", () => {
+    expect(parseLocation("/fleet", "").route).toEqual({ name: "fleet" });
+    expect(parseLocation("/fleet/x", "").route.name).toBe("not_found");
+  });
+
   it("matches the landing route", () => {
     expect(parseLocation("/", "")).toEqual({ route: { name: "landing" }, mock: false });
   });

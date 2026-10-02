@@ -11,6 +11,7 @@ from typing import Literal, cast
 
 from borges.cases.registry import CaseRegistry
 from borges.config import Settings
+from borges.fleet.models import RunAgents
 from borges.llm.factory import make_llm
 from borges.runs.bus import EventBus
 from borges.runs.detail import build_universe_detail
@@ -18,7 +19,7 @@ from borges.runs.emitter import RunEmitter
 from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
-from borges.runs.orchestrator_meta import announced_models, outcome_meta
+from borges.runs.orchestrator_meta import agents_provenance, announced_models, outcome_meta
 from borges.runs.orchestrator_trace import (
     TelemetryFactory,
     close_telemetry,
@@ -142,6 +143,7 @@ class RunOrchestrator:
         request: RunRequest,
         resolved: ResolvedRun,
         trace_id: str | None = None,
+        agents: RunAgents | None = None,
     ) -> None:
         llm, backend = self._modes(request)
         started = RunStartedData(
@@ -155,6 +157,7 @@ class RunOrchestrator:
             models=announced_models(self.settings, llm),
             max_universes=resolved.max_universes,
             trace_id=trace_id,
+            agents=agents,
         )
         await emitter.emit("run.started", started.model_dump(mode="json"))
 
@@ -187,6 +190,9 @@ class RunOrchestrator:
             self._register(run_id, request, resolved)
         telemetry = open_telemetry(self.telemetry_factory, self.settings, self.store, run_id)
         llm_mode, backend_mode = self._modes(request)
+        agents = agents_provenance(self.settings, llm_mode)
+        if agents is not None:
+            self.store.update_meta(run_id, agents=agents.model_dump(mode="json"))
         attributes = {
             "borges.case_id": resolved.case_id or "",
             "borges.llm": llm_mode,
@@ -194,7 +200,7 @@ class RunOrchestrator:
         }
         try:
             with run_scope(telemetry, self.store, run_id, attributes) as span:
-                snapshot = await self._execute(run_id, request, resolved, telemetry)
+                snapshot = await self._execute(run_id, request, resolved, telemetry, agents)
                 mark_outcome(span, snapshot.status)
                 return snapshot
         finally:
@@ -206,6 +212,7 @@ class RunOrchestrator:
         request: RunRequest,
         resolved: ResolvedRun,
         telemetry: RunTelemetry | None,
+        agents: RunAgents | None = None,
     ) -> RunSnapshot:
         self.bus.open(run_id)
         started_at = time.monotonic()
@@ -215,7 +222,7 @@ class RunOrchestrator:
         error: str | None = None
         try:
             await self._announce(
-                emitter, request, resolved, telemetry.trace_id if telemetry else None
+                emitter, request, resolved, telemetry.trace_id if telemetry else None, agents
             )
             log.info("run started", extra={"run_id": run_id, "case_id": resolved.case_id})
             llm_options: dict[str, Path | None] = {"fixtures_dir": resolved.fixtures_dir}
@@ -224,6 +231,7 @@ class RunOrchestrator:
             llm = instrument_llm(self.llm_factory(self.settings, request.llm, **llm_options))
             backend = instrument_backend(self.backend_factory(self.settings, request.backend))
             pipeline = Pipeline(self.settings, llm, backend, emitter, resolved)
+            pipeline.agents = agents
             await pipeline.run()
         except asyncio.CancelledError:
             await self._finish(emitter, started_at, "run cancelled", pipeline)

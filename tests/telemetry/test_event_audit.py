@@ -17,7 +17,7 @@ def test_scripted_run_audit_covers_models_sandbox_verdicts_lifecycle(
     assert lifecycle == ["started", "completed"]
     assert all(r.run_id == scripted_run.run_id and r.trace_id for r in records)
     judge = next(r for r in records if r.kind == "verdict.judge")
-    assert judge.decision in ("allow", "deny") and judge.principal == "agent:judge"
+    assert judge.decision in ("allow", "deny") and judge.principal == "agent://borges/judge"
     model = next(r for r in records if r.kind == "model.call")
     for field in ("role", "model", "prompt_sha256", "response_sha256", "tokens_in", "cost_usd"):
         assert field in model.data

@@ -12,6 +12,7 @@ from borges.analysis.profile import profile_dataframe
 from borges.analysis.scale_check import scale_check
 from borges.analysis.smoke_review import llm_reviewer
 from borges.config import Settings
+from borges.fleet.models import RunAgents
 from borges.garden.executor import GardenExecutor
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary, Universe
@@ -53,6 +54,7 @@ class Pipeline:
         self.executor: GardenExecutor | None = None
         self.flip: Flip | None = None
         self.report: Report | None = None
+        self.agents: RunAgents | None = None
         self.caveats: list[str] = []
         self.coding = CodingSummary()
         self.judged = JudgedLedger()

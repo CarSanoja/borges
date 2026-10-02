@@ -46,4 +46,5 @@ async def narrate_stage(pipeline: Pipeline, plan: AnalysisPlan, report: Report) 
             report.caveats = [*report.caveats, *caveats]
         except Exception as exc:
             report.caveats = [*report.caveats, f"Narrative unavailable: {exc}"]
+        report.agents = pipeline.agents
         await pipeline.emitter.emit("report.ready", {"report": report.model_dump(mode="json")})

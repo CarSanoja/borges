@@ -2,6 +2,7 @@ import type { RecordingSource } from "../types/contracts";
 
 export type Route =
   | { name: "landing" }
+  | { name: "fleet" }
   | { name: "run"; runId: string }
   | { name: "trace"; runId: string }
   | { name: "replay"; caseId: string; source: RecordingSource | null }
@@ -20,6 +21,7 @@ export function parseLocation(pathname: string, search: string): Location {
   const parts = pathname.split("/").filter(Boolean).map(decodeURIComponent);
   if (parts.length === 0) return { route: { name: "landing" }, mock };
   const [head, id] = parts;
+  if (parts.length === 1 && head === "fleet") return { route: { name: "fleet" }, mock };
   if (parts.length === 3 && id && parts[2] === "trace" && head === "run") {
     return { route: { name: "trace", runId: id }, mock };
   }
@@ -29,6 +31,8 @@ export function parseLocation(pathname: string, search: string): Location {
   }
   return { route: { name: "not_found" }, mock };
 }
+
+export const FLEET_PATH = "/fleet";
 
 export function runPath(runId: string): string {
   return `/run/${encodeURIComponent(runId)}`;

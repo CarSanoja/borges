@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     borges_sandbox_memory_mb: int = 3072
     borges_sandbox_cpu_s: int = 600
     borges_sandbox_fsize_mb: int = 256
+    borges_registry_enforce: bool = False
     borges_home: Path = REPO_ROOT / ".borges"
     borges_runs_dir: Path = REPO_ROOT / "runs"
     borges_cases_dir: Path = REPO_ROOT / "cases"

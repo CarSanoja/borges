@@ -130,3 +130,36 @@ async def test_local_llm_is_refused_over_http(tmp_path) -> None:
     assert response.status_code == 400
     assert "CLI only" in response.json()["detail"]
     assert env.orchestrator.calls == []
+
+
+async def test_live_run_is_refused_when_the_registry_has_no_approval(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_registry_enforce=True)
+    from borges.analysis.prompts import judge
+
+    original = judge.SYSTEM
+    judge.SYSTEM = original + " Be stricter."
+    try:
+        response = await post(env, CASE)
+    finally:
+        judge.SYSTEM = original
+    assert response.status_code == 409
+    assert "judge" in response.json()["detail"]
+    assert env.orchestrator.calls == []
+
+
+async def test_live_run_is_accepted_when_the_registry_approves_the_tree(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_registry_enforce=True)
+    assert (await post(env, CASE)).status_code == 202
+
+
+async def test_scripted_run_ignores_registry_enforcement(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_registry_enforce=True)
+    from borges.analysis.prompts import judge
+
+    original = judge.SYSTEM
+    judge.SYSTEM = original + " Be stricter."
+    try:
+        response = await post(env, {"case_id": "a", "llm": "scripted"})
+    finally:
+        judge.SYSTEM = original
+    assert response.status_code == 202

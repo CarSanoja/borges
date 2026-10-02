@@ -8,7 +8,14 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from borges.api import routes_cases, routes_health, routes_runs, routes_trace, routes_uploads
+from borges.api import (
+    routes_agents,
+    routes_cases,
+    routes_health,
+    routes_runs,
+    routes_trace,
+    routes_uploads,
+)
 from borges.api.spa import mount_frontend
 from borges.api.startup import reconcile
 from borges.api.uploads import UploadStore
@@ -69,7 +76,14 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    for module in (routes_health, routes_cases, routes_runs, routes_trace, routes_uploads):
+    for module in (
+        routes_health,
+        routes_cases,
+        routes_agents,
+        routes_runs,
+        routes_trace,
+        routes_uploads,
+    ):
         app.include_router(module.router, prefix="/api")
     mount_frontend(app, resolved.borges_frontend_dist)
     return app

@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from borges.analysis.models import AnalysisPlan, DecisionRule, Option, Step, StepTrace
+from borges.fleet.models import RunAgents
 from borges.garden.models import Flip, Garden, Report, Universe
 from borges.runs.events import StageName
 
@@ -60,6 +61,7 @@ class RunSnapshot(BaseModel):
     report: Report | None = None
     usage: UsageSnapshot = Field(default_factory=UsageSnapshot)
     error: str | None = None
+    agents: RunAgents | None = None
     last_seq: int = 0
 
 

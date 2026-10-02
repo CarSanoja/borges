@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from borges.analysis.models import AnalysisPlan, DecisionRule, Option
+from borges.fleet.models import RunAgents
 from borges.garden.models import Flip, Report, Universe
 from borges.runs.events import Event
 from borges.runs.models import CheckpointNode, RunSnapshot, UsageSnapshot
@@ -50,6 +51,8 @@ def _apply(snapshot: RunSnapshot, event: Event) -> None:
             snapshot.decision_rule = DecisionRule.model_validate(data["decision_rule"])
             snapshot.llm = data.get("llm")
             snapshot.backend = data.get("backend")
+            if data.get("agents"):
+                snapshot.agents = RunAgents.model_validate(data["agents"])
         case "stage":
             snapshot.stages[data["name"]] = data["status"]
         case "plan.ready":

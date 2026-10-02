@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from borges.fleet.principal import agent_principal
 from borges.telemetry import hooks
 
 REASON_CHARS = 300
@@ -9,6 +10,24 @@ REASON_CHARS = 300
 
 def _text(value: Any) -> str | None:
     return str(value)[:REASON_CHARS] if value else None
+
+
+def audit_agents(agents: Any) -> None:
+    if not agents:
+        return
+    hooks.audit(
+        "registry.provenance",
+        registry_sha=agents.get("registry_sha"),
+        agents=[
+            {
+                "agent_id": a.get("agent_id"),
+                "version": a.get("version"),
+                "definition_sha": a.get("definition_sha"),
+                "approval": a.get("approval"),
+            }
+            for a in agents.get("agents", [])
+        ],
+    )
 
 
 def audit_run_event(event_type: str, data: dict[str, Any]) -> None:
@@ -23,6 +42,7 @@ def audit_run_event(event_type: str, data: dict[str, Any]) -> None:
                 models=data.get("models"),
                 max_universes=data.get("max_universes"),
             )
+            audit_agents(data.get("agents"))
         case "run.finished":
             hooks.audit(
                 "run.lifecycle",
@@ -38,7 +58,7 @@ def audit_run_event(event_type: str, data: dict[str, Any]) -> None:
                 "verdict.judge",
                 decision="allow" if data.get("accepted") else "deny",
                 reason=_text(data.get("reason")),
-                principal="agent:judge",
+                principal=agent_principal("judge"),
                 step_id=data.get("step_id"),
                 option_id=data.get("option_id"),
                 defensibility=data.get("defensibility"),
@@ -50,7 +70,7 @@ def audit_run_event(event_type: str, data: dict[str, Any]) -> None:
                 "verdict.reviewer",
                 decision="allow" if faithful else "deny",
                 reason=_text(data.get("problem")),
-                principal="agent:reviewer",
+                principal=agent_principal("reviewer"),
                 step_id=data.get("step_id"),
                 option_id=data.get("option_id"),
                 faithful=data.get("faithful"),

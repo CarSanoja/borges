@@ -1,5 +1,6 @@
 import type { Health } from "../../shared/types/contracts";
 import { backendLabel } from "../run/runLabels";
+import { AppLink, FLEET_PATH } from "../../shared/router";
 import { CaseCardView } from "./CaseCardView";
 import { Hero } from "./Hero";
 import { LiveNote } from "./LiveNote";
@@ -31,6 +32,11 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
   const watchDemo = () => (demo ? onOpenReplay(demo.id) : onOpenMock());
   return (
     <main className="landing">
+      <nav className="landing-nav" aria-label="Main">
+        <AppLink to={FLEET_PATH} className="chip chip--link">
+          Fleet
+        </AppLink>
+      </nav>
       <Hero
         onWatchDemo={watchDemo}
         health={health}

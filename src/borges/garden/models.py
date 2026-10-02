@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from borges.analysis.models import AnalysisResult, CodingSummary, StepTrace
+from borges.fleet.models import RunAgents
 
 UniverseKind = Literal["baseline", "single", "adversary", "combination", "verification"]
 UniverseStatus = Literal["pending", "running", "done", "failed"]
@@ -80,6 +81,7 @@ class Report(BaseModel):
     failed: list[str] = Field(default_factory=list)
     search: SearchSummary | None = None
     coding: CodingSummary | None = None
+    agents: RunAgents | None = None
 
 
 class Garden(BaseModel):

@@ -2,6 +2,7 @@ import { Landing } from "./features/cases/Landing";
 import { RunPage } from "./features/run/RunPage";
 import { ReplayRoute } from "./features/run/ReplayRoute";
 import { NotFound } from "./features/notfound/NotFound";
+import { FleetPage } from "./features/fleet/FleetPage";
 import { TracePage } from "./features/trace/TracePage";
 import { navigate, replayPath, runPath, useLocation, useScrollToTop, withMock } from "./shared/router";
 
@@ -20,6 +21,8 @@ export function App() {
       />
     );
   }
+
+  if (route.name === "fleet") return <FleetPage />;
 
   if (route.name === "trace") {
     return <TracePage key={`trace:${route.runId}`} runId={route.runId} />;

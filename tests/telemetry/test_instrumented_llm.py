@@ -99,7 +99,7 @@ async def test_no_raw_prompt_or_response_reaches_spans_or_audit(tmp_path: Path) 
     record = next(
         r for r in read_records(tmp_path / "run" / "audit.jsonl") if r.kind == "model.call"
     )
-    assert record.principal == "agent:planner"
+    assert record.principal == "agent://borges/planner"
     assert record.data["outcome"] == "ok" and record.data["cache_hit"] is True
     assert record.data["tokens_in"] == 120 and record.data["role"] == "planner"
     assert verify_chain(tmp_path / "run" / "audit.jsonl").ok

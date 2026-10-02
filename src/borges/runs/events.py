@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from borges.fleet.models import RunAgents
+
 EventType = Literal[
     "run.started",
     "stage",
@@ -56,6 +58,7 @@ class RunStartedData(BaseModel):
     models: dict[str, str]
     max_universes: int
     trace_id: str | None = None
+    agents: RunAgents | None = None
 
 
 class StageData(BaseModel):
