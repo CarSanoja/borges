@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.models import AnalysisResult, CodingSummary
 from borges.garden.models import Flip, SearchSummary
+from borges.llm.local_models import LOCAL_LABEL
 from borges.runs.models import RunSnapshot, UniverseDetail
 
 KIND_NOTES = {
@@ -87,7 +88,12 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
         f"Universes: {usage.universes}, checkpoints: {usage.checkpoints}, "
         f"LLM calls: {calls} ({usage.cached_calls} cached)"
     )
-    if scripted:
+    if snapshot.llm == "local":
+        lines.append(f"Model: {LOCAL_LABEL}")
+        lines.append(
+            f"Tokens: {usage.tokens_in} in / {usage.tokens_out} out, cost: $0.0000 (local)"
+        )
+    elif scripted:
         lines.append("Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)")
     else:
         lines.append(

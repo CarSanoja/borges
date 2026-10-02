@@ -1,0 +1,25 @@
+{
+ "id": "chatcmpl-954",
+ "object": "chat.completion",
+ "created": 1790934725,
+ "model": "nemotron-3-nano:30b",
+ "system_fingerprint": "fp_ollama",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"answer\": 42,\n  \"label\": \"Sum of 17 and 25\"\n}"
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 40,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens": 26,
+  "total_tokens": 66
+ }
+}

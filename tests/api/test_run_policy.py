@@ -122,3 +122,11 @@ async def test_non_ascii_live_token_is_403_not_500(tmp_path) -> None:
     stub_upload(env)
     response = await post(env, UPLOAD, {"X-Borges-Live-Token": "s\xe9".encode("latin-1")})
     assert response.status_code == 403
+
+
+async def test_local_llm_is_refused_over_http(tmp_path) -> None:
+    env = Env(tmp_path, key="k")
+    response = await post(env, {"case_id": "a", "llm": "local"})
+    assert response.status_code == 400
+    assert "CLI only" in response.json()["detail"]
+    assert env.orchestrator.calls == []

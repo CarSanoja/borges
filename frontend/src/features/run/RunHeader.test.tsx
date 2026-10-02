@@ -17,6 +17,11 @@ describe("RunHeader mode badge", () => {
     expect(screen.getByText("Live on Nemotron · ConTree sandboxes")).toBeInTheDocument();
   });
 
+  it("labels a recording made with the local Ollama model", () => {
+    render(<RunHeader snapshot={{ ...snapshot, llm: "local", backend: "local" }} onHome={() => undefined} />);
+    expect(screen.getByText("Nemotron 3 Nano on Ollama (local, not Token Factory) · local sandboxes")).toBeInTheDocument();
+  });
+
   it("claims no sandbox mode before run.started", () => {
     render(<RunHeader snapshot={{ ...snapshot, llm: null, backend: null }} onHome={() => undefined} />);
     expect(screen.queryByText(/sandboxes/)).toBeNull();

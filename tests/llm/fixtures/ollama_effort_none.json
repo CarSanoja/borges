@@ -1,0 +1,25 @@
+{
+ "id": "chatcmpl-698",
+ "object": "chat.completion",
+ "created": 1790934713,
+ "model": "nemotron-3-nano:30b",
+ "system_fingerprint": "fp_ollama",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"answer\": 42,\n  \"label\": \"sum\"\n}"
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 41,
+  "prompt_tokens_details": {
+   "cached_tokens": 37
+  },
+  "completion_tokens": 18,
+  "total_tokens": 59
+ }
+}

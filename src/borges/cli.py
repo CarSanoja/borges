@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Annotated, Literal
+from typing import Annotated
 
 import typer
 
@@ -15,7 +15,7 @@ from borges.runs.reproduce import reproduction_lines
 
 app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
 
-LlmOption = Annotated[str, typer.Option("--llm", help="scripted or nebius")]
+LlmOption = Annotated[str, typer.Option("--llm", help="scripted, nebius or local")]
 
 
 def _validated(value: str | None, allowed: tuple[str, ...], name: str) -> str | None:
@@ -44,14 +44,14 @@ def cases() -> None:
 @app.command()
 def run(
     case: Annotated[str, typer.Option("--case", help="Case id")],
-    llm: Annotated[str | None, typer.Option(help="scripted or nebius")] = None,
+    llm: Annotated[str | None, typer.Option(help="scripted, nebius or local")] = None,
     backend: Annotated[str | None, typer.Option(help="local or contree")] = None,
     max_universes: Annotated[int | None, typer.Option(min=1, max=200)] = None,
     record: Annotated[bool, typer.Option(help="Record model responses as fixtures")] = False,
     json_output: Annotated[bool, typer.Option("--json", help="Print the RunSnapshot")] = False,
 ) -> None:
     """Execute a case in-process and print the outcome."""
-    llm_mode = _validated(llm, ("scripted", "nebius"), "--llm")
+    llm_mode = _validated(llm, ("scripted", "nebius", "local"), "--llm")
     backend_mode = _validated(backend, ("local", "contree"), "--backend")
     request = RunRequest(
         case_id=case,
@@ -59,7 +59,7 @@ def run(
         backend=backend_mode,
         max_universes=max_universes,
     )
-    snapshot = _run(get_settings(), request, record and llm_mode == "nebius")
+    snapshot = _run(get_settings(), request, record and llm_mode in ("nebius", "local"))
     if json_output:
         typer.echo(snapshot.model_dump_json(indent=2))
     else:
@@ -91,11 +91,10 @@ def record_demo(
     llm: LlmOption = "scripted",
 ) -> None:
     """Run a case and store its event log as the offline recording."""
-    llm_mode = _validated(llm, ("scripted", "nebius"), "--llm")
+    llm_mode = _validated(llm, ("scripted", "nebius", "local"), "--llm")
     settings = get_settings()
     request = RunRequest(case_id=case, llm=llm_mode)
-    mode: Literal["scripted", "nebius"] = "nebius" if llm_mode == "nebius" else "scripted"
-    snapshot = _run(settings, request, mode == "nebius")
+    snapshot = _run(settings, request, llm_mode in ("nebius", "local"))
     if snapshot.status != "completed":
         typer.echo(f"run {snapshot.run_id} failed: {snapshot.error}", err=True)
         raise typer.Exit(1)

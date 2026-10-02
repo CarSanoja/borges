@@ -42,3 +42,23 @@ def test_nebius_wiring(tmp_path: Path) -> None:
     assert llm.ledger.path == tmp_path / "spend.json"
     assert llm.run_budget is not None and llm.run_budget.cap_usd == 0.25
     assert llm.record_dir == tmp_path / "rec"
+
+
+def test_local_wiring_uses_ollama_and_costs_nothing(tmp_path: Path) -> None:
+    llm = make_llm(settings(tmp_path), mode="local", record_dir=tmp_path / "rec")
+    assert isinstance(llm, NebiusLLM)
+    assert str(llm.client.base_url).startswith("http://localhost:11434/v1")
+    assert llm.ledger is None and llm.run_budget is None
+    assert llm.record_dir == tmp_path / "rec"
+    assert llm.cache is not None
+    assert {spec.id for spec in llm.role_models.values()} == {"nemotron-3-nano:30b"}
+    assert all(spec.cost(1000, 1000) == 0.0 for spec in llm.role_models.values())
+
+
+def test_local_wiring_honours_settings(tmp_path: Path) -> None:
+    llm = make_llm(
+        settings(tmp_path, borges_local_base_url="http://h:1/v1", borges_local_model="m:1"),
+        mode="local",
+    )
+    assert str(llm.client.base_url).startswith("http://h:1/v1")
+    assert {spec.id for spec in llm.role_models.values()} == {"m:1"}

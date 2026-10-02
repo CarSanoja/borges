@@ -208,3 +208,12 @@ async def test_record_dir_is_forwarded_to_the_llm_factory(
     rig.orchestrator.record_dir = tmp_path / "rec"
     await rig.orchestrator.execute("r_rec", RunRequest(case_id="demo"))
     assert rig.factory_calls[0]["record_dir"] == tmp_path / "rec"
+
+
+async def test_local_run_announces_the_real_model_id(tmp_path: Path, scenario: Scenario) -> None:
+    rig = make_rig(tmp_path)
+    await rig.orchestrator.execute("r_local", RunRequest(case_id="demo", llm="local"))
+    started = rig.store.events("r_local")[0].data
+    assert started["llm"] == "local"
+    assert set(started["models"].values()) == {"nemotron-3-nano:30b"}
+    assert rig.factory_calls[0]["mode"] == "local"

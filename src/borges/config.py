@@ -22,6 +22,8 @@ class Settings(BaseSettings):
         default=None, validation_alias=AliasChoices("CONTREE_PROJECT_ID", "NEBIUS_PROJECT_ID")
     )
 
+    borges_local_base_url: str = "http://localhost:11434/v1"
+    borges_local_model: str = "nemotron-3-nano:30b"
     borges_llm: Literal["nebius", "scripted"] = "scripted"
     borges_backend: Literal["local", "contree"] = "local"
     borges_spend_cap_usd: float = 5.0

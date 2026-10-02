@@ -103,6 +103,17 @@ def test_scripted_run_never_shows_token_counts(captured) -> None:
     assert "10 in" not in result.output
 
 
+def test_local_run_names_the_model_and_prints_real_tokens(captured) -> None:
+    snapshot = _completed().model_copy(update={"llm": "local"})
+    captured.install(snapshot)
+    result = runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--llm", "local", "--record"])
+    assert result.exit_code == 0
+    assert "Nemotron 3 Nano on Ollama (local, not Token Factory)" in result.output
+    assert "Tokens: 10 in / 5 out, cost: $0.0000 (local)" in result.output
+    request, record = captured[0]
+    assert request.llm == "local" and record is True
+
+
 def test_run_json_output(captured) -> None:
     captured.install(_completed())
     result = runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--json"])

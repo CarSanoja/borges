@@ -220,7 +220,7 @@ export interface RunSnapshot {
   title: string;
   question: string;
   decision_rule: DecisionRule | null;
-  llm?: "nebius" | "scripted" | null;
+  llm?: "nebius" | "scripted" | "local" | null;
   backend?: string | null;
   stages: Partial<Record<StageName, "started" | "done">>;
   plan: AnalysisPlan | null;
@@ -238,7 +238,7 @@ export interface RunRequest {
   upload_id?: string | null;
   question?: string | null;
   decision_rule?: DecisionRule | null;
-  llm?: "nebius" | "scripted" | null;
+  llm?: "nebius" | "scripted" | "local" | null;
   backend?: "local" | "contree" | null;
   max_universes?: number | null;
 }
@@ -280,7 +280,7 @@ export interface UniverseDetail {
 
 export interface Health {
   status: "ok";
-  llm: "nebius" | "scripted";
+  llm: "nebius" | "scripted" | "local";
   llm_live_available: boolean;
   backend: string;
   spend_usd: number;
@@ -307,7 +307,7 @@ export type RunEvent =
         question: string;
         decision_rule: DecisionRule;
         mode: "live" | "replay";
-        llm: "nebius" | "scripted";
+        llm: "nebius" | "scripted" | "local";
         backend: string;
         models: Record<string, string>;
         max_universes: number;

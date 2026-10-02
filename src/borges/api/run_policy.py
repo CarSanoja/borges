@@ -74,6 +74,12 @@ def enforce_run_policy(
             f"This server runs the {settings.borges_backend} backend; "
             "the server chooses the backend.",
         )
+    if request.llm == "local":
+        raise _reject(
+            400,
+            "llm=local is CLI only (Nemotron 3 Nano on Ollama, on the operator's machine); "
+            "the server pins its own mode.",
+        )
     ceiling = settings.borges_max_universes
     clamped = min(request.max_universes or ceiling, ceiling)
     request = request.model_copy(update={"max_universes": clamped})

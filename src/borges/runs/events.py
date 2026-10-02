@@ -50,7 +50,7 @@ class RunStartedData(BaseModel):
     question: str
     decision_rule: dict[str, Any]
     mode: Literal["live", "replay"]
-    llm: Literal["nebius", "scripted"]
+    llm: Literal["nebius", "scripted", "local"]
     backend: str
     models: dict[str, str]
     max_universes: int

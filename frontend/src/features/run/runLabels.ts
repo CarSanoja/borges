@@ -1,5 +1,7 @@
 import type { DecisionRule, RunSnapshot, StageName } from "../../shared/types/contracts";
 
+export const LOCAL_MODEL_LABEL = "Nemotron 3 Nano on Ollama (local, not Token Factory)";
+
 const STAGE_LABELS: Record<StageName, string> = {
   profiling: "Reading the data",
   planning: "Planning the analysis",
@@ -26,6 +28,7 @@ export function backendLabel(backend: string): string {
 export function modeLabel(snapshot: RunSnapshot): string | null {
   if (!snapshot.llm || !snapshot.backend) return null;
   const sandboxes = `${backendLabel(snapshot.backend)} sandboxes`;
+  if (snapshot.llm === "local") return `${LOCAL_MODEL_LABEL} · ${sandboxes}`;
   return snapshot.llm === "scripted" ? `Scripted replay · ${sandboxes}` : `Live on Nemotron · ${sandboxes}`;
 }
 

@@ -11,6 +11,10 @@ from borges.llm.json_output import schema_instructions
 CHARS_PER_TOKEN = 3.5
 
 
+def nebius_thinking_body(enabled: bool) -> dict[str, Any]:
+    return {"chat_template_kwargs": {"enable_thinking": enabled}}
+
+
 class TruncatedOutput(LLMError):
     pass
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ from borges.llm.nebius_transport import (
     TruncatedOutput,
     create_completion,
     estimate_prompt_tokens,
+    nebius_thinking_body,
     retry_messages,
     with_schema_instructions,
 )
@@ -43,7 +45,9 @@ class NebiusLLM:
         run_budget: RunBudget | None = None,
         record_dir: Path | None = None,
         client: Any = None,
+        thinking_body: Callable[[bool], dict[str, Any]] = nebius_thinking_body,
     ) -> None:
+        self.thinking_body = thinking_body
         self.role_models = role_models
         self.cache = cache
         self.ledger = ledger
@@ -183,7 +187,7 @@ class NebiusLLM:
             "messages": messages,
             "max_tokens": max_tokens,
             "temperature": temperature,
-            "extra_body": {"chat_template_kwargs": {"enable_thinking": spec.thinking}},
+            "extra_body": self.thinking_body(spec.thinking),
         }
         response = await create_completion(self.client, kwargs, schema)
         try:

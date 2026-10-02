@@ -1,0 +1,26 @@
+{
+ "id": "chatcmpl-772",
+ "object": "chat.completion",
+ "created": 1790934727,
+ "model": "nemotron-3-nano:30b",
+ "system_fingerprint": "fp_ollama",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "\n{\n  \"answer\": 42,\n  \"label\": \"sum\"\n}",
+    "reasoning": "User wants JSON with fields answer (int) and label (str). Sum of 17 and 25 is 42. Provide JSON with answer: 42 (int) and label: maybe \"sum\" or something. They didn't specify label content, just \"label (str)\". Could use any string, maybe \"result\". Provide JSON."
+   },
+   "finish_reason": "stop"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 40,
+  "prompt_tokens_details": {
+   "cached_tokens": 36
+  },
+  "completion_tokens": 95,
+  "total_tokens": 135
+ }
+}

@@ -1,0 +1,26 @@
+{
+ "id": "chatcmpl-417",
+ "object": "chat.completion",
+ "created": 1790934738,
+ "model": "nemotron-3-nano:30b",
+ "system_fingerprint": "fp_ollama",
+ "choices": [
+  {
+   "index": 0,
+   "message": {
+    "role": "assistant",
+    "content": "",
+    "reasoning": "We need to produce JSON with key \"haiku\" and value a str containing a haiku about rain. Haiku format: 5-7-5 syllables, three lines, often about nature"
+   },
+   "finish_reason": "length"
+  }
+ ],
+ "usage": {
+  "prompt_tokens": 30,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens": 40,
+  "total_tokens": 70
+ }
+}

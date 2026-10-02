@@ -119,6 +119,11 @@ class RunOrchestrator:
     def universe_detail(self, run_id: str, universe_id: str) -> UniverseDetail:
         return build_universe_detail(self.snapshot(run_id), universe_id)
 
+    def _announced_models(self, llm: str) -> dict[str, str]:
+        if llm == "local":
+            return {role.value: self.settings.borges_local_model for role in DEFAULT_ROLE_MODELS}
+        return {r.value: s.id if llm == "nebius" else llm for r, s in DEFAULT_ROLE_MODELS.items()}
+
     async def _announce(
         self, emitter: RunEmitter, request: RunRequest, resolved: ResolvedRun
     ) -> None:
@@ -129,11 +134,9 @@ class RunOrchestrator:
             question=resolved.question,
             decision_rule=resolved.decision_rule.model_dump(mode="json"),
             mode="live",
-            llm=cast(Literal["nebius", "scripted"], llm),
+            llm=cast(Literal["nebius", "scripted", "local"], llm),
             backend=backend,
-            models={
-                r.value: s.id if llm == "nebius" else llm for r, s in DEFAULT_ROLE_MODELS.items()
-            },
+            models=self._announced_models(llm),
             max_universes=resolved.max_universes,
         )
         await emitter.emit("run.started", started.model_dump(mode="json"))

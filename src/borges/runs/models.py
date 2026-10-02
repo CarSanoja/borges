@@ -16,7 +16,7 @@ class RunRequest(BaseModel):
     upload_id: str | None = None
     question: str | None = Field(default=None, max_length=1000)
     decision_rule: DecisionRule | None = None
-    llm: Literal["nebius", "scripted"] | None = None
+    llm: Literal["nebius", "scripted", "local"] | None = None
     backend: Literal["local", "contree"] | None = None
     max_universes: int | None = Field(default=None, ge=1, le=200)
 
@@ -50,7 +50,7 @@ class RunSnapshot(BaseModel):
     title: str = ""
     question: str = ""
     decision_rule: DecisionRule | None = None
-    llm: Literal["nebius", "scripted"] | None = None
+    llm: Literal["nebius", "scripted", "local"] | None = None
     backend: str | None = None
     stages: dict[StageName, Literal["started", "done"]] = Field(default_factory=dict)
     plan: AnalysisPlan | None = None
