@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from borges.api.deps import get_registry, get_settings, get_store
 from borges.api.recorded_detail import recorded_origin
 from borges.config import Settings
-from borges.telemetry.audit_verify import ChainReport, read_records, verify_chain
-from borges.telemetry.run_telemetry import AUDIT_FILE
+from borges.telemetry.audit_crosscheck import verify_run_chain
+from borges.telemetry.audit_verify import ChainReport, read_records
+from borges.telemetry.run_telemetry import AUDIT_FILE, global_audit_path
 from borges.telemetry.trace_tree import NO_SPANS_REASON, TraceResponse, build_trace
 
 router = APIRouter()
@@ -29,7 +30,7 @@ def get_trace(
         raise HTTPException(status_code=404, detail=f"Unknown run '{run_id}'.")
     if not store.exists(run_id):
         return TraceResponse(run_id=run_id, reason=NO_SPANS_REASON)
-    return build_trace(run_id, settings.borges_runs_dir / run_id)
+    return build_trace(run_id, settings.borges_runs_dir / run_id, global_audit_path(settings))
 
 
 @router.get("/runs/{run_id}/audit")
@@ -43,4 +44,8 @@ def get_audit(
         return {"run_id": run_id, "chain": chain, "records": [], "reason": NO_SPANS_REASON}
     path = settings.borges_runs_dir / run_id / AUDIT_FILE
     records = [r.model_dump(mode="json") for r in read_records(path)]
-    return {"run_id": run_id, "chain": verify_chain(path), "records": records}
+    return {
+        "run_id": run_id,
+        "chain": verify_run_chain(path, global_audit_path(settings), run_id),
+        "records": records,
+    }

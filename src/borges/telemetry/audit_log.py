@@ -14,18 +14,30 @@ _LOCK = threading.RLock()
 TAIL_BYTES = 65536
 
 
+def _last_line(handle: Any) -> bytes:
+    handle.seek(0, os.SEEK_END)
+    position = handle.tell()
+    chunks: list[bytes] = []
+    while position > 0:
+        step = min(TAIL_BYTES, position)
+        position -= step
+        handle.seek(position)
+        chunks.insert(0, handle.read(step))
+        lines = [line for line in b"".join(chunks).splitlines() if line.strip()]
+        if len(lines) > 1 or (lines and position == 0):
+            return lines[-1]
+    return b""
+
+
 def read_tail(path: Path) -> tuple[int, str]:
     try:
         with path.open("rb") as handle:
-            handle.seek(0, os.SEEK_END)
-            size = handle.tell()
-            handle.seek(max(0, size - TAIL_BYTES))
-            lines = [line for line in handle.read().splitlines() if line.strip()]
+            line = _last_line(handle)
     except FileNotFoundError:
         return 0, GENESIS_HASH
-    if not lines:
+    if not line:
         return 0, GENESIS_HASH
-    last = json.loads(lines[-1])
+    last = json.loads(line)
     return int(last["seq"]), str(last["hash"])
 
 

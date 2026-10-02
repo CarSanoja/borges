@@ -6,6 +6,7 @@ import typer
 
 from borges.config import get_settings
 from borges.runs.store import RunStore
+from borges.telemetry.audit_crosscheck import verify_run_chain
 from borges.telemetry.audit_verify import verify_chain
 from borges.telemetry.run_telemetry import global_audit_path, run_audit_path
 
@@ -27,7 +28,10 @@ def verify(
     else:
         typer.echo(f"unknown run '{target}'", err=True)
         raise typer.Exit(2)
-    report = verify_chain(path)
+    if target == "global":
+        report = verify_chain(path)
+    else:
+        report = verify_run_chain(path, global_audit_path(settings), target)
     if not report.exists:
         typer.echo(f"no audit log at {path}")
         raise typer.Exit(2)

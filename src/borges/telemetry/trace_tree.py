@@ -7,7 +7,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from borges.telemetry.audit_verify import ChainReport, read_records, verify_chain
+from borges.telemetry.audit_crosscheck import verify_run_chain
+from borges.telemetry.audit_verify import ChainReport, read_records
 
 NO_SPANS_REASON = (
     "This run has no spans: it was recorded before tracing existed or tracing was unavailable."
@@ -66,7 +67,7 @@ def _node(raw: dict[str, Any]) -> SpanNode:
     )
 
 
-def build_trace(run_id: str, run_dir: Path) -> TraceResponse:
+def build_trace(run_id: str, run_dir: Path, global_path: Path | None = None) -> TraceResponse:
     spans = read_spans(run_dir / "spans.jsonl")
     if not spans:
         return TraceResponse(run_id=run_id, reason=NO_SPANS_REASON)
@@ -93,5 +94,5 @@ def build_trace(run_id: str, run_dir: Path) -> TraceResponse:
         spans_by_kind=dict(kinds),
         roots=sorted(children.get(None, []), key=lambda n: n.start_ns),
         unlinked_audit=unlinked,
-        audit_chain=verify_chain(run_dir / "audit.jsonl"),
+        audit_chain=verify_run_chain(run_dir / "audit.jsonl", global_path, run_id),
     )

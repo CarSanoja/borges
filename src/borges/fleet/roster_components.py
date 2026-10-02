@@ -42,7 +42,13 @@ COMPONENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         "Runs one analysis option inside the sandbox and returns the typed result.",
         "executor",
         ("sandbox.exec", "dataset.rows.read"),
-        ("analysis/harness*.py",),
+        (
+            "analysis/harness*.py",
+            "analysis/runtime_policy*.py",
+            "analysis/path_scrub.py",
+            "analysis/scale_check.py",
+            "analysis/result_scale.py",
+        ),
         AnalysisResult,
     ),
     _component(
@@ -59,7 +65,14 @@ COMPONENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         "Searches the forking analyses for the smallest change that flips the decision.",
         "search",
         ("sandbox.exec", "dataset.rows.read", "report.write"),
-        ("garden/search.py", "garden/influence.py", "garden/plausibility.py", "garden/reversal.py"),
+        (
+            "garden/search.py",
+            "garden/influence.py",
+            "garden/plausibility.py",
+            "garden/reversal.py",
+            "garden/executor*.py",
+            "garden/prefix_cache.py",
+        ),
         SearchSummary,
     ),
     _component(

@@ -4,12 +4,13 @@ from typing import Any
 
 from borges.fleet.principal import agent_principal
 from borges.telemetry import hooks
+from borges.telemetry.redaction import redact_text
 
 REASON_CHARS = 300
 
 
 def _text(value: Any) -> str | None:
-    return str(value)[:REASON_CHARS] if value else None
+    return redact_text(value, REASON_CHARS) if value else None
 
 
 def audit_agents(agents: Any) -> None:

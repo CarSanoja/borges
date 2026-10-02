@@ -5,6 +5,7 @@ from pathlib import Path
 
 from borges.telemetry.audit_log import AuditLog
 from borges.telemetry.audit_record import GENESIS_HASH
+from borges.telemetry.audit_verify import verify_chain
 
 
 def test_records_are_chained(tmp_path: Path) -> None:
@@ -42,3 +43,17 @@ def test_failures_are_counted_not_raised(tmp_path: Path) -> None:
     log = AuditLog(blocker / "audit.jsonl")
     assert log.append("x") is None
     assert log.failures == 1
+
+
+def test_a_record_larger_than_the_tail_window_does_not_wedge_the_chain(tmp_path: Path) -> None:
+    log = AuditLog(tmp_path / "audit.jsonl")
+    assert log.append("x", data={"n": 1}) is not None
+    assert log.append("x", data={"blob": "y" * 200_000}) is not None
+    after = log.append("x", data={"n": 2})
+    assert after is not None and after.seq == 3
+    assert log.failures == 0
+    assert verify_chain(tmp_path / "audit.jsonl").ok
+    only = AuditLog(tmp_path / "single.jsonl")
+    assert only.append("x", data={"blob": "z" * 200_000}) is not None
+    follow = only.append("x")
+    assert follow is not None and follow.seq == 2

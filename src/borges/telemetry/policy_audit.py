@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from borges.config import Settings
 from borges.telemetry.audit_log import AuditLog
+from borges.telemetry.redaction import redact_text
 from borges.telemetry.run_telemetry import global_audit_path
 
 REASON_CHARS = 300
@@ -26,7 +27,7 @@ def audited_policy[T](
             settings,
             f"policy.{name}",
             decision="deny",
-            reason=str(exc.detail)[:REASON_CHARS],
+            reason=redact_text(exc.detail, REASON_CHARS),
             data={"status": exc.status_code, **data},
         )
         raise

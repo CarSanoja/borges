@@ -22,6 +22,7 @@ def _agent(
     role: Role,
     schema: type,
     capabilities: tuple[str, ...],
+    code_files: tuple[str, ...] = (),
 ) -> AgentDeclaration:
     return AgentDeclaration(
         agent_id=agent_id,
@@ -33,6 +34,7 @@ def _agent(
         department=DEPARTMENT_ANALYSIS,
         llm_role=role,
         output_schema=schema,
+        code_files=code_files,
     )
 
 
@@ -44,6 +46,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.PLANNER,
         PlannerOutput,
         (PROFILE, *LLM_CAPS),
+        ("analysis/prompts/planner.py", "analysis/planner*.py"),
     ),
     _agent(
         "coder",
@@ -52,6 +55,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.CODER,
         CoderOutput,
         (PROFILE, *LLM_CAPS),
+        ("analysis/prompts/coder*.py", "analysis/coder*.py"),
     ),
     _agent(
         "repairer",
@@ -60,6 +64,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.REPAIRER,
         CoderOutput,
         (PROFILE, *LLM_CAPS),
+        ("analysis/prompts/coder*.py", "analysis/coder*.py"),
     ),
     _agent(
         "adversary",
@@ -68,6 +73,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.ADVERSARY,
         AdversaryOutput,
         (PROFILE, *LLM_CAPS),
+        ("analysis/prompts/adversary.py", "analysis/adversary.py", "runs/adversary_review.py"),
     ),
     _agent(
         "judge",
@@ -76,6 +82,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.JUDGE,
         JudgeOutput,
         (PROFILE, *LLM_CAPS),
+        ("analysis/prompts/judge.py", "analysis/judge.py"),
     ),
     _agent(
         "reviewer",
@@ -84,6 +91,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.REVIEWER,
         ReviewerOutput,
         (PROFILE, *LLM_CAPS),
+        ("analysis/prompts/reviewer.py", "analysis/smoke_review.py"),
     ),
     _agent(
         "narrator",
@@ -92,5 +100,6 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.NARRATOR,
         NarratorOutput,
         (*LLM_CAPS, "report.write"),
+        ("analysis/prompts/narrator.py", "analysis/narrat*.py"),
     ),
 )
