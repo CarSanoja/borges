@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from borges.analysis.models import AnalysisResult
-from borges.garden.models import Flip
+from borges.analysis.models import AnalysisResult, CodingSummary
+from borges.garden.models import Flip, SearchSummary
 from borges.runs.models import RunSnapshot, UniverseDetail
 
 
@@ -13,7 +13,7 @@ def result_line(result: AnalysisResult) -> str:
 
 
 def flip_lines(flip: Flip) -> list[str]:
-    lines = [f"Minimal flip: {flip.baseline_verdict} -> {flip.flipped_verdict}"]
+    lines = [f"Smallest flip found: {flip.baseline_verdict} -> {flip.flipped_verdict}"]
     for change in flip.changes:
         lines.append(f"  - {change.step_title}: {change.from_option} -> {change.to_label}")
         lines.append(f"      why: {change.rationale}")
@@ -23,6 +23,26 @@ def flip_lines(flip: Flip) -> list[str]:
     reproduced = {None: "not checked", True: "yes", False: "no"}[flip.reproduced]
     lines.append(f"  reproduced: {reproduced}")
     return lines
+
+
+def search_line(search: SearchSummary) -> str:
+    level = "level" if search.levels_explored == 1 else "levels"
+    line = (
+        f"Search budget: {search.universes_used} of {search.universe_budget} universes used, "
+        f"{search.levels_explored} {level} explored, at most "
+        f"{search.max_combinations_per_level} combinations per level"
+    )
+    return line + (
+        "; the budget ran out before the search finished" if search.budget_exhausted else ""
+    )
+
+
+def coding_line(coding: CodingSummary) -> str:
+    return (
+        f"Coding: {coding.options} options written, {coding.smoke_tested} smoke-tested on a "
+        f"sample, {coding.repaired_after_smoke} repaired after a runtime error, "
+        f"{coding.failed} failed"
+    )
 
 
 def summary_lines(snapshot: RunSnapshot) -> list[str]:
@@ -37,7 +57,7 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
         if report.minimal_flip is not None:
             lines.extend(flip_lines(report.minimal_flip))
         else:
-            lines.append("Minimal flip: none found")
+            lines.append("Smallest flip found: none within the search budget")
         lines.append(
             f"Robustness: {report.robustness:.0%} of {report.n_universes} universes "
             f"keep the original verdict ({report.n_flipped} flipped)"
@@ -47,6 +67,10 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
                 f"  {report.n_universes + report.n_failed} explored, "
                 f"{report.n_failed} could not run"
             )
+        if report.search is not None:
+            lines.append(search_line(report.search))
+        if report.coding is not None:
+            lines.append(coding_line(report.coding))
         lines.extend(f"Caveat: {caveat}" for caveat in report.caveats)
     usage = snapshot.usage
     scripted = snapshot.llm == "scripted"
