@@ -25,6 +25,7 @@ class CaseSpec(BaseModel):
     reference_label: str | None = None
     reference: list[ReferenceEstimate] = Field(default_factory=list)
     story: str = ""
+    live_only: bool = False
 
 
 class CaseCard(BaseModel):
@@ -38,3 +39,4 @@ class CaseCard(BaseModel):
     reference_label: str | None = None
     reference: list[ReferenceEstimate] = Field(default_factory=list)
     story: str = ""
+    live_only: bool = False

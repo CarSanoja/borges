@@ -1,0 +1,21 @@
+{
+  "id": "bank_marketing_calls",
+  "title": "Bank telemarketing: cap the calls?",
+  "subtitle": "Real campaign data, nothing planted. Does every extra call hurt?",
+  "question": "Does each additional contact call to the same customer in a campaign reduce the chance that the customer subscribes to a term deposit?",
+  "decision_rule": {
+    "metric": "odds ratio of subscribing per additional contact call in the campaign",
+    "comparator": "lt",
+    "threshold": 1.0,
+    "alpha": 0.05,
+    "positive_label": "CAP THE CALLS",
+    "negative_label": "NO CASE FOR A CAP"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "bank_marketing_campaign",
+  "max_universes": 40,
+  "reference_label": null,
+  "reference": [],
+  "story": "45,211 customer records from phone campaigns of a Portuguese bank. A plain analysis says more calls to the same person means fewer subscriptions, so cap them. But who gets called many times is not random: hard-to-reach customers, the month, the contact channel and earlier campaigns all differ. Observational data, no planted effect; a live run only.",
+  "live_only": true
+}

@@ -24,7 +24,7 @@ def _string_field(block: str, name: str) -> str:
 
 def test_fallback_cards_match_the_curated_cases() -> None:
     blocks = _fallback_blocks()
-    cards = CaseRegistry(ROOT / "cases").list()
+    cards = [c for c in CaseRegistry(ROOT / "cases").list() if not c.live_only]
     assert sorted(blocks) == sorted(card.id for card in cards)
     for card in cards:
         block = blocks[card.id]

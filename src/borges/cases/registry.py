@@ -8,6 +8,10 @@ import pyarrow.parquet as pq
 from borges.cases.models import CaseCard, CaseSpec
 from borges.runs.events import Event
 
+LIVE_ONLY_MESSAGE = (
+    "Case '{case_id}' is live-only: it has no scripted fixtures and no recording. "
+    "Run it with llm=nebius and NEBIUS_API_KEY."
+)
 _SAFE_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
@@ -31,8 +35,15 @@ class CaseRegistry:
     def data_bytes(self, case_id: str) -> bytes:
         return (self._dir(case_id) / self.get(case_id).dataset_file).read_bytes()
 
-    def fixtures_dir(self, case_id: str) -> Path:
-        return self._dir(case_id) / "fixtures"
+    def fixtures_dir(self, case_id: str) -> Path | None:
+        directory = self._dir(case_id)
+        if self.get(case_id).live_only:
+            return None
+        return directory / "fixtures"
+
+    def require_scripted(self, case_id: str) -> None:
+        if self.get(case_id).live_only:
+            raise ValueError(LIVE_ONLY_MESSAGE.format(case_id=case_id))
 
     def _recording_path(self, case_id: str) -> Path:
         return self._dir(case_id) / "recorded" / "events.jsonl"

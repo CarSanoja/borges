@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -63,3 +64,31 @@ def test_shipped_cases_load(case_id: str) -> None:
     assert card.n_rows > 0
     assert registry.fixtures_dir(case_id).is_dir()
     assert registry.data_bytes(case_id)
+
+
+def _write_live_only(cases_dir: Path, case_id: str) -> None:
+    write_case(cases_dir, case_id)
+    spec_path = cases_dir / case_id / "case.json"
+    spec = json.loads(spec_path.read_text())
+    spec["live_only"] = True
+    spec_path.write_text(json.dumps(spec))
+    (cases_dir / case_id / "fixtures").rmdir()
+
+
+def test_live_only_flag_defaults_false_and_is_reported(cases_dir: Path) -> None:
+    _write_live_only(cases_dir, "gamma")
+    registry = CaseRegistry(cases_dir)
+    cards = {c.id: c for c in registry.list()}
+    assert cards["alpha"].live_only is False
+    assert cards["gamma"].live_only is True and cards["gamma"].has_recording is False
+    assert registry.card("gamma").model_dump()["live_only"] is True
+
+
+def test_scripted_run_of_live_only_case_is_refused_with_a_clear_message(cases_dir: Path) -> None:
+    _write_live_only(cases_dir, "gamma")
+    registry = CaseRegistry(cases_dir)
+    assert registry.fixtures_dir("gamma") is None
+    with pytest.raises(ValueError, match="live-only.*llm=nebius"):
+        registry.require_scripted("gamma")
+    registry.require_scripted("alpha")
+    assert registry.fixtures_dir("alpha") is not None
