@@ -5,6 +5,7 @@ import type {
   RecordingSource,
   Health,
   Me,
+  PiiSummary,
   RunCreated,
   RunRequest,
   RunSnapshot,
@@ -84,6 +85,7 @@ export function getCase(caseId: string): Promise<CaseCard> {
 export interface UploadResult {
   upload_id: string;
   profile: { name: string; n_rows: number; columns: unknown[] };
+  pii?: PiiSummary;
 }
 
 export async function uploadDataset(file: File): Promise<UploadResult> {

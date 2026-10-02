@@ -8,5 +8,7 @@ export function codingSentence(coding: CodingSummary): string {
   if (coding.failed > 0) parts.push(`${coding.failed} dropped`);
   const judged = coding.options_dropped_by_judge ?? 0;
   if (judged > 0) parts.push(`${judged} dropped by the defensibility judge`);
+  const armored = coding.options_dropped_by_armor ?? 0;
+  if (armored > 0) parts.push(`${armored} dropped by Armor as tool poisoning`);
   return parts.join(", ");
 }

@@ -137,6 +137,20 @@ export interface CodingSummary {
   repaired_after_smoke: number;
   failed: number;
   options_dropped_by_judge?: number;
+  options_dropped_by_armor?: number;
+}
+
+export interface PiiColumn {
+  column: string;
+  kinds: Record<string, number>;
+  scanned: number;
+  total_rows: number;
+}
+
+export interface PiiSummary {
+  columns: PiiColumn[];
+  total_detections: number;
+  note: string;
 }
 
 export interface Report {

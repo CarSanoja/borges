@@ -1,4 +1,5 @@
 import type { SpanNode } from "../../shared/types/contracts";
+import { ArmorFact, isArmorRecord } from "./ArmorFact";
 import { formatCostUsd, numberAttr, shortHash, textAttr } from "./spanFormat";
 
 interface Props {
@@ -61,7 +62,10 @@ export function SpanDetails({ node }: Props) {
       {node.kind === "model_call" && <ModelFacts node={node} />}
       {node.kind === "sandbox_exec" && <SandboxFacts node={node} />}
       {node.kind === "universe" && <Fact label="verdict" value={universe} />}
-      {node.audit.map((record) => (
+      {node.audit.filter(isArmorRecord).map((record) => (
+        <ArmorFact key={record.seq} record={record} />
+      ))}
+      {node.audit.filter((record) => !isArmorRecord(record)).map((record) => (
         <span key={record.seq} className="trace-fact" data-decision={record.decision ?? "none"}>
           <span className="trace-fact__label">audit #{record.seq}</span>
           <code className="mono" title={record.hash}>

@@ -73,6 +73,13 @@ describe("Telemetry coding summary", () => {
     expect(screen.getByLabelText("Telemetry")).toHaveTextContent("2 dropped by the defensibility judge");
   });
 
+  it("reports options dropped by Armor", () => {
+    const base = foldEvents("t", events);
+    const coding = { options: 9, smoke_tested: 8, repaired_after_smoke: 0, failed: 0, options_dropped_by_armor: 1 };
+    render(<Telemetry snapshot={{ ...base, report: { ...base.report!, coding } }} />);
+    expect(screen.getByLabelText("Telemetry")).toHaveTextContent("1 dropped by Armor as tool poisoning");
+  });
+
   it("pluralises the counters", () => {
     const base = foldEvents("t", events);
     const snapshot = {

@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { createRun, uploadDataset } from "../../shared/api/client";
+import { createRun, uploadDataset, type UploadResult } from "../../shared/api/client";
 import type { Health } from "../../shared/types/contracts";
+import { PiiSummary } from "./PiiSummary";
 import { buildRequest, EMPTY_FORM, validateForm, type UploadForm } from "./uploadRequest";
 
 const INSTEAD =
@@ -19,9 +20,27 @@ export function UploadCard({ health, onOpenRun }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<UploadResult | null>(null);
 
   const field = (key: keyof UploadForm) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [key]: event.target.value }));
+
+  const start = async (upload: UploadResult) => {
+    const run = await createRun(buildRequest(upload.upload_id, form));
+    onOpenRun(run.run_id);
+  };
+
+  const confirm = async () => {
+    if (!pending) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await start(pending);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not start the run");
+      setBusy(false);
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -31,8 +50,12 @@ export function UploadCard({ health, onOpenRun }: Props) {
     setError(null);
     try {
       const upload = await uploadDataset(file);
-      const run = await createRun(buildRequest(upload.upload_id, form));
-      onOpenRun(run.run_id);
+      if (upload.pii && upload.pii.total_detections > 0) {
+        setPending(upload);
+        setBusy(false);
+        return;
+      }
+      await start(upload);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not start the run");
       setBusy(false);
@@ -97,6 +120,14 @@ export function UploadCard({ health, onOpenRun }: Props) {
             </button>
           </fieldset>
         </form>
+      )}
+      {pending?.pii && (
+        <>
+          <PiiSummary pii={pending.pii} />
+          <button type="button" className="btn btn-primary" disabled={busy} onClick={confirm}>
+            Start the analysis with these values redacted
+          </button>
+        </>
       )}
       {error && (
         <p className="case-error" role="alert">
