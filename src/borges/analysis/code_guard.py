@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import ast
-import re
 
+from borges.analysis.code_guard_formula import formula_error, needs_formula_check
 from borges.analysis.code_guard_introspection import (
     attribute_violations as introspection_attribute_violations,
 )
@@ -16,13 +16,11 @@ from borges.analysis.code_guard_rules import (
     FORBIDDEN_ATTRIBUTES,
     FORBIDDEN_MODULES,
     FORBIDDEN_NAMES,
-    FORMULA_CALLS,
     IO_PREFIXES,
 )
 from borges.analysis.models import StepKind
 
 EXPECTED_PARAMS = ["df", "ctx"]
-CALL_PATTERN = re.compile(r"([A-Za-z_][\w.]*)\s*\(")
 
 
 def _module_allowed(module: str) -> bool:
@@ -94,18 +92,12 @@ def _constant_violations(node: ast.Constant) -> list[str]:
 
 
 def _formula_violations(node: ast.Constant) -> list[str]:
-    text = node.value
-    where = f"line {node.lineno}"
-    calls = CALL_PATTERN.findall(text)
-    if "~" in text:
-        if "'" in text or '"' in text or "`" in text:
-            return [f"{where}: formula strings may not contain quotes"]
-        bad = [name for name in calls if name not in FORMULA_CALLS]
-    else:
-        bad = [name for name in calls if name.split(".")[-1] in FORBIDDEN_NAMES]
-    if bad:
-        return [f"{where}: string constants may not call '{bad[0]}'"]
-    return []
+    if not needs_formula_check(node.value):
+        return []
+    reason = formula_error(node.value)
+    if reason is None:
+        return []
+    return [f"line {node.lineno}: string constant rejected: {reason}"]
 
 
 def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:

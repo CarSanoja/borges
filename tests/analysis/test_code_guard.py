@@ -232,3 +232,69 @@ def test_accept_plain_formulas() -> None:
         '    return smf.ols("y ~ x + I(x ** 2) + C(g) + np.log(z)", df).fit()\n'
     )
     assert check_code(code, "model") == []
+
+
+def model_code(body: str) -> str:
+    return (
+        "import statsmodels.formula.api as smf\nimport pandas as pd\n\n\n"
+        f"def estimate(df, ctx):\n{body}\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        '    f = "y ~ x" + " + I(len(pd.io.common.os.getcwd()))"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ x" + " + I(len(pd.io.common.os.popen(1)))"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ x + I(pd.io.common.os.system(x))"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ x" + " + I(pd.io.common.os.getcwd())"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ I(" + "x)"\n    return smf.ols(f, df).fit()',
+        '    f = "("\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ x + I(x"\n    return smf.ols(f, df).fit()',
+        '    f = "pd.io.common.os.getcwd"\n    return smf.ols(f, df).fit()',
+        '    f = "np.log"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ np.linalg.norm(x)"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ " + "pd" + "." + "io" + "." + "common.os.getcwd" + "(x)"\n    return 1',
+        '    f = "y ~ x + len(x)"\n    return smf.ols(f, df).fit()',
+        '    f = "y ~ I(open(x))"\n    return smf.ols(f, df).fit()',
+        '    f = "see os.path"\n    return 1',
+    ],
+)
+def test_reject_formula_string_bypasses(body: str) -> None:
+    assert check_code(model_code(body), "model")
+
+
+def test_jury_split_string_script_is_rejected() -> None:
+    body = (
+        '    f = "y ~ x" + " + I(len(pd.io.common.os.getcwd()))"\n    return smf.ols(f, df).fit()'
+    )
+    problems = check_code(model_code(body), "model")
+    assert any("string constant rejected" in p for p in problems)
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        "y ~ x + I(x ** 2) + C(g) + np.log(z)",
+        "y ~ C(country) + standardize(x) + center(z)",
+        "y ~ np.log1p(a) * np.sqrt(b) : np.abs(c) - 1",
+        "y ~ I((a + b) / 2) + poly(x, 3) + bs(x, df=4)",
+        "~x",
+        "y ~ x | g",
+        "converted ~ treatment + C(platform)",
+        " + C(country)",
+        "plain prose without anything special",
+        "Pr(>|z|)",
+    ],
+)
+def test_accept_legitimate_formulas(formula: str) -> None:
+    body = f'    f = "{formula}"\n    return smf.ols(f, df).fit()'
+    assert check_code(model_code(body), "model") == []
+
+
+def test_accept_formula_built_from_terms() -> None:
+    body = (
+        '    terms = ["a", "b"]\n    f = "y ~ " + " + ".join(terms) + " + C(country)"\n'
+        "    return smf.ols(f, df).fit()"
+    )
+    assert check_code(model_code(body), "model") == []

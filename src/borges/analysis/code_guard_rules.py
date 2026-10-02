@@ -105,27 +105,9 @@ ALLOWED_TO_ATTRIBUTES = frozenset(
     }
 )
 
-FORMULA_CALLS = frozenset(
-    {
-        "I",
-        "C",
-        "Q",
-        "log",
-        "exp",
-        "sqrt",
-        "abs",
-        "center",
-        "standardize",
-        "scale",
-        "np.log",
-        "np.exp",
-        "np.sqrt",
-        "np.log1p",
-        "np.abs",
-        "np.square",
-        "pow",
-    }
-)
+FORMULA_FUNCTIONS = frozenset({"C", "I", "Q", "center", "standardize", "scale", "bs", "cr", "poly"})
+
+FORMULA_NUMPY_FUNCTIONS = frozenset({"log", "log1p", "exp", "sqrt", "abs"})
 
 IO_PREFIXES = ("read_", "to_", "save")
 
