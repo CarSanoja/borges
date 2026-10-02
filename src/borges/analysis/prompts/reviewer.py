@@ -15,11 +15,14 @@ column the spec says is created that is missing or constant.
 swapping the groups, reversing the coding of a variable, measuring a different outcome. A \
 different but legitimate way to measure or clean the same thing does not change the estimand.
 
-Rules: judge every option listed, once, by its option_id. Use the observed effects as evidence, \
-not the label. When the code and effects are consistent with the spec, answer faithful=true, \
-changes_estimand=false and an empty problem. When faithful is false, state in the problem, in \
-one or two sentences with the column or group names and numbers, what the code does instead of \
-what the spec says, so that the coder can fix it.
+Rules: judge every option listed, once, by its option_id, against its own spec only; options \
+of the same step are meant to differ from each other. Use the observed effects as evidence, \
+not the label. Mark faithful=false only when you can quote the phrase of that option's own spec \
+that the code or the effects contradict, and put the quote in the problem. When the code and \
+effects are consistent with the spec, answer faithful=true, changes_estimand=false and an \
+empty problem. When faithful is false, state in the problem, in one or two sentences with the \
+column or group names and numbers, what the code does instead of what the spec says, so that \
+the coder can fix it.
 
 Return only JSON: {"verdicts": [{"option_id", "faithful", "changes_estimand", "problem"}]}."""
 

@@ -185,3 +185,52 @@ def test_missing_values_are_counted_when_a_fit_fails(tmp_path: Path) -> None:
     error = parse_error(done.stdout) or ""
     assert done.returncode == 1
     assert "missing values per column (200 rows): {'x': 50}" in error
+
+
+DROPS_ARM = """
+def apply(df, ctx):
+    return df.groupby("user_id", as_index=False).agg(user_converted=("converted", "max"))
+"""
+
+READS_ARM = """
+def estimate(df, ctx):
+    lift = df.loc[df["variant"] == "t", "user_converted"].mean()
+    return {"estimate": float(lift), "ci_low": -1.0, "ci_high": 2.0, "p_value": 0.5,
+            "n": int(len(df))}
+"""
+
+
+def _sessions(tmp_path: Path) -> None:
+    frame = pd.DataFrame(
+        {
+            "user_id": np.repeat(np.arange(100), 3),
+            "variant": np.repeat(np.where(np.arange(100) % 2 == 0, "t", "c"), 3),
+            "converted": np.tile([0, 1, 0], 100),
+        }
+    )
+    frame.to_parquet(tmp_path / "data.parquet")
+
+
+def _execute(tmp_path: Path, kind: str, code: str) -> subprocess.CompletedProcess:
+    step, option = make(kind, code)
+    (tmp_path / "step.py").write_text(render_step(step, option))
+    return subprocess.run(
+        [sys.executable, "step.py"], cwd=tmp_path, capture_output=True, text=True, timeout=120
+    )
+
+
+def test_aggregation_carries_attributes_constant_within_each_group(tmp_path: Path) -> None:
+    _sessions(tmp_path)
+    assert _execute(tmp_path, "transform", DROPS_ARM).returncode == 0
+    out = pd.read_parquet(tmp_path / "state" / "df.parquet")
+    assert list(out.columns) == ["user_id", "user_converted", "variant"]
+    assert len(out) == 100
+    done = _execute(tmp_path, "model", READS_ARM)
+    assert done.returncode == 0, parse_error(done.stdout)
+
+
+def test_aggregation_does_not_carry_columns_that_vary_within_a_group(tmp_path: Path) -> None:
+    _sessions(tmp_path)
+    assert _execute(tmp_path, "transform", DROPS_ARM).returncode == 0
+    out = pd.read_parquet(tmp_path / "state" / "df.parquet")
+    assert "converted" not in out.columns

@@ -130,6 +130,7 @@ __EFFECTS__
         out = apply(df, ctx)
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
+        out = _carry_group_attributes(df, out)
         _check_columns(seen["columns"], rows_before, out, kind)
         _check_produces(out, ctx)
         _check_ctx(ctx)

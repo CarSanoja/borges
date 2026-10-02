@@ -19,6 +19,26 @@ CHECKS_SOURCE = """
             + " (one row per group) may return fewer columns"
         )
 
+    def _carry_group_attributes(before, out):
+        lost = [c for c in before.columns if c not in out.columns]
+        if not lost or len(out) >= len(before):
+            return out
+        keys = [
+            c for c in out.columns
+            if c in before.columns and out[c].notna().all() and out[c].is_unique
+        ]
+        if len(keys) != 1:
+            return out
+        key = keys[0]
+        groups = before.groupby(key, dropna=True)
+        constant = [c for c in lost if bool((groups[c].nunique(dropna=False) <= 1).all())]
+        if not constant:
+            return out
+        first = groups[constant].first().reset_index()
+        merged = out.merge(first, on=key, how="left", validate="one_to_one")
+        merged.index = out.index
+        return merged
+
     def _check_produces(out, ctx):
         for name in __PRODUCES__:
             if name not in out.columns and name not in ctx:

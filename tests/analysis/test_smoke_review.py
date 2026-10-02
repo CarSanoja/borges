@@ -171,3 +171,10 @@ async def test_no_reviewer_fixture_skips_the_review_silently() -> None:
 async def test_scripted_provider_without_fixture_returns_no_review(tmp_path: Path) -> None:
     reviewer = llm_reviewer(ScriptedLLM(tmp_path), feature_plan([]))
     assert await reviewer(feature_plan([]).step("f1"), []) is None
+
+
+def test_reviewer_judges_each_option_against_its_own_spec() -> None:
+    from borges.analysis.prompts.reviewer import SYSTEM
+
+    assert "against its own spec only" in SYSTEM
+    assert "quote the phrase" in SYSTEM
