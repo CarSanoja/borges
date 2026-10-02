@@ -17,7 +17,7 @@ The recordings the web app plays by default are the event logs in `cases/<case>/
 | checkout_ab | r_20261002T120802_2196a1 | 24 | 38,219 / 6,055 | $0.0145 | DON'T SHIP: lift -0.13 pp [-0.79, +0.53], 15,564 users | Keep internal and bot-like sessions: +0.84 pp [+0.15, +1.54], p 0.018, SHIP (direction) | 5 | flip u_3a4a8a35a5 MATCH |
 | red_cards | r_20261002T122210_05dc90 | 32 | 57,433 / 7,318 | $0.0183 | BIAS DETECTED: OR 1.34 [1.14, 1.58], p 0.0004 | none in 9 universes | 10 | baseline u_9b64a46005 MATCH |
 | marp_religiosity | r_20261002T115439_5566f5 | 22 | 66,078 / 5,201 | $0.0191 | POSITIVE ASSOCIATION: beta 0.090 [0.073, 0.107] | none in 24 universes | 24 | baseline u_9bdcff23c3 MATCH |
-| marp_norms | r_20261002T115354_22e578 | 25 | 74,118 / 4,924 | $0.0205 | DEPENDS ON NORMS: interaction 0.023 [0.012, 0.033] | none in 16 universes | 16 | baseline u_7f4be9da7c MATCH |
+| marp_norms | r_20261002T153501_254613 | 31 | 94,401 / 6,465 | $0.0266 | DEPENDS ON NORMS: interaction 0.036 [0.019, 0.052] | none in 32 universes | 32 | baseline u_30a5329f49 MATCH, u_8c53ece824 MATCH |
 | bank_marketing_calls | r_20261002T122049_3ca802 | 41 | 86,266 / 13,975 | $0.0326 | CAP THE CALLS: OR 0.878 per call [0.863, 0.892] | Listwise deletion of rows with any missing covariate (45,211 to 7,842 rows) and robust SE: OR 0.88 [0.61, 1.27], p 0.50 (significance only) | 7 | flip u_6b058a8e02 MATCH |
 
 How the live numbers compare with outside references:
@@ -42,9 +42,17 @@ The first live batches failed in ways the scripted demos could not show. Each fa
 | red_cards: missing skin-tone ratings broke the model fit (r_20261002T115327_abc043) | Model steps start from complete cases. Fit errors list missing values per column | 909261e |
 | bank: "Firth's penalized logistic regression" was a plain Logit with an unseeded bootstrap. The run did not reproduce (r_20261002T115529_c4bc7a) | Step randomness is seeded. The planner names only estimators that statsmodels or scipy provide. The reviewer checks that the named estimator is the one fitted. Adversary options are reviewed too | de16fb3 |
 | bank: coefficient on the log-odds scale (-0.116) judged against "odds ratio < 1". No universe could ever flip (r_20261002T121458_92f1ee) | A ratio rule requires positive estimates and intervals. The coder is told the rule's scale | 2a71bd9 |
+| marp_norms: the minimal flip used cnorm_2 - cnorm_1, a planner alternative whose own rationale said both items are positive indicators (r_20261002T130325_2d3cd2) | Every planner alternative passes the same defensibility judge as adversary proposals, with the column notes, before it is coded | 7696862, 9d792e0 |
+| red_cards and bank: a default model that failed its smoke run killed the whole run (r_20261002T133928_9088c0, r_20261002T133954_258ab5) | One fresh re-code by Super, then promotion of a passing alternative with a caveat; error hints for statsmodels distributions and covariate lists | 60131bc |
+| marp_norms: the coder filtered attention-check failures inside the model step, so the filter step was a no-op and the report said filtering had no influence (r_20261002T133635_b00f08) | Model steps may only drop incomplete rows; a static guard rejects value filters and sends them to repair | 7193bd3, 3aa99a8 |
+| marp_religiosity: the judge rejected an alternative proposed by the planner and accepted the same one from the adversary (r_20261002T133753_a5365d) | Adversary duplicates reuse the planner's judgement | 7193bd3, 3aa99a8 |
+| marp_religiosity and marp_norms: a prompt rule for percentage points was applied to standardised coefficients (12.78) (r_20261002T143403_7c310e) | Units are decided in code from the case metric; the model returns its natural scale | 90a791c |
+| checkout: the narrative named a different filter option than the one the flip changed (r_20261002T143218_a09f47) | The flip sentence is built in code and must appear verbatim; sentences naming another option of that step are removed | 90a791c, 3947452 |
+| marp_norms: a PCA score reversed on the full data in a universe that did not flip (r_20261002T143306_67e104) | The reversal check runs on every universe | 9cd2822 |
+| red_cards: a model with many dummies was singular on the 2,000-row smoke sample only (r_20261002T143018_92b96a) | Singular or separated fits are retried on up to 20,000 rows before counting as failures | 9cd2822 |
 
 ## Cost
 
-The development day made 27 live runs, 18 of which completed. Their recorded cost was $0.31. The spend ledger (`.borges/spend.json`) also counts the smoke checks: $0.37 over 577 calls.
+The development day made 45 live runs, 31 of which completed. Their recorded cost was $0.65. The spend ledger (`.borges/spend.json`) also counts the smoke checks: $0.76 over 1,096 calls. Every run that was not committed was rejected after a hand review, and the reasons are in the table above or in the commits that fixed them.
 
 A complete live run of one case costs between $0.015 and $0.033.

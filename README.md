@@ -58,7 +58,7 @@ Be clear about this before reading further. The source of truth for every live n
 
 | | State today |
 |---|---|
-| Nemotron through Token Factory | **Ran live on 2 October 2026, all five cases, from an empty cache.** 144 calls in the five recordings (24, 32, 22, 25, 41), $0.0145 to $0.0326 per case. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The whole development day made 27 live runs, 18 completed, $0.31 recorded ($0.37 in the spend ledger with smoke checks) |
+| Nemotron through Token Factory | **Ran live on 2 October 2026, all five cases, from an empty cache.** 150 calls in the five recordings (24, 32, 22, 31, 41), $0.0145 to $0.0326 per case. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The whole development day made 45 live runs, 31 completed, $0.65 recorded ($0.76 in the spend ledger with smoke checks) |
 | What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
 | What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed a recorded live universe from scratch for all five cases and matched |
@@ -77,7 +77,7 @@ the same event says `scripted`.
 | checkout_ab | 24 | 38,219 / 6,055 | $0.0145 | DON'T SHIP: lift -0.13 pp [-0.79, +0.53] | Keep internal and bot-like sessions: +0.84 pp, SHIP (direction) |
 | red_cards | 32 | 57,433 / 7,318 | $0.0183 | BIAS DETECTED: OR 1.34 [1.14, 1.58] | none in 9 universes |
 | marp_religiosity | 22 | 66,078 / 5,201 | $0.0191 | POSITIVE ASSOCIATION: beta 0.090 [0.073, 0.107] | none in 24 universes |
-| marp_norms | 25 | 74,118 / 4,924 | $0.0205 | DEPENDS ON NORMS: interaction 0.023 [0.012, 0.033] | none in 16 universes |
+| marp_norms | 31 | 94,401 / 6,465 | $0.0266 | DEPENDS ON NORMS: interaction 0.036 [0.019, 0.052] | none in 32 universes |
 | bank_marketing_calls | 41 | 86,266 / 13,975 | $0.0326 | CAP THE CALLS: OR 0.878 per call [0.863, 0.892] | Listwise deletion plus robust SE: OR 0.88 [0.61, 1.27], p 0.50 (significance only) |
 
 Run ids, universe counts and the reproduce results are in `evidence/live-runs.md`. In the
