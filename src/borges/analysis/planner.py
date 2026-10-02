@@ -11,6 +11,7 @@ from borges.analysis.models import (
 )
 from borges.analysis.planner_validation import plan_shortfalls
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
+from borges.analysis.result_scale import detect_scale
 from borges.analysis.schemas import PlannedStep, PlannerOutput
 from borges.llm.client import LLMClient, LLMError, Role
 
@@ -113,4 +114,5 @@ async def plan_analysis(
         decision_rule=rule,
         dataset=profile,
         steps=steps,
+        result_scale=detect_scale(rule.metric),
     )

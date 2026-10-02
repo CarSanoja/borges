@@ -20,11 +20,23 @@ headings, no preamble. Also return 0 to 4 short caveats.
 Return only JSON matching the requested schema."""
 
 
-def build_messages(plan: AnalysisPlan, report: Report) -> list[dict[str, str]]:
+def build_messages(
+    plan: AnalysisPlan,
+    report: Report,
+    flip_sentence: str | None = None,
+    problems: list[str] | None = None,
+) -> list[dict[str, str]]:
     body = report.model_dump(mode="json", exclude={"narrative", "caveats"})
     user = (
         f"Estimand: {plan.estimand}\n"
         f"Decision rule: {compact_json(plan.decision_rule)}\n"
         f"Report: {compact_json(body)}"
     )
+    if flip_sentence is not None:
+        user += (
+            f"\nInclude this sentence verbatim in the summary, as its second sentence: "
+            f"{flip_sentence}\nName no other option of that step as part of the flip."
+        )
+    if problems:
+        user += "\nYour previous summary was rejected: " + "; ".join(problems) + "."
     return messages(SYSTEM, user)

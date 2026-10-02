@@ -11,10 +11,9 @@ def test_reviewer_flags_row_filters_inside_a_model_step() -> None:
     assert "belongs to a filter step" in SYSTEM
 
 
-def test_reviewer_flags_unit_mismatches_with_the_estimand() -> None:
-    assert "unit mismatch" in SYSTEM
-    assert "percentage points" in SYSTEM
-    assert "unfaithful and must be flagged" in SYSTEM
+def test_reviewer_does_not_judge_units() -> None:
+    assert "unit mismatch" not in SYSTEM
+    assert "Units are converted by Borges" in SYSTEM
 
 
 def test_reviewer_receives_the_estimand_and_the_observed_smoke_estimate() -> None:

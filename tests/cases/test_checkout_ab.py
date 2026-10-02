@@ -8,6 +8,7 @@ import pytest
 
 from borges.analysis import code_guard
 from borges.analysis.models import AnalysisResult, DecisionRule
+from borges.analysis.result_scale import apply_scale
 from borges.analysis.schemas import (
     AdversaryOutput,
     CoderOutput,
@@ -27,6 +28,7 @@ DEFAULTS = {
     "unit": "sessions",
     "model": "two_prop_z",
 }
+PP_SCALE = 100.0
 FLIP = ("internal_traffic", "exclude_internal")
 ACCEPTED = ("model", "adv_ols_cluster_user")
 REJECTED = ("bot_filter", "adv_engaged_only")
@@ -51,7 +53,7 @@ def run_universe(frame: pd.DataFrame, choices: dict[str, str]) -> AnalysisResult
         namespace: dict = {}
         exec(coder_code(step_id, choices[step_id]), namespace)
         if step_id == "model":
-            return AnalysisResult(**namespace["estimate"](data, ctx))
+            return apply_scale(AnalysisResult(**namespace["estimate"](data, ctx)), PP_SCALE)
         data = namespace["apply"](data, ctx)
     raise AssertionError("no model step")
 

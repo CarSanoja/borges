@@ -5,6 +5,7 @@ import json
 import pandas as pd
 
 from borges.analysis.models import AnalysisResult, DecisionRule
+from borges.analysis.result_scale import apply_scale, detect_scale
 from borges.evaluation.calibration_data import CASE_DIR
 
 FIXTURES = CASE_DIR / "fixtures"
@@ -29,7 +30,8 @@ def default_analysis(frame: pd.DataFrame) -> AnalysisResult:
         namespace: dict = {}
         exec(_load(f"coder:{step['id']}.{option}")["code"], namespace)
         if step["kind"] == "model":
-            return AnalysisResult(**namespace["estimate"](data, ctx))
+            raw = AnalysisResult(**namespace["estimate"](data, ctx))
+            return apply_scale(raw, detect_scale(case_rule().metric))
         data = namespace["apply"](data, ctx)
     raise AssertionError("the plan has no model step")
 

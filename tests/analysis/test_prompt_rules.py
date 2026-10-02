@@ -188,14 +188,16 @@ def test_coder_takes_p_values_and_intervals_from_the_fitted_result() -> None:
     assert "never recompute them from a hand-written distribution" in CODER_SYSTEM
 
 
-def test_planner_requires_percent_units_to_be_scaled_by_100() -> None:
-    assert "percentage points or percent" in PLANNER_SYSTEM
-    assert "multiply the estimate and both interval bounds by 100" in PLANNER_SYSTEM
+def test_no_prompt_asks_for_a_multiplication_by_100() -> None:
+    assert "multiply the estimate and both interval bounds by 100" not in PLANNER_SYSTEM
+    assert "multiply the estimate and both bounds by 100" not in CODER_SYSTEM
+    assert "in the units of the estimand" not in CODER_SYSTEM
 
 
-def test_coder_returns_estimates_in_the_estimand_units() -> None:
-    assert "in the units of the estimand" in CODER_SYSTEM
-    assert "multiply the estimate and both bounds by 100" in CODER_SYSTEM
+def test_coder_returns_estimates_on_the_natural_scale() -> None:
+    assert "natural scale of the estimator" in CODER_SYSTEM
+    assert "Borges converts units itself" in CODER_SYSTEM
+    assert "never multiply by 100" in CODER_SYSTEM
 
 
 def test_coder_forbids_row_selection_by_value_in_a_model_step() -> None:

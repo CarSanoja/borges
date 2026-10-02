@@ -100,3 +100,14 @@ async def test_no_model_step_raises() -> None:
     out = PlannerOutput(estimand="E", steps=[pstep("f", "filter", [popt("a", True)])])
     with pytest.raises(LLMError):
         await run(out)
+
+
+async def test_plan_carries_the_scale_derived_from_the_metric() -> None:
+    out = PlannerOutput(
+        estimand="E",
+        steps=[pstep("m", "model", [popt("ols", True), popt("welch")])],
+    )
+    for metric, scale in [("lift (percentage points)", 100.0), ("standardised coefficient", 1.0)]:
+        llm = FakeLLM({"planner": out})
+        plan = await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric=metric))
+        assert plan.result_scale == scale

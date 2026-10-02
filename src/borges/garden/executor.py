@@ -9,6 +9,7 @@ from typing import Any
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
+from borges.analysis.result_scale import convert
 from borges.garden.executor_errors import failure_detail
 from borges.garden.models import Universe, UniverseKind
 from borges.garden.plausibility import implausible_message, is_implausible
@@ -110,6 +111,10 @@ class GardenExecutor:
             traces, result = harness.parse_output(run.stdout)
         except Exception as exc:
             return PrefixNode(None, error=f"{step_id}/{option_id}: unparseable output: {exc}")
+        if result is not None:
+            result, problem = convert(result, self.plan.result_scale)
+            if problem is not None:
+                return PrefixNode(None, error=f"{step_id}/{option_id}: {problem}")
         await self._emit_checkpoint(run.checkpoint, step_id, option_id, index + 1, run.duration_s)
         mine = [t for t in traces if t.step_id == step_id and t.option_id == option_id]
         if not mine:

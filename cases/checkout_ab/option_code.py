@@ -92,9 +92,9 @@ def estimate(df, ctx):
     p_value = 2 * (1 - stats.norm.cdf(abs(diff) / se_null))
     z = stats.norm.ppf(0.975)
     return {
-        "estimate": 100 * diff,
-        "ci_low": 100 * (diff - z * se),
-        "ci_high": 100 * (diff + z * se),
+        "estimate": diff,
+        "ci_low": (diff - z * se),
+        "ci_high": (diff + z * se),
         "p_value": float(p_value),
         "n": int(n_t + n_c),
         "extra": {"rate_treatment": 100 * p_t, "rate_control": 100 * p_c},
@@ -111,9 +111,9 @@ def estimate(df, ctx):
     margins = fit.get_margeff(at="overall", method="dydx", dummy=True).summary_frame()
     row = margins.loc["treatment"]
     return {
-        "estimate": 100 * float(row["dy/dx"]),
-        "ci_low": 100 * float(row["Conf. Int. Low"]),
-        "ci_high": 100 * float(row["Cont. Int. Hi."]),
+        "estimate": float(row["dy/dx"]),
+        "ci_low": float(row["Conf. Int. Low"]),
+        "ci_high": float(row["Cont. Int. Hi."]),
         "p_value": float(row["Pr(>|z|)"]),
         "n": int(fit.nobs),
         "extra": {"log_odds": float(fit.params["treatment"])},
@@ -131,9 +131,9 @@ def estimate(df, ctx):
     )
     low, high = fit.conf_int().loc["treatment"]
     return {
-        "estimate": 100 * float(fit.params["treatment"]),
-        "ci_low": 100 * float(low),
-        "ci_high": 100 * float(high),
+        "estimate": float(fit.params["treatment"]),
+        "ci_low": float(low),
+        "ci_high": float(high),
         "p_value": float(fit.pvalues["treatment"]),
         "n": int(fit.nobs),
         "extra": {"n_clusters": float(data["user_id"].nunique())},

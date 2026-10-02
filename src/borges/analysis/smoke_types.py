@@ -47,6 +47,7 @@ class SmokeConfig:
     reviewer: Reviewer | None = None
     on_review: OnReview | None = None
     result_check: Callable[[dict[str, Any]], str | None] | None = None
+    result_scale: float = 1.0
     state: SmokeState = field(default_factory=SmokeState)
 
 

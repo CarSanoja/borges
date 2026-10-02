@@ -9,6 +9,7 @@ import pandas as pd
 from borges.analysis import harness
 from borges.analysis.models import Option, Step
 from borges.analysis.path_scrub import scrub_paths
+from borges.analysis.result_scale import convert
 from borges.analysis.smoke_types import Check, Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
@@ -74,6 +75,10 @@ async def execute(config: SmokeConfig, parent: Checkpoint, step: Step, option: O
     traces, result = harness.parse_output(run.stdout)
     if not traces:
         return None, "the step produced no trace", None, None
+    if result is not None:
+        result, error = convert(result, config.result_scale)
+        if error is not None:
+            return None, error, None, None
     return run.checkpoint, None, _trace_effects(run.stdout), result.model_dump() if result else None
 
 

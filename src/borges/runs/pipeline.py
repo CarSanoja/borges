@@ -97,6 +97,7 @@ class Pipeline:
             reviewer=llm_reviewer(self.llm, plan),
             on_review=on_review,
             result_check=scale_check(plan.decision_rule),
+            result_scale=plan.result_scale,
         )
         self.smoke = smoke
         async with self.stage("coding"):

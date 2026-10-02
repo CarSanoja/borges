@@ -64,9 +64,6 @@ alternative ways of measuring or estimating the same signed quantity.
 - Constructed scores (PCA, factor scores, z-scores of composites) are oriented so that higher \
 means more of the construct, for example by requiring a positive correlation with the mean of \
 their items.
-- Units: when the estimand or the metric is in percentage points or percent, every model \
-option's spec must say to multiply the estimate and both interval bounds by 100, so that the \
-returned numbers are in the estimand's units.
 - estimand states precisely the quantity the decision rule judges, in one sentence.
 
 Return only JSON matching the requested schema."""

@@ -43,6 +43,12 @@ def test_instruction_states_the_threshold_and_the_ratio_scale() -> None:
     assert "exponentiate" not in scale_instruction(LIFT)
 
 
+def test_percentage_point_instruction_asks_for_a_proportion() -> None:
+    text = scale_instruction(LIFT)
+    assert "difference in proportions" in text and "Borges converts units" in text
+    assert "exactly that scale" not in text
+
+
 async def test_smoke_attempt_turns_a_wrong_scale_into_an_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

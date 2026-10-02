@@ -18,9 +18,8 @@ A row filter other than complete cases (rows dropped only for missing values) in
 step's code, such as keeping only rows where a column equals a value, is unfaithful: row \
 selection by value belongs to a filter step, and the filter step the model code duplicates \
 would become a silent no-op.
-Units: compare the estimand with smoke_result. A unit mismatch, for example a difference in \
-proportions (-0.0014) when the estimand says percentage points (it should be -0.14), is \
-unfaithful and must be flagged, quoting the estimand's unit and the returned magnitude.
+Units are converted by Borges after the step: do not flag a result for being a proportion \
+rather than percentage points.
 2. changes_estimand: does the option change the question rather than the analysis? Examples: \
 swapping the groups, reversing the coding of a variable, measuring a different outcome. A \
 different but legitimate way to measure or clean the same thing does not change the estimand.

@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 from borges.analysis.models import DecisionRule
+from borges.analysis.result_scale import detect_scale
 
 RATIO_WORDS = ("ratio",)
 
@@ -31,6 +32,12 @@ def scale_check(rule: DecisionRule) -> Callable[[dict[str, Any]], str | None] | 
 
 
 def scale_instruction(rule: DecisionRule) -> str:
+    if detect_scale(rule.metric) != 1.0:
+        return (
+            f"Decision rule metric: {rule.metric}. Return estimate, ci_low and ci_high as a "
+            f"difference in proportions (for example -0.0014), not in percentage points: "
+            f"Borges converts units after your code runs."
+        )
     text = (
         f"Decision rule: the estimate is compared with {rule.threshold:g} "
         f"({rule.comparator.value}); "

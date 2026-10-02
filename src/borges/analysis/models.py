@@ -89,6 +89,7 @@ class AnalysisPlan(BaseModel):
     decision_rule: DecisionRule
     dataset: DatasetProfile
     steps: list[Step]
+    result_scale: float = 1.0
 
     def step(self, step_id: str) -> Step:
         return next(s for s in self.steps if s.id == step_id)
