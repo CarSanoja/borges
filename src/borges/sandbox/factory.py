@@ -12,10 +12,16 @@ def make_backend(
 ) -> BranchBackend:
     chosen = kind or settings.borges_backend
     if chosen == "local":
+        from borges.sandbox.limits import ResourceLimits
         from borges.sandbox.local_backend import LocalBackend
 
         home = settings.borges_home / "sandboxes" / f"sb_{uuid.uuid4().hex[:12]}"
-        return LocalBackend(home, ephemeral=True)
+        limits = ResourceLimits(
+            memory_mb=settings.borges_sandbox_memory_mb,
+            cpu_s=settings.borges_sandbox_cpu_s,
+            fsize_mb=settings.borges_sandbox_fsize_mb,
+        )
+        return LocalBackend(home, ephemeral=True, limits=limits)
     if chosen == "contree":
         from borges.sandbox.contree_backend import ContreeBackend
 
@@ -26,5 +32,9 @@ def make_backend(
             )
         if not settings.contree_base_url:
             raise SandboxError("the contree backend needs CONTREE_BASE_URL to be set")
-        return ContreeBackend(api_key=key, base_url=settings.contree_base_url)
+        return ContreeBackend(
+            api_key=key,
+            base_url=settings.contree_base_url,
+            project_id=settings.contree_project_id,
+        )
     raise SandboxError(f"unknown sandbox backend: {chosen!r}")

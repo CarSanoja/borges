@@ -117,3 +117,85 @@ def test_remote_path() -> None:
     assert _remote_path("a/../b.txt") == "/borges/b.txt"
     with pytest.raises(SandboxError):
         _remote_path("/etc/passwd")
+
+
+class BuildImage:
+    def __init__(self, log: list[tuple[str, Any]], exit_code: int = 0, stderr: str = "") -> None:
+        self.log = log
+        self.result = SimpleNamespace(exit_code=exit_code, stdout="", stderr=stderr)
+        self.uuid = "built"
+
+    def run(self, **kwargs: Any) -> Any:
+        self.log.append(("run", kwargs))
+        outcome = self.log_outcomes.pop(0)
+        return _Done(outcome)
+
+    async def tag_as(self, tag: str) -> BuildImage:
+        self.log.append(("tag", tag))
+        return self
+
+
+class _Done:
+    def __init__(self, image: Any) -> None:
+        self.image = image
+
+    def __await__(self):
+        async def go() -> Any:
+            return self.image
+
+        return go().__await__()
+
+
+class BuildImages:
+    def __init__(self, base: BuildImage) -> None:
+        self.base = base
+
+    async def use(self, ref: str, strict: bool = False) -> Any:
+        from contree_sdk.sdk.exceptions import NotFoundError
+
+        raise NotFoundError("missing")
+
+    async def oci(self, ref: str) -> BuildImage:
+        return self.base
+
+
+def _builder(outcomes: list[BuildImage]) -> tuple[ContreeBackend, list[tuple[str, Any]]]:
+    log: list[tuple[str, Any]] = []
+    base = BuildImage(log)
+    base.log_outcomes = outcomes
+    for image in outcomes:
+        image.log = log
+        image.log_outcomes = outcomes
+    backend = ContreeBackend("key", "https://example.invalid")
+    backend._client = SimpleNamespace(images=BuildImages(base))
+    return backend, log
+
+
+async def test_runner_image_is_tagged_only_after_install_and_import_check() -> None:
+    backend, log = _builder([BuildImage([]), BuildImage([])])
+    await backend.ensure_runner_image()
+    runs = [entry for kind, entry in log if kind == "run"]
+    assert "pip install" in runs[0]["shell"] and "tag" not in runs[0]
+    assert "import pandas, numpy, scipy, statsmodels, pyarrow" in runs[1]["shell"]
+    assert [kind for kind, _ in log] == ["run", "run", "tag"]
+
+
+async def test_failed_install_is_not_tagged() -> None:
+    backend, log = _builder([BuildImage([], exit_code=1, stderr="ERROR: no matching distribution")])
+    with pytest.raises(SandboxError, match="no matching distribution"):
+        await backend.ensure_runner_image()
+    assert not any(kind == "tag" for kind, _ in log)
+
+
+async def test_failed_import_check_is_not_tagged() -> None:
+    backend, log = _builder(
+        [BuildImage([]), BuildImage([], exit_code=1, stderr="ImportError: pyarrow")]
+    )
+    with pytest.raises(SandboxError, match="ImportError: pyarrow"):
+        await backend.ensure_runner_image()
+    assert not any(kind == "tag" for kind, _ in log)
+
+
+def test_project_id_reaches_the_auth_config() -> None:
+    backend = ContreeBackend("key", "https://example.invalid", project_id="proj-123")
+    assert backend._client.config.auth.get_headers()["Project"] == "proj-123"

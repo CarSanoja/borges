@@ -235,3 +235,11 @@ async def test_exhausted_universe_budget_adds_caveats(tmp_path: Path, scenario: 
     assert snapshot.report is not None
     joined = " ".join(snapshot.report.caveats)
     assert "single-decision" in joined and "adversary stage" in joined
+
+
+async def test_step_timeout_setting_reaches_the_executor(
+    tmp_path: Path, scenario: Scenario
+) -> None:
+    rig = make_rig(tmp_path)
+    await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
+    assert scenario.executors[0].kwargs["step_timeout_s"] == 120.0

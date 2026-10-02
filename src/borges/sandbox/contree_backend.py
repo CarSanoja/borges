@@ -3,13 +3,17 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from pathlib import PurePosixPath
 from typing import Any
 
 from borges.sandbox.backend import WORKDIR, Checkpoint, ExecResult, SandboxError
 
 INSTALL_COMMAND = "pip install --no-cache-dir pandas numpy scipy statsmodels pyarrow"
+IMPORT_CHECK_COMMAND = "python -c 'import pandas, numpy, scipy, statsmodels, pyarrow'"
 INSTALL_TIMEOUT_S = 900.0
+CHECK_TIMEOUT_S = 120.0
+STDERR_TAIL_CHARS = 400
 
 
 def _remote_files(files: Mapping[str, bytes] | None) -> dict[str, bytes]:
@@ -44,14 +48,20 @@ class ContreeBackend:
         base_url: str,
         base_image: str = "docker://python:3.13-slim",
         runner_tag: str = "borges-runner-1",
+        project_id: str | None = None,
     ) -> None:
         try:
             from contree_sdk import Contree
+            from contree_sdk.auth import IAMAuth
+            from contree_sdk.config import ContreeConfig
         except ImportError as exc:
             raise SandboxError(
                 "the contree backend needs the optional dependency: install borges[contree]"
             ) from exc
-        self._client = Contree(base_url=base_url, token=api_key)
+        auth = IAMAuth(base_url=base_url, token=api_key)
+        if project_id:
+            auth = replace(auth, project_id=project_id)
+        self._client = Contree(ContreeConfig(auth=auth))
         self.base_image = base_image
         self.runner_tag = runner_tag
         self._runner: Any | None = None
@@ -70,12 +80,15 @@ class ContreeBackend:
             except NotFoundError:
                 try:
                     base = await images.oci(self.base_image)
-                    self._runner = await base.run(
-                        shell=INSTALL_COMMAND,
-                        timeout=INSTALL_TIMEOUT_S,
-                        disposable=False,
-                        tag=self.runner_tag,
+                    installed = await base.run(
+                        shell=INSTALL_COMMAND, timeout=INSTALL_TIMEOUT_S, disposable=False
                     )
+                    _require_success(installed, "install the analysis packages")
+                    checked = await installed.run(
+                        shell=IMPORT_CHECK_COMMAND, timeout=CHECK_TIMEOUT_S, disposable=True
+                    )
+                    _require_success(checked, "import the analysis packages")
+                    self._runner = await installed.tag_as(self.runner_tag)
                 except ContreeError as exc:
                     raise SandboxError(f"could not build the runner image: {exc}") from exc
             return self._runner
@@ -153,6 +166,13 @@ class ContreeBackend:
 
     async def close(self) -> None:
         return None
+
+
+def _require_success(image: Any, action: str) -> None:
+    result = image.result
+    if int(result.exit_code) != 0:
+        tail = _as_text(result.stderr).strip()[-STDERR_TAIL_CHARS:]
+        raise SandboxError(f"could not build the runner image: failed to {action}: {tail}")
 
 
 def _as_text(value: Any) -> str:

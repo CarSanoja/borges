@@ -53,3 +53,14 @@ def test_contree_falls_back_to_nebius_key(tmp_path: Path) -> None:
 def test_kind_overrides_setting(tmp_path: Path) -> None:
     settings = _settings(tmp_path, borges_backend="contree")
     assert isinstance(make_backend(settings, "local"), LocalBackend)
+
+
+def test_contree_project_id_comes_from_settings(tmp_path: Path) -> None:
+    settings = _settings(
+        tmp_path,
+        contree_api_key="k",
+        contree_base_url="https://example.invalid",
+        contree_project_id="proj-9",
+    )
+    backend = make_backend(settings, "contree")
+    assert backend._client.config.auth.get_headers()["Project"] == "proj-9"

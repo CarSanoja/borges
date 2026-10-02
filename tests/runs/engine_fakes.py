@@ -53,8 +53,15 @@ class FakeExecutor:
     scenario: Scenario
 
     def __init__(
-        self, backend: Any, plan: AnalysisPlan, data: bytes, emit: Any, concurrency: int, **_: Any
+        self,
+        backend: Any,
+        plan: AnalysisPlan,
+        data: bytes,
+        emit: Any,
+        concurrency: int,
+        **kwargs: Any,
     ):
+        self.kwargs = kwargs
         self.plan = plan
         self.emit = emit
         self.baseline_verdict: str | None = None

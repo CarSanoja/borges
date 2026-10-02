@@ -14,6 +14,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from borges.sandbox.backend import Checkpoint, ExecResult, SandboxError
+from borges.sandbox.limits import ResourceLimits, make_preexec
 
 TIMEOUT_EXIT_CODE = 124
 
@@ -52,7 +53,14 @@ class LocalBackend:
 
     name = "local"
 
-    def __init__(self, home: Path, python: str = sys.executable, ephemeral: bool = False) -> None:
+    def __init__(
+        self,
+        home: Path,
+        python: str = sys.executable,
+        ephemeral: bool = False,
+        limits: ResourceLimits | None = None,
+    ) -> None:
+        self.limits = limits or ResourceLimits()
         self.home = Path(home)
         self.python = python
         self.ephemeral = ephemeral
@@ -119,6 +127,7 @@ class LocalBackend:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 start_new_session=True,
+                preexec_fn=make_preexec(self.limits),
             )
         except OSError as exc:
             return ExecResult(child, 127, "", str(exc), time.perf_counter() - started)
