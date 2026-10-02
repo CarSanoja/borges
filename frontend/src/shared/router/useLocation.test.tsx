@@ -14,6 +14,6 @@ describe("useLocation", () => {
       window.history.pushState(null, "", "/replay/c1");
       window.dispatchEvent(new PopStateEvent("popstate"));
     });
-    expect(result.current.route).toEqual({ name: "replay", caseId: "c1" });
+    expect(result.current.route).toEqual({ name: "replay", caseId: "c1", source: null });
   });
 });

@@ -2,12 +2,12 @@ import { useEffect, useReducer } from "react";
 import { RECORDED_RUN_ID, recordedRun } from "../../fixtures/recordedRun";
 import { ApiError, eventsUrl, getCase, getRun, recordingUrl } from "../../shared/api/client";
 import { subscribeEvents } from "../../shared/api/sse";
-import type { RunEvent, RunSnapshot } from "../../shared/types/contracts";
+import type { RecordingSource, RunEvent, RunSnapshot } from "../../shared/types/contracts";
 import { applyEvent, initialSnapshot } from "./reducer";
 
 export type RunSource =
   | { kind: "live"; runId: string }
-  | { kind: "replay"; caseId: string; speed: number }
+  | { kind: "replay"; caseId: string; speed: number; recording?: RecordingSource }
   | { kind: "mock" };
 
 type Action =
@@ -30,7 +30,7 @@ export function isNotFound(snapshot: RunSnapshot): boolean {
 
 export function sourceKey(source: RunSource): string {
   if (source.kind === "live") return `live:${source.runId}`;
-  if (source.kind === "replay") return `replay:${source.caseId}:${source.speed}`;
+  if (source.kind === "replay") return `replay:${source.caseId}:${source.speed}:${source.recording ?? ""}`;
   return "mock";
 }
 
@@ -86,7 +86,7 @@ export function useRun(source: RunSource): RunSnapshot {
     const emit = (event: RunEvent) => dispatch({ type: "event", event });
     if (source.kind === "mock") return scheduleMock(recordedRun(), emit);
     const url =
-      source.kind === "live" ? eventsUrl(source.runId, 0) : recordingUrl(source.caseId, source.speed);
+      source.kind === "live" ? eventsUrl(source.runId, 0) : recordingUrl(source.caseId, source.speed, source.recording ?? null);
     let active = true;
     const onLost = () => {
       if (source.kind === "replay") {

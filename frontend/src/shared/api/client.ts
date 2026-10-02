@@ -1,5 +1,6 @@
 import type {
   CaseCard,
+  RecordingSource,
   Health,
   RunCreated,
   RunRequest,
@@ -94,6 +95,7 @@ export function eventsUrl(runId: string, fromSeq = 0): string {
   return `${BASE}/runs/${encodeURIComponent(runId)}/events?from_seq=${fromSeq}`;
 }
 
-export function recordingUrl(caseId: string, speed = 1): string {
-  return `${BASE}/cases/${encodeURIComponent(caseId)}/recording?speed=${speed}`;
+export function recordingUrl(caseId: string, speed = 1, source: RecordingSource | null = null): string {
+  const suffix = source ? `&source=${source}` : "";
+  return `${BASE}/cases/${encodeURIComponent(caseId)}/recording?speed=${speed}${suffix}`;
 }

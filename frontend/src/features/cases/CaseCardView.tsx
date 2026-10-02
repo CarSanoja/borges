@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { createRun } from "../../shared/api/client";
 import type { CaseCard } from "../../shared/types/contracts";
+import { formatCost } from "../recording/recordingText";
+import "../recording/recording.css";
 import { describeRule } from "./decisionRuleText";
 
 interface Props {
@@ -30,7 +32,12 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
   return (
     <article className="case-card">
       <p className="eyebrow">{card.subtitle}</p>
-      {liveOnly && <p className="case-live-only">Needs live mode: runs only with a Nemotron key</p>}
+      {card.live_recording && (
+        <p className="recording-badge" data-testid="live-badge">
+          Live run recorded · ${formatCost(card.live_recording.cost_usd)}
+        </p>
+      )}
+      {liveOnly && !card.live_recording && <p className="case-live-only">Needs live mode: runs only with a Nemotron key</p>}
       <h3 className="case-title">{card.title}</h3>
       <p className="case-question">{card.question}</p>
       <dl className="case-meta">
@@ -44,12 +51,12 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
         </div>
       </dl>
       <div className="case-actions">
-        {card.has_recording && (
+        {(card.has_recording || card.live_recording) && (
           <button type="button" className="btn btn-primary" onClick={() => onOpenReplay(card.id)}>
             Watch the recorded run
           </button>
         )}
-        {liveOnly && !card.has_recording && (
+        {liveOnly && !card.has_recording && !card.live_recording && (
           <button type="button" className="btn btn-primary" onClick={() => onOpenReplay(card.id)}>
             See how it runs live
           </button>

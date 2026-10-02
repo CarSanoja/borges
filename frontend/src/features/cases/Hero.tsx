@@ -1,5 +1,5 @@
 import "./hero.css";
-import type { Health } from "../../shared/types/contracts";
+import type { Health, LiveRecordingSummary } from "../../shared/types/contracts";
 import { HeroGarden } from "./HeroGarden";
 import { HeroMode } from "./HeroMode";
 
@@ -16,9 +16,10 @@ interface Props {
   onWatchDemo: () => void;
   health: Health | null;
   healthLoaded: boolean;
+  liveRecording?: LiveRecordingSummary | null;
 }
 
-export function Hero({ onWatchDemo, health, healthLoaded }: Props) {
+export function Hero({ onWatchDemo, health, healthLoaded, liveRecording }: Props) {
   return (
     <header className="landing-hero">
       <div className="landing-copy">
@@ -35,7 +36,7 @@ export function Hero({ onWatchDemo, health, healthLoaded }: Props) {
             </a>
           )}
         </div>
-        {healthLoaded && <HeroMode health={health} />}
+        {healthLoaded && <HeroMode health={health} liveRecording={liveRecording} />}
         <p className="landing-sub">29 research teams. Same data. Opposite answers.</p>
       </div>
       <HeroGarden />

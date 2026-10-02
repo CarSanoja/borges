@@ -6,6 +6,7 @@ import { SpecCurve } from "../speccurve/SpecCurve";
 import { Telemetry } from "../telemetry/Telemetry";
 import { UniverseDrawer } from "../universe/UniverseDrawer";
 import { VerdictCard } from "../verdict/VerdictCard";
+import { RecordingBanner } from "../recording/RecordingBanner";
 import { RunHeader } from "./RunHeader";
 import { useCaseCard } from "./useCaseCard";
 import { NotFound } from "../notfound/NotFound";
@@ -21,7 +22,7 @@ interface Props {
 
 export function RunPage({ source, onHome }: Props) {
   const snapshot = useRun(source);
-  const card = useCaseCard(snapshot.case_id);
+  const card = useCaseCard(source.kind === "replay" ? source.caseId : snapshot.case_id);
   const [selected, setSelected] = useState<string | null>(null);
   const runId = source.kind === "mock" ? null : snapshot.run_id;
 
@@ -50,6 +51,14 @@ export function RunPage({ source, onHome }: Props) {
         Skip to verdict
       </a>
       <RunHeader snapshot={snapshot} onHome={onHome} />
+      {source.kind === "replay" && source.recording && (
+        <RecordingBanner
+          caseId={source.caseId}
+          source={source.recording}
+          live={card?.live_recording}
+          hasScripted={card?.has_recording ?? true}
+        />
+      )}
       {snapshot.error && (
         <p className="run-error" role="alert">
           {snapshot.error}

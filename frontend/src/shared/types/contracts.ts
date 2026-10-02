@@ -168,6 +168,21 @@ export interface ReferenceEstimate {
   significant: boolean | null;
 }
 
+export type RecordingSource = "live" | "scripted";
+
+export interface LiveRecordingSummary {
+  recorded_at: string;
+  models: Record<string, string>;
+  llm_calls: number;
+  tokens_in: number;
+  tokens_out: number;
+  cost_usd: number;
+  verdict: string;
+  flipped_verdict: string | null;
+  flip_kind: "direction" | "significance" | null;
+  universes: number;
+}
+
 export interface CaseCard {
   id: string;
   title: string;
@@ -180,6 +195,7 @@ export interface CaseCard {
   reference: ReferenceEstimate[];
   story: string;
   live_only?: boolean;
+  live_recording?: LiveRecordingSummary | null;
 }
 
 export type StageName =

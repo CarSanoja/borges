@@ -8,7 +8,7 @@ describe("parseLocation", () => {
 
   it("matches run and replay routes", () => {
     expect(parseLocation("/run/abc123", "").route).toEqual({ name: "run", runId: "abc123" });
-    expect(parseLocation("/replay/checkout_ab", "").route).toEqual({ name: "replay", caseId: "checkout_ab" });
+    expect(parseLocation("/replay/checkout_ab", "").route).toEqual({ name: "replay", caseId: "checkout_ab", source: null });
   });
 
   it("detects mock mode", () => {

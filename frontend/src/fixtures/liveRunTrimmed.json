@@ -1,0 +1,58 @@
+[
+ {
+  "seq": 1,
+  "ts": 1790939516.2076092,
+  "run_id": "r_20261002T111156_5ae545",
+  "type": "run.started",
+  "data": {
+   "case_id": "checkout_ab",
+   "title": "New checkout A/B test",
+   "question": "Does the new checkout increase the conversion rate?",
+   "decision_rule": {
+    "metric": "conversion lift, treatment minus control (percentage points)",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "SHIP",
+    "negative_label": "DON'T SHIP"
+   },
+   "mode": "live",
+   "llm": "nebius",
+   "backend": "local",
+   "models": {
+    "planner": "nvidia/nemotron-3-super-120b-a12b",
+    "coder": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "repairer": "nvidia/nemotron-3-super-120b-a12b",
+    "adversary": "nvidia/nemotron-3-super-120b-a12b",
+    "judge": "nvidia/nemotron-3-super-120b-a12b",
+    "narrator": "nvidia/Nemotron-3-Ultra-550b-a55b"
+   },
+   "max_universes": 40
+  }
+ },
+ {
+  "seq": 89,
+  "ts": 1790939553.268047,
+  "run_id": "r_20261002T111156_5ae545",
+  "type": "usage",
+  "data": {
+   "tokens_in": 33499,
+   "tokens_out": 9371,
+   "cost_usd": 0.006973200000000001,
+   "llm_calls": 22,
+   "cached_calls": 15,
+   "checkpoints": 19,
+   "universes": 8
+  }
+ },
+ {
+  "seq": 90,
+  "ts": 1790939553.2898402,
+  "run_id": "r_20261002T111156_5ae545",
+  "type": "run.finished",
+  "data": {
+   "status": "completed",
+   "elapsed_s": 37.08165637499769
+  }
+ }
+]

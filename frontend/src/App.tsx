@@ -25,7 +25,7 @@ export function App() {
       ? ({ kind: "mock" } as const)
       : ({ kind: "replay", caseId: route.caseId, speed: 1 } as const);
     if (mock) return <RunPage key={`replay:${route.caseId}:${mock}`} source={source} onHome={home} />;
-    return <ReplayRoute key={`replay:${route.caseId}`} caseId={route.caseId} onHome={home} />;
+    return <ReplayRoute key={`replay:${route.caseId}:${route.source ?? ""}`} caseId={route.caseId} requested={route.source} onHome={home} />;
   }
 
   if (route.name === "not_found") {
