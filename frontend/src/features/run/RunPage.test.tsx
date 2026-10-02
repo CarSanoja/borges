@@ -1,7 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { buildSampleRun } from "../../fixtures/sampleRun";
 import { RunPage } from "./RunPage";
 
 class FakeEventSource {
@@ -37,8 +35,6 @@ class FakeEventSource {
   }
 }
 
-const GONE = /This run no longer exists on this server/;
-
 
 describe("RunPage (mock source)", () => {
   beforeEach(() => {
@@ -73,27 +69,31 @@ describe("RunPage (live source)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("explains an unknown run instead of a lost connection", async () => {
+  it("renders a not-found page with links home and to the recorded runs for an unknown run", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Unknown run", { status: 404 })));
     render(<RunPage source={{ kind: "live", runId: "r_gone" }} onHome={() => undefined} />);
     await act(async () => {
       FakeEventSource.instances[0]?.drop();
     });
-    expect(await screen.findByRole("alert")).toHaveTextContent(GONE);
+    expect(await screen.findByRole("heading", { name: "Run not found" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to the entrance" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: /Recorded run: New checkout A\/B test/ })).toHaveAttribute(
+      "href",
+      "/replay/checkout_ab",
+    );
     expect(screen.queryByText("Connection to the run was lost.")).toBeNull();
+    expect(screen.queryByText(/Walking the garden/)).toBeNull();
   });
 
-  it("links to the case replay when the case is known", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Unknown run", { status: 404 })));
-    const onOpenReplay = vi.fn();
-    render(<RunPage source={{ kind: "live", runId: "r1" }} onHome={() => undefined} onOpenReplay={onOpenReplay} />);
-    const started = buildSampleRun("r1")[0];
+  it("renders a not-found page for an unknown case replay", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Unknown case", { status: 404 })));
+    render(<RunPage source={{ kind: "replay", caseId: "nope", speed: 1 }} onHome={() => undefined} />);
     await act(async () => {
-      FakeEventSource.instances[0]?.emit("run.started", started);
       FakeEventSource.instances[0]?.drop();
     });
-    await userEvent.click(await screen.findByRole("button", { name: "Watch the recorded run" }));
-    expect(onOpenReplay).toHaveBeenCalledWith("checkout_ab");
+    expect(await screen.findByRole("heading", { name: "Case not found" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to the entrance" })).toBeInTheDocument();
+    expect(screen.queryByText("Connection to the run was lost.")).toBeNull();
   });
 
   it("keeps the connection-lost message when the run still exists", async () => {

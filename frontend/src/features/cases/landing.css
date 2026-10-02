@@ -154,3 +154,76 @@
   }
 }
 
+
+.upload-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: linear-gradient(180deg, var(--ink-700), var(--ink-800));
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.upload-lead {
+  color: var(--paper-300);
+}
+
+.upload-unavailable {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  background: var(--gold-soft);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.upload-fields {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.upload-fields:disabled {
+  opacity: 0.55;
+}
+
+.upload-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+  min-width: 0;
+}
+
+.upload-field input,
+.upload-field textarea,
+.upload-field select {
+  font: inherit;
+  color: var(--paper-100);
+  background: var(--ink-900);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  min-width: 0;
+}
+
+.upload-fields .btn-primary {
+  align-self: flex-start;
+}

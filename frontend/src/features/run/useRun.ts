@@ -1,6 +1,6 @@
 import { useEffect, useReducer } from "react";
 import { RECORDED_RUN_ID, recordedRun } from "../../fixtures/recordedRun";
-import { ApiError, eventsUrl, getRun, recordingUrl } from "../../shared/api/client";
+import { ApiError, eventsUrl, getCase, getRun, recordingUrl } from "../../shared/api/client";
 import { subscribeEvents } from "../../shared/api/sse";
 import type { RunEvent, RunSnapshot } from "../../shared/types/contracts";
 import { applyEvent, initialSnapshot } from "./reducer";
@@ -14,12 +14,19 @@ type Action =
   | { type: "event"; event: RunEvent }
   | { type: "reset"; runId: string }
   | { type: "connection_lost" }
-  | { type: "run_gone" };
+  | { type: "run_gone" }
+  | { type: "case_gone" };
 
 const MAX_MOCK_DELAY_MS = 650;
 
 export const RUN_GONE_MESSAGE =
   "This run no longer exists on this server (runs are cleared on redeploy). Watch the recorded run instead.";
+
+export const CASE_GONE_MESSAGE = "This case does not exist on this server.";
+
+export function isNotFound(snapshot: RunSnapshot): boolean {
+  return snapshot.error === RUN_GONE_MESSAGE || snapshot.error === CASE_GONE_MESSAGE;
+}
 
 export function sourceKey(source: RunSource): string {
   if (source.kind === "live") return `live:${source.runId}`;
@@ -43,6 +50,9 @@ function reduce(snapshot: RunSnapshot, action: Action): RunSnapshot {
     case "run_gone":
       if (snapshot.status !== "running") return snapshot;
       return { ...snapshot, status: "failed", error: RUN_GONE_MESSAGE };
+    case "case_gone":
+      if (snapshot.status !== "running") return snapshot;
+      return { ...snapshot, status: "failed", error: CASE_GONE_MESSAGE };
     case "event": {
       const next = applyEvent(snapshot, action.event);
       return next.run_id === action.event.run_id ? next : { ...next, run_id: action.event.run_id };
@@ -79,6 +89,15 @@ export function useRun(source: RunSource): RunSnapshot {
       source.kind === "live" ? eventsUrl(source.runId, 0) : recordingUrl(source.caseId, source.speed);
     let active = true;
     const onLost = () => {
+      if (source.kind === "replay") {
+        getCase(source.caseId).then(
+          () => active && dispatch({ type: "connection_lost" }),
+          (cause) =>
+            active &&
+            dispatch({ type: cause instanceof ApiError && cause.status === 404 ? "case_gone" : "connection_lost" }),
+        );
+        return;
+      }
       if (source.kind !== "live") return dispatch({ type: "connection_lost" });
       getRun(source.runId).then(
         () => active && dispatch({ type: "connection_lost" }),

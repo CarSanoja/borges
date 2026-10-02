@@ -54,6 +54,26 @@ export function getCases(): Promise<CaseCard[]> {
   return request<CaseCard[]>("/cases");
 }
 
+export function getCase(caseId: string): Promise<CaseCard> {
+  return request<CaseCard>(`/cases/${encodeURIComponent(caseId)}`);
+}
+
+export interface UploadResult {
+  upload_id: string;
+  profile: { name: string; n_rows: number; columns: unknown[] };
+}
+
+export async function uploadDataset(file: File): Promise<UploadResult> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await fetch(`${BASE}/uploads`, { method: "POST", body: form });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new ApiError(response.status, errorMessage(text) || response.statusText);
+  }
+  return (await response.json()) as UploadResult;
+}
+
 export function createRun(body: RunRequest): Promise<RunCreated> {
   return request<RunCreated>("/runs", { method: "POST", body: JSON.stringify(body) });
 }

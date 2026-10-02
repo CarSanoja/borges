@@ -267,6 +267,8 @@ export interface Health {
   spend_usd: number;
   spend_cap_usd: number;
   live_unavailable_reason?: "no_key" | "budget_spent" | null;
+  uploads_available?: boolean;
+  uploads_unavailable_reason?: string | null;
 }
 
 interface EventBase<T extends string, D> {

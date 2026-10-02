@@ -1,10 +1,12 @@
 import { Landing } from "./features/cases/Landing";
 import { RunPage } from "./features/run/RunPage";
-import { navigate, replayPath, runPath, useLocation, withMock } from "./shared/router";
+import { NotFound } from "./features/notfound/NotFound";
+import { navigate, replayPath, runPath, useLocation, useScrollToTop, withMock } from "./shared/router";
 
 export function App() {
   const { route, mock } = useLocation();
   const home = () => navigate("/");
+  useScrollToTop(`${route.name}:${"runId" in route ? route.runId : "caseId" in route ? route.caseId : ""}`);
 
   if (route.name === "run") {
     const source = mock ? ({ kind: "mock" } as const) : ({ kind: "live", runId: route.runId } as const);
@@ -13,7 +15,6 @@ export function App() {
         key={`run:${route.runId}:${mock}`}
         source={source}
         onHome={home}
-        onOpenReplay={(caseId) => navigate(replayPath(caseId))}
       />
     );
   }
@@ -26,14 +27,7 @@ export function App() {
   }
 
   if (route.name === "not_found") {
-    return (
-      <main className="not-found">
-        <h1>Lost in the garden</h1>
-        <button type="button" onClick={home}>
-          Return to the entrance
-        </button>
-      </main>
-    );
+    return <NotFound title="Page not found" message="There is nothing at this address." />;
   }
 
   return (

@@ -48,3 +48,31 @@ describe("App mock run end to end", () => {
     expect(screen.getByLabelText("Universe")).toBeInTheDocument();
   });
 });
+
+describe("App routing", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    window.history.pushState({}, "", "/");
+  });
+
+  it("shows a not-found state with a link home for an unknown URL", async () => {
+    window.history.pushState({}, "", "/nowhere/at/all");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to the entrance" })).toHaveAttribute("href", "/");
+    expect(await screen.findByRole("link", { name: /Recorded run: Red cards and skin tone/ })).toBeInTheDocument();
+  });
+
+  it("scrolls to the top when the route changes", async () => {
+    window.history.pushState({}, "", "/nowhere");
+    render(<App />);
+    vi.mocked(window.scrollTo).mockClear();
+    await userEvent.click(screen.getByRole("link", { name: "Back to the entrance" }));
+    expect(window.location.pathname).toBe("/");
+    expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+  });
+});

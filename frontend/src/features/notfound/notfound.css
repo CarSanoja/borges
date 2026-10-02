@@ -1,0 +1,32 @@
+.not-found {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.not-found h1 {
+  font-size: var(--text-3xl);
+}
+
+.not-found-message {
+  color: var(--paper-300);
+  font-size: var(--text-lg);
+}
+
+.not-found-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+
+.not-found-links .btn {
+  text-decoration: none;
+}
+
+.not-found-links .btn-primary {
+  color: var(--ink-900);
+}

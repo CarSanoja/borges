@@ -25,15 +25,40 @@
 }
 
 .landing-title {
-  font-size: var(--text-hero);
-  max-width: 14ch;
+  font-size: clamp(2.5rem, 4.4vw, 4.25rem);
+  max-width: 16ch;
   font-weight: 500;
+}
+
+.landing-pitch {
+  font-size: var(--text-lg);
+  line-height: 1.5;
+  color: var(--paper-100);
+  max-width: 34rem;
+}
+
+.landing-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.btn-cta {
+  flex-direction: row;
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-md);
+  text-decoration: none;
+}
+
+.btn-primary.btn-cta {
+  color: var(--ink-900);
 }
 
 .landing-sub {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: var(--text-xl);
+  font-size: var(--text-lg);
   color: var(--gold);
 }
 
