@@ -279,14 +279,16 @@ error:
    delimited table whose columns are the dataset's) above the class are denied. The detector
    knows the dataset's column names from the run; it is a safeguard against accidents in prompt
    building, not a data-loss-prevention product, and it does not see rows an agent re-encodes.
-5. **Armor-in hook**: a placeholder interface for the armor wave (no-op today).
+5. **Armor-in hook** (Model Armor, see below): blocks prompt injection in what reaches the
+   model and redacts personal data.
 6. **Budgets**: calls and cost per agent and per run are reserved before the call and settled
    after it; concurrency per agent and per run is capped by queueing, not rejection.
 7. **Routing**: transient errors (5xx, 408, 429, timeouts, connection failures) are retried with
    exponential backoff and jitter; a per-model circuit breaker opens after repeated failures and
    lets one probe through after its cooldown; the call falls back to the next model **only if
    the policy lists one** for that agent. The provider client itself no longer retries.
-8. **Armor-out hook**, then an audit record and span attributes with the decision.
+8. **Armor-out hook**: redacts personal data in the response and blocks code that steers or
+   exfiltrates, then an audit record and span attributes with the decision.
 
 Sandbox executions are authorised as the `harness` (the only executor), may only run
 `python steps/<id>.py` with files under `steps/`, with a timeout under the policy ceiling, and
@@ -302,6 +304,61 @@ imported outside `llm/`, and a run-time test asserts that every call of a full s
 made inside the gateway. Limits: model and sandbox calls inside one process share its memory, so
 this is a policy and audit layer for honest code paths, not a barrier against code that already
 runs in the server process.
+
+## Model Armor (inline guardrails)
+
+`src/borges/armor/` screens three things, deterministically and with no model call by default.
+Every decision is an `armor.screen` audit record (`decision=deny` for refuse, quarantine, drop
+and block; `observe` for a redaction) with the field and the matched category, never the
+protected value, and it appears as a chip on the span in the trace view and as a caveat on the
+run page.
+
+**1. Untrusted text that reaches a model.** The run question, the decision-rule text, uploaded
+file names, column names, column notes, categorical cell values and sample rows. Every screen
+runs on the original and on normalised variants: Unicode NFKC, homoglyph folding, removal of
+invisible, zero-width and bidi control characters, accent stripping, leetspeak, reversed text,
+spaced-out letters, rot13 and decoded base64 or hex runs. The patterns (English and Spanish)
+cover instruction override ("ignore the decision rule"), role and system impersonation, result
+steering ("report p < 0.05", "always conclude SHIP", "the flip is ..."), exfiltration ("print the
+environment", "read .env", "send to http...") and tool or code steering ("import os",
+"subprocess", "open('/...')"). Actions:
+
+- run inputs (question, rule text, file name, column names) are **refused**: `POST /api/runs`
+  and `POST /api/uploads` return 400 with a clear message and an audit record;
+- column notes and data values are **quarantined**: the text is replaced by
+  `[quarantined: instruction-like text]` in the profile, the run continues and a caveat says so.
+  An attack split across several notes is caught by screening their concatenation;
+- the gateway armor-in hook screens every user message once more and blocks the call on a hit.
+
+**2. Tool poisoning.** Planner options go to the coder; adversary proposals go to the judge and
+the coder. Their label, rationale, spec and source are screened with the same patterns plus
+result- and code-steering ones. A poisoned alternative is dropped with an `option.judged` event
+whose reason starts with `armor:`, just like a judge rejection; poison in a default option, the
+estimand or a step description stops the run. Coder and repairer output is screened by the
+armor-out hook and the AST code guard remains the hard boundary for code.
+
+**3. Personal data.** E-mail, phone numbers, payment cards (Luhn and issuer prefix), IBANs
+(mod 97), US SSNs, Spanish DNI/NIE (check letter), Mexican CURP (check digit) and RFC, IP
+addresses, and dates of birth in columns whose name says so. It is redacted to
+`[redacted:<kind>]` in every profile value and sample row a model reads, in every model output
+(report, narrative, events) and in audit reasons; the upload response lists the columns that
+contain personal data with counts and never values, and the upload screen shows it before the
+run starts. The analysis code in the sandbox still reads the raw columns.
+
+**Optional second stage.** With `BORGES_ARMOR_LLM=true` text that is ambiguous (weak
+instruction-like signals but no pattern hit) is classified by the judge's model through the
+gateway, at most 12 texts per run; a failing or capped review fails closed (quarantine). Off by
+default.
+
+`tests/armor/corpus/` holds 62 attacks (including homoglyph, zero-width, base64, hex, rot13,
+reversed, fullwidth, bidi, accent, Spanish and split-across-notes ones) and 73 benign texts
+from the five cases; a test requires 100% recall and zero false positives, and another proves
+the curated cases and every recorded model output screen clean.
+
+Limits: this is a pattern screen for known phrasings, not a semantic guarantee; a novel
+paraphrase can pass, which is why the code guard, the runtime policy and the gateway stay
+independent layers. PII detection is validated by checksums where one exists, so it favours
+precision; free-form names and addresses are not detected.
 
 ## Server rules
 
