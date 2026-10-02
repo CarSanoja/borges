@@ -3,12 +3,14 @@ from __future__ import annotations
 import asyncio
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from borges.api.deps import get_settings, get_uploads
-from borges.api.run_policy import LIVE_TOKEN_HEADER, enforce_upload_policy
+from borges.api.run_policy import enforce_upload_policy
 from borges.api.uploads import MAX_BYTES, UploadQuotaError, UploadStore
 from borges.config import Settings
+from borges.identity.deps import get_principal
+from borges.identity.principal import Principal
 from borges.telemetry.policy_audit import audited_policy
 
 router = APIRouter()
@@ -19,9 +21,9 @@ async def create_upload(
     file: Annotated[UploadFile, File()],
     uploads: Annotated[UploadStore, Depends(get_uploads)],
     settings: Annotated[Settings, Depends(get_settings)],
-    live_token: Annotated[str | None, Header(alias=LIVE_TOKEN_HEADER)] = None,
+    principal: Annotated[Principal, Depends(get_principal)],
 ) -> dict[str, Any]:
-    audited_policy(settings, "upload", enforce_upload_policy, settings, live_token)
+    audited_policy(settings, "upload", enforce_upload_policy, settings, principal=principal.id)
     content = await file.read(MAX_BYTES + 1)
     try:
         upload_id, profile = await asyncio.to_thread(

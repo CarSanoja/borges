@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
 
 @dataclass(frozen=True)
@@ -13,6 +13,7 @@ class Caller:
     step_id: str | None = None
     option_id: str | None = None
     universe_id: str | None = None
+    token: str | None = field(default=None, repr=False)
 
 
 _ANONYMOUS = Caller()
@@ -30,6 +31,7 @@ def calling_as(
     step_id: str | None = None,
     option_id: str | None = None,
     universe_id: str | None = None,
+    token: str | None = None,
 ) -> Iterator[Caller]:
     fields = {
         "principal": principal,
@@ -37,6 +39,7 @@ def calling_as(
         "step_id": step_id,
         "option_id": option_id,
         "universe_id": universe_id,
+        "token": token,
     }
     merged = replace(current_caller(), **{k: v for k, v in fields.items() if v is not None})
     token = _CALLER.set(merged)

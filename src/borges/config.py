@@ -57,6 +57,15 @@ class Settings(BaseSettings):
     borges_sandbox_cpu_s: int = 600
     borges_sandbox_fsize_mb: int = 256
     borges_registry_enforce: bool = False
+    borges_registry_four_eyes: bool = False
+    borges_rate_anon_burst: int = 120
+    borges_rate_anon_per_s: float = 5.0
+    borges_rate_key_burst: int = 400
+    borges_rate_key_per_s: float = 30.0
+    borges_audit_reads: bool = False
+    borges_agent_token_ttl_s: int = 3600
+    borges_audit_anchor_key: str | None = None
+    borges_audit_anchor_every: int = 50
     borges_home: Path = REPO_ROOT / ".borges"
     borges_runs_dir: Path = REPO_ROOT / "runs"
     borges_cases_dir: Path = REPO_ROOT / "cases"

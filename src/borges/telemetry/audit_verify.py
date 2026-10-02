@@ -17,6 +17,7 @@ class ChainReport(BaseModel):
     broken_seq: int | None = None
     broken_line: int | None = None
     reason: str | None = None
+    anchored: int | None = None
 
 
 def _break(report: ChainReport, line: int, seq: int | None, reason: str) -> ChainReport:

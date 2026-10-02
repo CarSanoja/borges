@@ -8,16 +8,24 @@ from borges.analysis.models import DatasetProfile
 from borges.api import uploads as uploads_module
 from borges.api.app import create_app
 from borges.config import Settings
+from tests.identity.keys import bearer, make_key
 
 
-def build_client(tmp_path, monkeypatch: pytest.MonkeyPatch, **settings) -> httpx.AsyncClient:
+def build_client(
+    tmp_path, monkeypatch: pytest.MonkeyPatch, authed: bool = True, **settings
+) -> httpx.AsyncClient:
     monkeypatch.setattr(
         uploads_module.profile_module,
         "profile_dataframe",
         lambda df, name, sample=5: DatasetProfile(name=name, n_rows=len(df), columns=[]),
     )
-    app = create_app(settings=Settings(_env_file=None, borges_home=tmp_path, **settings))
-    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
+    config = Settings(_env_file=None, borges_home=tmp_path, **settings)
+    headers = bearer(make_key(config, "uploads:write")) if authed else {}
+    return httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=create_app(settings=config)),
+        base_url="http://t",
+        headers=headers,
+    )
 
 
 @pytest.fixture
@@ -63,11 +71,12 @@ async def test_contree_backend_refuses_uploads_without_live(tmp_path, monkeypatc
     assert "NEBIUS_API_KEY" in response.json()["detail"]
 
 
-async def test_upload_token_rule(tmp_path, monkeypatch) -> None:
+async def test_legacy_live_token_still_authorises_uploads(tmp_path, monkeypatch) -> None:
     def make() -> httpx.AsyncClient:
         return build_client(
             tmp_path,
             monkeypatch,
+            authed=False,
             borges_backend="contree",
             nebius_api_key="k",
             borges_live_token="secret",
@@ -76,6 +85,15 @@ async def test_upload_token_rule(tmp_path, monkeypatch) -> None:
     assert (await post_upload(make())).status_code == 403
     assert (await post_upload(make(), {"X-Borges-Live-Token": "wrong"})).status_code == 403
     assert (await post_upload(make(), {"X-Borges-Live-Token": "secret"})).status_code == 200
+
+
+async def test_anonymous_cannot_upload(tmp_path, monkeypatch) -> None:
+    client = build_client(
+        tmp_path, monkeypatch, authed=False, borges_backend="contree", nebius_api_key="k"
+    )
+    response = await post_upload(client)
+    assert response.status_code == 403
+    assert "uploads:write" in response.json()["detail"]
 
 
 async def test_upload_returns_id_and_profile(client: httpx.AsyncClient) -> None:
@@ -111,18 +129,19 @@ async def test_upload_over_quota_is_413(tmp_path, monkeypatch: pytest.MonkeyPatc
         "profile_dataframe",
         lambda df, name, sample=5: DatasetProfile(name=name, n_rows=len(df), columns=[]),
     )
-    app = create_app(
-        settings=Settings(
-            _env_file=None,
-            borges_home=tmp_path,
-            borges_upload_quota_mb=0,
-            borges_backend="contree",
-            nebius_api_key="k",
-        )
+    config = Settings(
+        _env_file=None,
+        borges_home=tmp_path,
+        borges_upload_quota_mb=0,
+        borges_backend="contree",
+        nebius_api_key="k",
     )
+    app = create_app(settings=config)
     csv = pd.DataFrame({"a": range(60), "b": range(60)}).to_csv(index=False)
     transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://t") as http:
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://t", headers=bearer(make_key(config, "uploads:write"))
+    ) as http:
         response = await http.post(
             "/api/uploads", files={"file": ("d.csv", csv.encode(), "text/csv")}
         )

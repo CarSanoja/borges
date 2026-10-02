@@ -7,7 +7,7 @@ import typer
 from borges.config import get_settings
 from borges.runs.store import RunStore
 from borges.telemetry.audit_crosscheck import verify_run_chain
-from borges.telemetry.audit_verify import verify_chain
+from borges.telemetry.audit_global_verify import verify_global
 from borges.telemetry.run_telemetry import global_audit_path, run_audit_path
 
 audit_app = typer.Typer(
@@ -29,14 +29,15 @@ def verify(
         typer.echo(f"unknown run '{target}'", err=True)
         raise typer.Exit(2)
     if target == "global":
-        report = verify_chain(path)
+        report = verify_global(path, settings.borges_audit_anchor_key)
     else:
         report = verify_run_chain(path, global_audit_path(settings), target)
     if not report.exists:
         typer.echo(f"no audit log at {path}")
         raise typer.Exit(2)
     if report.ok:
-        typer.echo(f"OK {report.records} records head={report.head_hash} {path}")
+        anchored = f" anchored={report.anchored}" if report.anchored is not None else ""
+        typer.echo(f"OK {report.records} records head={report.head_hash}{anchored} {path}")
         return
     typer.echo(
         f"BROKEN at seq {report.broken_seq} (line {report.broken_line}): {report.reason}; "

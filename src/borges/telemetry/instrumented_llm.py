@@ -1,25 +1,30 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
 from borges.fleet.principal import agent_principal
 from borges.llm.client import BudgetExceeded, LLMClient, LLMResponse, Role, UsageTotals
 from borges.telemetry import hooks
-from borges.telemetry.caller import current_caller
+from borges.telemetry.caller import calling_as, current_caller
 from borges.telemetry.hashing import sha256_json, sha256_text
 
 GENAI_SYSTEM = "nebius"
 SCRIPTED_MODEL = "scripted"
 
 
+if TYPE_CHECKING:
+    from borges.identity.run_identity import RunIdentity
+
+
 class InstrumentedLLM:
     """Wraps an LLMClient so every model call yields a GenAI span and an audit record."""
 
-    def __init__(self, inner: LLMClient) -> None:
+    def __init__(self, inner: LLMClient, identity: RunIdentity | None = None) -> None:
         self._inner = inner
+        self._identity = identity
 
     @property
     def totals(self) -> UsageTotals:
@@ -34,6 +39,29 @@ class InstrumentedLLM:
         return spec.id if spec is not None else SCRIPTED_MODEL
 
     async def complete(
+        self,
+        role: Role,
+        messages: list[dict[str, str]],
+        *,
+        key: str,
+        schema: type[BaseModel] | None = None,
+        max_tokens: int = 2048,
+        temperature: float = 0.2,
+    ) -> LLMResponse:
+        agent_id = role.value
+        token = self._identity.token_for(agent_id) if self._identity else None
+        principal = current_caller().principal or agent_principal(agent_id)
+        with calling_as(principal=principal, agent=agent_id, token=token):
+            return await self._complete(
+                role,
+                messages,
+                key=key,
+                schema=schema,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+
+    async def _complete(
         self,
         role: Role,
         messages: list[dict[str, str]],
@@ -131,5 +159,5 @@ class InstrumentedLLM:
             return response
 
 
-def instrument_llm(llm: LLMClient) -> LLMClient:
-    return llm if isinstance(llm, InstrumentedLLM) else InstrumentedLLM(llm)
+def instrument_llm(llm: LLMClient, identity: RunIdentity | None = None) -> LLMClient:
+    return llm if isinstance(llm, InstrumentedLLM) else InstrumentedLLM(llm, identity)

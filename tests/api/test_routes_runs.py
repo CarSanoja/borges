@@ -10,6 +10,7 @@ from borges.api.app import create_app
 from borges.config import Settings
 from borges.runs.events import Event
 from borges.runs.models import RunSnapshot, RunSummary
+from tests.identity.keys import bearer, make_key
 
 
 def summary(run_id: str, status: str = "running", llm: str = "nebius") -> RunSummary:
@@ -95,6 +96,10 @@ class Env:
         return httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url="http://t")
 
 
+def uploader(env: Env) -> dict[str, str]:
+    return bearer(make_key(env.app.state.settings, "runs:create:live:upload"))
+
+
 @pytest.fixture
 def env(tmp_path) -> Env:
     return Env(tmp_path, key=None)
@@ -143,7 +148,7 @@ async def test_upload_run_requires_question_and_rule(tmp_path) -> None:
     env = Env(tmp_path, key="k", borges_allow_untrusted_local=True)
     body = {"upload_id": "x" * 32, "llm": "nebius"}
     async with env.client() as client:
-        response = await client.post("/api/runs", json=body)
+        response = await client.post("/api/runs", json=body, headers=uploader(env))
     assert response.status_code == 400
     assert "decision_rule" in response.json()["detail"]
 
@@ -158,7 +163,7 @@ async def test_upload_run_passes_bytes(tmp_path) -> None:
         "decision_rule": {"metric": "effect"},
     }
     async with env.client() as client:
-        response = await client.post("/api/runs", json=body)
+        response = await client.post("/api/runs", json=body, headers=uploader(env))
     assert response.status_code == 202
     _, data, name = env.orchestrator.calls[0]
     assert (data, name) == (b"PQ", "d.csv")
@@ -173,7 +178,8 @@ async def test_unknown_upload_is_400(tmp_path) -> None:
         "decision_rule": {"metric": "m"},
     }
     async with env.client() as client:
-        assert (await client.post("/api/runs", json=body)).status_code == 400
+        response = await client.post("/api/runs", json=body, headers=uploader(env))
+        assert response.status_code == 400
 
 
 async def test_list_and_get_run(env: Env) -> None:

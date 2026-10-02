@@ -152,3 +152,35 @@ async def test_without_telemetry_the_wrapper_is_transparent() -> None:
 
 def test_audit_payload_is_json() -> None:
     assert json.dumps({"ok": True})
+
+
+class CaptureCaller:
+    def __init__(self) -> None:
+        self.totals = UsageTotals()
+        self.seen = None
+
+    async def complete(self, role, messages, *, key, schema=None, max_tokens=2048, temperature=0.2):
+        from borges.telemetry.caller import current_caller
+
+        self.seen = current_caller()
+        usage = Usage(model="scripted", tokens_in=1, tokens_out=1, cost_usd=0.0)
+        return LLMResponse(role=role, text="x", usage=usage, latency_s=0.0)
+
+
+async def test_each_call_runs_as_its_agent_with_its_run_token() -> None:
+    from borges.identity.run_identity import RunIdentity
+
+    inner = CaptureCaller()
+    identity = RunIdentity("r1", 99.0, {"planner": "tok-planner", "judge": "tok-judge"})
+    llm = InstrumentedLLM(inner, identity)
+    await llm.complete(Role.JUDGE, [], key="k")
+    assert inner.seen.principal == "agent://borges/judge"
+    assert inner.seen.agent == "judge" and inner.seen.token == "tok-judge"
+    await llm.complete(Role.PLANNER, [], key="k")
+    assert inner.seen.token == "tok-planner"
+
+
+async def test_without_identity_no_token_is_attached() -> None:
+    inner = CaptureCaller()
+    await InstrumentedLLM(inner).complete(Role.CODER, [], key="k")
+    assert inner.seen.token is None and inner.seen.principal == "agent://borges/coder"

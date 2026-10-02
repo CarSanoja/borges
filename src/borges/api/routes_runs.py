@@ -16,10 +16,13 @@ from borges.api.deps import (
     get_uploads,
 )
 from borges.api.recorded_detail import recorded_origin, recorded_snapshot
-from borges.api.run_policy import LIVE_TOKEN_HEADER, enforce_run_policy
+from borges.api.run_policy import enforce_run_policy
 from borges.api.sse import sse_response
 from borges.api.uploads import UploadStore
 from borges.config import Settings
+from borges.identity.deps import get_principal, require_scope
+from borges.identity.principal import Principal
+from borges.identity.run_scopes import scope_for_run
 from borges.runs.detail import build_universe_detail
 from borges.runs.export_script import build_script
 from borges.runs.models import (
@@ -66,10 +69,11 @@ async def create_run(
     orchestrator: Orchestrator,
     settings: Annotated[Settings, Depends(get_settings)],
     uploads: Annotated[UploadStore, Depends(get_uploads)],
-    live_token: Annotated[str | None, Header(alias=LIVE_TOKEN_HEADER)] = None,
+    principal: Annotated[Principal, Depends(get_principal)],
 ) -> RunCreated:
     if request.case_id is None and request.upload_id is None:
         raise HTTPException(status_code=400, detail="Provide a case_id or an upload_id.")
+    require_scope(principal, scope_for_run(request, settings))
     request = audited_policy(
         settings,
         "run",
@@ -77,7 +81,7 @@ async def create_run(
         request,
         settings,
         orchestrator,
-        live_token,
+        principal=principal.id,
         case_id=request.case_id,
         llm=request.llm,
         upload=request.upload_id is not None,

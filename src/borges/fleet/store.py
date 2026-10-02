@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import fcntl
-import json
-import time
 from pathlib import Path
 from typing import Any
 
 from borges.fleet.models import Approval
 from borges.fleet.versions import Transition, VersionRecord, parse_version
+from borges.identity.chain import ChainBroken, ChainedJsonl, ChainStatus
 
 PUBLISHED = "version.published"
 STATE_CHANGED = "state.changed"
@@ -22,28 +20,37 @@ class TransitionError(ValueError):
     pass
 
 
+class RegistryTampered(ChainBroken):
+    def __init__(self, path: Path, line: int, reason: str) -> None:
+        super().__init__(path, line, reason)
+        self.args = (
+            f"The agent registry at {path} failed hash-chain verification at line {line}: "
+            f"{reason}. Refusing to use it; restore it from backup or delete it so it is "
+            "re-imported from the tracked seed (`borges agents verify` re-checks it).",
+        )
+
+
 class RegistryStore:
     """Append-only JSONL of published agent versions and their approval transitions."""
 
     def __init__(self, path: Path) -> None:
         self.path = Path(path)
+        self._chain = ChainedJsonl(self.path)
 
     def events(self) -> list[dict[str, Any]]:
-        if not self.path.is_file():
-            return []
-        lines = self.path.read_text(encoding="utf-8").splitlines()
-        return [json.loads(line) for line in lines if line.strip()]
+        try:
+            return self._chain.read()
+        except ChainBroken as broken:
+            raise RegistryTampered(broken.path, broken.line, broken.reason) from broken
+
+    def verify(self) -> ChainStatus:
+        return self._chain.verify()
 
     def _append(self, event: dict[str, Any]) -> dict[str, Any]:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a+", encoding="utf-8") as handle:
-            fcntl.flock(handle, fcntl.LOCK_EX)
-            handle.seek(0)
-            seq = sum(1 for line in handle if line.strip()) + 1
-            record = {"seq": seq, "ts": time.time(), **event}
-            handle.write(json.dumps(record, sort_keys=True) + "\n")
-            handle.flush()
-        return record
+        try:
+            return self._chain.append(event)
+        except ChainBroken as broken:
+            raise RegistryTampered(broken.path, broken.line, broken.reason) from broken
 
     def records(self) -> list[VersionRecord]:
         folded: dict[tuple[str, str], VersionRecord] = {}

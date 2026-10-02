@@ -19,6 +19,7 @@ from borges.runs.emitter import RunEmitter
 from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
+from borges.runs.orchestrator_identity import mint_identity
 from borges.runs.orchestrator_meta import agents_provenance, announced_models, outcome_meta
 from borges.runs.orchestrator_trace import (
     TelemetryFactory,
@@ -228,7 +229,10 @@ class RunOrchestrator:
             llm_options: dict[str, Path | None] = {"fixtures_dir": resolved.fixtures_dir}
             if self.record_dir is not None:
                 llm_options["record_dir"] = self.record_dir
-            llm = instrument_llm(self.llm_factory(self.settings, request.llm, **llm_options))
+            identity = mint_identity(self.settings, run_id)
+            llm = instrument_llm(
+                self.llm_factory(self.settings, request.llm, **llm_options), identity
+            )
             backend = instrument_backend(self.backend_factory(self.settings, request.backend))
             pipeline = Pipeline(self.settings, llm, backend, emitter, resolved)
             pipeline.agents = agents

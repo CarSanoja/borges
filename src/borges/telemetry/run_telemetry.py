@@ -12,7 +12,8 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import Span, Status, StatusCode
 
 from borges.config import Settings
-from borges.telemetry.audit_log import AuditLog
+from borges.telemetry.audit_anchor import anchor_config
+from borges.telemetry.audit_log import AuditLog, checkpoint
 from borges.telemetry.audit_record import Decision
 from borges.telemetry.caller import current_caller
 from borges.telemetry.exporters import Sink, build_sinks
@@ -25,6 +26,19 @@ FLUSH_TIMEOUT_MS = 3000
 
 def global_audit_path(settings: Settings) -> Path:
     return Path(settings.borges_home) / GLOBAL_AUDIT_RELATIVE
+
+
+def global_audit_log(settings: Settings) -> AuditLog:
+    path = global_audit_path(settings)
+    return AuditLog(path, anchor_config(settings, path))
+
+
+def anchor_global_audit(settings: Settings) -> None:
+    path = global_audit_path(settings)
+    try:
+        checkpoint(path, anchor_config(settings, path))
+    except Exception:
+        return
 
 
 def run_audit_path(settings: Settings, run_id: str) -> Path:
@@ -45,7 +59,9 @@ class RunTelemetry:
         sinks: list[Sink],
         run_audit: AuditLog,
         global_audit: AuditLog | None,
+        settings: Settings | None = None,
     ) -> None:
+        self.settings = settings
         self.run_id = run_id
         self.provider = provider
         self.sinks = sinks
@@ -71,7 +87,8 @@ class RunTelemetry:
             provider,
             chosen,
             AuditLog(run_dir / AUDIT_FILE),
-            AuditLog(global_audit_path(settings)),
+            global_audit_log(settings),
+            settings,
         )
 
     @contextmanager
@@ -124,6 +141,8 @@ class RunTelemetry:
             self.provider.shutdown()
         except Exception:
             pass
+        if self.settings is not None and self.global_audit is not None:
+            anchor_global_audit(self.settings)
         failures = {sink.name: sink.exporter.failures for sink in self.sinks}
         return {
             "trace_id": self.trace_id,

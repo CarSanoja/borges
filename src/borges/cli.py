@@ -11,6 +11,7 @@ from borges.cli_render import summary_lines, universe_lines
 from borges.config import Settings, get_settings
 from borges.fleet.cli import agents_app
 from borges.fleet.enforcement import RegistryBlocked
+from borges.identity.cli import keys_app
 from borges.runs.detail import build_universe_detail
 from borges.runs.models import RunRequest, RunSnapshot
 from borges.runs.orchestrator import new_run_id
@@ -19,6 +20,7 @@ from borges.runs.reproduce import reproduction_lines
 app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
 app.add_typer(audit_app, name="audit")
 app.add_typer(agents_app, name="agents")
+app.add_typer(keys_app, name="keys")
 
 LlmOption = Annotated[str, typer.Option("--llm", help="scripted, nebius or local")]
 

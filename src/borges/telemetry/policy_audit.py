@@ -6,19 +6,23 @@ from typing import Any
 from fastapi import HTTPException
 
 from borges.config import Settings
-from borges.telemetry.audit_log import AuditLog
 from borges.telemetry.redaction import redact_text
-from borges.telemetry.run_telemetry import global_audit_path
+from borges.telemetry.run_telemetry import global_audit_log
 
 REASON_CHARS = 300
 
 
 def audit_global(settings: Settings, kind: str, **fields: Any) -> None:
-    AuditLog(global_audit_path(settings)).append(kind, **fields)
+    global_audit_log(settings).append(kind, **fields)
 
 
 def audited_policy[T](
-    settings: Settings, name: str, check: Callable[..., T], *args: Any, **data: Any
+    settings: Settings,
+    name: str,
+    check: Callable[..., T],
+    *args: Any,
+    principal: str | None = None,
+    **data: Any,
 ) -> T:
     try:
         result = check(*args)
@@ -27,9 +31,10 @@ def audited_policy[T](
             settings,
             f"policy.{name}",
             decision="deny",
+            principal=principal,
             reason=redact_text(exc.detail, REASON_CHARS),
             data={"status": exc.status_code, **data},
         )
         raise
-    audit_global(settings, f"policy.{name}", decision="allow", data=data)
+    audit_global(settings, f"policy.{name}", decision="allow", principal=principal, data=data)
     return result

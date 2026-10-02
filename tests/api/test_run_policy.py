@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from tests.api.test_routes_runs import Env
+from tests.identity.keys import bearer, make_key
 
 CASE = {"case_id": "a", "llm": "nebius"}
 UPLOAD = {
@@ -17,6 +18,10 @@ def stub_upload(env: Env) -> None:
     env.app.state.uploads.get = lambda upload_id: (b"PQ", "d.csv")
 
 
+def uploader(env: Env) -> dict[str, str]:
+    return bearer(make_key(env.app.state.settings, "runs:create:live:upload"))
+
+
 async def post(env: Env, body: dict, headers: dict | None = None):
     async with env.client() as client:
         return await client.post("/api/runs", json=body, headers=headers or {})
@@ -25,7 +30,7 @@ async def post(env: Env, body: dict, headers: dict | None = None):
 async def test_live_local_upload_is_rejected_by_default(tmp_path) -> None:
     env = Env(tmp_path, key="k")
     stub_upload(env)
-    response = await post(env, UPLOAD)
+    response = await post(env, UPLOAD, uploader(env))
     assert response.status_code == 400
     assert "isolated sandboxes" in response.json()["detail"]
     assert env.orchestrator.calls == []
@@ -52,13 +57,13 @@ async def test_live_curated_case_without_overrides_is_accepted(tmp_path) -> None
 async def test_flag_lets_live_local_upload_through(tmp_path) -> None:
     env = Env(tmp_path, key="k", borges_allow_untrusted_local=True)
     stub_upload(env)
-    assert (await post(env, UPLOAD)).status_code == 202
+    assert (await post(env, UPLOAD, uploader(env))).status_code == 202
 
 
 async def test_contree_server_accepts_live_upload(tmp_path) -> None:
     env = Env(tmp_path, key="k", borges_backend="contree")
     stub_upload(env)
-    assert (await post(env, UPLOAD)).status_code == 202
+    assert (await post(env, UPLOAD, uploader(env))).status_code == 202
 
 
 async def test_live_token_gates_uploads(tmp_path) -> None:
@@ -98,7 +103,7 @@ async def test_active_run_cap_applies_to_scripted_runs(tmp_path) -> None:
 async def test_upload_with_scripted_llm_is_400(tmp_path) -> None:
     env = Env(tmp_path, key=None)
     stub_upload(env)
-    response = await post(env, {**UPLOAD, "llm": "scripted"})
+    response = await post(env, {**UPLOAD, "llm": "scripted"}, uploader(env))
     assert response.status_code == 400
     assert "need live mode" in response.json()["detail"]
 

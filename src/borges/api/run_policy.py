@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hmac
 from typing import Any
 
 from fastapi import HTTPException
@@ -15,16 +14,12 @@ from borges.config import Settings
 from borges.fleet.enforcement import RegistryBlocked, enforce_registry
 from borges.runs.models import RunRequest
 
-LIVE_TOKEN_HEADER = "X-Borges-Live-Token"
-
 
 def _reject(status: int, detail: str) -> HTTPException:
     return HTTPException(status_code=status, detail=detail)
 
 
-def _check_live(
-    request: RunRequest, settings: Settings, orchestrator: Any, live_token: str | None
-) -> None:
+def _check_live(request: RunRequest, settings: Settings, orchestrator: Any) -> None:
     if not settings.nebius_api_key:
         raise _reject(
             400,
@@ -38,8 +33,8 @@ def _check_live(
             raise _reject(
                 400, "Live runs on a curated case use its own question and decision rule."
             )
-    else:
-        _check_upload_trust(settings, live_token)
+    elif untrusted_local_blocked(settings):
+        raise _reject(400, UNTRUSTED_LOCAL_MESSAGE)
     if orchestrator.live_count() >= settings.borges_max_live_runs:
         raise _reject(
             429,
@@ -54,28 +49,15 @@ def _check_registry(settings: Settings, llm: str) -> None:
         raise _reject(409, str(blocked)) from blocked
 
 
-def _check_upload_trust(settings: Settings, live_token: str | None) -> None:
-    if untrusted_local_blocked(settings):
-        raise _reject(400, UNTRUSTED_LOCAL_MESSAGE)
-    expected = settings.borges_live_token
-    if expected and not hmac.compare_digest(
-        (live_token or "").encode("utf-8"), expected.encode("utf-8")
-    ):
-        raise _reject(403, "Uploaded datasets need a valid live token.")
-
-
-def enforce_upload_policy(settings: Settings, live_token: str | None) -> None:
+def enforce_upload_policy(settings: Settings) -> None:
     if untrusted_local_blocked(settings):
         raise _reject(403, UNTRUSTED_LOCAL_MESSAGE)
     reason = uploads_unavailable_reason(settings)
     if reason is not None:
         raise _reject(403, reason)
-    _check_upload_trust(settings, live_token)
 
 
-def enforce_run_policy(
-    request: RunRequest, settings: Settings, orchestrator: Any, live_token: str | None
-) -> RunRequest:
+def enforce_run_policy(request: RunRequest, settings: Settings, orchestrator: Any) -> RunRequest:
     if request.backend is not None and request.backend != settings.borges_backend:
         raise _reject(
             400,
@@ -100,6 +82,6 @@ def enforce_run_policy(
     if request.upload_id is not None and llm != "nebius":
         raise _reject(400, "Uploaded datasets need live mode (llm=nebius with NEBIUS_API_KEY).")
     if llm == "nebius":
-        _check_live(request, settings, orchestrator, live_token)
+        _check_live(request, settings, orchestrator)
         _check_registry(settings, llm)
     return request

@@ -13,3 +13,12 @@ def capabilities_of(settings: Settings, principal: str) -> frozenset[str]:
 
 def allows(settings: Settings, principal: str, capability: str) -> bool:
     return capability in capabilities_of(settings, principal)
+
+
+def capability_map(settings: Settings) -> dict[str, tuple[str, frozenset[str]]]:
+    fleet = build_fleet(settings)
+    return {
+        item.agent_id: (item.principal, frozenset(item.capabilities))
+        for item in fleet.agents
+        if item.lifecycle != "retired"
+    }
