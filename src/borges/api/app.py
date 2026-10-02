@@ -3,15 +3,13 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 from borges.api import routes_cases, routes_health, routes_runs, routes_uploads
+from borges.api.spa import mount_frontend
 from borges.api.startup import reconcile
 from borges.api.uploads import UploadStore
 from borges.config import Settings, get_settings
@@ -35,24 +33,6 @@ def _build_missing(app: FastAPI) -> None:
         state.bus = EventBus(state.store)
     if state.orchestrator is None:
         state.orchestrator = RunOrchestrator(settings, state.store, state.bus, state.registry)
-
-
-def _mount_frontend(app: FastAPI, dist: Path) -> None:
-    index = dist / "index.html"
-    if not index.exists():
-        return
-    assets = dist / "assets"
-    if assets.is_dir():
-        app.mount("/assets", StaticFiles(directory=assets), name="assets")
-
-    @app.get("/{path:path}", include_in_schema=False)
-    def spa(path: str) -> FileResponse:
-        if path == "api" or path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="Not found.")
-        candidate = (dist / path).resolve()
-        if path and candidate.is_file() and candidate.is_relative_to(dist.resolve()):
-            return FileResponse(candidate)
-        return FileResponse(index)
 
 
 def create_app(
@@ -91,5 +71,5 @@ def create_app(
     )
     for module in (routes_health, routes_cases, routes_runs, routes_uploads):
         app.include_router(module.router, prefix="/api")
-    _mount_frontend(app, resolved.borges_frontend_dist)
+    mount_frontend(app, resolved.borges_frontend_dist)
     return app

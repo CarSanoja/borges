@@ -30,7 +30,7 @@ async def test_spa_serves_assets_and_falls_back(tmp_path, dist) -> None:
         assert (await client.get("/assets/app.js")).text == "console.log(1)"
         assert (await client.get("/favicon.svg")).text == "<svg/>"
         assert "spa" in (await client.get("/")).text
-        assert "spa" in (await client.get("/runs/abc")).text
+        assert "spa" in (await client.get("/run/abc")).text
         assert (await client.get("/api/nothing")).status_code == 404
         assert (await client.get("/api/health")).json()["status"] == "ok"
 

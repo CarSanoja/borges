@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0b0a09"/>
+  <g fill="none" stroke="#d6a84f" stroke-width="3" stroke-linecap="round" opacity="0.9">
+    <path d="M880 315h-90M880 315l90-120M880 315l90 120M970 195l90-60M970 195l90 70M970 435l90-70M970 435l90 60"/>
+    <circle cx="880" cy="315" r="12" fill="#d6a84f"/>
+    <circle cx="970" cy="195" r="9"/>
+    <circle cx="970" cy="435" r="9"/>
+    <circle cx="1060" cy="135" r="8"/>
+    <circle cx="1060" cy="265" r="8"/>
+    <circle cx="1060" cy="365" r="8"/>
+    <circle cx="1060" cy="495" r="8" stroke="#e0573b" fill="#e0573b"/>
+    <path d="M970 435l90 60" stroke="#e0573b"/>
+  </g>
+  <text x="80" y="270" font-family="Georgia, 'Times New Roman', serif" font-size="120" fill="#f3ecdd">Borges</text>
+  <text x="80" y="350" font-family="Georgia, 'Times New Roman', serif" font-size="40" fill="#d6a84f">Every conclusion is one path through a garden.</text>
+  <text x="80" y="420" font-family="Helvetica, Arial, sans-serif" font-size="28" fill="#cfc6b3">How fragile is this decision, and which analytic</text>
+  <text x="80" y="460" font-family="Helvetica, Arial, sans-serif" font-size="28" fill="#cfc6b3">choice matters? Sandbox-forked analyses on Nemotron.</text>
+</svg>
