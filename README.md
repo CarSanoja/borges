@@ -342,6 +342,18 @@ and its rate-limit state; `GET /api/audit` (scope `audit:read`) reads the global
 Every route declares its required scope in one table and an undeclared route is denied.
 Details and limits: [SECURITY.md](SECURITY.md).
 
+### Gateway policy
+
+`policy/gateway.json` says, per agent, which models it may call (primary and fallback chain),
+its `max_tokens` ceiling, calls, cost and concurrency per run, and which data it may receive
+(`profile_only`, `sample_rows` with a bound, or `none`); it also says who may run what in the
+sandbox. Every model call and sandbox execution goes through `src/borges/gateway/`, which
+checks the agent token, the capability, the egress class and the budgets, retries transient
+errors with backoff, trips a per-model circuit breaker and falls back only along the listed
+chain. The policy's sha is in every run's provenance; `GET /api/policy` and the Fleet page show
+it. Changing the file changes the agents' definitions, so publish and approve a new registry
+version (`borges agents publish --approve`).
+
 ## How it is built
 
 | Layer | What |

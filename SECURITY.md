@@ -239,8 +239,8 @@ closed. `src/borges/identity/` holds the pieces.
   `AgentAuthorizer` (a port of the Quanta harness) verifies a token and intersects its
   capabilities with the fleet grant: forged, expired, wrong-run and unknown-agent tokens and
   unmapped actions are denied and audited, and a `PermissionGate` applies DENY over QUARANTINE
-  over ALLOW. The model and sandbox gateway that enforces this on every call is a later wave;
-  today the tokens are minted, carried and verifiable, not yet checked per call.
+  over ALLOW. The gateway (next section) checks the token on every model call and every sandbox
+  execution.
 - **Registry governance.** Approvals record the approving principal. With
   `BORGES_REGISTRY_FOUR_EYES=true` the publisher cannot approve their own version and the CLI
   needs a key with `registry:approve`. The registry store is hash-chained and verified on load:
@@ -254,6 +254,54 @@ closed. `src/borges/identity/` holds the pieces.
   attacker who rewrites the anchor file too, so copy the anchor file off the machine. A last
   line cut short by a crash is moved to `global.jsonl.torn` and an `audit.torn_line` record
   says so.
+
+## Gateway (unified routing and policy)
+
+Every model call and every sandbox execution of a run passes one choke point,
+`src/borges/gateway/`, driven by the tracked file `policy/gateway.json` (validated by pydantic;
+an unreadable or invalid file stops the run, it is never replaced by defaults). The file's sha
+is recorded in run provenance and in the registry definition of every policy-bearing agent and
+component, so changing a rule changes `definition_sha` and needs a published, approved version.
+`GET /api/policy` returns the effective policy and its sha; the Fleet page shows each agent's
+models, budgets and egress class.
+
+For a model call the gateway applies, in order, and every denial is an audit record
+(`gateway.deny`, `decision=deny`, with the reason, principal and policy sha) and a clear run
+error:
+
+1. **Agent token**: forged, expired, wrong-run and wrong-agent tokens are refused.
+2. **Capability**: `llm.invoke:<model>` must be held by the agent, fallbacks included.
+3. **Model and ceiling**: the configured model must be in the agent's list; `max_tokens` may not
+   exceed the agent's ceiling.
+4. **Egress class** (`none`, `profile_only`, `sample_rows`): sample rows above the class are
+   stripped from the messages, and kept rows are redacted for e-mail addresses and numbers of
+   nine or more digits. Raw rows pasted in some other shape (a JSON array of records or a
+   delimited table whose columns are the dataset's) above the class are denied. The detector
+   knows the dataset's column names from the run; it is a safeguard against accidents in prompt
+   building, not a data-loss-prevention product, and it does not see rows an agent re-encodes.
+5. **Armor-in hook**: a placeholder interface for the armor wave (no-op today).
+6. **Budgets**: calls and cost per agent and per run are reserved before the call and settled
+   after it; concurrency per agent and per run is capped by queueing, not rejection.
+7. **Routing**: transient errors (5xx, 408, 429, timeouts, connection failures) are retried with
+   exponential backoff and jitter; a per-model circuit breaker opens after repeated failures and
+   lets one probe through after its cooldown; the call falls back to the next model **only if
+   the policy lists one** for that agent. The provider client itself no longer retries.
+8. **Armor-out hook**, then an audit record and span attributes with the decision.
+
+Sandbox executions are authorised as the `harness` (the only executor), may only run
+`python steps/<id>.py` with files under `steps/`, with a timeout under the policy ceiling, and
+only for code that passed the code guard in this run (the guard records the code it approved;
+the gateway refuses a step file that contains anything else). The policy states that sandboxes
+have no network egress; that is enforced by the sandbox backends (ConTree, resource-limited
+local process) and the code guard, and the gateway pins it as a declared, validated field rather
+than a check of its own.
+
+Nothing reaches a provider or a backend any other way: the wrappers refuse to forward provider
+methods, a test fails if a provider or backend is constructed outside the factories or the SDK is
+imported outside `llm/`, and a run-time test asserts that every call of a full scripted run was
+made inside the gateway. Limits: model and sandbox calls inside one process share its memory, so
+this is a policy and audit layer for honest code paths, not a barrier against code that already
+runs in the server process.
 
 ## Server rules
 
