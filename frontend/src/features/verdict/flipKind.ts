@@ -29,7 +29,12 @@ export function describeFlip(rule: DecisionRule, flip: Flip): FlipKind {
   const before = flip.baseline_result;
   const after = flip.flipped_result;
   const estimates = `${short(before.estimate)} to ${short(after.estimate)}`;
-  if (onPositiveSide(rule, before.estimate) !== onPositiveSide(rule, after.estimate)) {
+  const kind =
+    flip.kind ??
+    (onPositiveSide(rule, before.estimate) !== onPositiveSide(rule, after.estimate)
+      ? "direction"
+      : "significance");
+  if (kind === "direction") {
     return {
       kind: "direction",
       title: "Direction flip",
@@ -39,7 +44,7 @@ export function describeFlip(rule: DecisionRule, flip: Flip): FlipKind {
   return {
     kind: "significance",
     title: "Significance flip",
-    text: `The estimate stays on the same side of the threshold ${rule.threshold} (${estimates}) but p crosses alpha ${rule.alpha}: ${exactP(before.p_value)} to ${exactP(after.p_value)}. The evidence weakens; the effect does not reverse.`,
+    text: `The estimate stays on the same side of the threshold ${rule.threshold} (${estimates}); only p crosses ${rule.alpha}: ${exactP(before.p_value)} to ${exactP(after.p_value)}.`,
   };
 }
 

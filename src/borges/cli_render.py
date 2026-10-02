@@ -4,6 +4,11 @@ from borges.analysis.models import AnalysisResult, CodingSummary
 from borges.garden.models import Flip, SearchSummary
 from borges.runs.models import RunSnapshot, UniverseDetail
 
+KIND_NOTES = {
+    "significance": " (significance only: the estimate stays on the same side, p crosses 0.05)",
+    "direction": " (direction: the estimate crosses the threshold)",
+}
+
 
 def result_line(result: AnalysisResult) -> str:
     return (
@@ -13,7 +18,10 @@ def result_line(result: AnalysisResult) -> str:
 
 
 def flip_lines(flip: Flip) -> list[str]:
-    lines = [f"Smallest flip found: {flip.baseline_verdict} -> {flip.flipped_verdict}"]
+    lines = [
+        f"Smallest flip found{KIND_NOTES.get(flip.kind or '', '')}: "
+        f"{flip.baseline_verdict} -> {flip.flipped_verdict}"
+    ]
     for change in flip.changes:
         lines.append(f"  - {change.step_title}: {change.from_option} -> {change.to_label}")
         lines.append(f"      why: {change.rationale}")

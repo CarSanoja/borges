@@ -21,6 +21,7 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
 
   return (
     <div className="vc-face vc-face--front" aria-hidden={hidden} inert={hidden}>
+      {snapshot.report && <Robustness report={snapshot.report} range={effectRange(snapshot)} />}
       <span className="eyebrow">The original verdict</span>
       <h2 className="vc-verdict vc-verdict--gold">{verdict}</h2>
       {result && <ResultStats result={result} tone="gold" />}
@@ -28,7 +29,6 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
       {flip && !hidden && <p className="vc-hint">Borges found a fork that reverses this.</p>}
       {clean && <p className="vc-clean">No defensible flip found</p>}
       {!flip && <SearchNote search={snapshot.report?.search} flipFound={false} explored={explored} />}
-      {snapshot.report && <Robustness report={snapshot.report} range={effectRange(snapshot)} />}
     </div>
   );
 }

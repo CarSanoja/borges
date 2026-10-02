@@ -45,6 +45,7 @@ class Flip(BaseModel):
     flipped_verdict: str
     reproduced: bool | None = None
     reproduce_command: str | None = None
+    kind: Literal["direction", "significance"] | None = None
 
 
 class DecisionInfluence(BaseModel):

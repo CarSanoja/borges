@@ -71,3 +71,31 @@ def test_summary_says_smallest_flip_found_and_prints_the_budget() -> None:
     assert "Smallest flip found: none" in text and "Minimal flip" not in text
     assert "Search budget: 3 of 9 universes used" in text
     assert "Coding: 4 options written" in text
+
+
+def flip_with(kind: str | None):
+    from borges.garden.models import Flip
+
+    base = AnalysisResult(estimate=0.1, ci_low=0, ci_high=0.2, p_value=0.01, n=5)
+    return Flip(
+        universe_id="u",
+        changes=[],
+        baseline_result=base,
+        flipped_result=base,
+        baseline_verdict="SHIP",
+        flipped_verdict="DON'T SHIP",
+        kind=kind,
+    )
+
+
+def test_flip_lines_name_the_kind() -> None:
+    from borges.cli_render import flip_lines
+
+    assert (
+        "(significance only: the estimate stays on the same side, p crosses 0.05)"
+        in (flip_lines(flip_with("significance"))[0])
+    )
+    assert (
+        "(direction: the estimate crosses the threshold)" in flip_lines(flip_with("direction"))[0]
+    )
+    assert flip_lines(flip_with(None))[0] == "Smallest flip found: SHIP -> DON'T SHIP"

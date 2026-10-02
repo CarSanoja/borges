@@ -20,7 +20,7 @@ export function Robustness({ report, range }: Props) {
         <span className="vc-robust__fill" style={{ width: formatPercent(report.robustness) }} />
       </span>
       <p className="vc-robust__note">
-        {agree} of {report.n_universes} explored universes agree
+        {agree} of {report.n_universes} paths agree with the baseline
       </p>
       {range && (
         <p className="vc-robust__note vc-range">

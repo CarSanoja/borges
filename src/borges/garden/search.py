@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator
+from typing import Literal
+
+from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator, DecisionRule
 from borges.garden.executor import universe_id
 from borges.garden.models import Change, Flip, Garden, Universe
 
@@ -88,6 +90,20 @@ def combination_flip_choices(
     return [choices for _, choices in ranked[:limit]]
 
 
+def beyond_threshold(rule: DecisionRule, result: AnalysisResult) -> bool:
+    if rule.comparator is Comparator.GT:
+        return result.estimate > rule.threshold
+    return result.estimate < rule.threshold
+
+
+def flip_kind(
+    rule: DecisionRule, baseline: AnalysisResult, flipped: AnalysisResult
+) -> Literal["direction", "significance"]:
+    if beyond_threshold(rule, baseline) != beyond_threshold(rule, flipped):
+        return "direction"
+    return "significance"
+
+
 def minimal_flip(plan: AnalysisPlan, garden: Garden) -> Flip | None:
     baseline = garden.baseline
     if baseline is None or baseline.result is None or baseline.verdict is None:
@@ -118,4 +134,5 @@ def minimal_flip(plan: AnalysisPlan, garden: Garden) -> Flip | None:
         flipped_result=best.result,
         baseline_verdict=baseline.verdict,
         flipped_verdict=best.verdict,
+        kind=flip_kind(plan.decision_rule, baseline.result, best.result),
     )

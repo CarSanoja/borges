@@ -111,6 +111,7 @@ export interface Flip {
   flipped_verdict: string;
   reproduced: boolean | null;
   reproduce_command: string | null;
+  kind?: "direction" | "significance" | null;
 }
 
 export interface DecisionInfluence {

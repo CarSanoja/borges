@@ -22,7 +22,7 @@ describe("VerdictCard", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={snapshot} />);
     expect(screen.getByText(snapshot.report!.original_verdict)).toBeInTheDocument();
-    expect(screen.getByText(/explored universes agree/)).toBeInTheDocument();
+    expect(screen.getByText(/paths agree with the baseline/)).toBeInTheDocument();
   });
 
   it("reveals the flip with changes and the reproduced badge", () => {
@@ -99,7 +99,7 @@ describe("VerdictCard", () => {
     expect(kind?.getAttribute("data-kind")).toBe("significance");
     expect(kind?.textContent).toMatch(/1\.34 to 1\.20/);
     expect(kind?.textContent).toMatch(/0\.00056 to 0\.055/);
-    expect(kind?.textContent).toMatch(/does not reverse/);
+    expect(kind?.textContent).toMatch(/only p crosses 0.05/);
   });
 
   it("shows the effect range across explored universes next to robustness", () => {
@@ -142,7 +142,7 @@ describe("VerdictCard search summary", () => {
     };
     render(<VerdictCard snapshot={clean} />);
     expect(screen.getByText(/No flip found: 7 explored of a 40-universe budget/)).toBeInTheDocument();
-    expect(screen.getByText("7 of 7 explored universes agree")).toBeInTheDocument();
+    expect(screen.getByText("7 of 7 paths agree with the baseline")).toBeInTheDocument();
     expect(screen.queryByText(/within 40/)).toBeNull();
     expect(screen.queryByText(/found in 7 universes/)).toBeNull();
   });
@@ -159,5 +159,25 @@ describe("VerdictCard search summary", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search: undefined } }} />);
     expect(screen.queryByText(/Smallest flip found:/)).toBeNull();
+  });
+
+  it("uses the recorded kind when present and computes it when missing", () => {
+    const snapshot = foldEvents("t", events);
+    const rule = { ...snapshot.decision_rule!, threshold: 0, comparator: "lt" as const };
+    const base = { ...snapshot.flip!, baseline_result: { ...snapshot.flip!.baseline_result, estimate: -0.5 } };
+    const crossing = { ...base, flipped_result: { ...base.flipped_result, estimate: 0.2 } };
+    const { unmount } = render(
+      <VerdictCard snapshot={{ ...snapshot, flip: { ...crossing, kind: "significance" }, decision_rule: rule }} />,
+    );
+    expect(document.querySelector(".vc-kind")?.getAttribute("data-kind")).toBe("significance");
+    unmount();
+    render(<VerdictCard snapshot={{ ...snapshot, flip: { ...crossing, kind: undefined }, decision_rule: rule }} />);
+    expect(document.querySelector(".vc-kind")?.getAttribute("data-kind")).toBe("direction");
+  });
+
+  it("puts the robustness share first on the front face", () => {
+    render(<VerdictCard snapshot={foldEvents("t", events)} />);
+    const front = document.querySelector(".vc-face--front")!;
+    expect(front.firstElementChild?.classList.contains("vc-robust")).toBe(true);
   });
 });
