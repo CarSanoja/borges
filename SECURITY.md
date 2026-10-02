@@ -93,8 +93,13 @@ partial (next section).
 - **Windows-only events.** `os.spawn` and `os.startfile` are audit events on Windows only; they
   were removed from the blocked list because no test can attempt them on this machine. On
   Windows the policy is untested.
-- **`resource.prlimit`.** It exists on Linux only; its test is skipped on macOS and was not run
-  in this round, so the denial is claimed for Linux but not shown here.
+- **`resource.prlimit`.** It exists on Linux only, so its pytest test is skipped on macOS. It
+  was checked by hand in the `borges:latest` image on 2 Oct 2026: a step calling
+  `resource.prlimit(os.getppid(), ...)` failed with `runtime policy denied resource.prlimit`.
+  In the same image, reading `/proc/1/environ` and the parent's `environ`, `os.kill` on the
+  parent, `gc.get_objects`, the closure tamper and a direct `_posixsubprocess.fork_exec` were
+  all denied and no file was created. That check is manual; CI runs on Linux but does not
+  build the image.
 - **Anything we did not think of.** The list above is what we found and tested. A new CPython
   release can also add an unaudited primitive.
 
