@@ -5,6 +5,7 @@ from borges.fleet.fleet import build_fleet
 from borges.fleet.locations import open_store
 from borges.fleet.models import AgentUse, RunAgents
 from borges.fleet.models_in_use import Provider
+from borges.gateway.policy_load import policy_for
 
 
 def run_provenance(settings: Settings, provider: Provider) -> RunAgents:
@@ -25,6 +26,11 @@ def run_provenance(settings: Settings, provider: Provider) -> RunAgents:
                 prompt_sha=descriptor.prompt_sha,
                 principal=descriptor.principal,
                 lifecycle=descriptor.lifecycle,
+                policy_sha=descriptor.policy_sha,
             )
         )
-    return RunAgents(registry_sha=registered.registry_sha, agents=uses)
+    return RunAgents(
+        registry_sha=registered.registry_sha,
+        agents=uses,
+        policy_sha=policy_for(settings).sha,
+    )

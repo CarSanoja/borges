@@ -117,9 +117,10 @@ class AgentAuthorizer:
         action: ToolAction,
         *,
         gate: PermissionGate | None = None,
+        principal: str | None = None,
     ) -> PermissionVerdict:
         try:
-            claims = self._issuer.verify(token, run_id=run_id)
+            claims = self._issuer.verify(token, run_id=run_id, principal=principal)
         except AgentTokenInvalid as invalid:
             self._emit_token_denial(invalid, run_id, action)
             raise

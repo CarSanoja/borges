@@ -55,3 +55,49 @@ def test_descriptor_is_stable_and_sourced(settings: Settings) -> None:
     assert first.field_sources["prompt_sha"] is FieldSource.PROMPT_TEXT
     assert first.field_sources["definition_sha"] is FieldSource.COMPUTED
     assert first.output_schema_sha is not None
+
+
+def test_policy_sha_is_part_of_the_definition(settings: Settings) -> None:
+    from borges.fleet.descriptor import DEFINITION_FIELDS
+    from borges.gateway.policy_view import agent_policy_sha
+
+    judge = describe(settings, "judge")
+    assert "policy_sha" in DEFINITION_FIELDS
+    assert judge.policy_sha == agent_policy_sha(settings, "judge")
+    assert judge.field_sources["policy_sha"] is FieldSource.POLICY_FILE
+    assert describe(settings, "code_guard").policy_sha is None
+
+
+def test_sandbox_components_carry_the_sandbox_policy(settings: Settings) -> None:
+    from borges.gateway.policy_view import agent_policy_sha
+
+    harness = describe(settings, "harness")
+    assert harness.policy_sha == agent_policy_sha(settings, "harness", sandbox=True)
+
+
+def test_fallback_models_become_capabilities(settings: Settings) -> None:
+    narrator = describe(settings, "narrator")
+    assert "llm.invoke:nvidia/nemotron-3-super-120b-a12b" in narrator.capabilities
+    coder = describe(settings, "coder")
+    assert [c for c in coder.capabilities if c.startswith("llm.invoke:")] == [
+        f"llm.invoke:{coder.model_id}"
+    ]
+
+
+def test_a_policy_change_changes_the_definition_sha(
+    settings: Settings, tmp_path, monkeypatch
+) -> None:
+    import json
+
+    from borges.config import REPO_ROOT
+
+    before = describe(settings, "judge").definition_sha
+    data = json.loads((REPO_ROOT / "policy" / "gateway.json").read_text())
+    data["agents"]["judge"]["max_tokens"] = 1000
+    path = tmp_path / "policy.json"
+    path.write_text(json.dumps(data))
+    changed = settings.model_copy(update={"borges_gateway_policy": path})
+    assert describe(changed, "judge").definition_sha != before
+    assert (
+        describe(changed, "planner").definition_sha == describe(settings, "planner").definition_sha
+    )

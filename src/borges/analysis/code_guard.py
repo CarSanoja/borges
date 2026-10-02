@@ -20,6 +20,7 @@ from borges.analysis.code_guard_rules import (
     IO_PREFIXES,
 )
 from borges.analysis.models import StepKind
+from borges.gateway.code_evidence import record_guarded
 from borges.telemetry import hooks
 from borges.telemetry.caller import current_caller
 from borges.telemetry.hashing import sha256_text
@@ -176,6 +177,8 @@ def _check_code(code: str, kind: StepKind) -> list[str]:
 
 def check_code(code: str, kind: StepKind) -> list[str]:
     violations = _check_code(code, kind)
+    if not violations:
+        record_guarded(code)
     if violations:
         caller = current_caller()
         hooks.audit(

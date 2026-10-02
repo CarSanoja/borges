@@ -14,6 +14,7 @@ from borges.api import (
     routes_cases,
     routes_health,
     routes_identity,
+    routes_policy,
     routes_runs,
     routes_trace,
     routes_uploads,
@@ -22,6 +23,7 @@ from borges.api.spa import mount_frontend
 from borges.api.startup import reconcile
 from borges.api.uploads import UploadStore
 from borges.config import Settings, get_settings
+from borges.gateway.errors import PolicyError
 from borges.identity.authentication import Authenticator
 from borges.identity.chain import ChainBroken
 from borges.identity.middleware import IdentityMiddleware
@@ -94,6 +96,10 @@ def create_app(
         allow_headers=["*"],
     )
 
+    @app.exception_handler(PolicyError)
+    async def _policy_error(_: Request, error: PolicyError) -> JSONResponse:
+        return JSONResponse(status_code=503, content={"detail": str(error)})
+
     @app.exception_handler(ChainBroken)
     async def _chain_broken(_: Request, error: ChainBroken) -> JSONResponse:
         return JSONResponse(status_code=503, content={"detail": str(error)})
@@ -102,6 +108,7 @@ def create_app(
         routes_health,
         routes_identity,
         routes_cases,
+        routes_policy,
         routes_agents,
         routes_runs,
         routes_trace,

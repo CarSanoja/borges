@@ -7,6 +7,8 @@ from borges.fleet.models import AgentDescriptor, FieldSource
 from borges.fleet.models_in_use import DETERMINISTIC_MODEL, Provider, model_for
 from borges.fleet.principal import agent_principal
 from borges.fleet.prompt_texts import system_prompt
+from borges.gateway.policy_load import policy_for
+from borges.gateway.policy_view import agent_policy_section
 from borges.telemetry.hashing import sha256_json
 
 DEFINITION_FIELDS = (
@@ -19,6 +21,7 @@ DEFINITION_FIELDS = (
     "prompt_sha",
     "output_schema_sha",
     "code_sha",
+    "policy_sha",
     "capabilities",
     "principal",
     "lifecycle",
@@ -27,11 +30,22 @@ DEFINITION_FIELDS = (
 )
 
 
-def _capabilities(declaration: AgentDeclaration, model_id: str) -> list[str]:
+def _capabilities(declaration: AgentDeclaration, model_id: str, fallbacks: list[str]) -> list[str]:
     declared = list(declaration.capabilities)
     if declaration.llm_role is not None:
-        declared.append(f"llm.invoke:{model_id}")
+        declared.extend(f"llm.invoke:{model}" for model in (model_id, *fallbacks))
     return sorted(set(declared))
+
+
+def _policy_parts(
+    declaration: AgentDeclaration, settings: Settings
+) -> tuple[str | None, list[str]]:
+    loaded = policy_for(settings)
+    agent = loaded.agent(declaration.agent_id) if declaration.llm_role else None
+    sandbox = "sandbox.exec" in declaration.capabilities
+    section = agent_policy_section(loaded, declaration.agent_id, sandbox)
+    sha = sha256_json(section) if section is not None else None
+    return sha, list(agent.fallbacks) if agent else []
 
 
 def _sources(declaration: AgentDeclaration) -> dict[str, FieldSource]:
@@ -52,6 +66,7 @@ def _sources(declaration: AgentDeclaration) -> dict[str, FieldSource]:
     sources["capabilities"] = (
         FieldSource.PROVIDER_CONFIG if declaration.llm_role else FieldSource.DECLARED
     )
+    sources["policy_sha"] = FieldSource.POLICY_FILE
     sources["definition_sha"] = FieldSource.COMPUTED
     return sources
 
@@ -68,6 +83,7 @@ def build_descriptor(
         if declaration.llm_role
         else DETERMINISTIC_MODEL
     )
+    policy_sha, fallbacks = _policy_parts(declaration, settings)
     fields: dict[str, object] = {
         "agent_id": declaration.agent_id,
         "display_name": declaration.display_name,
@@ -78,7 +94,8 @@ def build_descriptor(
         "prompt_sha": prompt_sha(system_prompt(declaration.agent_id)),
         "output_schema_sha": schema_sha(declaration.output_schema),
         "code_sha": code_sha(declaration.code_files),
-        "capabilities": _capabilities(declaration, model_id),
+        "policy_sha": policy_sha,
+        "capabilities": _capabilities(declaration, model_id, fallbacks),
         "principal": agent_principal(declaration.agent_id),
         "lifecycle": declaration.lifecycle,
         "owner": declaration.owner,

@@ -21,6 +21,7 @@ ROUTE_TABLE: Final[dict[tuple[str, str], RouteRequirement]] = {
     ("GET", "/api/cases"): s.CASES_READ,
     ("GET", "/api/cases/{case_id}"): s.CASES_READ,
     ("GET", "/api/cases/{case_id}/recording"): s.RECORDINGS_READ,
+    ("GET", "/api/policy"): s.CASES_READ,
     ("GET", "/api/agents"): s.CASES_READ,
     ("GET", "/api/agents/{agent_id}"): s.CASES_READ,
     ("GET", "/api/agents/{agent_id}/versions/{version}"): s.CASES_READ,

@@ -6,7 +6,7 @@ from borges.fleet.versions import format_version, parse_version
 
 FIRST_VERSION = "1.0.0"
 MAJOR_FIELDS = ("capabilities", "principal", "kind", "role")
-MINOR_FIELDS = ("prompt_sha", "output_schema_sha", "code_sha", "model_id")
+MINOR_FIELDS = ("prompt_sha", "output_schema_sha", "code_sha", "policy_sha", "model_id")
 CHANGELOG_FIELDS = (
     *MAJOR_FIELDS,
     *MINOR_FIELDS,

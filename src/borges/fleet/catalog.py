@@ -11,6 +11,9 @@ from borges.fleet.locations import open_store
 from borges.fleet.models import AgentDescriptor
 from borges.fleet.store import RegistryStore
 from borges.fleet.versions import VersionRecord
+from borges.gateway.policy_load import policy_for
+from borges.gateway.policy_models import SandboxPolicy
+from borges.gateway.policy_view import AgentPolicyView, agent_view
 
 
 class AgentCard(BaseModel):
@@ -28,6 +31,9 @@ class AgentCard(BaseModel):
     prompt_sha: str | None
     output_schema_sha: str | None
     code_sha: str | None
+    policy_sha: str | None
+    policy: AgentPolicyView | None
+    sandbox_policy: SandboxPolicy | None
     definition_sha: str
     version: str | None
     approval: str
@@ -67,12 +73,16 @@ class AgentDetail(BaseModel):
     versions: list[VersionRecord]
 
 
-def card_for(descriptor: AgentDescriptor, store: RegistryStore) -> AgentCard:
+def card_for(descriptor: AgentDescriptor, store: RegistryStore, settings: Settings) -> AgentCard:
     versions = store.versions_of(descriptor.agent_id)
     current = store.by_definition(descriptor.agent_id, descriptor.definition_sha)
     fields = descriptor.model_dump(exclude={"field_sources"})
+    loaded = policy_for(settings)
+    agent = loaded.agent(descriptor.agent_id)
     return AgentCard(
         **fields,
+        policy=agent_view(agent) if agent else None,
+        sandbox_policy=loaded.policy.sandbox if "sandbox.exec" in descriptor.capabilities else None,
         version=current.version if current else None,
         approval=current.state if current else "unpublished",
         latest_version=versions[-1].version if versions else None,
@@ -112,7 +122,7 @@ def build_catalog(
 ) -> Catalog:
     fleet = build_fleet(settings)
     store = open_store(settings)
-    every = [card_for(item, store) for item in fleet.agents]
+    every = [card_for(item, store, settings) for item in fleet.agents]
     summary = CatalogSummary(
         total=len(every),
         by_lifecycle=_count([c.lifecycle for c in every]),
@@ -134,6 +144,6 @@ def build_detail(settings: Settings, agent_id: str) -> AgentDetail | None:
     store = open_store(settings)
     return AgentDetail(
         descriptor=descriptor,
-        card=card_for(descriptor, store),
+        card=card_for(descriptor, store, settings),
         versions=store.versions_of(agent_id),
     )

@@ -184,3 +184,64 @@ async def test_without_identity_no_token_is_attached() -> None:
     inner = CaptureCaller()
     await InstrumentedLLM(inner).complete(Role.CODER, [], key="k")
     assert inner.seen.token is None and inner.seen.principal == "agent://borges/coder"
+
+
+def gateway_for(tmp_path: Path):
+    from borges.gateway.core import build_gateway
+    from borges.identity.run_identity import mint_run_identity
+
+    settings = Settings(_env_file=None, borges_home=tmp_path / "home")
+    identity = mint_run_identity(settings, "r1")
+    return build_gateway(settings, "r1", identity), identity
+
+
+async def test_gateway_decision_is_on_the_audit_record_and_span(tmp_path: Path) -> None:
+    telemetry = open_telemetry(tmp_path)
+    gateway, identity = gateway_for(tmp_path)
+    llm = InstrumentedLLM(FakeNebius(), identity, gateway)
+    with hooks.bound(telemetry), telemetry.span("run", "run r1"):
+        await call(llm)
+    telemetry.close()
+    record = next(
+        r for r in read_records(tmp_path / "run" / "audit.jsonl") if r.kind == "model.call"
+    )
+    assert record.decision == "allow" and record.data["policy_sha"] == gateway.policy_sha
+    assert record.data["attempts"] == 1 and record.data["fallback"] is False
+    span = next(
+        s for s in read_spans(tmp_path / "run" / "spans.jsonl") if s["kind"] == "model_call"
+    )
+    assert span["attributes"]["borges.gateway.policy_sha"] == gateway.policy_sha
+
+
+async def test_gateway_denial_is_audited_on_both_records_and_raised(tmp_path: Path) -> None:
+    from borges.gateway.errors import GatewayDenied
+
+    telemetry = open_telemetry(tmp_path)
+    gateway, identity = gateway_for(tmp_path)
+    llm = InstrumentedLLM(FakeNebius(), identity, gateway)
+    with (
+        hooks.bound(telemetry),
+        telemetry.span("run", "run r1"),
+        pytest.raises(GatewayDenied, match="ceiling"),
+    ):
+        await call(llm, max_tokens=10**6)
+    telemetry.close()
+    kinds = [(r.kind, r.decision) for r in read_records(tmp_path / "run" / "audit.jsonl")]
+    assert ("gateway.deny", "deny") in kinds and ("model.call", "deny") in kinds
+
+
+async def test_gateway_is_applied_even_without_telemetry(tmp_path: Path) -> None:
+    from borges.gateway.errors import GatewayDenied
+
+    gateway, identity = gateway_for(tmp_path)
+    llm = InstrumentedLLM(FakeNebius(), identity, gateway)
+    with pytest.raises(GatewayDenied):
+        await call(llm, max_tokens=10**6)
+    assert (await call(llm)).text == SECRET_REPLY
+
+
+def test_provider_methods_are_not_reachable_through_the_wrapper() -> None:
+    llm = InstrumentedLLM(FakeNebius())
+    assert llm.extra == "reachable"
+    with pytest.raises(AttributeError, match="gateway"):
+        llm.__getattr__("complete")

@@ -32,6 +32,8 @@ NANO = ModelSpec(
 SUPER = ModelSpec(id="nvidia/nemotron-3-super-120b-a12b", input_usd_per_m=0.3, output_usd_per_m=0.9)
 ULTRA = ModelSpec(id="nvidia/Nemotron-3-Ultra-550b-a55b", input_usd_per_m=1.0, output_usd_per_m=3.0)
 
+KNOWN_MODELS: dict[str, ModelSpec] = {m.id: m for m in (NANO, SUPER, ULTRA)}
+
 DEFAULT_ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.PLANNER: SUPER,
     Role.CODER: NANO,

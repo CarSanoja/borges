@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 class FieldSource(StrEnum):
     DECLARED = "declared"
     PROVIDER_CONFIG = "provider_config"
+    POLICY_FILE = "policy_file"
     PROMPT_TEXT = "prompt_text"
     OUTPUT_SCHEMA = "output_schema"
     SOURCE_CODE = "source_code"
@@ -31,6 +32,7 @@ class AgentDescriptor(BaseModel):
     prompt_sha: str | None
     output_schema_sha: str | None
     code_sha: str | None
+    policy_sha: str | None = None
     capabilities: list[str]
     principal: str
     lifecycle: Lifecycle
@@ -49,8 +51,10 @@ class AgentUse(BaseModel):
     prompt_sha: str | None = None
     principal: str
     lifecycle: Lifecycle
+    policy_sha: str | None = None
 
 
 class RunAgents(BaseModel):
     registry_sha: str
     agents: list[AgentUse]
+    policy_sha: str | None = None

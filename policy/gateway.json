@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "description": "Gateway policy: what each agent may call, spend, receive and execute. Every model call and sandbox execution of a run is checked against this file; its sha is recorded in run provenance.",
+  "retry": {"max_attempts": 3, "base_delay_s": 0.5, "max_delay_s": 8.0, "jitter": 0.25},
+  "breaker": {"failure_threshold": 4, "cooldown_s": 30.0},
+  "run": {
+    "max_calls": 1200,
+    "max_cost_usd": 1.0,
+    "max_concurrent_calls": 12,
+    "max_sandbox_execs": 50000,
+    "max_concurrent_sandbox_execs": 16
+  },
+  "sandbox": {
+    "executor": "harness",
+    "require_code_guard": true,
+    "allowed_commands": ["python"],
+    "step_dir": "steps",
+    "data_file": "data.parquet",
+    "max_timeout_s": 600,
+    "network": "none"
+  },
+  "agents": {
+    "planner": {
+      "models": ["nvidia/nemotron-3-super-120b-a12b", "nvidia/Nemotron-3-Ultra-550b-a55b"],
+      "max_tokens": 8192,
+      "max_calls_per_run": 20,
+      "max_cost_usd_per_run": 0.2,
+      "max_concurrent_calls": 2,
+      "egress": "sample_rows",
+      "max_sample_rows": 5
+    },
+    "coder": {
+      "models": ["nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"],
+      "max_tokens": 4096,
+      "max_calls_per_run": 400,
+      "max_cost_usd_per_run": 0.25,
+      "max_concurrent_calls": 8,
+      "egress": "sample_rows",
+      "max_sample_rows": 5
+    },
+    "repairer": {
+      "models": ["nvidia/nemotron-3-super-120b-a12b"],
+      "max_tokens": 4096,
+      "max_calls_per_run": 400,
+      "max_cost_usd_per_run": 0.25,
+      "max_concurrent_calls": 8,
+      "egress": "sample_rows",
+      "max_sample_rows": 5
+    },
+    "adversary": {
+      "models": ["nvidia/nemotron-3-super-120b-a12b"],
+      "max_tokens": 4096,
+      "max_calls_per_run": 40,
+      "max_cost_usd_per_run": 0.2,
+      "max_concurrent_calls": 2,
+      "egress": "sample_rows",
+      "max_sample_rows": 5
+    },
+    "judge": {
+      "models": ["nvidia/nemotron-3-super-120b-a12b"],
+      "max_tokens": 2048,
+      "max_calls_per_run": 400,
+      "max_cost_usd_per_run": 0.25,
+      "max_concurrent_calls": 8,
+      "egress": "profile_only"
+    },
+    "reviewer": {
+      "models": ["nvidia/nemotron-3-super-120b-a12b"],
+      "max_tokens": 4096,
+      "max_calls_per_run": 200,
+      "max_cost_usd_per_run": 0.25,
+      "max_concurrent_calls": 8,
+      "egress": "profile_only"
+    },
+    "narrator": {
+      "models": ["nvidia/Nemotron-3-Ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
+      "max_tokens": 4096,
+      "max_calls_per_run": 10,
+      "max_cost_usd_per_run": 0.1,
+      "max_concurrent_calls": 1,
+      "egress": "profile_only"
+    }
+  }
+}

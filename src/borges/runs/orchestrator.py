@@ -12,6 +12,8 @@ from typing import Literal, cast
 from borges.cases.registry import CaseRegistry
 from borges.config import Settings
 from borges.fleet.models import RunAgents
+from borges.gateway.core import build_gateway
+from borges.gateway.dataset_columns import columns_of
 from borges.llm.factory import make_llm
 from borges.runs.bus import EventBus
 from borges.runs.detail import build_universe_detail
@@ -230,13 +232,23 @@ class RunOrchestrator:
             if self.record_dir is not None:
                 llm_options["record_dir"] = self.record_dir
             identity = mint_identity(self.settings, run_id)
-            llm = instrument_llm(
-                self.llm_factory(self.settings, request.llm, **llm_options), identity
+            gateway = build_gateway(
+                self.settings,
+                run_id,
+                identity,
+                self._modes(request)[0],
+                dataset_columns=columns_of(resolved.data),
             )
-            backend = instrument_backend(self.backend_factory(self.settings, request.backend))
+            llm = instrument_llm(
+                self.llm_factory(self.settings, request.llm, **llm_options), identity, gateway
+            )
+            backend = instrument_backend(
+                self.backend_factory(self.settings, request.backend), gateway
+            )
             pipeline = Pipeline(self.settings, llm, backend, emitter, resolved)
             pipeline.agents = agents
-            await pipeline.run()
+            with gateway.bind():
+                await pipeline.run()
         except asyncio.CancelledError:
             await self._finish(emitter, started_at, "run cancelled", pipeline)
             raise

@@ -95,3 +95,37 @@ async def test_wrapper_is_transparent_without_telemetry() -> None:
     await backend.close()
     assert inner.closed
     assert instrument_backend(backend) is backend
+
+
+async def test_backend_wrapper_blocks_direct_access_to_provider_methods() -> None:
+    backend = InstrumentedBackend(FakeBackend())
+    with pytest.raises(AttributeError, match="gateway"):
+        backend.__getattr__("close")
+    assert backend.closed is False
+
+
+async def test_backend_calls_are_gated_and_carry_the_policy(tmp_path: Path) -> None:
+    from borges.gateway.core import build_gateway
+    from borges.gateway.errors import GatewayDenied
+    from borges.identity.run_identity import mint_run_identity
+
+    settings = Settings(_env_file=None, borges_home=tmp_path / "home")
+    gateway = build_gateway(settings, "r1", mint_run_identity(settings, "r1"))
+    backend = InstrumentedBackend(FakeBackend(), gateway)
+    telemetry = open_telemetry(tmp_path)
+    with hooks.bound(telemetry), telemetry.span("run", "run r1"):
+        root = await backend.root({"data.parquet": b"x"})
+        with pytest.raises(GatewayDenied):
+            await backend.run(root, ["bash", "-c", "id"], files={"steps/a.py": b"x"})
+        code = "def apply(df, ctx):\n    return df\n"
+        gateway.evidence.record(code)
+        result = await backend.run(
+            root, ["python", "steps/a.py"], files={"steps/a.py": code.encode()}
+        )
+    telemetry.close()
+    assert result.ok
+    records = read_records(tmp_path / "run" / "audit.jsonl")
+    execs = [r for r in records if r.kind == "sandbox.exec"]
+    assert [(r.decision, r.data["outcome"]) for r in execs] == [("deny", "denied"), ("allow", "ok")]
+    assert execs[1].principal == "agent://borges/harness"
+    assert execs[1].data["policy_sha"] == gateway.policy_sha

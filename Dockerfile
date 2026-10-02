@@ -20,6 +20,7 @@ RUN uv sync --frozen --no-dev --extra contree --no-install-project
 COPY src ./src
 RUN uv sync --frozen --no-dev --extra contree
 COPY cases ./cases
+COPY policy ./policy
 COPY --from=frontend /app/frontend/dist ./frontend/dist
 RUN useradd --create-home --uid 1000 borges \
     && mkdir -p /app/runs /app/.borges \

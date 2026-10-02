@@ -19,6 +19,7 @@ from borges.llm.client import (
     UsageTotals,
 )
 from borges.llm.json_output import parse_model
+from borges.llm.model_override import model_override
 from borges.llm.nebius_response import read_completion, with_reservation, write_fixture
 from borges.llm.nebius_transport import (
     TruncatedOutput,
@@ -56,7 +57,7 @@ class NebiusLLM:
         self.record_dir = record_dir
         self.totals = UsageTotals()
         self.client = client or openai.AsyncOpenAI(
-            base_url=base_url, api_key=api_key, timeout=120, max_retries=3
+            base_url=base_url, api_key=api_key, timeout=120, max_retries=0
         )
 
     async def complete(
@@ -69,7 +70,8 @@ class NebiusLLM:
         max_tokens: int = 2048,
         temperature: float = 0.2,
     ) -> LLMResponse:
-        started, spec = time.perf_counter(), self.role_models[role]
+        started = time.perf_counter()
+        spec = model_override() or self.role_models[role]
         sent = with_schema_instructions(messages, schema) if schema else list(messages)
         cache_id = cache_key(
             spec.id, sent, schema.__name__ if schema else None, max_tokens, temperature
