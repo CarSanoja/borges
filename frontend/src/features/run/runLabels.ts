@@ -40,7 +40,13 @@ export function currentStage(snapshot: RunSnapshot): StageName | null {
 export function statusLabel(snapshot: RunSnapshot): string {
   if (snapshot.status === "failed") return "Failed";
   if (snapshot.status === "completed") return "Complete";
+  if (snapshot.status === "cancelled") return "Cancelled";
+  if (snapshot.status === "queued") return "Queued";
   const stage = currentStage(snapshot);
   if (stage) return STAGE_LABELS[stage];
   return Object.keys(snapshot.stages).length > 0 ? "Finishing" : "Starting";
+}
+
+export function resumedLabel(snapshot: RunSnapshot): string | null {
+  return (snapshot.resumed ?? 0) > 0 ? "Resumed after restart" : null;
 }

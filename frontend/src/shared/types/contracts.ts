@@ -225,7 +225,7 @@ export type StageName =
   | "verifying"
   | "narrating";
 
-export type RunStatus = "running" | "completed" | "failed";
+export type RunStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
 export interface CheckpointNode {
   checkpoint_id: string;
@@ -263,6 +263,7 @@ export interface RunSnapshot {
   usage: UsageSnapshot;
   error: string | null;
   agents?: RunAgents | null;
+  resumed?: number;
   last_seq: number;
 }
 
@@ -331,6 +332,10 @@ export interface Health {
   live_unavailable_reason?: "no_key" | "budget_spent" | null;
   uploads_available?: boolean;
   uploads_unavailable_reason?: string | null;
+  queue_depth?: number;
+  active_workers?: number;
+  oldest_job_age_s?: number | null;
+  dead_letter_count?: number;
 }
 
 interface EventBase<T extends string, D> {
@@ -395,8 +400,10 @@ export type RunEvent =
   | EventBase<"flip.verified", { flip: Flip }>
   | EventBase<"usage", UsageSnapshot>
   | EventBase<"report.ready", { report: Report }>
-  | EventBase<"run.finished", { status: "completed" | "failed"; elapsed_s: number }>
-  | EventBase<"run.failed", { error: string }>;
+  | EventBase<"run.finished", { status: "completed" | "failed" | "cancelled"; elapsed_s: number }>
+  | EventBase<"run.failed", { error: string }>
+  | EventBase<"run.resumed", { reason: string; restored_universes: number; dropped_events: number }>
+  | EventBase<"run.cancelled", { reason: string }>;
 
 export type RunEventType = RunEvent["type"];
 

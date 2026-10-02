@@ -1,6 +1,6 @@
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { AppLink, tracePath } from "../../shared/router";
-import { describeRule, modeLabel, statusLabel } from "./runLabels";
+import { describeRule, modeLabel, resumedLabel, statusLabel } from "./runLabels";
 
 interface Props {
   snapshot: RunSnapshot;
@@ -11,6 +11,7 @@ interface Props {
 export function RunHeader({ snapshot, onHome, traceRunId = null }: Props) {
   const rule = snapshot.decision_rule;
   const mode = modeLabel(snapshot);
+  const resumed = resumedLabel(snapshot);
   return (
     <header className="run-header">
       <button type="button" className="run-home" onClick={onHome} aria-label="Back to cases">
@@ -27,6 +28,7 @@ export function RunHeader({ snapshot, onHome, traceRunId = null }: Props) {
             Trace
           </AppLink>
         )}
+        {resumed && <span className="chip chip--resumed">{resumed}</span>}
         {rule && <span className="chip chip--rule">{describeRule(rule)}</span>}
         <span className={`chip chip--status chip--${snapshot.status}`} role="status">
           <span className="chip__dot" aria-hidden="true" />

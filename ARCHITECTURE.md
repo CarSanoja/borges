@@ -196,6 +196,31 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
    significance), the effect range over the explored universes and the search-bias caveat.
 6. **Decision influence.** The decisions ranked by how much they move the answer.
 
+## 6b. Runtime: queue, leases, resume
+
+`src/borges/runtime/` runs every API run through a durable SQLite queue (WAL, under `BORGES_HOME`).
+
+- **Submit.** `POST /api/runs` registers the run as `queued` and inserts a job. The idempotency key is the
+  `Idempotency-Key` header (24 h, per principal) or, without it, principal plus request hash within
+  `BORGES_IDEMPOTENCY_WINDOW_S` (600 s). A duplicate returns the existing run with `Idempotent-Replay: true`.
+- **Claim.** A worker claims a job with a lease (`BORGES_JOB_LEASE_S`) and renews it by heartbeat. The
+  total, live and per-owner caps are checked at claim time; a job over a cap stays queued. An expired lease
+  is reclaimed; a lease whose owner process is dead on this host is expired at startup.
+- **Checkpoints.** Each finished universe and the plan and coded stages are written to the `checkpoints`
+  table. On resume, finished universes are restored instead of re-executed and the earlier stages are
+  replayed from the LLM cache, with events already persisted deduplicated. In-flight universes, orphan
+  checkpoint events and terminal events are dropped from the log (sequence gaps, ids stay unique) and a
+  `run.resumed` event is appended. The baseline sandbox state is rebuilt silently. Smoke-test state cannot
+  be serialized, so the pre-search stages depend on the cache and are not free without it.
+- **Retry.** Transient failures (5xx, 429, connection and timeout errors, sandbox unavailable) retry with
+  backoff `base * 2**(attempt-1)` capped at 300 s, up to `BORGES_JOB_MAX_ATTEMPTS`, then land in
+  `dead_letter` (`GET /api/runs/dead-letter`, admin; `borges runs retry <run_id>`).
+- **Cancel.** `POST /api/runs/{id}/cancel`: creator, an admin, or an anonymous caller from the same client
+  session. The run stops at the next checkpoint, emits `run.cancelled` and releases spend reservations.
+- **Schedules.** `borges schedule add --case X --every 24h`; the loop runs only with `BORGES_SCHEDULER=true`.
+  `GET /api/schedules` (admin). Minimum period 60 s; each slot is idempotent.
+- **Health.** `GET /api/health` adds `queue_depth`, `active_workers`, `oldest_job_age_s`, `dead_letter_count`.
+
 ## 7. Run modes
 
 - `llm=scripted`: deterministic hand-built responses from `cases/<id>/fixtures/`, labelled

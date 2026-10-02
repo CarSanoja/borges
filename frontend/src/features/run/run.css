@@ -103,6 +103,16 @@
   animation: none;
 }
 
+.chip--cancelled .chip__dot,
+.chip--queued .chip__dot {
+  background: var(--ink-muted, #8a8578);
+  animation: none;
+}
+
+.chip--resumed {
+  border-style: dashed;
+}
+
 @keyframes run-pulse {
   50% {
     opacity: 0.3;

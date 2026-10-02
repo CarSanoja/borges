@@ -388,6 +388,15 @@ judge-model second stage for ambiguous text. Details and limits are in `SECURITY
 Details: [ARCHITECTURE.md](ARCHITECTURE.md). Product definition and the end-to-end
 definition of done: [PRODUCT.md](PRODUCT.md).
 
+## Runtime
+
+Runs go through a durable queue and survive restarts. Environment: `BORGES_JOB_LEASE_S` (30),
+`BORGES_JOB_MAX_ATTEMPTS` (3), `BORGES_JOB_BACKOFF_S` (2), `BORGES_IDEMPOTENCY_WINDOW_S` (600),
+`BORGES_SCHEDULER` (false), `BORGES_SCHEDULER_POLL_S` (30). Send `Idempotency-Key` to make a submit
+safe to repeat. `POST /api/runs/{id}/cancel` stops a run. `borges runs dead-letter`, `borges runs retry
+<run_id>`, `borges runs work` and `borges schedule add|list|remove` are the operator commands. See
+ARCHITECTURE.md section 6b.
+
 ## Security model
 
 Generated code runs behind three layers: an AST code guard (a lint), a runtime audit-hook policy

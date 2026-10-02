@@ -35,6 +35,7 @@ export function initialSnapshot(runId: string): RunSnapshot {
     report: null,
     usage: EMPTY_USAGE,
     error: null,
+    resumed: 0,
     last_seq: 0,
   };
 }
@@ -113,6 +114,10 @@ function fold(snapshot: RunSnapshot, event: RunEvent): RunSnapshot {
       return { ...snapshot, status: event.data.status };
     case "run.failed":
       return { ...snapshot, status: "failed", error: event.data.error };
+    case "run.resumed":
+      return { ...snapshot, status: "running", resumed: (snapshot.resumed ?? 0) + 1 };
+    case "run.cancelled":
+      return { ...snapshot, status: "cancelled" };
     case "option.coded":
     case "option.smoke":
       return snapshot;

@@ -444,6 +444,18 @@ non-breaking spaces, zero-width characters and fullwidth forms first, accepts lo
 dashed IBANs and Unicode addresses, and covers texts of any length (text above two million
 characters is cut and marked `[redacted:unscanned]` rather than passed through).
 
+## Runtime (queue, resume, cancel)
+
+- Cancel is authorised for the creating principal, an admin, or an anonymous caller whose run-quota
+  identity (client session) matches the run. Anyone else gets 403.
+- Dead-letter and schedule listings are admin only. Scheduled runs go through the same run policy as
+  API runs and run as the principal that created the schedule.
+- Claim-time admission re-checks the active-run caps, so a restart or retry cannot exceed them.
+- Resume rewrites the per-run event log (drops in-flight and terminal events). The global audit chain is
+  append-only and is not rewritten; resumes, cancels, requeues and schedule changes are audited there.
+- Limits: leases only detect dead owners by pid on the same host; a multi-host deployment relies on
+  lease expiry. Scripted and cached model calls are not repeated on resume; an uncached live call may be.
+
 ## Server rules
 
 - **Uploads are refused on the local backend** (`POST /api/runs` with an `upload_id` returns

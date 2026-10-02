@@ -45,13 +45,13 @@ function reduce(snapshot: RunSnapshot, action: Action): RunSnapshot {
     case "reset":
       return initialSnapshot(action.runId);
     case "connection_lost":
-      if (snapshot.status !== "running") return snapshot;
+      if (snapshot.status !== "running" && snapshot.status !== "queued") return snapshot;
       return { ...snapshot, status: "failed", error: "Connection to the run was lost." };
     case "run_gone":
-      if (snapshot.status !== "running") return snapshot;
+      if (snapshot.status !== "running" && snapshot.status !== "queued") return snapshot;
       return { ...snapshot, status: "failed", error: RUN_GONE_MESSAGE };
     case "case_gone":
-      if (snapshot.status !== "running") return snapshot;
+      if (snapshot.status !== "running" && snapshot.status !== "queued") return snapshot;
       return { ...snapshot, status: "failed", error: CASE_GONE_MESSAGE };
     case "event": {
       const next = applyEvent(snapshot, action.event);

@@ -5,7 +5,7 @@ import type { RunEvent } from "../../shared/types/contracts";
 import { Telemetry } from "../telemetry/Telemetry";
 import { stageState } from "../telemetry/stageStates";
 import { foldEvents } from "./reducer";
-import { statusLabel } from "./runLabels";
+import { resumedLabel, statusLabel } from "./runLabels";
 
 const events = buildSampleRun("t");
 
@@ -63,5 +63,34 @@ describe("skipped stages", () => {
     const cut = indexOf("stage", "baseline", "started");
     const snapshot = foldEvents("t", events.slice(0, cut + 1));
     expect(stageState(snapshot, "narrating")).toBe("pending");
+  });
+});
+
+describe("queued, resumed and cancelled states", () => {
+  const base = (type: RunEvent["type"], data: unknown, seq: number): RunEvent =>
+    ({ seq, ts: seq, run_id: "t", type, data }) as RunEvent;
+
+  it("labels a cancelled run", () => {
+    const cancelled = foldEvents("t", [
+      base("run.cancelled", { reason: "stop" }, 1),
+      base("run.finished", { status: "cancelled", elapsed_s: 1 }, 2),
+    ]);
+    expect(cancelled.status).toBe("cancelled");
+    expect(statusLabel(cancelled)).toBe("Cancelled");
+  });
+
+  it("labels a queued snapshot", () => {
+    expect(statusLabel({ ...foldEvents("t", []), status: "queued" })).toBe("Queued");
+  });
+
+  it("counts resumes and keeps the run running", () => {
+    const resumed = foldEvents("t", [
+      base("run.resumed", { reason: "restart", restored_universes: 3, dropped_events: 1 }, 1),
+      base("run.resumed", { reason: "restart", restored_universes: 3, dropped_events: 0 }, 2),
+    ]);
+    expect(resumed.resumed).toBe(2);
+    expect(resumed.status).toBe("running");
+    expect(resumedLabel(resumed)).toBe("Resumed after restart");
+    expect(resumedLabel(foldEvents("t", []))).toBeNull();
   });
 });
