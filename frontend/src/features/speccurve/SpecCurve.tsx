@@ -26,6 +26,7 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const refs = reference ?? NO_REFERENCE;
   const threshold = (snapshot.decision_rule ?? snapshot.plan?.decision_rule)?.threshold ?? null;
+  const yLabel = (snapshot.decision_rule ?? snapshot.plan?.decision_rule)?.metric ?? "estimate";
   const points = useMemo(() => buildPoints(snapshot), [snapshot]);
   const rows = useMemo(() => buildRows(snapshot, points), [snapshot, points]);
   const layout = useMemo(
@@ -44,14 +45,14 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
           <li data-tone="agree">agrees</li>
           <li data-tone="flip">flips</li>
         </ul>
-        <span className="sc-count mono">{points.length} universes</span>
+        <span className="sc-count mono">{points.length} {points.length === 1 ? "universe" : "universes"}</span>
       </header>
       <div className="sc-body" ref={ref}>
         {points.length === 0 ? (
           <p className="sc-empty">Finished universes appear here, sorted by estimate.</p>
         ) : (
           <svg width={width} height={layout.height} role="group" aria-label="Estimates by universe">
-            <CurveAxes layout={layout} threshold={threshold} />
+            <CurveAxes layout={layout} threshold={threshold} yLabel={yLabel} />
             <DecisionMatrix layout={layout} rows={rows} />
             {refs.length > 0 && <ReferenceLane layout={layout} reference={refs} label={referenceLabel ?? "Reference"} />}
             {points.map((point, i) => (

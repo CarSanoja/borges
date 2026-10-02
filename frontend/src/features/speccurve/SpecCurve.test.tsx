@@ -54,4 +54,20 @@ describe("SpecCurve", () => {
     render(<SpecCurve snapshot={empty} selectedUniverseId={null} onSelectUniverse={() => undefined} />);
     expect(screen.getByText(/Finished universes appear here/)).toBeInTheDocument();
   });
+
+  it("labels both axes and pluralises the universe count", () => {
+    render(<SpecCurve snapshot={snapshot} selectedUniverseId={null} onSelectUniverse={() => undefined} />);
+    expect(screen.getByText("universes, sorted by estimate")).toBeInTheDocument();
+    expect(document.querySelector("text.sc-axis-label")?.textContent?.length).toBeGreaterThan(0);
+    const one = {
+      ...snapshot,
+      garden: {
+        ...snapshot.garden,
+        universes: Object.fromEntries(Object.entries(snapshot.garden.universes).slice(0, 1)),
+      },
+    };
+    render(<SpecCurve snapshot={one} selectedUniverseId={null} onSelectUniverse={() => undefined} />);
+    expect(screen.getByText("1 universe")).toBeInTheDocument();
+    expect(screen.queryByText("1 universes")).toBeNull();
+  });
 });
