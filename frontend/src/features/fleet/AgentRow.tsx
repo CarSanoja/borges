@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { AgentCard } from "../../shared/types/contracts";
 import { AgentVersions } from "./AgentVersions";
+import { AgentPolicyFacts } from "./AgentPolicyFacts";
 import { ApprovalBadge } from "./ApprovalBadge";
 import { shortSha } from "./fleetFormat";
 
@@ -38,6 +39,7 @@ export function AgentRow({ card }: { card: AgentCard }) {
           <dd>{card.department}</dd>
         </div>
       </dl>
+      <AgentPolicyFacts card={card} />
       <ul className="fleet-caps" aria-label="Capabilities">
         {card.capabilities.map((capability) => (
           <li key={capability} className="chip mono">{capability}</li>

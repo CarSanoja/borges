@@ -1,4 +1,14 @@
-import type { AgentCard, AgentCatalog, AgentVersion, AnalysisTemplate } from "../../shared/types/contracts";
+import type { AgentCard, AgentCatalog, AgentVersion, AnalysisTemplate, SandboxPolicy } from "../../shared/types/contracts";
+
+export const SANDBOX: SandboxPolicy = {
+  executor: "harness",
+  require_code_guard: true,
+  allowed_commands: ["python"],
+  step_dir: "steps",
+  data_file: "data.parquet",
+  max_timeout_s: 600,
+  network: "none",
+};
 
 export function sampleCard(partial: Partial<AgentCard> = {}): AgentCard {
   return {
@@ -16,6 +26,17 @@ export function sampleCard(partial: Partial<AgentCard> = {}): AgentCard {
     prompt_sha: "p".repeat(64),
     output_schema_sha: "s".repeat(64),
     code_sha: null,
+    policy_sha: "g".repeat(64),
+    policy: {
+      models: ["nvidia/nemotron-3-super-120b-a12b", "nvidia/Nemotron-3-Ultra-550b-a55b"],
+      max_tokens: 2048,
+      max_calls_per_run: 400,
+      max_cost_usd_per_run: 0.25,
+      max_concurrent_calls: 8,
+      egress: "profile_only",
+      max_sample_rows: 0,
+    },
+    sandbox_policy: null,
     definition_sha: "d".repeat(64),
     version: "1.1.0",
     approval: "approved",
@@ -80,7 +101,7 @@ export function sampleCatalog(partial: Partial<AgentCatalog> = {}): AgentCatalog
       enforce: true,
       blocked: [],
     },
-    agents: [sampleCard(), sampleCard({ agent_id: "harness", display_name: "Harness", kind: "component", approval: "proposed", prompt_sha: null, model_id: "deterministic" })],
+    agents: [sampleCard(), sampleCard({ agent_id: "harness", display_name: "Harness", kind: "component", approval: "proposed", prompt_sha: null, model_id: "deterministic", policy: null, sandbox_policy: SANDBOX })],
     templates: [TEMPLATE],
     ...partial,
   };

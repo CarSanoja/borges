@@ -149,3 +149,20 @@
 .fleet-empty {
   color: var(--paper-500);
 }
+
+.fleet-policy {
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-3);
+}
+
+.fleet-chain {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fleet-chain .chip {
+  margin-left: var(--space-2);
+}

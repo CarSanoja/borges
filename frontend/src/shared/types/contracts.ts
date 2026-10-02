@@ -452,11 +452,35 @@ export interface AgentUse {
   prompt_sha: string | null;
   principal: string;
   lifecycle: AgentLifecycle;
+  policy_sha?: string | null;
 }
 
 export interface RunAgents {
   registry_sha: string;
   agents: AgentUse[];
+  policy_sha?: string | null;
+}
+
+export type EgressClass = "none" | "profile_only" | "sample_rows";
+
+export interface AgentPolicy {
+  models: string[];
+  max_tokens: number;
+  max_calls_per_run: number;
+  max_cost_usd_per_run: number;
+  max_concurrent_calls: number;
+  egress: EgressClass;
+  max_sample_rows: number;
+}
+
+export interface SandboxPolicy {
+  executor: string;
+  require_code_guard: boolean;
+  allowed_commands: string[];
+  step_dir: string;
+  data_file: string;
+  max_timeout_s: number;
+  network: "none";
 }
 
 export interface AgentCard {
@@ -474,6 +498,9 @@ export interface AgentCard {
   prompt_sha: string | null;
   output_schema_sha: string | null;
   code_sha: string | null;
+  policy_sha: string | null;
+  policy: AgentPolicy | null;
+  sandbox_policy: SandboxPolicy | null;
   definition_sha: string;
   version: string | null;
   approval: AgentApproval;

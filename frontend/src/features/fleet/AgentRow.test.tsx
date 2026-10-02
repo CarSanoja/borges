@@ -9,7 +9,8 @@ describe("AgentRow", () => {
 
   it("shows model, version, approval, capabilities, principal and prompt sha", () => {
     render(<ul><AgentRow card={sampleCard()} /></ul>);
-    expect(screen.getByText("nvidia/nemotron-3-super-120b-a12b")).toBeInTheDocument();
+    expect(screen.getAllByText("nvidia/nemotron-3-super-120b-a12b")).toHaveLength(2);
+    expect(screen.getByLabelText("Gateway policy of judge")).toBeInTheDocument();
     expect(screen.getByText("v1.1.0")).toBeInTheDocument();
     expect(screen.getByText("approved")).toBeInTheDocument();
     expect(screen.getByText("agent://borges/judge")).toBeInTheDocument();
