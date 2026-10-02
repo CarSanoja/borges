@@ -11,6 +11,7 @@ interface Props {
   tone: Tone | null;
   role: LinkRole;
   universeId: string | null;
+  ariaLabel?: string;
   selected: boolean;
   interactive: boolean;
   onHover: (id: string, event: PointerEvent<SVGGElement>) => void;
@@ -31,7 +32,7 @@ function nodeRadius(isRoot: boolean, isUniverse: boolean, selected: boolean, rol
   return 4.5;
 }
 
-function GardenNodeBase({ node, tone, role, universeId, selected, interactive, onHover, onLeave, onSelect }: Props) {
+function GardenNodeBase({ node, tone, role, universeId, ariaLabel, selected, interactive, onHover, onLeave, onSelect }: Props) {
   const isUniverse = universeId !== null;
   const isRoot = node.depth === 0;
   const radius = nodeRadius(isRoot, isUniverse, selected, role);
@@ -63,7 +64,7 @@ function GardenNodeBase({ node, tone, role, universeId, selected, interactive, o
         data-verdict={tone ?? "none"}
         role={live ? "button" : undefined}
         tabIndex={live ? 0 : undefined}
-        aria-label={live ? `Universe ${universeId}` : undefined}
+        aria-label={live ? (ariaLabel ?? `Universe ${universeId}`) : undefined}
         aria-pressed={live ? selected : undefined}
         onPointerMove={interactive ? (e) => onHover(node.id, e) : undefined}
         onPointerLeave={interactive ? onLeave : undefined}

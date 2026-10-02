@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { buildSampleRun } from "../../fixtures/sampleRun";
@@ -77,6 +77,15 @@ describe("UniverseDrawer", () => {
     await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it("closes on Escape straight after opening, before any focus moves inside", () => {
+    const onClose = vi.fn();
+    const baselineId = snapshot.garden.baseline_id ?? "";
+    render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={baselineId} onClose={onClose} />);
+    expect(screen.getByRole("dialog")).toHaveFocus();
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("is a labelled modal dialog that takes focus, traps Tab and gives focus back", async () => {

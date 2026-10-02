@@ -9,9 +9,10 @@ interface Props {
   hidden: boolean;
   rule: DecisionRule | null;
   search?: SearchSummary | null;
+  explored: number;
 }
 
-export function BackFace({ flip, hidden, rule, search }: Props) {
+export function BackFace({ flip, hidden, rule, search, explored }: Props) {
   const kind = rule ? describeFlip(rule, flip) : null;
   const many = flip.changes.length > 1;
   const lead = many
@@ -46,7 +47,7 @@ export function BackFace({ flip, hidden, rule, search }: Props) {
           Not reproduced on a fresh re-execution: treat as unconfirmed
         </p>
       )}
-      <SearchNote search={search} flipFound />
+      <SearchNote search={search} flipFound explored={explored} />
       <p className="vc-caveat">
         Borges searches for flips, so this is the nearest crossing it found, not a typical analysis.
       </p>

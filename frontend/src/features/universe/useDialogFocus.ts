@@ -15,9 +15,10 @@ export function useDialogFocus(open: boolean, onClose: () => void) {
     if (!open) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const root = ref.current;
-    if (root) (focusables(root)[0] ?? root).focus();
+    root?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        event.stopPropagation();
         onCloseRef.current();
         return;
       }
@@ -31,7 +32,7 @@ export function useDialogFocus(open: boolean, onClose: () => void) {
         return;
       }
       const active = document.activeElement;
-      const outside = !ref.current.contains(active);
+      const outside = active === ref.current || !ref.current.contains(active);
       if (event.shiftKey && (active === first || outside)) {
         event.preventDefault();
         last.focus();
@@ -40,9 +41,9 @@ export function useDialogFocus(open: boolean, onClose: () => void) {
         first.focus();
       }
     };
-    document.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
     return () => {
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKey, true);
       if (previous && previous.isConnected) previous.focus();
     };
   }, [open]);

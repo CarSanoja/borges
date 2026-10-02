@@ -25,6 +25,7 @@
     height: auto;
   }
   .run-footer {
+    position: static;
     height: auto;
     min-height: var(--run-footer);
     padding-top: var(--space-2);

@@ -42,7 +42,7 @@ describe("VerdictCard", () => {
       report: snapshot.report ? { ...snapshot.report, minimal_flip: null, n_universes: 9 } : null,
     };
     render(<VerdictCard snapshot={clean} />);
-    expect(screen.getByText("No defensible flip found in 9 universes")).toBeInTheDocument();
+    expect(screen.getByText("No defensible flip found")).toBeInTheDocument();
     expect(screen.queryByText("One defensible change reverses it:")).not.toBeInTheDocument();
   });
 
@@ -129,21 +129,35 @@ describe("VerdictCard search summary", () => {
   it("states the bounded search on the flipped face and says when the budget ran out", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search } }} />);
-    expect(screen.getByText(/Smallest flip found within 24 universes, 2 levels\./)).toBeInTheDocument();
-    expect(screen.getByText(/search budget ran out \(24 of 24 universes used\)/)).toBeInTheDocument();
+    expect(screen.getByText(/Smallest flip found: \d+ explored of a 24-universe budget, 2 levels\./)).toBeInTheDocument();
+    expect(screen.getByText(/24-universe budget ran out/)).toBeInTheDocument();
+  });
+
+  it("states executed and budgeted universes once, never two conflicting counts", () => {
+    const snapshot = foldEvents("t", events);
+    const clean = {
+      ...snapshot,
+      flip: null,
+      report: { ...snapshot.report!, minimal_flip: null, n_universes: 7, n_flipped: 0, search: { ...search, universe_budget: 40, budget_exhausted: false } },
+    };
+    render(<VerdictCard snapshot={clean} />);
+    expect(screen.getByText(/No flip found: 7 explored of a 40-universe budget/)).toBeInTheDocument();
+    expect(screen.getByText("7 of 7 explored universes agree")).toBeInTheDocument();
+    expect(screen.queryByText(/within 40/)).toBeNull();
+    expect(screen.queryByText(/found in 7 universes/)).toBeNull();
   });
 
   it("omits the budget warning when the search finished within budget", () => {
     const snapshot = foldEvents("t", events);
     const done = { ...search, levels_explored: 1, budget_exhausted: false };
     render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search: done } }} />);
-    expect(screen.getByText(/within 24 universes, 1 level\./)).toBeInTheDocument();
+    expect(screen.getByText(/explored of a 24-universe budget, 1 level\./)).toBeInTheDocument();
     expect(screen.queryByText(/search budget ran out/)).toBeNull();
   });
 
   it("renders without a summary for old recordings", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search: undefined } }} />);
-    expect(screen.queryByText(/Smallest flip found within/)).toBeNull();
+    expect(screen.queryByText(/Smallest flip found:/)).toBeNull();
   });
 });

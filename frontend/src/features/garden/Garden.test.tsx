@@ -145,4 +145,14 @@ describe("Garden", () => {
     expect(roles).toContain("flip");
     expect(roles).toContain("selected");
   });
+
+  it("gives leaf nodes descriptive accessible labels with step, option, verdict and estimate", () => {
+    const snap = snapshot();
+    const u1 = { ...snap.garden.universes.u1!, changed: ["s1"], choices: { s1: "b" } };
+    const withChange = { ...snap, garden: { ...snap.garden, universes: { ...snap.garden.universes, u1 } } };
+    render(<Garden snapshot={withChange} selectedUniverseId={null} onSelectUniverse={() => {}} />);
+    const label = screen.getByRole("button", { name: /^Universe u1/ });
+    expect(label).toHaveAccessibleName("Universe u1, changes Outliers: Trim 1%, verdict DON'T SHIP, estimate 0.120, flips the verdict");
+    expect(screen.getByRole("button", { name: /^Baseline universe, default choices, verdict SHIP, estimate 0.120$/ })).toBeInTheDocument();
+  });
 });

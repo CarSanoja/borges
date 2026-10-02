@@ -26,12 +26,8 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
       {result && <ResultStats result={result} tone="gold" />}
       {rule && <p className="vc-rule">{ruleInWords(rule)}</p>}
       {flip && !hidden && <p className="vc-hint">Borges found a fork that reverses this.</p>}
-      {clean && (
-        <p className="vc-clean">
-          No defensible flip found in {explored} {explored === 1 ? "universe" : "universes"}
-        </p>
-      )}
-      {!flip && <SearchNote search={snapshot.report?.search} flipFound={false} />}
+      {clean && <p className="vc-clean">No defensible flip found</p>}
+      {!flip && <SearchNote search={snapshot.report?.search} flipFound={false} explored={explored} />}
       {snapshot.report && <Robustness report={snapshot.report} range={effectRange(snapshot)} />}
     </div>
   );

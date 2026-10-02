@@ -4,6 +4,7 @@ import { GardenLink } from "./GardenLink";
 import { GardenNode } from "./GardenNode";
 import type { LinkRole } from "./GardenLink";
 import { Rings } from "./Rings";
+import { universeAriaLabel } from "./labels";
 import { RootLabel } from "./RootLabel";
 import type { ElementSize } from "./useElementSize";
 import type { GardenModel } from "./useGardenModel";
@@ -47,6 +48,7 @@ export function GardenCanvas({ snapshot, model, size, selectedUniverseId, intera
               tone={model.leafTone.get(node.id) ?? null}
               role={roleOf.get(node.id) ?? "baseline"}
               universeId={universe?.id ?? null}
+              ariaLabel={universe ? universeAriaLabel(plan, universe) : undefined}
               selected={universe !== undefined && universe.id === selectedUniverseId}
               interactive={interactive}
               onHover={onHover}
