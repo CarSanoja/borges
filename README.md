@@ -8,6 +8,22 @@ on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step
 branch of a sandbox: a local subprocess backend by default (no VM isolation), or Nebius
 Token Factory Sandboxes (ConTree, VM-isolated) with `BORGES_BACKEND=contree`.
 
+## Status: what has and has not run
+
+Be clear about this before reading further.
+
+| | State today |
+|---|---|
+| Nemotron through Token Factory | **Code paths written and tested against fakes. Nothing has run live yet**: there has been no `NEBIUS_API_KEY` on the development machine. `make live-smoke` and `make record-live` are the first live steps |
+| ConTree sandboxes | Implemented against `contree-sdk` and contract-tested with a fake SDK. The live test is skipped without credentials. Never run against the real service |
+| What the demos replay | **Scripted fixtures, hand-built, not model output.** They carry the model label `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `LLM calls: 16 scripted`, `cost: $0.0000 (scripted replay, no model called)` |
+| What is real | The data, the option code, the sandbox execution and every statistic: each universe is really executed and re-executed by `borges reproduce` |
+| Hosted public demo | None yet |
+
+The recorded events (`cases/*/recorded/events.jsonl`) still list the configured role model
+ids in the `run.started` `models` field, even though no model was called; the `llm` field of
+the same event says `scripted`.
+
 ---
 
 ## The problem
@@ -44,9 +60,9 @@ conversion lift is positive with p < 0.05"*.
 5. **You can step into any universe** and see its exact code, row counts, checkpoint ids
    and result.
 
-## The two demo cases
+## The demo cases
 
-| | Checkout A/B test (synthetic) | Red cards (real data, 146,028 dyads) |
+| | Checkout A/B test (synthetic, effect planted) | Red cards (real data, 146,028 dyads) |
 |---|---|---|
 | Question | Does the new checkout increase conversion? | Do referees give dark-skinned players more red cards? |
 | Default analysis | **SHIP**: +0.53 pp, 95% CI [0.14, 0.92], p = 0.008 | **BIAS DETECTED**: OR 1.34, 95% CI [1.13, 1.58], p = 0.0006 |
@@ -55,13 +71,47 @@ conversion lift is positive with p < 0.05"*.
 | Reproduced from scratch | yes | yes |
 | Explored | 7 universes, 22 sandbox checkpoints | 30 universes, 58 sandbox checkpoints |
 
-In the checkout case the new checkout truly does nothing: employee and QA test orders,
-concentrated in the treatment arm, create the lift. Borges finds that this one decision
-moves the estimate more than any other. On the red-cards data no single or paired
-defensible change reverses the finding; it takes three together. The only single change
-that would flip it, keeping low-bias referees only, is rejected by the judge as an
-indefensible change of population. The 29 human teams' estimates are overlaid on the
-specification curve.
+**The checkout data is synthetic and the answer is planted.** `cases/checkout_ab/generate.py`
+sets a true effect of zero and adds internal test accounts (58% conversion, concentrated in the
+treatment arm). The plan is hand-written and finds exactly that flip, so this case shows the
+mechanics, not discovery. The red-cards flip is a p-value crossing: the odds ratio goes from
+1.34 to 1.20 and stays above 1, with p moving from 0.0006 to 0.055. The evidence weakens; the
+effect does not reverse. The search favours flips, so this is the nearest crossing Borges
+found, not a typical analysis. The robustness share (87% of 30 universes agree) is the fairer
+headline. On the red-cards data no single or paired defensible change reverses the finding;
+it takes three together. The only single change that would flip it, keeping low-bias referees
+only, is rejected by the judge as an indefensible change of population.
+
+### How wide is the curve, against the human teams
+
+| | Borges universes | Reference teams |
+|---|---|---|
+| Red cards (odds ratio) | 30 universes: 1.20 to 1.36 | 29 teams: 0.89 to 2.93, median 1.31, 20 significant. Two teams (Tobit 2.88, Poisson 2.93) are the extremes; the next highest is 1.71. Ten teams fall inside Borges's range |
+| MARP religiosity (standardised beta) | 40 universes: 0.064 to 0.150; all 768 universes enumerated offline: 0.053 to 0.156 | 110 teams: 0.007 to 0.354, median 0.120, all 110 intervals above 0 |
+| MARP cultural norms (interaction beta) | 15 universes: 0.018 to 0.046; offline 1,536: -0.002 to 0.049 | 105 teams: -0.045 to 0.282, median 0.039, 68 of 105 above 0 |
+
+Borges's range is narrower than the teams', and it should be. It walks defensible choices
+under one estimand: the red-cards plan has four decisions (skin-tone measure, exclusions,
+covariates, model family) and 72 base combinations plus the adversary's proposals, while the teams
+also chose different outcomes and estimands (Tobit, zero-inflated and negative-binomial
+count models, Dirichlet-process clustering, Spearman correlation) and added their own
+covariates. The narrower curve answers "how fragile is this analysis within its own
+question", not "how much would 29 independent teams disagree". On the real MARP data Borges
+also agrees more than the teams do on the cultural-norms question (89% of the 1,536 enumerated universes
+against 65% of the teams); the space holds the teams' common choices, not their tails.
+Both case READMEs list what is outside the option space.
+
+### Real, unplanted data: the MARP cases
+
+`marp_religiosity` and `marp_norms` use the Many Analysts Religion Project (10,535
+participants in 24 countries, CC-BY 4.0), with the per-team results as the reference lane.
+Nobody planted anything. Religiosity and well-being is robust in this option space (no flip
+in 40 universes), with a disclosed caveat: well-being options are alternative measures of
+overall well-being, and the physical-health facet alone is fragile (see
+`cases/marp_religiosity/README.md`). The cultural-norms interaction has one single-change
+flip, pooled OLS (p = 0.056, estimate still positive). These recordings are scripted
+replays of a hand-built option space seeded from the teams' published choices; the adversary
+proposes nothing there.
 
 ## Quickstart
 
@@ -71,23 +121,50 @@ Requirements: Python 3.13 with [uv](https://docs.astral.sh/uv/), Node 22+ with p
 make install          # uv sync --extra contree, pnpm install
 make demo-cli         # checkout case end to end, offline and deterministic, $0
 make demo-red-cards   # the real red-cards data, offline, $0
+uv run --no-sync borges run --case marp_religiosity --llm scripted   # MARP, real data, ~18 s
 make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
-The web app has a recorded replay of both cases, a "Run it now" button (scripted models,
+The web app has a recorded replay of all four cases, a "Run it now" button (scripted models,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
-live on Nemotron" (curated cases only; the button says why when it is disabled). The hosted
-demo replays a scripted demo run (hand-built, not a live model run) and runs scripted. Uploading your own dataset is API-only
-(`POST /api/uploads`, then `POST /api/runs` with `upload_id`), needs live mode, and on a
-public instance needs `BORGES_BACKEND=contree` and `BORGES_LIVE_TOKEN`.
+live on Nemotron" (the button says why when it is disabled). The recordings are scripted
+(hand-built), not live model runs. The landing page has a "bring your own data" card: it is
+enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
+the `contree` backend or `BORGES_ALLOW_UNTRUSTED_LOCAL=true`) and otherwise shows the exact
+reason. The same flow is available over the API (`POST /api/uploads`, CSV or parquet, then
+`POST /api/runs` with `upload_id`). Uploaded data always needs a live run, which has never
+been exercised here.
 
-### Running live on Nemotron
+### Reproduce any universe
+
+Every universe in the drawer carries a command you can paste. For the recorded demos:
+
+```bash
+uv run --no-sync borges reproduce --case red_cards --universe u_a64c6b99f5
+```
+
+It re-executes that universe's steps on the case dataset with the local backend, and prints
+`MATCH` only if estimate, interval, p-value, n and verdict equal the recording (exit 1 and
+`MISMATCH` otherwise). It also re-runs the baseline, so the flip is shown end to end. Runs
+that are not recordings get a downloadable script, `python borges_<run>_<universe>.py --data
+path/to/data.parquet`, from `GET /api/runs/{run}/universes/{u}/script`. Universe ids are
+read from the recording; the drawer shows the right one.
+
+### Running live on Nemotron (not yet run)
 
 ```bash
 cp .env.example .env    # then set NEBIUS_API_KEY
-uv run borges run --case checkout_ab --llm nebius --record
+make live-smoke         # lists models, one structured call per role, cap 0.05 USD, exit 2 without a key
+make record-live        # live-smoke, then record-demo for both curated cases with --llm nebius, then export
 ```
+
+`make live-smoke` checks the three model ids exist, makes one structured call per role and
+reports latency, tokens, cost and finish reason; it fails on a missing id or on reasoning
+content leaking when thinking is disabled. `make record-live` runs both demo cases live under
+`BORGES_RUN_CAP_USD` (default 0.50), and its recordings replace the scripted ones. Until it
+has run, the cost figure in `ARCHITECTURE.md` is an estimate, not a measurement. A single case
+can also be run with `uv run borges run --case checkout_ab --llm nebius --record`.
 
 Spend is capped twice, per run (`BORGES_RUN_CAP_USD`, default $0.50) and in total
 (`BORGES_SPEND_CAP_USD`, default $5). When the total is used up, the web app disables the
@@ -101,7 +178,8 @@ can be replayed exactly at no cost.
 Set `CONTREE_API_KEY` (or reuse `NEBIUS_API_KEY`), `CONTREE_BASE_URL` and, if your account
 needs it, `CONTREE_PROJECT_ID`, then pass `--backend contree` (or set
 `BORGES_BACKEND=contree` on a server). The ConTree backend is contract-tested, and a live
-test runs only when credentials are present; the hosted demo does not use it. The first run builds a runner image with the scientific Python stack
+test runs only when credentials are present; it has never run against the real service, and
+there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
 once; after that, every analysis step is a non-disposable `image.run` on its parent image,
 so each checkpoint is a real sandbox image you can branch from again.
 
@@ -116,7 +194,7 @@ The image defaults to the scripted model and the local backend, with
 
 | Variable | Purpose |
 |---|---|
-| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run live on the local backend. `make dev` and `make serve` set it to `true` |
+| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run on the local backend. `make dev` and `make serve` set it to `true` |
 | `BORGES_LIVE_TOKEN` | When set, uploads need the header `X-Borges-Live-Token` |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
 | `BORGES_BACKEND` | `contree` for isolated sandboxes |
@@ -146,6 +224,32 @@ there, and without it the live budget resets on every redeploy. Run history is n
 Details: [ARCHITECTURE.md](ARCHITECTURE.md). Product definition and the end-to-end
 definition of done: [PRODUCT.md](PRODUCT.md).
 
+## Security model
+
+- **The server policy is the boundary, not the code guard.** The AST guard
+  (default-deny: no underscore attributes, frame and traceback attributes, `type`, `getattr`,
+  `exec`, computed string subscripts, and an exact import allowlist) is a lint that stops
+  accidents and the bypasses we know of. It is not a sandbox. The generated code comes from a
+  model or from an upload.
+- **The local backend is not isolation.** It runs each step as a subprocess of the server
+  with a scrubbed environment, resource limits and a timeout, and shares the machine's
+  filesystem and network. Use it for the scripted demos and on a private machine.
+- **Live and upload runs on a shared or public server need the VM backend.** Today the server
+  enforces that for uploads: with `BORGES_BACKEND=local` and `BORGES_ALLOW_UNTRUSTED_LOCAL`
+  not true, `POST /api/runs` with an `upload_id` is refused (400). Live runs on a curated
+  case are not refused on the local backend by the server, although the coder then writes
+  the code that runs; do not expose that combination publicly. Set `BORGES_BACKEND=contree`.
+- The server, not the client, picks the backend, clamps `max_universes`, limits concurrency
+  (429), refuses live runs without a key (400) or past the spend cap (403), and can require
+  `X-Borges-Live-Token` for uploads. The built-in UI does not send that header.
+- Never commit `.env`. CI (`.github/workflows/ci.yml`) runs lint, tests and the frontend
+  build; a badge will exist once the repository is public.
+
+## Related work
+
+Boba, the `multiverse` R package, `specr` and ForkSCOPE are compared in
+[PRODUCT.md](PRODUCT.md#related-work), with links and with what Borges does not do better.
+
 ## What Borges does not claim
 
 Influence is an interventional contrast under a fixed continuation protocol, not a causal
@@ -154,12 +258,23 @@ adversary propose, not every possible analysis. The robustness share is computed
 universes it explored, and the search deliberately favours universes likely to flip.
 Specification-curve and multiverse analysis are established ideas (Simonsohn et al. 2020;
 Steegen et al. 2016); what is new here is agents that discover the alternatives, fork real
-execution state mid-analysis, search for the minimal flip and prove it reproduces.
+execution state mid-analysis, search for the minimal flip and prove it reproduces. That claim
+rests on a design that has been tested with scripted agents; whether Nemotron proposes good
+forks is untested until the first live run.
 
 ## Data
 
-The red-cards data is the Crowdstorming dataset by Silberzahn et al., released under
-CC0 1.0 on the [OSF (gvm2z)](https://osf.io/gvm2z/). See `cases/red_cards/README.md`.
+- **Checkout A/B**: synthetic, generated by `cases/checkout_ab/generate.py` with a planted
+  effect.
+- **Red cards**: the Crowdstorming dataset by Silberzahn et al., real, CC0 1.0 on the
+  [OSF (gvm2z)](https://osf.io/gvm2z/). See `cases/red_cards/README.md`.
+- **MARP**: Many Analysts Religion Project data and team results, real, CC-BY 4.0 (Hoogeveen,
+  Sarafoglou, Aczel et al., 2022; OSF [qbdce](https://osf.io/qbdce/) and
+  [gkxqy](https://osf.io/gkxqy/)). See `cases/marp_*/README.md`.
+
+The scripted fixtures were built by hand from computed numbers: each `build_fixtures.py`
+runs the option code on the data and writes the planner, coder, adversary, judge and narrator
+responses, so every figure they state is computed, but no model wrote them.
 
 ## License
 
