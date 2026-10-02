@@ -18,18 +18,25 @@ PLATFORM_MULTIPLIER = {"web": 1.0, "ios": 1.15, "android": 0.8}
 OUT = Path(__file__).parent / "data.parquet"
 
 
-def build(seed: int = SEED) -> pd.DataFrame:
+def build(
+    seed: int = SEED,
+    *,
+    true_effect: float = TRUE_EFFECT,
+    novelty_bump: float = NOVELTY_BUMP,
+    internal_user_share: float = INTERNAL_USER_SHARE,
+    n_users: int = N_USERS,
+) -> pd.DataFrame:
     rng = np.random.default_rng(seed)
-    sessions_per_user = rng.choice([1, 2, 3, 4], size=N_USERS, p=[0.45, 0.30, 0.17, 0.08])
-    internal_user = rng.random(N_USERS) < INTERNAL_USER_SHARE
+    sessions_per_user = rng.choice([1, 2, 3, 4], size=n_users, p=[0.45, 0.30, 0.17, 0.08])
+    internal_user = rng.random(n_users) < internal_user_share
     treated_user = np.where(
         internal_user,
-        rng.random(N_USERS) < INTERNAL_TREATMENT_SHARE,
-        rng.random(N_USERS) < 0.5,
+        rng.random(n_users) < INTERNAL_TREATMENT_SHARE,
+        rng.random(n_users) < 0.5,
     )
-    platform_user = rng.choice(["web", "ios", "android"], size=N_USERS, p=[0.55, 0.30, 0.15])
+    platform_user = rng.choice(["web", "ios", "android"], size=n_users, p=[0.55, 0.30, 0.15])
 
-    idx = np.repeat(np.arange(N_USERS), sessions_per_user)
+    idx = np.repeat(np.arange(n_users), sessions_per_user)
     n = len(idx)
     treated = treated_user[idx]
     internal = internal_user[idx]
@@ -41,8 +48,8 @@ def build(seed: int = SEED) -> pd.DataFrame:
     seconds = np.where(bot, rng.uniform(0.2, 1.9, size=n), np.maximum(seconds, 2.0))
 
     multiplier = pd.Series(platform).map(PLATFORM_MULTIPLIER).to_numpy()
-    prob = BASE_RATE * multiplier + TRUE_EFFECT * treated
-    prob = prob + NOVELTY_BUMP * (treated & (day <= 2))
+    prob = BASE_RATE * multiplier + true_effect * treated
+    prob = prob + novelty_bump * (treated & (day <= 2))
     prob = np.where(internal, INTERNAL_RATE, prob)
     prob = np.where(bot, 0.0, prob)
     converted = (rng.random(n) < prob).astype(np.int8)
