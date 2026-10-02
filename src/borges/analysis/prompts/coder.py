@@ -64,8 +64,10 @@ and add or change columns. The one exception is a step whose spec aggregates row
 group, e.g. per user): it returns the group key, the grouping variables the later steps need \
 (such as the treatment indicator) and the names this step must create. Keep the direction and \
 coding of every variable. Never swap or recode groups (a treatment indicator stays 1 for \
-treatment). Orient a PCA or factor score so that it correlates positively with the mean of its \
-items (multiply it by -1 otherwise).
+treatment). Orient a PCA or factor score by its correlation with the plain mean of its items: \
+`if np.corrcoef(score, items.mean(axis=1))[0, 1] < 0: score = -score`. Never orient by the sign \
+of the scores' mean, which is zero. Write `pd.get_dummies(..., dtype=float)`: the default bool \
+dummies cannot hold standardised values.
 - For the step of kind model: start with complete cases, `data = df.dropna(subset=[...])` over \
 every column the model uses (outcome, predictors, offsets, weights, cluster or group columns), \
 build the model, its groups and its weights from that same frame, and return n = len(data). \

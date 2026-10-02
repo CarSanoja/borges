@@ -96,8 +96,8 @@ def test_coder_filter_step_has_no_create_line() -> None:
 def test_coder_rules_cover_columns_direction_and_orientation() -> None:
     assert "Never drop columns" in CODER_SYSTEM
     assert "filters only drop rows" in CODER_SYSTEM
-    assert "correlates positively with the mean of its items" in CODER_SYSTEM
-    assert "multiply it by -1" in CODER_SYSTEM
+    assert "by its correlation with the plain mean of its items" in CODER_SYSTEM
+    assert "score = -score" in CODER_SYSTEM
     assert "Never swap" in CODER_SYSTEM
     assert "statsmodels" in CODER_SYSTEM
 
@@ -158,3 +158,13 @@ def test_narrator_does_not_invent_a_missing_re_execution() -> None:
     from borges.analysis.prompts.narrator import SYSTEM
 
     assert "When no flip was found there is nothing to re-execute" in SYSTEM
+
+
+def test_constructed_scores_are_oriented_by_correlation_with_their_items() -> None:
+    assert "np.corrcoef(score, items.mean(axis=1))" in CODER_SYSTEM
+    assert "Never orient by the sign" in CODER_SYSTEM
+    assert "dtype=float" in CODER_SYSTEM
+
+
+def test_produced_names_say_what_is_measured_not_how() -> None:
+    assert "Name what is measured, not how" in PLANNER_SYSTEM.replace("\n", " ")

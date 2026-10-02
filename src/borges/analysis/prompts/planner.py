@@ -45,7 +45,9 @@ the option.
 feature step creates, under the same name and with the same meaning in every option. Later steps \
 and the model read these names, so each option of the step must create all of them and a \
 later spec may use only raw columns or names produced by earlier steps. Filter steps usually \
-produce nothing. Every transform and feature step must declare a non-empty produces.
+produce nothing. Every transform and feature step must declare a non-empty produces. Name what \
+is measured, not how: options "mean of the items" and "first principal component" both write \
+one column such as "cnorm_score", never "cnorm_mean" in one option and "cnorm_pca" in another.
 - Options never drop columns: filters drop rows, transforms and features add or change columns. \
 The exception is a step that aggregates rows (one row per user or group); its produces then lists \
 every column it keeps that later steps read (the group key, the treatment indicator, outcomes), \
