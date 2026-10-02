@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.86, \"accepted\": true, \"reason\": \"A player appears in many dyads, so clustering the errors by player corrects the uncertainty without changing the estimand.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.86,
+    "accepted": true,
+    "reason": "A player appears in many dyads, so clustering the errors by player corrects the uncertainty without changing the estimand.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

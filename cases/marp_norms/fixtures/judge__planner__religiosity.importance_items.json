@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.64, \"accepted\": true, \"reason\": \"Importance of religion captures salience rather than belief or practice, so it narrows the construct; defensible with a sentence of justification.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 4 of 116 teams used rel_8 and rel_9 alone.\"}",
+  "parsed": {
+    "defensibility": 0.64,
+    "accepted": true,
+    "reason": "Importance of religion captures salience rather than belief or practice, so it narrows the construct; defensible with a sentence of justification.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 4 of 116 teams used rel_8 and rel_9 alone."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

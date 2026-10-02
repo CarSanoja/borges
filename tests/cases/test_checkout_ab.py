@@ -186,7 +186,7 @@ def test_adversary_and_judges() -> None:
 
 def test_fixture_envelopes() -> None:
     files = sorted(FIXTURES.glob("*.json"))
-    assert len(files) == 17
+    assert len(files) == 22
     for path in files:
         record = json.loads(path.read_text())
         assert set(record) == {"model", "text", "parsed", "tokens_in", "tokens_out"}

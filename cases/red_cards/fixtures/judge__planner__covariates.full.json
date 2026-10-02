@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.82, \"accepted\": true, \"reason\": \"League country is a pre-treatment context variable; adjusting for it alongside physique is a common specification among the research teams.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.82,
+    "accepted": true,
+    "reason": "League country is a pre-treatment context variable; adjusting for it alongside physique is a common specification among the research teams.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

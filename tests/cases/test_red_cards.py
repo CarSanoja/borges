@@ -98,7 +98,7 @@ def _by_changes(universes: list[dict], n: int, rejected: bool = False) -> list[d
 
 def test_every_fixture_validates_against_its_schema():
     paths = sorted((CASE_DIR / "fixtures").glob("*.json"))
-    assert len(paths) == 19
+    assert len(paths) == 27
     for path in paths:
         payload = json.loads(path.read_text())
         assert set(payload) == {"model", "text", "parsed", "tokens_in", "tokens_out"}

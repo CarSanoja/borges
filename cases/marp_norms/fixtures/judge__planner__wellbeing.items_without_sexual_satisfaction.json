@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.78, \"accepted\": true, \"reason\": \"One item is missing for participants who did not disclose it, so dropping it is a reasonable handling of the item-level missingness.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 5 of 116 teams modelled the 17 items without it.\"}",
+  "parsed": {
+    "defensibility": 0.78,
+    "accepted": true,
+    "reason": "One item is missing for participants who did not disclose it, so dropping it is a reasonable handling of the item-level missingness.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 5 of 116 teams modelled the 17 items without it."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

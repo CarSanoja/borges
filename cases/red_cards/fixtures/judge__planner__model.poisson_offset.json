@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.85, \"accepted\": true, \"reason\": \"Red cards are rare counts over varying exposure, so a Poisson model with a log-games offset is the textbook alternative to the binomial model.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.85,
+    "accepted": true,
+    "reason": "Red cards are rare counts over varying exposure, so a Poisson model with a log-games offset is the textbook alternative to the binomial model.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

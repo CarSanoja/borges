@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.74, \"accepted\": true, \"reason\": \"Cultural norms are a property of a country, so aggregating the perception to the country mean matches the construct; it changes the level at which the norm varies.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 25 of 120 team reports mention country-level or aggregated norms.\"}",
+  "parsed": {
+    "defensibility": 0.74,
+    "accepted": true,
+    "reason": "Cultural norms are a property of a country, so aggregating the perception to the country mean matches the construct; it changes the level at which the norm varies.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 25 of 120 team reports mention country-level or aggregated norms."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.78, \"accepted\": true, \"reason\": \"Randomisation is by user, so analysing one row per user respects the unit of randomisation; it narrows the sessions counted but not the question.\", \"source\": \"Deng, Lu & Litz (2017), Trustworthy Analysis of Online A/B Tests, WSDM\"}",
+  "parsed": {
+    "defensibility": 0.78,
+    "accepted": true,
+    "reason": "Randomisation is by user, so analysing one row per user respects the unit of randomisation; it narrows the sessions counted but not the question.",
+    "source": "Deng, Lu & Litz (2017), Trustworthy Analysis of Online A/B Tests, WSDM"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

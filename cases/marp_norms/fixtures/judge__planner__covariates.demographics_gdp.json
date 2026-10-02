@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.8, \"accepted\": true, \"reason\": \"Country wealth differs across the 24 countries and relates to both variables; adding GDP to the demographics is a common specification.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 32 of 116 teams adjusted for GDP.\"}",
+  "parsed": {
+    "defensibility": 0.8,
+    "accepted": true,
+    "reason": "Country wealth differs across the 24 countries and relates to both variables; adding GDP to the demographics is a common specification.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 32 of 116 teams adjusted for GDP."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

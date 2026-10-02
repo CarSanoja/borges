@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.72, \"accepted\": true, \"reason\": \"The mirror of the rater 1 choice: a single rater scale, with the caveat that this rater scored darker on average.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.72,
+    "accepted": true,
+    "reason": "The mirror of the rater 1 choice: a single rater scale, with the caveat that this rater scored darker on average.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

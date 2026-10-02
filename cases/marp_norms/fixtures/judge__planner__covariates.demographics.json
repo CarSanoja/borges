@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.88, \"accepted\": true, \"reason\": \"Age, gender, socio-economic status and education relate to both religiosity and well-being; adjusting for them is standard.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 56 of 116 teams adjusted for age and SES, usually with gender and education.\"}",
+  "parsed": {
+    "defensibility": 0.88,
+    "accepted": true,
+    "reason": "Age, gender, socio-economic status and education relate to both religiosity and well-being; adjusting for them is standard.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 56 of 116 teams adjusted for age and SES, usually with gender and education."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

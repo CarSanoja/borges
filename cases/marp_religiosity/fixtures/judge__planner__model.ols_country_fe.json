@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.86, \"accepted\": true, \"reason\": \"Country fixed effects absorb country differences without distributional assumptions and keep the same estimand.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: a fixed-effects specification of the same teams' linear models.\"}",
+  "parsed": {
+    "defensibility": 0.86,
+    "accepted": true,
+    "reason": "Country fixed effects absorb country differences without distributional assumptions and keep the same estimand.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: a fixed-effects specification of the same teams' linear models."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

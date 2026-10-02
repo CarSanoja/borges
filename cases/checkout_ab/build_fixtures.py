@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 from option_code import CODES
 from plan_content import adversary_proposals, planner_output
+from planner_judgements import VERDICTS
 
 from borges.analysis.models import AnalysisResult, DecisionRule
 from borges.analysis.schemas import (
@@ -14,6 +15,7 @@ from borges.analysis.schemas import (
     JudgeOutput,
     NarratorOutput,
 )
+from borges.cases.judge_fixtures import planner_judge_outputs
 from borges.cases.models import CaseSpec
 from borges.llm.scripted_provider import SCRIPTED_MODEL
 
@@ -128,7 +130,10 @@ def main() -> None:
     frame = pd.read_parquet(HERE / "data.parquet")
     (HERE / "case.json").write_text(CASE.model_dump_json(indent=2) + "\n")
 
-    write_fixture("planner", planner_output())
+    planner = planner_output()
+    write_fixture("planner", planner)
+    for key, output in planner_judge_outputs(planner, VERDICTS).items():
+        write_fixture(f"judge:planner:{key}", output)
     for key, code in CODES.items():
         write_fixture(f"coder:{key}", CoderOutput(code=code))
 

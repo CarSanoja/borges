@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.8, \"accepted\": true, \"reason\": \"A checkout cannot be completed in under two seconds, so such sessions are automated traffic; the threshold is a convention that deserves one sentence of justification.\", \"source\": \"IAB/MRC Invalid Traffic Detection and Filtration Guidelines Addendum (2020); ABC bot-filtering guidance\"}",
+  "parsed": {
+    "defensibility": 0.8,
+    "accepted": true,
+    "reason": "A checkout cannot be completed in under two seconds, so such sessions are automated traffic; the threshold is a convention that deserves one sentence of justification.",
+    "source": "IAB/MRC Invalid Traffic Detection and Filtration Guidelines Addendum (2020); ABC bot-filtering guidance"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

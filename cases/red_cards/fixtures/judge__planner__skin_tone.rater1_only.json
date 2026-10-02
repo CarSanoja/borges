@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.72, \"accepted\": true, \"reason\": \"Using one of the two blind raters is a documented choice among the crowdsourced teams; it discards information from the second rater but keeps the same exposure.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.72,
+    "accepted": true,
+    "reason": "Using one of the two blind raters is a documented choice among the crowdsourced teams; it discards information from the second rater but keeps the same exposure.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.76, \"accepted\": true, \"reason\": \"Centring within country isolates the within-country relation; it answers the same question on a different scale and is a recognised choice.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 8 of 120 team reports mention within-country centring.\"}",
+  "parsed": {
+    "defensibility": 0.76,
+    "accepted": true,
+    "reason": "Centring within country isolates the within-country relation; it answers the same question on a different scale and is a recognised choice.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 8 of 120 team reports mention within-country centring."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.72, \"accepted\": true, \"reason\": \"Referees seen in few dyads give unstable rates, so requiring a minimum is a standard precision rule; the cut-off is a judgement.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.72,
+    "accepted": true,
+    "reason": "Referees seen in few dyads give unstable rates, so requiring a minimum is a standard precision rule; the cut-off is a judgement.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

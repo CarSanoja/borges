@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.82, \"accepted\": true, \"reason\": \"A pooled regression with robust errors is the simple baseline many teams used.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 29 of 116 teams fit a plain linear regression.\"}",
+  "parsed": {
+    "defensibility": 0.82,
+    "accepted": true,
+    "reason": "A pooled regression with robust errors is the simple baseline many teams used.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 29 of 116 teams fit a plain linear regression."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

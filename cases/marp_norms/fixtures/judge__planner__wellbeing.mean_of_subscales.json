@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.8, \"accepted\": true, \"reason\": \"Weighting the physical, psychological and social facets equally is a standard way of scoring the same well-being scale.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 21 of 116 teams modelled the three subscale means.\"}",
+  "parsed": {
+    "defensibility": 0.8,
+    "accepted": true,
+    "reason": "Weighting the physical, psychological and social facets equally is a standard way of scoring the same well-being scale.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 21 of 116 teams modelled the three subscale means."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.84, \"accepted\": true, \"reason\": \"Excluding inattentive respondents is a standard data-quality rule applied before modelling.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 15 of 120 team reports mention the attention check.\"}",
+  "parsed": {
+    "defensibility": 0.84,
+    "accepted": true,
+    "reason": "Excluding inattentive respondents is a standard data-quality rule applied before modelling.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 15 of 120 team reports mention the attention check."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

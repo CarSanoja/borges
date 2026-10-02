@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.84, \"accepted\": true, \"reason\": \"A multilevel model with random country slopes is the standard way to let the relation vary by country.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 11 of 120 team reports mention random slopes.\"}",
+  "parsed": {
+    "defensibility": 0.84,
+    "accepted": true,
+    "reason": "A multilevel model with random country slopes is the standard way to let the relation vary by country.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 11 of 120 team reports mention random slopes."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

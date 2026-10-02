@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.66, \"accepted\": true, \"reason\": \"Two general items measure well-being directly but cover less of the scale than the full item set.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 1 team used it alone; 48 included the items in a larger set.\"}",
+  "parsed": {
+    "defensibility": 0.66,
+    "accepted": true,
+    "reason": "Two general items measure well-being directly but cover less of the scale than the full item set.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 1 team used it alone; 48 included the items in a larger set."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

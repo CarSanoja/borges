@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.88, \"accepted\": true, \"reason\": \"Height, weight and position are pre-treatment player characteristics that relate to carding; adjusting for them is standard.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.88,
+    "accepted": true,
+    "reason": "Height, weight and position are pre-treatment player characteristics that relate to carding; adjusting for them is standard.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

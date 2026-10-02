@@ -62,7 +62,13 @@ def test_plan_options_carry_team_counts_and_the_adversary_proposes_nothing(rq):
         for option in step["options"]:
             assert "Hoogeveen, Sarafoglou et al. (2022)" in option["source"]
     assert json.loads((fixtures / "adversary.json").read_text())["parsed"] == {"proposals": []}
-    assert not list(fixtures.glob("judge__*.json"))
+    alternatives = {
+        f"judge__planner__{step['id']}.{option['id']}.json"
+        for step in planner["steps"]
+        for option in step["options"]
+        if not option["is_default"]
+    }
+    assert {p.name for p in fixtures.glob("judge__*.json")} == alternatives
 
 
 @pytest.mark.parametrize("rq", [1, 2])

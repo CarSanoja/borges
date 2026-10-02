@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.7, \"accepted\": true, \"reason\": \"A single self-identification item is widely used, though it is a coarser measure of the same construct.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 13 of 116 teams used rel_3 alone.\"}",
+  "parsed": {
+    "defensibility": 0.7,
+    "accepted": true,
+    "reason": "A single self-identification item is widely used, though it is a coarser measure of the same construct.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 13 of 116 teams used rel_3 alone."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

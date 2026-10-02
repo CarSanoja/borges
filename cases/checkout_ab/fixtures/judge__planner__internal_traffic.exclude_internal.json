@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.92, \"accepted\": true, \"reason\": \"Employee and QA sessions are test traffic outside the customer population the question is about; removing them is the standard first check of an online experiment.\", \"source\": \"Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 and 21 (filter internal traffic and bots)\"}",
+  "parsed": {
+    "defensibility": 0.92,
+    "accepted": true,
+    "reason": "Employee and QA sessions are test traffic outside the customer population the question is about; removing them is the standard first check of an online experiment.",
+    "source": "Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 and 21 (filter internal traffic and bots)"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

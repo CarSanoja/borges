@@ -6,12 +6,14 @@ from typing import Any
 import pandas as pd
 from option_code import ADVERSARY_OPTIONS, BASE_OPTIONS
 from plan_text import JUDGE, validated_adversary, validated_judge, validated_planner
+from planner_judgements import VERDICTS
 from prepare import CASE_DIR, load_teams
 from summary import summarize
 from validation import fixture_path
 
 from borges.analysis.models import DecisionRule
 from borges.analysis.schemas import CoderOutput, NarratorOutput
+from borges.cases.judge_fixtures import planner_judge_outputs
 from borges.cases.models import CaseSpec, ReferenceEstimate
 from borges.llm.scripted_provider import SCRIPTED_MODEL
 from borges.runs.pipeline import MAX_COMBINATIONS_PER_LEVEL
@@ -115,7 +117,10 @@ def main() -> None:
     frame = pd.read_parquet(CASE_DIR / "data.parquet")
     info = summarize(frame, codes, RULE)
 
-    write_fixture("planner", validated_planner().model_dump())
+    planner = validated_planner()
+    write_fixture("planner", planner.model_dump())
+    for key, output in planner_judge_outputs(planner, VERDICTS).items():
+        write_fixture(f"judge:planner:{key}", output.model_dump())
     for key, code in codes.items():
         parsed = CoderOutput(code=code).model_dump()
         write_fixture(f"coder:{key}", parsed)

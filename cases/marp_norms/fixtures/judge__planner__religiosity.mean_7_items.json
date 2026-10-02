@@ -1,0 +1,12 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"defensibility\": 0.82, \"accepted\": true, \"reason\": \"Averaging the seven graded items is a common measurement of religiosity that omits the two binary items; the construct is unchanged.\", \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 14 of 116 teams used these seven.\"}",
+  "parsed": {
+    "defensibility": 0.82,
+    "accepted": true,
+    "reason": "Averaging the seven graded items is a common measurement of religiosity that omits the two binary items; the construct is unchanged.",
+    "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 14 of 116 teams used these seven."
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

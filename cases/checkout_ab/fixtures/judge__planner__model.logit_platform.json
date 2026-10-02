@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.85, \"accepted\": true, \"reason\": \"Adjusting a randomised comparison for a prognostic covariate improves precision and keeps the same estimand.\", \"source\": \"Lin (2013), Agnostic notes on regression adjustments, Annals of Applied Statistics\"}",
+  "parsed": {
+    "defensibility": 0.85,
+    "accepted": true,
+    "reason": "Adjusting a randomised comparison for a prognostic covariate improves precision and keeps the same estimand.",
+    "source": "Lin (2013), Agnostic notes on regression adjustments, Annals of Applied Statistics"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

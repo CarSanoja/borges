@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.72, \"accepted\": true, \"reason\": \"Novelty effects fade over the first days of a new interface, so dropping them estimates the steady state; the cut-off is a judgement but the practice is recognised.\", \"source\": \"Hohnhold, O'Brien & Tang (2015), Focusing on the Long-term, KDD; Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 (novelty and primacy effects)\"}",
+  "parsed": {
+    "defensibility": 0.72,
+    "accepted": true,
+    "reason": "Novelty effects fade over the first days of a new interface, so dropping them estimates the steady state; the cut-off is a judgement but the practice is recognised.",
+    "source": "Hohnhold, O'Brien & Tang (2015), Focusing on the Long-term, KDD; Kohavi, Tang & Xu (2020), Trustworthy Online Controlled Experiments, Cambridge UP, ch. 3 (novelty and primacy effects)"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

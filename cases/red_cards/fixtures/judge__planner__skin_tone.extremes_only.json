@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.62, \"accepted\": true, \"reason\": \"Contrasting clearly light with clearly dark players is a recognised sensitivity check, but it discards the middle of the scale and changes the sample.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.62,
+    "accepted": true,
+    "reason": "Contrasting clearly light with clearly dark players is a recognised sensitivity check, but it discards the middle of the scale and changes the sample.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}
