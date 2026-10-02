@@ -44,3 +44,15 @@ async def run_step(
 def checkpoint_files(backend: LocalBackend, checkpoint: Checkpoint) -> set[str]:
     base = backend._fs(checkpoint.id)
     return {str(p.relative_to(base)) for p in base.rglob("*") if p.is_file()}
+
+
+async def assert_tamper_stopped(
+    backend: LocalBackend, tmp_path: Path, template: str, denial: str
+) -> None:
+    outside = tmp_path / "pwn.txt"
+    result, error = await run_step(backend, template.replace("__OUTSIDE__", str(outside)))
+    assert not outside.exists()
+    assert result.exit_code != 0
+    if denial:
+        assert error is not None
+        assert f"runtime policy denied {denial}" in error

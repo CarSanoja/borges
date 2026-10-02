@@ -16,7 +16,13 @@ ERROR_PREFIX = "BORGES_ERROR "
 
 STEPS_DIR = "steps"
 _UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
-_POLICY_SOURCE = (Path(__file__).parent / "runtime_policy.py").read_text()
+_POLICY_PARTS = ("runtime_policy_paths.py", "runtime_policy_config.py", "runtime_policy.py")
+_SIBLING_IMPORT = re.compile(
+    r"^from borges\.analysis\.runtime_policy_\w+ import (?:\([^)]*\)|[^\n]*)\n", re.MULTILINE
+)
+_POLICY_SOURCE = "".join(
+    _SIBLING_IMPORT.sub("", (Path(__file__).parent / name).read_text()) for name in _POLICY_PARTS
+)
 _POLICY_CALL = "_borges_install_policy(None, None)"
 
 
@@ -24,7 +30,7 @@ def policy_prelude(home: str | None = None, audit_path: str | None = None) -> st
     source = _POLICY_SOURCE.replace(
         _POLICY_CALL, f"_borges_install_policy({home!r}, {audit_path!r})"
     )
-    return f"exec(compile({source!r}, '<borges-policy>', 'exec'))\n"
+    return f"exec(compile({source!r}, '<borges-policy>', 'exec'), {{}})\n"
 
 
 def _sanitise(identifier: str) -> str:
