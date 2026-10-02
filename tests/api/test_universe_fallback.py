@@ -41,7 +41,7 @@ async def test_recorded_run_universe_resolves_without_a_stored_run(tmp_path) -> 
     assert response.status_code == 200
     body = response.json()
     assert body["reproduce_command"] == (
-        f"borges reproduce --case checkout_ab --universe {flip['universe_id']}"
+        f"uv run borges reproduce --case checkout_ab --universe {flip['universe_id']}"
     )
     assert body["reproduce_kind"] == "case"
     assert body["script_url"] == f"/api/runs/{run_id}/universes/{flip['universe_id']}/script"

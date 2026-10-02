@@ -33,6 +33,8 @@ def resolve_run(
     """Turn a request into concrete inputs. Raises KeyError for unknown cases, ValueError
     for uploads that lack the question or the decision rule."""
     if request.case_id is not None:
+        if (request.llm or settings.borges_llm) == "scripted":
+            registry.require_scripted(request.case_id)
         case = registry.get(request.case_id)
         return ResolvedRun(
             case_id=case.id,

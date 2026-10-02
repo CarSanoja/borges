@@ -15,7 +15,7 @@ class ReproducibleUniverse(UniverseDetail):
 
 
 def case_command(case_id: str, universe_id: str) -> str:
-    return f"borges reproduce --case {case_id} --universe {universe_id}"
+    return f"uv run borges reproduce --case {case_id} --universe {universe_id}"
 
 
 def script_filename(run_id: str, universe_id: str) -> str:

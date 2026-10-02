@@ -50,7 +50,7 @@ def test_command_ignores_any_stored_reproduce_command() -> None:
 
 def test_recorded_run_gets_the_borges_reproduce_command() -> None:
     detail = build_universe_detail(_snapshot(None), "u1", recorded_case="checkout_ab")
-    assert detail.reproduce_command == "borges reproduce --case checkout_ab --universe u1"
+    assert detail.reproduce_command == "uv run borges reproduce --case checkout_ab --universe u1"
     assert detail.reproduce_kind == "case"
 
 

@@ -47,3 +47,14 @@ def test_invalid_requests(registry: CaseRegistry) -> None:
         resolve_run(RunRequest(), registry, settings())
     with pytest.raises(ValueError):
         resolve_run(RunRequest(question="q"), registry, settings(), data=b"x")
+
+
+def test_scripted_run_of_live_only_case_is_refused(tmp_path: Path) -> None:
+    write_case(tmp_path / "cases", "live")
+    case_json = tmp_path / "cases" / "live" / "case.json"
+    case_json.write_text(case_json.read_text().replace('"live_only":false', '"live_only":true'))
+    registry = CaseRegistry(tmp_path / "cases")
+    with pytest.raises(ValueError, match="live-only"):
+        resolve_run(RunRequest(case_id="live", llm="scripted"), registry, settings())
+    resolved = resolve_run(RunRequest(case_id="live", llm="nebius"), registry, settings())
+    assert resolved.case_id == "live"
