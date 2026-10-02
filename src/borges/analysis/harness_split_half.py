@@ -4,6 +4,7 @@ SPLIT_HALF_SOURCE = """
     def _check_split_half(df, ctx, result):
         k_splits = 4
         max_ratio = 6.0
+        min_ratio = 0.025
         min_rows = 40
         rows = int(len(df))
         se = (result["ci_high"] - result["ci_low"]) / 3.92
@@ -28,6 +29,15 @@ SPLIT_HALF_SOURCE = """
             gaps.append(abs(values[0] - values[1]))
         median_gap = float(_np.median(gaps))
         ratio = median_gap / (2.0 * se)
+        if 0.0 < ratio < min_ratio:
+            raise ValueError(
+                "the reported interval implies a standard error of " + _num(se)
+                + ", but estimates on random halves of the data differ by a median of only "
+                + _num(median_gap) + ", about " + _num(1.0 / ratio)
+                + " times less than that standard error implies: the interval is far too wide"
+                + " (check that the estimate and the interval are on the same scale and units;"
+                + " prefer statsmodels inference)"
+            )
         if ratio > max_ratio:
             raise ValueError(
                 "the reported interval implies a standard error of " + _num(se)

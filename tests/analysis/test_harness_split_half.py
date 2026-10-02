@@ -35,8 +35,8 @@ def estimate(df, ctx):
     diff = float(df[df["arm"] == 1]["y"].mean() - df[df["arm"] == 0]["y"].mean())
     return {
         "estimate": diff,
-        "ci_low": diff - 1.0,
-        "ci_high": diff + 1.0,
+        "ci_low": diff - 0.15,
+        "ci_high": diff + 0.15,
         "p_value": 0.5,
         "n": len(df),
     }
@@ -89,6 +89,19 @@ def test_the_same_code_is_not_checked_outside_smoke(tmp_path: Path) -> None:
 def test_wide_clustered_interval_passes(tmp_path: Path) -> None:
     done, _, result = run(tmp_path, CLUSTERED, frame(), True)
     assert done.returncode == 0 and result is not None
+
+
+def test_interval_hundreds_of_times_too_wide_fails(tmp_path: Path) -> None:
+    done, error, result = run(tmp_path, PROPORTIONS.replace("SHRINK", "(1 / 300)"), frame(), True)
+    assert done.returncode == 1 and result is None
+    assert error is not None and "far too wide" in error and "same scale" in error
+
+
+def test_wide_threshold_has_no_false_alarms_for_a_five_fold_clustered_error() -> None:
+    rng = np.random.default_rng(1)
+    d = np.abs(rng.normal(0.0, 2.0, size=(20000, 4)))
+    ratios = np.median(d, axis=1) / (2.0 * 5.0)
+    assert float((ratios < 0.025).mean()) < 0.01
 
 
 def test_estimate_raising_on_a_half_skips_the_check(tmp_path: Path) -> None:
