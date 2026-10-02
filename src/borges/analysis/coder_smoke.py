@@ -15,6 +15,7 @@ from borges.analysis.smoke_review import review_step
 from borges.analysis.smoke_types import Outcome, Recode, Repair, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
+from borges.telemetry.scopes import option_span
 
 __all__ = ["SmokeConfig", "sample_rows", "smoke_plan"]
 
@@ -28,7 +29,10 @@ async def _smoke_step(
 ) -> list[Outcome]:
     async def work(option: Option) -> Outcome:
         async with semaphore:
-            outcome = await smoke_option(config, repair, parent, step, option)
+            with option_span("option.smoke", step.id, option.id) as span:
+                outcome = await smoke_option(config, repair, parent, step, option)
+                span.set_attribute("borges.option.status", outcome.status)
+                span.set_attribute("borges.option.attempts", outcome.attempts)
         if config.on_smoke is not None:
             await config.on_smoke(
                 step.id,

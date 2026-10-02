@@ -28,6 +28,7 @@ from borges.runs.pipeline_finish import narrate_stage, verify_stage
 from borges.runs.plan_judging import judge_plan_options
 from borges.runs.runner import UniverseRunner, publish_plan
 from borges.sandbox.backend import BranchBackend
+from borges.telemetry import hooks
 
 MAX_COMBINATIONS_PER_LEVEL = 10
 
@@ -68,10 +69,11 @@ class Pipeline:
 
     @asynccontextmanager
     async def stage(self, name: str, detail: str = "") -> AsyncIterator[None]:
-        await self.emitter.stage(name, "started", detail)
-        yield
-        await self.emitter.stage(name, "done")
-        await self.emitter.usage()
+        with hooks.span("stage", f"stage {name}", **{"borges.stage": name}):
+            await self.emitter.stage(name, "started", detail)
+            yield
+            await self.emitter.stage(name, "done")
+            await self.emitter.usage()
 
     async def _plan(self) -> AnalysisPlan:
         resolved = self.resolved

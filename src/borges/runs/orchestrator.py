@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import secrets
 import time
 from collections.abc import Callable
@@ -18,12 +19,24 @@ from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
 from borges.runs.orchestrator_meta import announced_models, outcome_meta
+from borges.runs.orchestrator_trace import (
+    TelemetryFactory,
+    close_telemetry,
+    mark_outcome,
+    open_telemetry,
+    run_scope,
+)
 from borges.runs.ownership import owner_fields
 from borges.runs.pipeline import Pipeline
 from borges.runs.state import fold
 from borges.runs.store import RunStore
 from borges.sandbox.backend import BranchBackend
 from borges.sandbox.factory import make_backend
+from borges.telemetry.instrumented_backend import instrument_backend
+from borges.telemetry.instrumented_llm import instrument_llm
+from borges.telemetry.run_telemetry import RunTelemetry
+
+log = logging.getLogger("borges.run")
 
 
 def new_run_id() -> str:
@@ -41,6 +54,7 @@ class RunOrchestrator:
         llm_factory: Callable = make_llm,
         backend_factory: Callable = make_backend,
         record_dir: Path | None = None,
+        telemetry_factory: TelemetryFactory = RunTelemetry.open,
     ) -> None:
         self.settings = settings
         self.store = store
@@ -49,6 +63,7 @@ class RunOrchestrator:
         self.llm_factory = llm_factory
         self.backend_factory = backend_factory
         self.record_dir = record_dir
+        self.telemetry_factory = telemetry_factory
         self.tasks: dict[str, asyncio.Task[RunSnapshot]] = {}
         self._live: set[str] = set()
 
@@ -122,7 +137,11 @@ class RunOrchestrator:
         return build_universe_detail(self.snapshot(run_id), universe_id)
 
     async def _announce(
-        self, emitter: RunEmitter, request: RunRequest, resolved: ResolvedRun
+        self,
+        emitter: RunEmitter,
+        request: RunRequest,
+        resolved: ResolvedRun,
+        trace_id: str | None = None,
     ) -> None:
         llm, backend = self._modes(request)
         started = RunStartedData(
@@ -135,6 +154,7 @@ class RunOrchestrator:
             backend=backend,
             models=announced_models(self.settings, llm),
             max_universes=resolved.max_universes,
+            trace_id=trace_id,
         )
         await emitter.emit("run.started", started.model_dump(mode="json"))
 
@@ -153,6 +173,7 @@ class RunOrchestrator:
             await emitter.emit("run.finished", finished.model_dump(mode="json"))
         finally:
             self.bus.close(emitter.run_id)
+        log.info("run %s", status, extra={"run_id": emitter.run_id, "status": status})
 
     async def execute(
         self,
@@ -164,6 +185,28 @@ class RunOrchestrator:
         resolved = resolve_run(request, self.registry, self.settings, data, dataset_name)
         if not self.store.exists(run_id):
             self._register(run_id, request, resolved)
+        telemetry = open_telemetry(self.telemetry_factory, self.settings, self.store, run_id)
+        llm_mode, backend_mode = self._modes(request)
+        attributes = {
+            "borges.case_id": resolved.case_id or "",
+            "borges.llm": llm_mode,
+            "borges.backend": backend_mode,
+        }
+        try:
+            with run_scope(telemetry, self.store, run_id, attributes) as span:
+                snapshot = await self._execute(run_id, request, resolved, telemetry)
+                mark_outcome(span, snapshot.status)
+                return snapshot
+        finally:
+            close_telemetry(telemetry, self.store, run_id)
+
+    async def _execute(
+        self,
+        run_id: str,
+        request: RunRequest,
+        resolved: ResolvedRun,
+        telemetry: RunTelemetry | None,
+    ) -> RunSnapshot:
         self.bus.open(run_id)
         started_at = time.monotonic()
         emitter = RunEmitter(run_id, self.store, self.bus)
@@ -171,12 +214,15 @@ class RunOrchestrator:
         backend: BranchBackend | None = None
         error: str | None = None
         try:
-            await self._announce(emitter, request, resolved)
+            await self._announce(
+                emitter, request, resolved, telemetry.trace_id if telemetry else None
+            )
+            log.info("run started", extra={"run_id": run_id, "case_id": resolved.case_id})
             llm_options: dict[str, Path | None] = {"fixtures_dir": resolved.fixtures_dir}
             if self.record_dir is not None:
                 llm_options["record_dir"] = self.record_dir
-            llm = self.llm_factory(self.settings, request.llm, **llm_options)
-            backend = self.backend_factory(self.settings, request.backend)
+            llm = instrument_llm(self.llm_factory(self.settings, request.llm, **llm_options))
+            backend = instrument_backend(self.backend_factory(self.settings, request.backend))
             pipeline = Pipeline(self.settings, llm, backend, emitter, resolved)
             await pipeline.run()
         except asyncio.CancelledError:

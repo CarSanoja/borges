@@ -27,9 +27,17 @@ class Settings(BaseSettings):
     def _contree_url_or_default(cls, value: object) -> object:
         return value or CONTREE_URL
 
+    @field_validator("otel_exporter_otlp_endpoint", mode="before")
+    @classmethod
+    def _blank_endpoint_is_unset(cls, value: object) -> object:
+        return value or None
+
     @property
     def sandbox_project_id(self) -> str | None:
         return self.contree_project_id or self.nebius_project_id
+
+    otel_exporter_otlp_endpoint: str | None = None
+    otel_service_name: str = "borges"
 
     borges_local_base_url: str = "http://localhost:11434/v1"
     borges_local_model: str = "nemotron-3-nano:30b"

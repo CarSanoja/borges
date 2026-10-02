@@ -17,6 +17,7 @@ from borges.garden.prefix_cache import Prefix, PrefixCache, PrefixNode
 from borges.garden.reversal import find_reversal
 from borges.runs.events import CheckpointCreatedData
 from borges.sandbox.backend import BranchBackend, Checkpoint
+from borges.telemetry.scopes import option_span
 
 EmitFn = Callable[[str, dict[str, Any]], Awaitable[None]]
 
@@ -125,7 +126,8 @@ class GardenExecutor:
         step_id, option_id, _ = prefix[-1]
 
         async def compute() -> PrefixNode:
-            return await self._compute_prefix(parent, len(prefix) - 1, step_id, option_id)
+            with option_span("step", step_id, option_id):
+                return await self._compute_prefix(parent, len(prefix) - 1, step_id, option_id)
 
         if not self.reuse_prefixes:
             return await compute()

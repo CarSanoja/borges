@@ -122,6 +122,7 @@ class Rig:
 def make_rig(tmp_path: Path) -> Rig:
     settings = Settings(
         _env_file=None,
+        borges_home=tmp_path / "home",
         borges_runs_dir=tmp_path / "runs",
         borges_cases_dir=tmp_path / "cases",
     )

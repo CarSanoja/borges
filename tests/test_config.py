@@ -46,3 +46,10 @@ def test_new_model_fields_default() -> None:
     assert RunSnapshot(run_id="r").llm is None and RunSnapshot(run_id="r").backend is None
     assert Report.model_fields["n_failed"].default == 0
     assert Report.model_fields["failed"].default_factory() == []
+
+
+def test_otlp_endpoint_comes_from_the_standard_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert settings(monkeypatch).otel_exporter_otlp_endpoint is None
+    s = settings(monkeypatch, OTEL_EXPORTER_OTLP_ENDPOINT="http://collector:4318")
+    assert s.otel_exporter_otlp_endpoint == "http://collector:4318"
+    assert settings(monkeypatch, OTEL_EXPORTER_OTLP_ENDPOINT="").otel_exporter_otlp_endpoint is None

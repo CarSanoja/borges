@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import time
 from collections.abc import Callable
 from typing import Any, cast
@@ -8,6 +9,7 @@ from borges.llm.client import UsageTotals
 from borges.runs.bus import EventBus
 from borges.runs.events import Event, EventType, UsageData
 from borges.runs.store import RunStore
+from borges.telemetry.event_audit import audit_run_event
 
 UsageProbe = Callable[[], tuple[UsageTotals, int]]
 USAGE_EVERY_UNIVERSES = 5
@@ -35,6 +37,8 @@ class RunEmitter:
         )
         self.store.append(event)
         self.bus.publish(event)
+        with contextlib.suppress(Exception):
+            audit_run_event(event_type, data)
         if event_type == "universe.finished":
             self.universes_finished += 1
             if self.universes_finished % USAGE_EVERY_UNIVERSES == 0:

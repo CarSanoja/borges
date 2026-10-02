@@ -55,6 +55,7 @@ class RunStartedData(BaseModel):
     backend: str
     models: dict[str, str]
     max_universes: int
+    trace_id: str | None = None
 
 
 class StageData(BaseModel):

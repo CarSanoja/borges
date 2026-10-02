@@ -298,3 +298,25 @@ def test_accept_formula_built_from_terms() -> None:
         "    return smf.ols(f, df).fit()"
     )
     assert check_code(model_code(body), "model") == []
+
+
+def test_rejection_is_audited_with_hash_not_code(tmp_path) -> None:
+    from borges.config import Settings
+    from borges.telemetry import hooks
+    from borges.telemetry.audit_verify import read_records
+    from borges.telemetry.caller import calling_as
+    from borges.telemetry.run_telemetry import RunTelemetry
+
+    telemetry = RunTelemetry.open(
+        Settings(_env_file=None, borges_home=tmp_path / "home"), "r1", tmp_path / "run"
+    )
+    bad = "import os\n\n\ndef apply(df, ctx):\n    return df\n"
+    with hooks.bound(telemetry), telemetry.span("run", "run r1"):
+        with calling_as(step_id="s1", option_id="a"):
+            assert check_code(bad, "filter")
+        assert check_code(VALID_APPLY, "filter") == []
+    telemetry.close()
+    (record,) = read_records(tmp_path / "run" / "audit.jsonl")
+    assert record.kind == "policy.code_guard" and record.decision == "deny"
+    assert record.data["step_id"] == "s1" and record.data["option_id"] == "a"
+    assert len(record.data["code_sha256"]) == 64 and "import os\n" not in str(record.data)

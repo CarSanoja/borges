@@ -10,6 +10,7 @@ from pathlib import Path
 
 from borges.llm.cache import atomic_write_text
 from borges.llm.client import BudgetExceeded
+from borges.telemetry import hooks
 
 _PROCESS_LOCK = threading.RLock()
 _RESERVED: dict[Path, float] = {}
@@ -29,10 +30,20 @@ class RunBudget:
 
     def _check(self, estimate_usd: float) -> None:
         if self._total + self._reserved + estimate_usd > self.cap_usd:
-            raise BudgetExceeded(
+            message = (
                 f"run budget ${self.cap_usd:.4f} would be exceeded "
                 f"(spent ${self._total:.4f}, next call ~${estimate_usd:.4f})"
             )
+            hooks.audit(
+                "policy.spend.refuse",
+                decision="deny",
+                reason=message,
+                scope="run",
+                cap_usd=self.cap_usd,
+                spent_usd=self._total,
+                estimate_usd=estimate_usd,
+            )
+            raise BudgetExceeded(message)
 
     async def ensure_room(self, estimate_usd: float) -> None:
         self._check(estimate_usd)
@@ -40,6 +51,14 @@ class RunBudget:
     async def reserve(self, estimate_usd: float) -> None:
         self._check(estimate_usd)
         self._reserved += estimate_usd
+        hooks.audit(
+            "policy.spend.reserve",
+            decision="allow",
+            scope="run",
+            cap_usd=self.cap_usd,
+            spent_usd=self._total,
+            estimate_usd=estimate_usd,
+        )
 
     async def release(self, estimate_usd: float) -> None:
         self._reserved = max(0.0, self._reserved - estimate_usd)
@@ -89,10 +108,20 @@ class SpendLedger:
         total = self.total
         reserved = _RESERVED.get(self._key, 0.0)
         if total + reserved + estimate_usd > self.cap_usd:
-            raise BudgetExceeded(
+            message = (
                 f"spend cap ${self.cap_usd:.2f} would be exceeded "
                 f"(spent ${total:.4f}, next call ~${estimate_usd:.4f})"
             )
+            hooks.audit(
+                "policy.spend.refuse",
+                decision="deny",
+                reason=message,
+                scope="global",
+                cap_usd=self.cap_usd,
+                spent_usd=total,
+                estimate_usd=estimate_usd,
+            )
+            raise BudgetExceeded(message)
 
     async def ensure_room(self, estimate_usd: float) -> None:
         with self._exclusive():
@@ -102,6 +131,14 @@ class SpendLedger:
         with self._exclusive():
             self._check(estimate_usd)
             _RESERVED[self._key] = _RESERVED.get(self._key, 0.0) + estimate_usd
+            hooks.audit(
+                "policy.spend.reserve",
+                decision="allow",
+                scope="global",
+                cap_usd=self.cap_usd,
+                spent_usd=self.total,
+                estimate_usd=estimate_usd,
+            )
 
     async def release(self, estimate_usd: float) -> None:
         with self._exclusive():

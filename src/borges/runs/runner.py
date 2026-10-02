@@ -10,6 +10,7 @@ from borges.llm.client import BudgetExceeded, LLMClient
 from borges.llm.gather import gather_cancelling
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData
+from borges.runs.universe_tracing import run_universe_traced
 
 
 async def publish_plan(emitter: RunEmitter, plan: AnalysisPlan) -> None:
@@ -73,11 +74,11 @@ class UniverseRunner:
         return {**universe.choices, step.id: repaired.id}
 
     async def run(self, choices: dict[str, str], kind: UniverseKind) -> Universe:
-        universe = await self.executor.run_universe(choices, kind)
+        universe = await run_universe_traced(self.executor, choices, kind)
         if universe.status == "failed":
             repaired = await self._repair(universe, kind)
             if repaired is not None:
-                universe = await self.executor.run_universe(repaired, kind)
+                universe = await run_universe_traced(self.executor, repaired, kind)
         self.garden.add(universe)
         if kind == "baseline":
             self.garden.baseline_id = universe.id

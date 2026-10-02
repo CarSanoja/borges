@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from borges import cli_runtime
+from borges.cli_audit import audit_app
 from borges.cli_render import summary_lines, universe_lines
 from borges.config import Settings, get_settings
 from borges.runs.detail import build_universe_detail
@@ -14,6 +15,7 @@ from borges.runs.orchestrator import new_run_id
 from borges.runs.reproduce import reproduction_lines
 
 app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
+app.add_typer(audit_app, name="audit")
 
 LlmOption = Annotated[str, typer.Option("--llm", help="scripted, nebius or local")]
 
@@ -77,12 +79,22 @@ def serve(
     """Serve the API and the built frontend."""
     import uvicorn
 
+    from borges.telemetry.json_logging import configure_logging
+
+    configure_logging()
     if reload:
-        uvicorn.run("borges.api.app:create_app", factory=True, host=host, port=port, reload=True)
+        uvicorn.run(
+            "borges.api.app:create_app",
+            factory=True,
+            host=host,
+            port=port,
+            reload=True,
+            log_config=None,
+        )
         return
     from borges.api.app import create_app
 
-    uvicorn.run(create_app(), host=host, port=port)
+    uvicorn.run(create_app(), host=host, port=port, log_config=None)
 
 
 @app.command("record-demo")

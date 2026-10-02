@@ -68,3 +68,32 @@ async def test_separate_ledger_instances_do_not_lose_updates(tmp_path: Path) -> 
     await asyncio.gather(*(ledger.record(0.1) for ledger in ledgers for _ in range(4)))
     assert SpendLedger(path, cap_usd=100).total == pytest.approx(2.0)
     assert json.loads(path.read_text())["calls"] == 20
+
+
+async def test_reservations_and_refusals_are_audited(tmp_path: Path) -> None:
+    from borges.config import Settings
+    from borges.telemetry import hooks
+    from borges.telemetry.audit_verify import read_records
+    from borges.telemetry.run_telemetry import RunTelemetry
+
+    telemetry = RunTelemetry.open(
+        Settings(_env_file=None, borges_home=tmp_path / "home"), "r1", tmp_path / "run"
+    )
+    budget = RunBudget(0.10)
+    ledger = SpendLedger(tmp_path / "spend.json", cap_usd=0.05)
+    with hooks.bound(telemetry), telemetry.span("run", "run r1"):
+        await budget.reserve(0.04)
+        await ledger.reserve(0.04)
+        with pytest.raises(BudgetExceeded):
+            await budget.reserve(0.08)
+        with pytest.raises(BudgetExceeded):
+            await ledger.reserve(0.04)
+    telemetry.close()
+    records = read_records(tmp_path / "run" / "audit.jsonl")
+    assert [(r.kind, r.decision, r.data["scope"]) for r in records] == [
+        ("policy.spend.reserve", "allow", "run"),
+        ("policy.spend.reserve", "allow", "global"),
+        ("policy.spend.refuse", "deny", "run"),
+        ("policy.spend.refuse", "deny", "global"),
+    ]
+    assert "would be exceeded" in (records[2].reason or "")

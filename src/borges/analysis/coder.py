@@ -12,6 +12,7 @@ from borges.analysis.prompts.coder import build_messages
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
 from borges.llm.gather import gather_cancelling
+from borges.telemetry.scopes import option_span
 
 NORMALISED_NOTE = "removed a stray closing-bracket line at the end of the code"
 OnCoded = Callable[[str, str, bool, int, str | None, list[str]], Awaitable[None]]
@@ -99,10 +100,13 @@ async def code_plan(
     async def work(step: Step, option: Option) -> tuple[str | None, int, str | None]:
         models = models_by_option.setdefault((step.id, option.id), [])
         async with semaphore:
-            try:
-                code, attempts, error = await generate_checked(llm, plan, step, option, models)
-            except LLMError as exc:
-                code, attempts, error = None, 1, str(exc)
+            with option_span("option.code", step.id, option.id) as span:
+                try:
+                    code, attempts, error = await generate_checked(llm, plan, step, option, models)
+                except LLMError as exc:
+                    code, attempts, error = None, 1, str(exc)
+                span.set_attribute("borges.option.ok", code is not None)
+                span.set_attribute("borges.option.attempts", attempts)
         if on_coded is not None:
             await on_coded(step.id, option.id, code is not None, attempts, error, models)
         return code, attempts, error

@@ -20,6 +20,9 @@ from borges.analysis.code_guard_rules import (
     IO_PREFIXES,
 )
 from borges.analysis.models import StepKind
+from borges.telemetry import hooks
+from borges.telemetry.caller import current_caller
+from borges.telemetry.hashing import sha256_text
 
 EXPECTED_PARAMS = ["df", "ctx"]
 
@@ -138,7 +141,7 @@ def _is_docstring(node: ast.stmt) -> bool:
     )
 
 
-def check_code(code: str, kind: StepKind) -> list[str]:
+def _check_code(code: str, kind: StepKind) -> list[str]:
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
@@ -168,4 +171,21 @@ def check_code(code: str, kind: StepKind) -> list[str]:
     violations.extend(_body_violations(func))
     if kind == "model":
         violations.extend(row_filter_violations(func))
+    return violations
+
+
+def check_code(code: str, kind: StepKind) -> list[str]:
+    violations = _check_code(code, kind)
+    if violations:
+        caller = current_caller()
+        hooks.audit(
+            "policy.code_guard",
+            decision="deny",
+            reason="; ".join(violations)[:300],
+            step_id=caller.step_id,
+            option_id=caller.option_id,
+            step_kind=kind,
+            violations=len(violations),
+            code_sha256=sha256_text(code),
+        )
     return violations

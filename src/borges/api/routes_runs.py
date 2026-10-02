@@ -29,6 +29,7 @@ from borges.runs.models import (
     RunSummary,
 )
 from borges.runs.reproduce_commands import ReproducibleUniverse, script_filename, with_reproduce
+from borges.telemetry.policy_audit import audited_policy
 
 if TYPE_CHECKING:
     from borges.runs.store import RunStore
@@ -69,7 +70,18 @@ async def create_run(
 ) -> RunCreated:
     if request.case_id is None and request.upload_id is None:
         raise HTTPException(status_code=400, detail="Provide a case_id or an upload_id.")
-    request = enforce_run_policy(request, settings, orchestrator, live_token)
+    request = audited_policy(
+        settings,
+        "run",
+        enforce_run_policy,
+        request,
+        settings,
+        orchestrator,
+        live_token,
+        case_id=request.case_id,
+        llm=request.llm,
+        upload=request.upload_id is not None,
+    )
     upload = _resolve_upload(request, uploads)
     data, name = upload if upload else (None, None)
     try:
