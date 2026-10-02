@@ -10,8 +10,10 @@ from borges.identity import api_key
 from borges.identity.chain import ChainBroken, ChainedJsonl, ChainStatus
 from borges.identity.principal import Principal, caller_principal
 from borges.identity.scopes import PUBLIC_SCOPES, parse_scopes
+from borges.identity.store_key import store_key
 
 KEYS_RELATIVE = Path("identity") / "keys.jsonl"
+KEYS_DOMAIN = "identity.keys"
 CREATED = "key.created"
 REVOKED = "key.revoked"
 
@@ -56,6 +58,10 @@ class KeyRecord:
         )
 
 
+def anchor_path_for(path: Path) -> Path:
+    return path.with_name(path.stem + ".anchor.jsonl")
+
+
 def keys_path(settings: Settings) -> Path:
     return Path(settings.borges_home) / KEYS_RELATIVE
 
@@ -81,9 +87,15 @@ def _fold(events: list[dict[str, Any]]) -> dict[str, KeyRecord]:
 class KeyStore:
     """Append-only, hash-chained store of API keys; only salted secret hashes are kept."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, key: str | None = None, anchored: bool = True) -> None:
         self.path = Path(path)
-        self._chain = ChainedJsonl(self.path)
+        self.anchor_path = anchor_path_for(self.path)
+        self._chain = ChainedJsonl(
+            self.path,
+            key=key,
+            domain=KEYS_DOMAIN,
+            anchor_path=self.anchor_path if anchored else None,
+        )
 
     def verify(self) -> ChainStatus:
         return self._chain.verify()
@@ -154,4 +166,4 @@ class KeyStore:
 
 
 def open_keystore(settings: Settings) -> KeyStore:
-    return KeyStore(keys_path(settings))
+    return KeyStore(keys_path(settings), store_key(settings))

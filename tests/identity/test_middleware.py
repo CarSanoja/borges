@@ -161,3 +161,24 @@ async def test_non_api_paths_are_not_gated(tmp_path) -> None:
 async def test_unknown_api_paths_are_a_plain_404(env: Env) -> None:
     async with env.client() as client:
         assert (await client.get("/api/nothing")).status_code == 404
+
+
+async def test_a_broken_key_store_gives_503_for_keys_and_leaves_anonymous_routes_alone(
+    env: Env,
+) -> None:
+    settings = env.app.state.settings
+    store = open_keystore(settings)
+    record, token = store.create("alice", "audit:read")
+    store.create("bob", "audit:read")
+    store.revoke(record.key_id)
+    lines = store.path.read_text().splitlines()
+    store.path.write_text("\n".join(lines[:-1]) + "\n")
+    async with env.client() as client:
+        keyed = await client.get("/api/audit", headers=bearer(token))
+        keyed_public = await client.get("/api/cases", headers=bearer(token))
+        anonymous = [await client.get(path) for path in PUBLIC_GETS]
+        scripted = await client.post("/api/runs", json={"case_id": "a", "llm": "scripted"})
+    assert keyed.status_code == 503 and keyed_public.status_code == 503
+    assert "key store" in keyed.json()["detail"]
+    assert [r.status_code for r in anonymous] == [200] * len(PUBLIC_GETS)
+    assert scripted.status_code == 202

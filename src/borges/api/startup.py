@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import logging
 import shutil
 from pathlib import Path
 from typing import Any
 
 from borges.config import Settings
+from borges.identity.store_key import UNKEYED_NOTICE, store_key
+
+logger = logging.getLogger(__name__)
 
 
 def sweep_sandboxes(settings: Settings) -> None:
@@ -21,3 +25,13 @@ def reconcile(settings: Settings, store: Any, orchestrator: Any) -> None:
     store.interrupt_running(active)
     if not live_elsewhere:
         sweep_sandboxes(settings)
+
+
+def warn_unkeyed(settings: Settings) -> bool:
+    if store_key(settings):
+        return False
+    logger.warning(
+        "key store and registry chains are %s; set BORGES_STORE_KEY (or BORGES_AUDIT_ANCHOR_KEY)",
+        UNKEYED_NOTICE,
+    )
+    return True

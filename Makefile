@@ -24,6 +24,7 @@ demo-red-cards:
 	$(BORGES) run --case red_cards --llm scripted
 
 serve: export BORGES_REGISTRY_ENFORCE=true
+serve: export BORGES_STORE_KEY_AUTOGEN=true
 serve:
 	$(FRONTEND) build
 	$(BORGES) serve

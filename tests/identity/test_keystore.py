@@ -5,7 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from borges.identity.keystore import KeyStore, KeyStoreError
+from borges.config import Settings
+from borges.identity import api_key
+from borges.identity.chain import ChainBroken
+from borges.identity.keystore import KeyStore, KeyStoreError, open_keystore
 
 
 @pytest.fixture
@@ -81,3 +84,86 @@ def test_listing_orders_by_creation(store: KeyStore) -> None:
     store.create("a", "audit:read")
     store.create("b", "audit:read")
     assert [r.name for r in store.listing()] == ["a", "b"]
+
+
+def truncate_last_line(path: Path) -> None:
+    lines = path.read_text().splitlines()
+    path.write_text("\n".join(lines[:-1]) + "\n")
+
+
+@pytest.mark.parametrize("key", [None, "store-secret"])
+def test_deleting_the_last_line_cannot_resurrect_a_revoked_key(
+    tmp_path: Path, key: str | None
+) -> None:
+    path = tmp_path / "keys.jsonl"
+    store = KeyStore(path, key)
+    first, token = store.create("alice", "audit:read")
+    store.create("bob", "audit:read")
+    store.revoke(first.key_id)
+    assert store.authenticate(token)[1] == "revoked"
+    truncate_last_line(path)
+    fresh = KeyStore(path, key)
+    assert not fresh.verify().ok
+    assert fresh.authenticate(token) == (None, "store_broken")
+
+
+def forged_admin_line(key_id: str, secret: str) -> str:
+    salt = "ab" * 8
+    event = {
+        "seq": 1,
+        "ts": 1.0,
+        "event": "key.created",
+        "key_id": key_id,
+        "name": "evil",
+        "scopes": ["admin"],
+        "salt": salt,
+        "secret_hash": api_key.hash_secret(salt, secret),
+        "expires_at": None,
+    }
+    return json.dumps(event) + "\n"
+
+
+@pytest.mark.parametrize("key", [None, "store-secret"])
+def test_a_handwritten_unhashed_record_is_refused(tmp_path: Path, key: str | None) -> None:
+    path = tmp_path / "keys.jsonl"
+    path.write_text(forged_admin_line("ffffffffffff", "forged"))
+    store = KeyStore(path, key)
+    status = store.verify()
+    assert not status.ok and "unhashed" in (status.reason or "")
+    token = api_key.format_token("ffffffffffff", "forged")
+    assert store.authenticate(token) == (None, "store_broken")
+    with pytest.raises(ChainBroken):
+        store.create("carol", "audit:read")
+
+
+def test_a_forged_unhashed_record_in_front_of_real_ones_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "keys.jsonl"
+    store = KeyStore(path)
+    store.create("alice", "audit:read")
+    path.write_text(forged_admin_line("ffffffffffff", "forged") + path.read_text())
+    assert not KeyStore(path).verify().ok
+
+
+def test_a_keyed_store_rejects_a_chain_recomputed_without_the_key(tmp_path: Path) -> None:
+    path = tmp_path / "keys.jsonl"
+    KeyStore(path, "store-secret").create("alice", "audit:read")
+    forged = tmp_path / "other" / "keys.jsonl"
+    attacker = KeyStore(forged)
+    _, token = attacker.create("evil", "admin")
+    path.write_text(forged.read_text())
+    victim = KeyStore(path, "store-secret")
+    assert victim.authenticate(token) == (None, "store_broken")
+
+
+def test_open_keystore_uses_the_store_key_and_falls_back_to_the_anchor_key(
+    tmp_path: Path,
+) -> None:
+    home = tmp_path / "home"
+    stored = Settings(_env_file=None, borges_home=home, borges_store_key="a")
+    open_keystore(stored).create("alice", "audit:read")
+    assert open_keystore(stored).verify().keyed
+    fallback = Settings(_env_file=None, borges_home=tmp_path / "h2", borges_audit_anchor_key="b")
+    assert open_keystore(fallback).verify().keyed
+    assert not open_keystore(Settings(_env_file=None, borges_home=tmp_path / "h3")).verify().keyed
+    wrong = Settings(_env_file=None, borges_home=home, borges_store_key="z")
+    assert not open_keystore(wrong).verify().ok

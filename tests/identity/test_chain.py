@@ -49,23 +49,86 @@ def test_unreadable_line_breaks_the_chain(tmp_path: Path) -> None:
     assert not ChainedJsonl(path).verify().ok
 
 
-def test_legacy_unhashed_prefix_is_accepted_and_extended(tmp_path: Path) -> None:
+def write_legacy(path: Path, rows: int = 1) -> None:
+    lines = [json.dumps({"seq": n, "event": "old"}) for n in range(1, rows + 1)]
+    path.write_text("\n".join(lines) + "\n")
+
+
+def test_unhashed_records_are_refused_unless_legacy_is_allowed(tmp_path: Path) -> None:
     path = tmp_path / "c.jsonl"
-    path.write_text(json.dumps({"seq": 1, "event": "old"}) + "\n")
-    chain = ChainedJsonl(path)
-    assert chain.verify().legacy == 1
-    chain.append({"event": "new"})
+    write_legacy(path)
     status = ChainedJsonl(path).verify()
-    assert status.ok and status.records == 2
+    assert not status.ok and "no legacy" in (status.reason or "")
 
 
-def test_seal_legacy_rewrites_with_hashes_and_keeps_the_head(tmp_path: Path) -> None:
+def test_legacy_prefix_is_attested_by_the_first_hashed_record(tmp_path: Path) -> None:
     path = tmp_path / "c.jsonl"
-    path.write_text(json.dumps({"seq": 1, "event": "old"}) + "\n")
-    before = ChainedJsonl(path).verify().head_hash
-    assert ChainedJsonl(path).seal_legacy() == 1
-    after = ChainedJsonl(path).verify()
-    assert after.legacy == 0 and after.head_hash == before
+    write_legacy(path, 2)
+    chain = ChainedJsonl(path, allow_legacy=True)
+    assert not chain.verify().ok
+    first = chain.append({"event": "new"})
+    assert first["legacy_digest"] and first["seq"] == 3
+    status = ChainedJsonl(path, allow_legacy=True).verify()
+    assert status.ok and status.records == 3 and status.legacy == 2
+    assert "legacy_digest" not in chain.append({"event": "next"})
+
+
+def test_legacy_prefix_edited_after_attestation_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "c.jsonl"
+    write_legacy(path, 2)
+    ChainedJsonl(path, allow_legacy=True).append({"event": "new"})
+    path.write_text(path.read_text().replace('"seq": 1', '"seq": 9', 1))
+    status = ChainedJsonl(path, allow_legacy=True).verify()
+    assert not status.ok and "not attested" in (status.reason or "")
+
+
+def test_forged_legacy_prefix_without_attestation_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "c.jsonl"
+    chain = ChainedJsonl(path, allow_legacy=True)
+    chain.append({"event": "a"})
+    chain.append({"event": "b"})
+    forged = json.dumps({"seq": 1, "event": "forged"}) + "\n"
+    path.write_text(forged + path.read_text())
+    status = ChainedJsonl(path, allow_legacy=True).verify()
+    assert not status.ok
+
+
+def test_unattested_legacy_only_file_is_refused_until_migrated(tmp_path: Path) -> None:
+    path = tmp_path / "c.jsonl"
+    write_legacy(path)
+    chain = ChainedJsonl(path, allow_legacy=True)
+    assert chain.attest_legacy()
+    assert ChainedJsonl(path, allow_legacy=True).verify().ok
+    assert not chain.attest_legacy()
+
+
+def test_keyed_chain_rejects_a_rewrite_that_recomputes_unkeyed_hashes(tmp_path: Path) -> None:
+    path = tmp_path / "c.jsonl"
+    chain = ChainedJsonl(path, key="secret", domain="d")
+    chain.append({"event": "a"})
+    forged = ChainedJsonl(tmp_path / "f.jsonl", domain="d")
+    forged.append({"event": "a", "evil": True})
+    path.write_text((tmp_path / "f.jsonl").read_text())
+    status = ChainedJsonl(path, key="secret", domain="d").verify()
+    assert not status.ok and "without a store key" in (status.reason or "")
+    assert status.keyed
+
+
+def test_keyed_hash_depends_on_key_and_domain(tmp_path: Path) -> None:
+    one = ChainedJsonl(tmp_path / "1.jsonl", key="k1", domain="d")
+    two = ChainedJsonl(tmp_path / "2.jsonl", key="k2", domain="d")
+    other = ChainedJsonl(tmp_path / "3.jsonl", key="k1", domain="e")
+    for chain in (one, two, other):
+        chain.append({"event": "a"})
+    assert len({c.verify().head_hash for c in (one, two, other)}) == 3
+    assert not ChainedJsonl(tmp_path / "1.jsonl", key="k2", domain="d").verify().ok
+
+
+def test_status_notice_names_the_mode(tmp_path: Path) -> None:
+    plain = ChainedJsonl(tmp_path / "p.jsonl")
+    keyed = ChainedJsonl(tmp_path / "k.jsonl", key="s")
+    assert "tamper-evident only against accidental edits" in plain.verify().notice
+    assert "tamper-evident only" not in keyed.verify().notice
 
 
 def test_missing_file_is_an_empty_valid_chain(tmp_path: Path) -> None:

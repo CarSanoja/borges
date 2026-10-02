@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 import time
 from pathlib import Path
 
+import pytest
+
 from borges.api.app import create_app
-from borges.api.startup import reconcile, sweep_sandboxes
+from borges.api.startup import reconcile, sweep_sandboxes, warn_unkeyed
 from borges.config import Settings
 from borges.runs.bus import EventBus
 from borges.runs.events import Event
@@ -100,3 +103,19 @@ def test_reconcile_spares_a_run_owned_by_a_live_process_and_its_sandbox(tmp_path
     assert store.meta("r_cli")["status"] == "running"
     assert [e.type for e in store.events("r_cli")] == ["stage", "stage"]
     assert sandbox.exists()
+
+
+def test_startup_warns_when_the_chains_are_unkeyed(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    settings = Settings(_env_file=None, borges_home=tmp_path)
+    with caplog.at_level(logging.WARNING):
+        assert warn_unkeyed(settings)
+    assert "tamper-evident only against accidental edits" in caplog.text
+
+
+def test_startup_is_quiet_with_a_key(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    settings = Settings(_env_file=None, borges_home=tmp_path, borges_store_key="k")
+    with caplog.at_level(logging.WARNING):
+        assert not warn_unkeyed(settings)
+    assert caplog.text == ""

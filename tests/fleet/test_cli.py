@@ -127,3 +127,9 @@ def test_verify_reports_ok_and_tampering(empty_home: Settings) -> None:
 
 def test_verify_the_tracked_seed() -> None:
     assert runner.invoke(cli.app, ["agents", "verify", "--seed"]).exit_code == 0
+
+
+def test_verify_states_the_mode(empty_home: Settings) -> None:
+    runner.invoke(cli.app, ["agents", "publish", "--approve"])
+    result = runner.invoke(cli.app, ["agents", "verify"])
+    assert "unkeyed: tamper-evident only against accidental edits" in result.output

@@ -91,6 +91,10 @@ def serve(
     from borges.telemetry.json_logging import configure_logging
 
     configure_logging()
+    from borges.config import get_settings
+    from borges.identity.store_key import ensure_store_key
+
+    ensure_store_key(get_settings())
     if reload:
         uvicorn.run(
             "borges.api.app:create_app",

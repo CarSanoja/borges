@@ -21,7 +21,7 @@ from borges.api import (
 )
 from borges.api.body_limit import BodyLimitMiddleware
 from borges.api.spa import mount_frontend
-from borges.api.startup import reconcile
+from borges.api.startup import reconcile, warn_unkeyed
 from borges.api.uploads import UploadStore
 from borges.config import Settings, get_settings
 from borges.gateway.errors import PolicyError
@@ -65,6 +65,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _build_missing(app)
+        warn_unkeyed(resolved)
         await asyncio.to_thread(reconcile, resolved, app.state.store, app.state.orchestrator)
         yield
         shutdown = getattr(app.state.orchestrator, "shutdown", None)

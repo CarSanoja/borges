@@ -69,6 +69,8 @@ class Settings(BaseSettings):
     borges_agent_token_ttl_s: int = 3600
     borges_audit_anchor_key: str | None = None
     borges_audit_anchor_every: int = 50
+    borges_store_key: str | None = None
+    borges_store_key_autogen: bool = False
     borges_armor_llm: bool = False
     borges_gateway_policy: Path = REPO_ROOT / "policy" / "gateway.json"
     borges_home: Path = REPO_ROOT / ".borges"

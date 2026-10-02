@@ -313,6 +313,7 @@ The image defaults to the scripted model and the local backend, with
 | `BORGES_ANON_ACTIVE_RUNS`, `BORGES_ANON_RUNS_PER_MIN`, `BORGES_ANON_LIVE_RUNS_PER_HOUR` | Per-client run quota for anonymous callers: concurrent runs, scripted starts per minute, live starts per hour (429 with `Retry-After`) |
 | `BORGES_RATE_ANON_BURST`, `BORGES_RATE_ANON_PER_S`, `BORGES_RATE_KEY_BURST`, `BORGES_RATE_KEY_PER_S` | Token-bucket rate limits per principal (anonymous callers are limited per client address and stricter); 429 with `Retry-After` beyond them |
 | `BORGES_REGISTRY_FOUR_EYES` | `true`: a version cannot be approved by the principal that published it, and `borges agents approve` needs a key with `registry:approve` |
+| `BORGES_STORE_KEY` (falls back to `BORGES_AUDIT_ANCHOR_KEY`), `BORGES_STORE_KEY_AUTOGEN` | HMAC key for the key store and registry chains and their anchors; autogen creates one under `BORGES_HOME/identity/` (set by `make serve` and the Docker image). Unset means unkeyed: tamper-evident only against accidental edits |
 | `BORGES_AUDIT_ANCHOR_KEY`, `BORGES_AUDIT_ANCHOR_EVERY` | HMAC key and record interval for the signed checkpoints of the global audit chain |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
 | `BORGES_BACKEND` | `contree` for isolated sandboxes |

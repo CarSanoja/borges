@@ -91,13 +91,15 @@ def write_anchor(config: AnchorConfig, count: int, head_hash: str) -> Anchor:
     return anchor
 
 
-def anchor_problem(anchors: list[Anchor], key: str | None) -> str | None:
+def anchor_problem(
+    anchors: list[Anchor], key: str | None, key_name: str = "BORGES_AUDIT_ANCHOR_KEY"
+) -> str | None:
     prev = GENESIS_HASH
     for index, anchor in enumerate(anchors, start=1):
         if anchor.alg == SIGNED and not key:
-            return "the anchor is signed but BORGES_AUDIT_ANCHOR_KEY is not set"
+            return f"the anchor is signed but {key_name} is not set"
         if key and anchor.alg != SIGNED:
-            return f"anchor {index} is not signed although BORGES_AUDIT_ANCHOR_KEY is set"
+            return f"anchor {index} is not signed although {key_name} is set"
         if not hmac.compare_digest(
             anchor.mac, _digest(anchor, key if anchor.alg == SIGNED else None)
         ):

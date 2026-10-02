@@ -76,3 +76,27 @@ def test_verify_detects_tampering(home: Settings) -> None:
 
 def test_empty_list() -> None:
     assert "no keys" in runner.invoke(app, ["keys", "list"]).output
+
+
+def test_verify_states_the_mode_and_detects_truncation(
+    home: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for name in ("a", "b"):
+        runner.invoke(app, ["keys", "create", "--name", name, "--scopes", "audit:read"])
+    plain = runner.invoke(app, ["keys", "verify"])
+    assert "unkeyed: tamper-evident only against accidental edits" in plain.output
+    path = home.borges_home / "identity" / "keys.jsonl"
+    path.write_text(path.read_text().splitlines()[0] + "\n")
+    cut = runner.invoke(app, ["keys", "verify"])
+    assert cut.exit_code == 1 and "truncated" in cut.output
+    assert "accidental edits" in cut.output
+
+
+def test_verify_with_a_store_key_says_keyed(
+    home: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("BORGES_STORE_KEY", "k")
+    runner.invoke(app, ["keys", "create", "--name", "a", "--scopes", "audit:read"])
+    result = runner.invoke(app, ["keys", "verify"])
+    assert result.exit_code == 0 and "keyed: HMAC-SHA256" in result.output
+    assert "accidental" not in result.output

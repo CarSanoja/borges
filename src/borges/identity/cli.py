@@ -111,7 +111,11 @@ def verify() -> None:
     store = open_keystore(get_settings())
     status = store.verify()
     if status.ok:
-        typer.echo(f"OK {status.records} records head={status.head_hash} {store.path}")
+        typer.echo(
+            f"OK {status.records} records head={status.head_hash} {store.path} ({status.notice})"
+        )
         return
-    typer.echo(f"BROKEN at line {status.broken_line}: {status.reason}; {store.path}")
+    typer.echo(
+        f"BROKEN at line {status.broken_line}: {status.reason}; {store.path} ({status.notice})"
+    )
     raise typer.Exit(1)

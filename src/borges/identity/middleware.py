@@ -178,6 +178,14 @@ class IdentityMiddleware:
             return
         reason = f"api key rejected: {failure}"
         await self._audit_deny(ANONYMOUS, reason, scope, route, requirement)
+        if failure == "store_broken":
+            await self._reject(
+                send,
+                503,
+                "The key store failed integrity verification; keyed access is suspended. "
+                "Anonymous public routes keep working.",
+            )
+            return
         await self._reject(send, 401, "The API key is not valid (unknown, revoked or expired).")
 
     async def _rate_limited(

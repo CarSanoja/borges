@@ -4,6 +4,7 @@ from pathlib import Path
 
 from borges.config import Settings
 from borges.fleet.store import RegistryStore
+from borges.identity.store_key import store_key
 
 SEED_PATH = Path(__file__).resolve().parent / "registry_seed.jsonl"
 STORE_RELATIVE = Path("fleet") / "registry.jsonl"
@@ -42,7 +43,12 @@ def import_seed(store: RegistryStore, seed: RegistryStore) -> int:
     return imported
 
 
+def home_store(settings: Settings) -> RegistryStore:
+    return RegistryStore(store_path(settings), key=store_key(settings), anchored=True, legacy=True)
+
+
 def open_store(settings: Settings) -> RegistryStore:
-    store = RegistryStore(store_path(settings))
+    store = home_store(settings)
+    store.attest_legacy()
     import_seed(store, seed_store())
     return store

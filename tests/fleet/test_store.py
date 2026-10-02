@@ -111,7 +111,7 @@ def test_a_broken_store_refuses_new_writes(tmp_path: Path) -> None:
         RegistryStore(path).publish("coder", "1.0.0", "sha-c", {}, "major", "x", "alice")
 
 
-def test_an_unhashed_legacy_store_is_accepted_and_extended(tmp_path: Path) -> None:
+def test_an_unhashed_legacy_store_is_attested_and_extended(tmp_path: Path) -> None:
     path = tmp_path / "registry.jsonl"
     legacy = {
         "seq": 1,
@@ -127,12 +127,46 @@ def test_an_unhashed_legacy_store_is_accepted_and_extended(tmp_path: Path) -> No
         "by": "operator",
     }
     path.write_text(json.dumps(legacy) + "\n")
-    store = RegistryStore(path)
+    store = RegistryStore(path, legacy=True)
+    assert not store.verify().ok
+    assert store.attest_legacy()
     assert store.get("judge", "1.0.0").state == "approved"
     store.publish("coder", "1.0.0", "sha-c", {}, "major", "new", "alice")
-    assert RegistryStore(path).verify().ok
+    assert RegistryStore(path, legacy=True).verify().ok
+    assert RegistryStore(path, legacy=True).get("coder", "1.0.0") is not None
 
 
 def test_the_tracked_seed_is_sealed_and_intact() -> None:
     status = seed_store().verify()
     assert status.ok and status.legacy == 0 and status.records > 0
+
+
+def test_a_truncated_anchored_registry_fails_closed(tmp_path: Path) -> None:
+    path = tmp_path / "registry.jsonl"
+    store = RegistryStore(path, key="k", anchored=True)
+    put(store, "1.0.0", "a")
+    store.transition("judge", "1.0.0", "approved", "boss")
+    lines = path.read_text().splitlines()
+    path.write_text(lines[0] + "\n")
+    fresh = RegistryStore(path, key="k", anchored=True)
+    assert not fresh.verify().ok
+    with pytest.raises(RegistryTampered, match="truncated"):
+        fresh.records()
+    with pytest.raises(RegistryTampered):
+        put(fresh, "1.1.0", "b")
+
+
+def test_a_forged_legacy_prefix_is_refused_in_an_attested_registry(tmp_path: Path) -> None:
+    path = tmp_path / "registry.jsonl"
+    store = RegistryStore(path, legacy=True)
+    put(store, "1.0.0", "a")
+    forged = {"seq": 1, "event": "version.published", "agent_id": "judge", "version": "0.0.1"}
+    path.write_text(json.dumps(forged) + "\n" + path.read_text())
+    with pytest.raises(RegistryTampered, match="not attested"):
+        RegistryStore(path, legacy=True).records()
+
+
+def test_a_registry_without_legacy_refuses_unhashed_records(tmp_path: Path) -> None:
+    path = tmp_path / "registry.jsonl"
+    path.write_text(json.dumps({"seq": 1, "event": "version.published"}) + "\n")
+    assert not RegistryStore(path).verify().ok

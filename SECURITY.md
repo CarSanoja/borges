@@ -218,9 +218,13 @@ closed. `src/borges/identity/` holds the pieces.
   `uploads:write`, `runs:create:live:upload`, `registry:publish`, `registry:approve`,
   `audit:read`, `admin`.
 - **Key store.** `BORGES_HOME/identity/keys.jsonl`, append-only and hash-chained (`prev_hash`,
-  `hash`), verified on every read. Only a per-key salt and the HMAC-SHA256 of the secret are
-  stored. If the chain is broken, every key is refused (anonymous access keeps working) and
-  `borges keys verify` names the first bad line.
+  `hash`), verified on every read, with a signed checkpoint file beside it
+  (`identity/keys.anchor.jsonl`, see Store integrity). Only a per-key salt and the HMAC-SHA256 of
+  the secret are stored. Every record must carry a hash: the key store never had unhashed data,
+  so an unhashed record is refused, not treated as legacy. If the chain is broken, truncated or
+  diverges from its anchor, every key is refused (`store_broken`): a request that presents a key
+  gets 503, anonymous public routes keep working, and `borges keys verify` names the first bad
+  line.
 - **One route table.** `identity/route_table.py` maps every method and path to a required scope.
   The ASGI middleware rejects a method and path that are not in the table with 403 and an audit
   record, so a new route is closed until someone declares it; a test fails if the app gains an
@@ -253,8 +257,10 @@ closed. `src/borges/identity/` holds the pieces.
   execution.
 - **Registry governance.** Approvals record the approving principal. With
   `BORGES_REGISTRY_FOUR_EYES=true` the publisher cannot approve their own version and the CLI
-  needs a key with `registry:approve`. The registry store is hash-chained and verified on load:
-  a broken store is refused with a clear error (HTTP 503), and `borges agents verify` checks it.
+  needs a key with `registry:approve`. The registry store is hash-chained and anchored like the key
+  store and verified on load: a broken, truncated or diverging store is refused with a clear
+  error (HTTP 503), and `borges agents verify` checks it. The tracked seed
+  (`fleet/registry_seed.jsonl`) is public and always unkeyed; it is reviewed in git, not signed.
   A principal holding two keys can still approve its own work; four-eyes compares principals.
   With four-eyes on, publishing from the CLI needs a key too, so a publisher cannot be recorded
   under an invented `--as` name and then approve under their own key.
@@ -266,6 +272,54 @@ closed. `src/borges/identity/` holds the pieces.
   attacker who rewrites the anchor file too, so copy the anchor file off the machine. A last
   line cut short by a crash is moved to `global.jsonl.torn` and an `audit.torn_line` record
   says so.
+
+## Store integrity (key store and registry)
+
+The key store and the agent registry are `ChainedJsonl` files (`src/borges/identity/chain.py`).
+Each record carries `prev_hash` and `hash` over its canonical JSON.
+
+- **Keyed mode.** With `BORGES_STORE_KEY` set (falling back to `BORGES_AUDIT_ANCHOR_KEY`) the
+  link is HMAC-SHA256 under a key derived from it per store and purpose, and so is the anchor
+  signature. `make serve` and the Docker image set `BORGES_STORE_KEY_AUTOGEN=true`: when no key is
+  configured, `borges serve` creates a random one in `BORGES_HOME/identity/store.key` (mode 0600)
+  and uses it, unless a key store or registry written without a key already exists (then it stays
+  unkeyed and warns, so an upgrade never locks a deployment out). A key kept beside the store only stops an attacker who can write the store files
+  but cannot read that key file; for more, supply the key from your secret store and keep it out
+  of `BORGES_HOME`. Local development and the tests run without a key.
+- **Unkeyed mode.** Without a key the link is plain sha256 and every status output says
+  `unkeyed: tamper-evident only against accidental edits`; the server logs a warning at startup.
+  Anyone who can write the file can recompute every hash and anchor.
+- **Anchors.** Every append writes a checkpoint (record count, head hash, time, signature, link
+  to the previous checkpoint) to a separate file: `identity/keys.anchor.jsonl` and
+  `fleet/registry.anchor.jsonl`. Opening a store whose chain is shorter than its last anchor, or
+  whose record at the anchored position has another hash, fails closed with `ChainBroken`
+  (the registry raises `RegistryTampered`); appends are refused too. A crash between the record
+  and its checkpoint leaves the chain one record ahead of the anchor, which is accepted.
+- **Legacy.** The key store accepts no unhashed record. The registry store from the first
+  fleet wave may hold an unhashed prefix: it is accepted only when the first hashed record
+  carries a `legacy_digest` of exactly that prefix, which `open_store` writes at migration
+  (a `store.migrated` record when nothing else is appended). A forged or edited prefix, or a
+  legacy-only file nobody has migrated, is refused.
+
+Threat model.
+
+| Attack on the store files | Without a key | With a key |
+| --- | --- | --- |
+| Edit or delete a record in the middle | detected | detected |
+| Delete the tail, anchor intact | detected | detected |
+| Replace the file by a hand-written unhashed record | detected (key store) | detected |
+| Replace the file by a self-consistent chain | detected while the anchor file is intact | detected |
+| Rewrite chain and anchor consistently (recompute hashes) | not detected | detected |
+| Delete the anchor file | not detected; the next append starts a new one | detected |
+| Roll back chain and anchor together to an older consistent pair | not detected | not detected |
+| Delete both files | indistinguishable from a new install | indistinguishable from a new install |
+
+An attacker who holds the store key and has write access is out of scope: they can forge a
+valid chain and anchor. Rolling back both files to an earlier state is not detectable from the
+machine alone; copy the anchor file off the host to detect it. Deleting the key store leaves
+only anonymous access, and deleting the registry re-imports the tracked seed, so neither
+widens access. Adding a key to a store written without one, or removing it, makes the store
+fail verification (the reason says so); move the old files aside to start a fresh store.
 
 ## Gateway (unified routing and policy)
 

@@ -9,7 +9,7 @@ import typer
 from borges.config import Settings, get_settings
 from borges.fleet.fleet import build_fleet
 from borges.fleet.governance import FourEyesViolation, change_state, publish_audited
-from borges.fleet.locations import SEED_ACTOR, open_store, seed_store, store_path
+from borges.fleet.locations import SEED_ACTOR, home_store, open_store, seed_store
 from borges.fleet.models import Approval
 from borges.fleet.store import RegistryStore, RegistryTampered, TransitionError
 from borges.identity.cli_actor import ActorError, resolve_actor
@@ -151,14 +151,17 @@ def retire(
 @agents_app.command()
 def verify(seed: SeedOption = False) -> None:
     """Recompute the registry hash chain and report the first broken link."""
-    path = seed_store().path if seed else store_path(get_settings())
-    status = RegistryStore(path).verify()
+    store = seed_store() if seed else home_store(get_settings())
+    path = store.path
+    status = store.verify()
     if not path.is_file():
         typer.echo(f"no registry at {path}")
         raise typer.Exit(2)
     if status.ok:
         legacy = f" ({status.legacy} unhashed legacy records)" if status.legacy else ""
-        typer.echo(f"OK {status.records} records head={status.head_hash}{legacy} {path}")
+        typer.echo(
+            f"OK {status.records} records head={status.head_hash}{legacy} {path} ({status.notice})"
+        )
         return
-    typer.echo(f"BROKEN at line {status.broken_line}: {status.reason}; {path}")
+    typer.echo(f"BROKEN at line {status.broken_line}: {status.reason}; {path} ({status.notice})")
     raise typer.Exit(1)

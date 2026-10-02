@@ -7,6 +7,7 @@ from borges.fleet.models import Approval
 from borges.fleet.versions import Transition, VersionRecord, parse_version
 from borges.identity.chain import ChainBroken, ChainedJsonl, ChainStatus
 
+REGISTRY_DOMAIN = "fleet.registry"
 PUBLISHED = "version.published"
 STATE_CHANGED = "state.changed"
 ALLOWED = {
@@ -33,9 +34,23 @@ class RegistryTampered(ChainBroken):
 class RegistryStore:
     """Append-only JSONL of published agent versions and their approval transitions."""
 
-    def __init__(self, path: Path) -> None:
+    def __init__(
+        self, path: Path, key: str | None = None, anchored: bool = False, legacy: bool = False
+    ) -> None:
         self.path = Path(path)
-        self._chain = ChainedJsonl(self.path)
+        self._chain = ChainedJsonl(
+            self.path,
+            key=key,
+            domain=REGISTRY_DOMAIN,
+            anchor_path=self.path.with_name(self.path.stem + ".anchor.jsonl") if anchored else None,
+            allow_legacy=legacy,
+        )
+
+    def attest_legacy(self) -> bool:
+        try:
+            return self._chain.attest_legacy()
+        except ChainBroken as broken:
+            raise RegistryTampered(broken.path, broken.line, broken.reason) from broken
 
     def events(self) -> list[dict[str, Any]]:
         try:
@@ -55,6 +70,8 @@ class RegistryStore:
     def records(self) -> list[VersionRecord]:
         folded: dict[tuple[str, str], VersionRecord] = {}
         for event in self.events():
+            if event["event"] not in (PUBLISHED, STATE_CHANGED):
+                continue
             key = (event["agent_id"], event["version"])
             if event["event"] == PUBLISHED:
                 record = VersionRecord(
