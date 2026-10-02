@@ -37,6 +37,8 @@ dev:
 record-demos:
 	$(BORGES) record-demo --case checkout_ab --llm scripted
 	$(BORGES) record-demo --case red_cards --llm scripted
+	$(BORGES) record-demo --case marp_religiosity --llm scripted
+	$(BORGES) record-demo --case marp_norms --llm scripted
 	uv run --no-sync python scripts/export_recorded_run.py
 
 live-smoke:
