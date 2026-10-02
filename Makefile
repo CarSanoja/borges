@@ -23,7 +23,6 @@ demo-cli:
 demo-red-cards:
 	$(BORGES) run --case red_cards --llm scripted
 
-serve: export BORGES_ALLOW_UNTRUSTED_LOCAL=true
 serve:
 	$(FRONTEND) build
 	$(BORGES) serve
