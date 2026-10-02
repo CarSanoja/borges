@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable
 from contextlib import asynccontextmanager
 
 import pandas as pd
@@ -18,7 +18,7 @@ from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, Universe
 from borges.garden.search import combination_flip_choices, minimal_flip, single_flip_choices
 from borges.garden.verify import verify_flip
-from borges.llm.client import LLMClient, UsageTotals
+from borges.llm.client import BudgetExceeded, LLMClient, UsageTotals
 from borges.runs.adversary_round import run_adversary_round
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData
@@ -116,14 +116,24 @@ class Pipeline:
                 self.caveats.append(
                     "The universe budget ran out before every single-decision flip was tried."
                 )
-            await runner.run_many(singles, "single")
+            await self._tolerate_budget(
+                runner.run_many(singles, "single"), "The single-decision flips stopped early"
+            )
         if runner.remaining > 0:
             await self._adversary(plan, runner, baseline)
         else:
             self.caveats.append("The universe budget ran out before the adversary stage ran.")
         self.flip = minimal_flip(plan, self.garden)
         if self.flip is None and runner.remaining > 0:
-            await self._combinations(plan, runner)
+            await self._tolerate_budget(
+                self._combinations(plan, runner), "The combination flips stopped early"
+            )
+
+    async def _tolerate_budget(self, work: Awaitable[object], label: str) -> None:
+        try:
+            await work
+        except BudgetExceeded as exc:
+            self.caveats.append(f"{label} because the spend or run cap was reached: {exc}")
 
     async def _adversary(
         self, plan: AnalysisPlan, runner: UniverseRunner, baseline: Universe
