@@ -12,9 +12,25 @@ from borges.analysis import profile as profile_module
 from borges.analysis.models import DatasetProfile
 
 MAX_BYTES = 20 * 1024 * 1024
+PARQUET_MAGIC = b"PAR1"
 MIN_COLUMNS = 2
 MIN_ROWS = 50
 _ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
+
+
+def _is_parquet(content: bytes, filename: str) -> bool:
+    return content[:4] == PARQUET_MAGIC or filename.lower().endswith(".parquet")
+
+
+def _read_table(content: bytes, filename: str) -> pd.DataFrame:
+    parquet = _is_parquet(content, filename)
+    try:
+        if parquet:
+            return pd.read_parquet(io.BytesIO(content))
+        return pd.read_csv(io.BytesIO(content))
+    except Exception as exc:
+        kind = "parquet file" if parquet else "CSV"
+        raise ValueError(f"The file is not a readable {kind}: {exc}") from exc
 
 
 class UploadQuotaError(ValueError):
@@ -36,14 +52,11 @@ class UploadStore:
             raise ValueError("The file is larger than 20 MB.")
         if not csv_bytes.strip():
             raise ValueError("The file is empty.")
-        try:
-            df = pd.read_csv(io.BytesIO(csv_bytes))
-        except Exception as exc:
-            raise ValueError(f"The file is not a readable CSV: {exc}") from exc
+        df = _read_table(csv_bytes, filename)
         if df.shape[1] < MIN_COLUMNS:
-            raise ValueError(f"The CSV needs at least {MIN_COLUMNS} columns.")
+            raise ValueError(f"The table needs at least {MIN_COLUMNS} columns.")
         if df.shape[0] < MIN_ROWS:
-            raise ValueError(f"The CSV needs at least {MIN_ROWS} rows.")
+            raise ValueError(f"The table needs at least {MIN_ROWS} rows.")
         name = Path(filename).name or "upload.csv"
         profile = profile_module.profile_dataframe(df, name)
         upload_id = uuid.uuid4().hex

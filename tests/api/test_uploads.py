@@ -73,3 +73,28 @@ def test_quota_allows_uploads_under_the_limit(tmp_path) -> None:
     store.put(csv_bytes(), "a.csv")
     store.put(csv_bytes(), "b.csv")
     assert len(list(tmp_path.glob("*.parquet"))) == 2
+
+
+def parquet_bytes(rows: int = 60) -> bytes:
+    buffer = io.BytesIO()
+    pd.DataFrame({"a": range(rows), "b": range(rows)}).to_parquet(buffer)
+    return buffer.getvalue()
+
+
+def test_parquet_upload_is_accepted(tmp_path) -> None:
+    store = UploadStore(tmp_path)
+    upload_id, profile = store.put(parquet_bytes(), "data.parquet")
+    assert profile.n_rows == 60
+    data, name = store.get(upload_id)
+    assert name == "data.parquet"
+    assert len(pd.read_parquet(io.BytesIO(data))) == 60
+
+
+def test_parquet_is_detected_by_content_when_the_name_lies(tmp_path) -> None:
+    upload_id, _ = UploadStore(tmp_path).put(parquet_bytes(), "data.csv")
+    assert upload_id
+
+
+def test_corrupt_parquet_is_rejected_with_a_clear_message(tmp_path) -> None:
+    with pytest.raises(ValueError, match="parquet file"):
+        UploadStore(tmp_path).put(b"PAR1 not really", "x.parquet")

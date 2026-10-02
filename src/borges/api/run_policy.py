@@ -5,7 +5,7 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from borges.api.routes_health import read_spend
+from borges.api.live_rules import UNTRUSTED_LOCAL_MESSAGE, read_spend, untrusted_local_blocked
 from borges.config import Settings
 from borges.runs.models import RunRequest
 
@@ -42,12 +42,8 @@ def _check_live(
 
 
 def _check_upload_trust(settings: Settings, live_token: str | None) -> None:
-    if settings.borges_backend == "local" and not settings.borges_allow_untrusted_local:
-        raise _reject(
-            400,
-            "Uploaded datasets run live only on isolated sandboxes (BORGES_BACKEND=contree), "
-            "or with BORGES_ALLOW_UNTRUSTED_LOCAL=true on a private machine.",
-        )
+    if untrusted_local_blocked(settings):
+        raise _reject(400, UNTRUSTED_LOCAL_MESSAGE)
     expected = settings.borges_live_token
     if expected and not hmac.compare_digest(
         (live_token or "").encode("utf-8"), expected.encode("utf-8")

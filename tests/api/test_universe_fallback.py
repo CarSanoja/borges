@@ -91,5 +91,5 @@ async def test_script_reproduces_the_recorded_estimate_when_run(tmp_path) -> Non
         cwd=tmp_path,
     )
     assert proc.returncode == 0, proc.stderr
-    assert "verdict: DON'T SHIP" in proc.stdout
+    assert f"verdict: {flip['flipped_verdict']}" in proc.stdout
     assert f"estimate {flip['flipped_result']['estimate']:.4f}" in proc.stdout
