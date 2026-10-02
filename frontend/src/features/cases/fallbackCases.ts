@@ -4,7 +4,7 @@ export const FALLBACK_CASES: CaseCard[] = [
   {
     id: "checkout_ab",
     title: "New checkout A/B test",
-    subtitle: "Your AI analyst says ship. Is that the only defensible answer?",
+    subtitle: "Ship or don't ship? One defensible filter decides.",
     question: "Does the new checkout increase the conversion rate?",
     decision_rule: {
       metric: "conversion lift, treatment minus control (percentage points)",

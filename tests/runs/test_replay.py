@@ -46,3 +46,14 @@ async def test_empty_stream_and_invalid_speed(sleeps: list[float]) -> None:
     assert [e async for e in replay_events([])] == []
     with pytest.raises(ValueError):
         _ = [e async for e in replay_events(events(0), speed=0)]
+
+
+async def test_preparation_events_are_compressed(sleeps: list[float]) -> None:
+    stream = [
+        Event(seq=1, ts=0.0, run_id="r", type="stage"),
+        Event(seq=2, ts=8.0, run_id="r", type="option.coded"),
+        Event(seq=3, ts=16.0, run_id="r", type="option.smoke"),
+        Event(seq=4, ts=24.0, run_id="r", type="universe.finished"),
+    ]
+    _ = [e async for e in replay_events(stream, speed=4.0)]
+    assert sleeps == [0.15, 0.15, 1.5]

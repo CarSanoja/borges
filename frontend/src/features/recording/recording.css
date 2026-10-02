@@ -36,6 +36,9 @@
 
 .recording-badge {
   display: inline-block;
+  align-self: flex-start;
+  width: fit-content;
+  color: var(--verdigris);
   margin: 0 0 8px;
   padding: 2px 10px;
   border: 1px solid currentColor;
