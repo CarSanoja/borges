@@ -152,3 +152,9 @@ def test_reviewer_checks_the_named_estimator_and_the_p_value() -> None:
 
     assert "estimator the spec names must be the one the code fits" in SYSTEM
     assert "not a share of bootstrap draws" in SYSTEM
+
+
+def test_narrator_does_not_invent_a_missing_re_execution() -> None:
+    from borges.analysis.prompts.narrator import SYSTEM
+
+    assert "When no flip was found there is nothing to re-execute" in SYSTEM
