@@ -124,6 +124,7 @@ What exists, verified against the primary sources (September and October 2026):
 | ForkSCOPE (Balaji, Yeltekin, Zheng, arXiv 2609.12438, Sept 2026) | Human-AI pipeline that induces the forks and a taxonomy bottom-up from the code of many end-to-end analyses and shows them in an evidence-linked viewer. Its fork-to-outcome attribution is observational: choices co-occur and were not assigned | [arXiv](https://arxiv.org/abs/2609.12438) |
 | "The Agentic Garden of Forking Paths" (Miao, Pritchard, Zou, arXiv 2607.01507, July 2026; a different paper from the one above) | AI agents with different personas reproduce 72% of a human ideological gap on 42 teams' immigration analyses; introduces the m-value and an Agentic Bootstrap to place a reported finding in the space of plausible analyses. We found no public code for it | [arXiv](https://arxiv.org/abs/2607.01507) |
 | "Many AI analysts, one dataset" (Bertran, Fogliato, Wu; arXiv 2602.18710, Feb 2026; PNAS 2026) and its open-source code, [amazon-science/agentic-forking-path](https://github.com/amazon-science/agentic-forking-path) (Apache-2.0) | The closest open implementation. Autonomous data-scientist agents (Inspect AI, Docker containers) each analyse the same dataset and hypothesis under a different persona prompt (neutral, skeptical, confirmation-seeking) over several independent epochs and models. A separate judge audits each run; a 3-pass LLM extraction then reads the analytic decisions off the finished runs, builds a taxonomy, and reports hypothesis-support rates per persona, p-value distributions, specification curves and a "compliance gap" as a p-hacking diagnostic. About 5,000 analyst runs over 3 datasets, 4 LLMs and 5 personas; verdicts and effect sizes reverse between runs and persona steering shifts the distribution | [arXiv](https://arxiv.org/abs/2602.18710), [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC13393493/), [code](https://github.com/amazon-science/agentic-forking-path) |
+| Fixed full grid over Borges's seeded options (our own baseline, `scripts/compare_grid.py`) | The `specr` or hand-written multiverse approach: the full Cartesian product of each curated case's seeded plan options, every universe executed through the same harness and local backend, with no adversary. Complete grids of 72, 32, 768 and 1,536 universes ran offline in 27, 12, 204 and 424 s. It finds the same smallest flip as Borges in every case (or none in either), at 2.4 to 102 times the universes. Not a run of `specr` itself or of `agentic-forking-path` | [evidence/grid_vs_search.md](evidence/grid_vs_search.md), [json](evidence/grid_vs_search.json) |
 
 **What Borges does that these do not.**
 1. **An adversary that proposes forks on the live intermediate state.** Boba, `multiverse`
@@ -152,8 +153,11 @@ options in a plan, executed from shared checkpoints, an adversary proposes new o
 the conclusion, and each universe can be re-executed with `borges reproduce`. They are
 similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
 sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
-5,000 real model runs and a published study, while Borges has never called a model. No
-head-to-head on the same dataset exists; we have not run their pipeline.
+5,000 real model runs and a published study, while Borges has never called a model. We have
+not run their pipeline: it needs a live LLM API, which this machine does not have. The
+measurable part, a fixed full grid over the same seeded options, was run offline (see
+"What a statistician would object to" and `evidence/grid_vs_search.md`); a head-to-head
+against their agents on the same dataset still does not exist.
 
 **What it does not do better.**
 - `multiverse` also avoids recomputing shared work, and Boba and `multiverse` are mature,
@@ -170,6 +174,61 @@ head-to-head on the same dataset exists; we have not run their pipeline.
   no planner listed; Borges's coverage is limited by its planner and adversary.
 - Mature tools are used and checked by researchers today; Borges has not run a live model
   and has no external users yet.
+
+## What a statistician would object to
+
+Written as a skeptical reviewer would put it, each with Borges's honest answer. None of this
+has been run live on a model.
+
+1. **"Your option space is seeded by hand or by a model. It is not exhaustive, so 'robust'
+   means robust to what you listed."** Correct. The curated cases are seeded from published
+   many-analysts choices, and in live mode a planner and an adversary propose the rest; any
+   fork nobody proposed is invisible, and a human team also changes the estimand and the
+   model family (red cards: the teams span 0.89 to 2.93, Borges's curve 1.20 to 1.36). The
+   robustness share is a statement about the explored menu, not about all defensible
+   analyses. The measurable part: on the four cases the fixed full grid over the seeded
+   options finds the same smallest flip as Borges, so the bounded search loses nothing
+   inside the menu; it says nothing about the space outside it. Evidence:
+   `evidence/grid_vs_search.md`.
+2. **"Your adversary is biased toward flips by design."** Yes: it is told to argue against
+   the conclusion, the search keeps the smallest flip it finds, and the beam ranks
+   candidates by how far they move the estimate. The calibration measured the bias: with no
+   real artefact and a false SHIP, a flip was reported 89% of the time, all of them
+   significance crossings. For the same reason its robustness share is not a uniform
+   sample: checkout 83% against the grid's 50%, red cards 86% against 90%, marp_norms 93%
+   against 89.5%. Read a reported flip by its kind. Evidence: `evidence/calibration.md`,
+   `evidence/grid_vs_search.md`.
+3. **"Most flips are 'p crossed 0.05', which is noise near a threshold."** Agreed, and the
+   flagship red-cards flip is of that kind (OR 1.34 to 1.20, still above 1). In the
+   calibration, 0 of 272 clean datasets gave a direction flip, against 44% when an
+   artefact is planted; significance flips are expected from noise even for a large real
+   effect (16%). The report labels each flip `direction` or `significance`, and only the
+   first is a strong claim. Evidence: `evidence/calibration.md`; the same pattern in the
+   grid (marp_norms: the smallest flip is a significance crossing, 161 of 1,536 universes
+   flip).
+4. **"The LLM judge of defensibility has no ground truth."** True. Its scores gate which
+   adversary proposals enter the garden, but there is no inter-rater check against human
+   methodologists and no agreement statistic; in scripted mode the scores are fixtures, and
+   no model has judged anything. The seeded options of the curated cases do not depend on
+   the judge. Until a rater study exists, treat 'defensible' as a documented filter, not a
+   validated measurement. No evidence file yet; this limit is open.
+5. **"Forking paths inflate false discoveries, and you report a flip, not a corrected
+   p-value."** Right. Borges does not adjust inference across the universes, does not test
+   the specification curve (`specr` does, in its development version), and 'N of M agree'
+   is a count over what was run, not a probability that the finding is true. It tells you
+   which decision turns your verdict and how large the explored disagreement is; the
+   decision rule is applied to each universe's own p-value. Evidence: the robustness shares
+   in `evidence/grid_vs_search.md` (unweighted over the product, so a five-change universe
+   counts as much as a single change).
+6. **"Where is the head-to-head with a fixed grid or with agentic-forking-path?"** The
+   fixed grid, offline, complete, on the four curated cases (72, 32, 768 and 1,536
+   universes): same smallest flip in all four, 2.4 to 102 times fewer universes for Borges,
+   and wall time only worth saving on the large spaces (marp_norms 19 s against 424 s; on
+   red cards and checkout the grid took 27 and 12 s against 23 and 13 s). The grid finds
+   nothing that Borges missed. What it does not test: Borges's adversary-proposed options
+   (outside the grid), a live model, or any cost in tokens. `agentic-forking-path` needs a
+   live LLM API and was not run, and neither were `specr` or RobustiPy, so there is no
+   comparison of forks, flips and cost against them. Evidence: `evidence/grid_vs_search.md`.
 
 ## Built on Nebius and NVIDIA
 

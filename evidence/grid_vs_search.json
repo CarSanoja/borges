@@ -1,0 +1,313 @@
+{
+  "meta": {
+    "machine": "arm64 Darwin 25.5.0",
+    "python": "3.13.9",
+    "backend": "local sandbox (LocalBackend), shared prefixes via GardenExecutor",
+    "concurrency": 6
+  },
+  "cases": {
+    "red_cards": {
+      "case": "red_cards",
+      "question": "Are soccer referees more likely to give red cards to dark-skin-toned players than to light-skin-toned players?",
+      "decision_rule": {
+        "metric": "odds ratio of a red card per game, dark vs light skin tone",
+        "comparator": "gt",
+        "threshold": 1.0,
+        "alpha": 0.05,
+        "positive_label": "BIAS DETECTED",
+        "negative_label": "NO CLEAR EVIDENCE"
+      },
+      "options_per_step": {
+        "skin_tone": 4,
+        "exclusions": 2,
+        "covariates": 3,
+        "model": 3
+      },
+      "grid": {
+        "grid_size": 72,
+        "universes_run": 72,
+        "capped": false,
+        "cap": null,
+        "seed": 20261002,
+        "n_done": 72,
+        "n_failed": 0,
+        "n_flipped": 7,
+        "robustness": 0.9027777777777778,
+        "baseline_verdict": "BIAS DETECTED",
+        "estimate_min": 1.2027194818764144,
+        "estimate_max": 1.3559027757232462,
+        "smallest_flip": {
+          "found": true,
+          "n_changes": 3,
+          "changes": [
+            "skin_tone=rater2_only",
+            "exclusions=rated_frequent_refs",
+            "covariates=full"
+          ],
+          "kind": "significance",
+          "baseline_estimate": 1.3372444254558928,
+          "flipped_estimate": 1.2038029544775242,
+          "flipped_verdict": "NO CLEAR EVIDENCE"
+        },
+        "flips_by_n_changes": {
+          "3": 3,
+          "4": 4
+        },
+        "wall_s": 27.352285415981896,
+        "checkpoints": 109
+      },
+      "borges": {
+        "universes_used": 30,
+        "n_flipped": 4,
+        "robustness": 0.8666666666666667,
+        "universes_in_seeded_space": 22,
+        "universes_from_adversary_options": 8,
+        "robustness_seeded_space_only": 0.8636363636363636,
+        "flip_found": true,
+        "flip_n_changes": 3,
+        "flip_changes": [
+          "skin_tone=rater2_only",
+          "exclusions=rated_frequent_refs",
+          "covariates=full"
+        ],
+        "flip_kind": "significance",
+        "flip_in_seeded_space": true,
+        "wall_s": 22.806900958006736,
+        "llm_cost_usd": 0.0
+      },
+      "comparison": {
+        "grid_found_flip_borges_missed": false,
+        "borges_flip_larger_than_grid_minimum_by": 0,
+        "same_smallest_flip": true,
+        "robustness_difference_borges_minus_grid": -0.039141414141414144,
+        "universe_ratio_grid_over_borges": 2.4,
+        "grid_run_is_complete": true
+      }
+    },
+    "checkout_ab": {
+      "case": "checkout_ab",
+      "question": "Does the new checkout increase the conversion rate?",
+      "decision_rule": {
+        "metric": "conversion lift, treatment minus control (percentage points)",
+        "comparator": "gt",
+        "threshold": 0.0,
+        "alpha": 0.05,
+        "positive_label": "SHIP",
+        "negative_label": "DON'T SHIP"
+      },
+      "options_per_step": {
+        "internal_traffic": 2,
+        "bot_filter": 2,
+        "novelty_window": 2,
+        "unit": 2,
+        "model": 2
+      },
+      "grid": {
+        "grid_size": 32,
+        "universes_run": 32,
+        "capped": false,
+        "cap": null,
+        "seed": 20261002,
+        "n_done": 32,
+        "n_failed": 0,
+        "n_flipped": 16,
+        "robustness": 0.5,
+        "baseline_verdict": "SHIP",
+        "estimate_min": -0.14132077356650946,
+        "estimate_max": 1.2140406629498477,
+        "smallest_flip": {
+          "found": true,
+          "n_changes": 1,
+          "changes": [
+            "internal_traffic=exclude_internal"
+          ],
+          "kind": "direction",
+          "baseline_estimate": 0.5285530561002512,
+          "flipped_estimate": -0.14132077356650946,
+          "flipped_verdict": "DON'T SHIP"
+        },
+        "flips_by_n_changes": {
+          "1": 1,
+          "2": 4,
+          "3": 6,
+          "4": 4,
+          "5": 1
+        },
+        "wall_s": 11.827604124991922,
+        "checkpoints": 63
+      },
+      "borges": {
+        "universes_used": 7,
+        "n_flipped": 1,
+        "robustness": 0.8571428571428571,
+        "universes_in_seeded_space": 6,
+        "universes_from_adversary_options": 1,
+        "robustness_seeded_space_only": 0.8333333333333334,
+        "flip_found": true,
+        "flip_n_changes": 1,
+        "flip_changes": [
+          "internal_traffic=exclude_internal"
+        ],
+        "flip_kind": "direction",
+        "flip_in_seeded_space": true,
+        "wall_s": 12.631652374984697,
+        "llm_cost_usd": 0.0
+      },
+      "comparison": {
+        "grid_found_flip_borges_missed": false,
+        "borges_flip_larger_than_grid_minimum_by": 0,
+        "same_smallest_flip": true,
+        "robustness_difference_borges_minus_grid": 0.33333333333333337,
+        "universe_ratio_grid_over_borges": 4.571428571428571,
+        "grid_run_is_complete": true
+      }
+    },
+    "marp_religiosity": {
+      "case": "marp_religiosity",
+      "question": "Do religious people self-report greater well-being?",
+      "decision_rule": {
+        "metric": "standardised coefficient of religiosity on well-being",
+        "comparator": "gt",
+        "threshold": 0.0,
+        "alpha": 0.05,
+        "positive_label": "POSITIVE ASSOCIATION",
+        "negative_label": "NO CLEAR EVIDENCE"
+      },
+      "options_per_step": {
+        "religiosity": 4,
+        "wellbeing": 4,
+        "exclusions": 2,
+        "covariates": 3,
+        "scaling": 2,
+        "model": 4
+      },
+      "grid": {
+        "grid_size": 768,
+        "universes_run": 768,
+        "capped": false,
+        "cap": null,
+        "seed": 20261002,
+        "n_done": 768,
+        "n_failed": 0,
+        "n_flipped": 0,
+        "robustness": 1.0,
+        "baseline_verdict": "POSITIVE ASSOCIATION",
+        "estimate_min": 0.052513069864170266,
+        "estimate_max": 0.1560508740630309,
+        "smallest_flip": {
+          "found": false,
+          "n_changes": null,
+          "changes": [],
+          "kind": null
+        },
+        "flips_by_n_changes": {},
+        "wall_s": 203.5585915420088,
+        "checkpoints": 1109
+      },
+      "borges": {
+        "universes_used": 40,
+        "n_flipped": 0,
+        "robustness": 1.0,
+        "universes_in_seeded_space": 40,
+        "universes_from_adversary_options": 0,
+        "robustness_seeded_space_only": 1.0,
+        "flip_found": false,
+        "flip_n_changes": null,
+        "flip_changes": [],
+        "flip_kind": null,
+        "flip_in_seeded_space": false,
+        "wall_s": 20.420807292015525,
+        "llm_cost_usd": 0.0
+      },
+      "comparison": {
+        "grid_found_flip_borges_missed": false,
+        "borges_flip_larger_than_grid_minimum_by": null,
+        "same_smallest_flip": false,
+        "robustness_difference_borges_minus_grid": 0.0,
+        "universe_ratio_grid_over_borges": 19.2,
+        "grid_run_is_complete": true
+      }
+    },
+    "marp_norms": {
+      "case": "marp_norms",
+      "question": "Does the relation between religiosity and well-being depend on perceived cultural norms of religion?",
+      "decision_rule": {
+        "metric": "standardised religiosity x cultural-norms interaction on well-being",
+        "comparator": "gt",
+        "threshold": 0.0,
+        "alpha": 0.05,
+        "positive_label": "DEPENDS ON NORMS",
+        "negative_label": "NO CLEAR EVIDENCE"
+      },
+      "options_per_step": {
+        "religiosity": 4,
+        "wellbeing": 4,
+        "norms": 2,
+        "exclusions": 2,
+        "covariates": 3,
+        "scaling": 2,
+        "model": 4
+      },
+      "grid": {
+        "grid_size": 1536,
+        "universes_run": 1536,
+        "capped": false,
+        "cap": null,
+        "seed": 20261002,
+        "n_done": 1535,
+        "n_failed": 1,
+        "n_flipped": 161,
+        "robustness": 0.895114006514658,
+        "baseline_verdict": "DEPENDS ON NORMS",
+        "estimate_min": -0.001724563534779569,
+        "estimate_max": 0.04906794738942872,
+        "smallest_flip": {
+          "found": true,
+          "n_changes": 1,
+          "changes": [
+            "model=ols_pooled"
+          ],
+          "kind": "significance",
+          "baseline_estimate": 0.04465326632535754,
+          "flipped_estimate": 0.0181506961784062,
+          "flipped_verdict": "NO CLEAR EVIDENCE"
+        },
+        "flips_by_n_changes": {
+          "1": 1,
+          "2": 9,
+          "3": 36,
+          "4": 64,
+          "5": 42,
+          "6": 9
+        },
+        "wall_s": 424.0798152080097,
+        "checkpoints": 2228
+      },
+      "borges": {
+        "universes_used": 15,
+        "n_flipped": 1,
+        "robustness": 0.9333333333333333,
+        "universes_in_seeded_space": 15,
+        "universes_from_adversary_options": 0,
+        "robustness_seeded_space_only": 0.9333333333333333,
+        "flip_found": true,
+        "flip_n_changes": 1,
+        "flip_changes": [
+          "model=ols_pooled"
+        ],
+        "flip_kind": "significance",
+        "flip_in_seeded_space": true,
+        "wall_s": 18.508253041974967,
+        "llm_cost_usd": 0.0
+      },
+      "comparison": {
+        "grid_found_flip_borges_missed": false,
+        "borges_flip_larger_than_grid_minimum_by": 0,
+        "same_smallest_flip": true,
+        "robustness_difference_borges_minus_grid": 0.03821932681867535,
+        "universe_ratio_grid_over_borges": 102.4,
+        "grid_run_is_complete": true
+      }
+    }
+  }
+}
