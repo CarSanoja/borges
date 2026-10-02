@@ -1,0 +1,38 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install
+        run: |
+          uv sync --frozen --extra contree
+          pnpm -C frontend install --frozen-lockfile
+      - name: Lint
+        run: |
+          uv run --no-sync ruff check src tests cases scripts
+          uv run --no-sync ruff format --check src tests cases scripts
+      - name: Python tests
+        run: uv run --no-sync pytest -q
+      - name: Frontend
+        run: |
+          pnpm -C frontend typecheck
+          pnpm -C frontend test --run
+          pnpm -C frontend build

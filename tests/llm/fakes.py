@@ -23,11 +23,9 @@ def completion(
     )
 
 
-def bad_request() -> openai.BadRequestError:
+def bad_request(message: str = "response_format unsupported") -> openai.BadRequestError:
     request = httpx.Request("POST", "https://example.test/v1/chat/completions")
-    return openai.BadRequestError(
-        "response_format unsupported", response=httpx.Response(400, request=request), body=None
-    )
+    return openai.BadRequestError(message, response=httpx.Response(400, request=request), body=None)
 
 
 class FakeClient:

@@ -94,6 +94,13 @@ async def test_schema_failure_twice_raises() -> None:
     assert len(client.calls) == 2
 
 
+async def test_invalid_model_id_surfaces_instead_of_falling_back() -> None:
+    client = FakeClient(bad_request("The model `nvidia/nope` does not exist"))
+    with pytest.raises(LLMError, match="does not exist"):
+        await make(client).complete(Role.PLANNER, MESSAGES, key="k", schema=Answer)
+    assert len(client.calls) == 1
+
+
 async def test_json_object_fallback_on_400() -> None:
     client = FakeClient(bad_request(), completion('{"value": 3}'))
     response = await make(client).complete(Role.PLANNER, MESSAGES, key="k", schema=Answer)

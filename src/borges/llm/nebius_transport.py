@@ -25,6 +25,14 @@ def with_schema_instructions(
     return [{"role": "system", "content": instructions}, *messages]
 
 
+RESPONSE_FORMAT_MARKERS = ("response_format", "json_schema", "json_object", "structured output")
+
+
+def _rejects_response_format(exc: openai.BadRequestError) -> bool:
+    detail = f"{exc} {getattr(exc, 'body', '')}".lower()
+    return any(marker in detail for marker in RESPONSE_FORMAT_MARKERS)
+
+
 async def create_completion(
     client: Any, kwargs: dict[str, Any], schema: type[BaseModel] | None
 ) -> Any:
@@ -35,7 +43,9 @@ async def create_completion(
         structured = {"type": "json_schema", "json_schema": json_schema}
         try:
             return await client.chat.completions.create(response_format=structured, **kwargs)
-        except openai.BadRequestError:
+        except openai.BadRequestError as exc:
+            if not _rejects_response_format(exc):
+                raise
             fallback = {"type": "json_object"}
             return await client.chat.completions.create(response_format=fallback, **kwargs)
     except openai.OpenAIError as exc:
