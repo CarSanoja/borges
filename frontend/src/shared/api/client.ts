@@ -7,6 +7,8 @@ import type {
   UniverseDetail,
 } from "../types/contracts";
 
+import { liveTokenHeaders } from "./liveToken";
+
 const BASE = "/api";
 
 export class ApiError extends Error {
@@ -66,7 +68,7 @@ export interface UploadResult {
 export async function uploadDataset(file: File): Promise<UploadResult> {
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(`${BASE}/uploads`, { method: "POST", body: form });
+  const response = await fetch(`${BASE}/uploads`, { method: "POST", body: form, headers: liveTokenHeaders() });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new ApiError(response.status, errorMessage(text) || response.statusText);
@@ -75,7 +77,7 @@ export async function uploadDataset(file: File): Promise<UploadResult> {
 }
 
 export function createRun(body: RunRequest): Promise<RunCreated> {
-  return request<RunCreated>("/runs", { method: "POST", body: JSON.stringify(body) });
+  return request<RunCreated>("/runs", { method: "POST", body: JSON.stringify(body), headers: liveTokenHeaders() });
 }
 
 export function getRun(runId: string): Promise<RunSnapshot> {

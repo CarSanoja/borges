@@ -51,3 +51,18 @@ describe("Telemetry", () => {
     expect(formatCost(1.5)).toBe("$1.50");
   });
 });
+
+describe("Telemetry coding summary", () => {
+  it("states how many options were smoke tested and repaired, and is silent for old recordings", () => {
+    const base = foldEvents("t", events);
+    const report = base.report!;
+    const withCoding = {
+      ...base,
+      report: { ...report, coding: { options: 9, smoke_tested: 8, repaired_after_smoke: 2, failed: 0 } },
+    };
+    const { rerender } = render(<Telemetry snapshot={withCoding} />);
+    expect(screen.getByLabelText("Telemetry")).toHaveTextContent("8 options tested on a sample, 2 repaired after a failing test");
+    rerender(<Telemetry snapshot={{ ...base, report: { ...report, coding: undefined } }} />);
+    expect(screen.getByLabelText("Telemetry")).not.toHaveTextContent("tested on a sample");
+  });
+});

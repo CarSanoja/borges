@@ -161,7 +161,7 @@
 
 .u-nocode {
   font-size: var(--text-xs);
-  color: var(--paper-700);
+  color: var(--text-muted);
 }
 
 

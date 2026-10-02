@@ -43,7 +43,7 @@ describe("UniverseDrawer", () => {
       script_filename: `borges_r1_${flipId}.py`,
     });
     render(<UniverseDrawer runId="r1" snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
-    expect(await screen.findByText(`borges reproduce --case checkout_ab --universe ${flipId}`)).toBeInTheDocument();
+    expect(await screen.findByText(`uv run borges reproduce --case checkout_ab --universe ${flipId}`)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
     expect(screen.queryByText(/python steps\//)).toBeNull();
   });
@@ -79,8 +79,31 @@ describe("UniverseDrawer", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
+  it("is a labelled modal dialog that takes focus, traps Tab and gives focus back", async () => {
+    const baselineId = snapshot.garden.baseline_id ?? "";
+    const opener = document.createElement("button");
+    document.body.appendChild(opener);
+    opener.focus();
+    const { rerender } = render(
+      <UniverseDrawer runId={null} snapshot={snapshot} universeId={baselineId} onClose={() => undefined} />,
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveAccessibleName(baselineId);
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    for (let i = 0; i < 12; i += 1) {
+      await userEvent.tab();
+      expect(dialog.contains(document.activeElement)).toBe(true);
+    }
+    await userEvent.tab({ shift: true });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    rerender(<UniverseDrawer runId={null} snapshot={snapshot} universeId={null} onClose={() => undefined} />);
+    expect(opener).toHaveFocus();
+    opener.remove();
+  });
+
   it("renders nothing without a selection", () => {
     render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={null} onClose={() => undefined} />);
-    expect(screen.queryByLabelText("Universe")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

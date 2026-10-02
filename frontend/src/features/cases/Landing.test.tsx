@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "../../shared/api/client";
@@ -40,11 +40,12 @@ describe("Landing", () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false));
   });
 
-  it("renders cases and disables live runs without a key", async () => {
+  it("renders cases and hides live runs without a key", async () => {
     renderLanding();
     expect(await screen.findByText("Mocked checkout")).toBeInTheDocument();
     expect(screen.getByText("Every conclusion is one path through a garden.")).toBeInTheDocument();
-    for (const button of screen.getAllByRole("button", { name: /Run live on Nemotron/ })) expect(button).toBeDisabled();
+    await screen.findByRole("status", { name: "Live mode" });
+    expect(screen.queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
     expect(screen.getAllByRole("button", { name: "Watch the recorded run" })).toHaveLength(1);
   });
 
@@ -62,23 +63,37 @@ describe("Landing", () => {
     await waitFor(() => expect(handlers.onOpenRun).toHaveBeenCalledWith("r1"));
   });
 
-  it("explains why live is disabled when the budget is spent", async () => {
+  it("gives one line with the reason when the budget is spent", async () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false, { live_unavailable_reason: "budget_spent" }));
     renderLanding();
     await screen.findByText("Mocked checkout");
-    await waitFor(() =>
-      expect(screen.getAllByText("Live budget for this demo is used up").length).toBeGreaterThan(0),
-    );
-    for (const button of screen.getAllByRole("button", { name: /Run live on Nemotron/ })) expect(button).toBeDisabled();
+    const note = await screen.findByRole("status", { name: "Live mode" });
+    expect(note).toHaveTextContent("the live budget for this demo is used up");
+    expect(screen.queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
   });
 
-  it("explains why live is disabled without a key", async () => {
+  it("gives one line with the reason when there is no key", async () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false, { live_unavailable_reason: "no_key" }));
     renderLanding();
     await screen.findByText("Mocked checkout");
-    await waitFor(() =>
-      expect(screen.getAllByText("Live mode needs a NEBIUS_API_KEY on the server").length).toBeGreaterThan(0),
-    );
+    expect(await screen.findByRole("status", { name: "Live mode" })).toHaveTextContent("the server has no NEBIUS_API_KEY");
+    expect(screen.getAllByRole("status", { name: "Live mode" })).toHaveLength(1);
+  });
+
+  it("lists live-only cases only when live is available, otherwise in the single note", async () => {
+    const liveOnly = { ...redCards, id: "bank", title: "Bank calls", live_only: true, has_recording: false };
+    vi.mocked(client.getCases).mockResolvedValue([...cards, liveOnly]);
+    const { unmount } = render(<Landing onOpenRun={vi.fn()} onOpenReplay={vi.fn()} onOpenMock={vi.fn()} />);
+    expect(await screen.findByRole("status", { name: "Live mode" })).toHaveTextContent("One case needs live mode: Bank calls");
+    expect(screen.queryByRole("heading", { name: "Bank calls" })).toBeNull();
+    unmount();
+    vi.mocked(client.getHealth).mockResolvedValue(health(true));
+    render(<Landing onOpenRun={vi.fn()} onOpenReplay={vi.fn()} onOpenMock={vi.fn()} />);
+    const heading = await screen.findByRole("heading", { name: "Bank calls" });
+    const card = heading.closest("article") as HTMLElement;
+    expect(within(card).getByRole("button", { name: /Run live on Nemotron/ })).toBeEnabled();
+    expect(within(card).queryByRole("button", { name: "Run it now" })).toBeNull();
+    expect(screen.queryByRole("status", { name: "Live mode" })).toBeNull();
   });
 
   it("derives the footer from health instead of claiming Nebius Sandboxes", async () => {

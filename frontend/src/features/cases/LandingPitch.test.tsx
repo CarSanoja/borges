@@ -55,20 +55,20 @@ describe("Bring your own data card", () => {
     vi.mocked(client.getCases).mockResolvedValue(FALLBACK_CASES);
   });
 
-  it("is disabled and states the exact server reason and the hosted alternative", async () => {
+  it("is replaced by the exact server reason and the hosted alternative", async () => {
     vi.mocked(client.getHealth).mockResolvedValue(health());
     renderLanding();
     expect(await screen.findByText("Uploaded datasets run live and this server has no NEBIUS_API_KEY.")).toBeInTheDocument();
     expect(screen.getByText(/What the hosted demo can do instead/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start the analysis" })).toBeDisabled();
-    expect(screen.getByLabelText("Question")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Start the analysis" })).toBeNull();
+    expect(screen.queryByLabelText("Question")).toBeNull();
   });
 
-  it("is disabled with an offline reason when the server cannot be reached", async () => {
+  it("is replaced by an offline reason when the server cannot be reached", async () => {
     vi.mocked(client.getHealth).mockRejectedValue(new Error("down"));
     renderLanding();
     expect(await screen.findByText("The server is not reachable, so uploads are off.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Start the analysis" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Start the analysis" })).toBeNull();
   });
 
   it("uploads the file, then starts a run with the question and the decision rule", async () => {

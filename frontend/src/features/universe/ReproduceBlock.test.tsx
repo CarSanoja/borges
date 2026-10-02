@@ -8,7 +8,7 @@ import { ReproduceBlock } from "./ReproduceBlock";
 
 const snapshot = foldEvents("r1", buildSampleRun("r1"));
 const base = deriveDetail(snapshot, snapshot.garden.baseline_id ?? "") as UniverseDetail;
-const LONG = "borges reproduce --case red_cards_with_a_very_long_identifier --universe u_a64c6b99f5_and_a_long_tail_of_characters";
+const LONG = "uv run borges reproduce --case red_cards_with_a_very_long_identifier --universe u_a64c6b99f5_and_a_long_tail_of_characters";
 
 describe("ReproduceBlock", () => {
   it("shows the borges reproduce command in full with a copy button for recordings", () => {
@@ -23,6 +23,16 @@ describe("ReproduceBlock", () => {
     const code = screen.getByText(LONG);
     expect(code.className).toContain("u-command");
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+  });
+
+  it("prefixes borges with uv run so the copied command works after uv sync", () => {
+    const detail = {
+      ...base,
+      reproduce_command: "borges reproduce --case red_cards --universe u_a64c6b99f5",
+      reproduce_kind: "case" as const,
+    };
+    render(<ReproduceBlock detail={detail} hasRun />);
+    expect(screen.getByText("uv run borges reproduce --case red_cards --universe u_a64c6b99f5")).toBeInTheDocument();
   });
 
   it("offers the script download and the python command for other runs", () => {

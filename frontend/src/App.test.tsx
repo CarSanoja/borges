@@ -45,7 +45,7 @@ describe("App mock run end to end", () => {
       .filter((node) => node.getAttribute("data-leaf") === "true");
     expect(leaves).toHaveLength(universes.length);
     await userEvent.click(leaves[0] as HTMLElement);
-    expect(screen.getByLabelText("Universe")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 });
 

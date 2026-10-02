@@ -22,7 +22,7 @@
 }
 
 .tok-comment {
-  color: var(--paper-700);
+  color: var(--text-muted);
   font-style: italic;
 }
 

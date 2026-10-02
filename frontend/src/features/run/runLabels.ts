@@ -38,5 +38,6 @@ export function statusLabel(snapshot: RunSnapshot): string {
   if (snapshot.status === "failed") return "Failed";
   if (snapshot.status === "completed") return "Complete";
   const stage = currentStage(snapshot);
-  return stage ? STAGE_LABELS[stage] : "Starting";
+  if (stage) return STAGE_LABELS[stage];
+  return Object.keys(snapshot.stages).length > 0 ? "Finishing" : "Starting";
 }

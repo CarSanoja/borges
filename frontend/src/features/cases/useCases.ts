@@ -8,11 +8,12 @@ interface CasesState {
   liveAvailable: boolean;
   liveUnavailableReason: Health["live_unavailable_reason"];
   health: Health | null;
+  healthLoaded: boolean;
   offline: boolean;
 }
 
 export function useCases(): CasesState {
-  const [state, setState] = useState<CasesState>({ cases: FALLBACK_CASES, liveAvailable: false, liveUnavailableReason: null, health: null, offline: false });
+  const [state, setState] = useState<CasesState>({ cases: FALLBACK_CASES, liveAvailable: false, liveUnavailableReason: null, health: null, healthLoaded: false, offline: false });
 
   useEffect(() => {
     let active = true;
@@ -29,11 +30,14 @@ export function useCases(): CasesState {
         if (active) setState((prev) => ({
             ...prev,
             health,
+            healthLoaded: true,
             liveAvailable: health.llm_live_available,
             liveUnavailableReason: health.live_unavailable_reason ?? null,
           }));
       },
-      () => undefined,
+      () => {
+        if (active) setState((prev) => ({ ...prev, healthLoaded: true }));
+      },
     );
     return () => {
       active = false;

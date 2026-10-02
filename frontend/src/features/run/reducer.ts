@@ -114,6 +114,7 @@ function fold(snapshot: RunSnapshot, event: RunEvent): RunSnapshot {
     case "run.failed":
       return { ...snapshot, status: "failed", error: event.data.error };
     case "option.coded":
+    case "option.smoke":
       return snapshot;
   }
 }

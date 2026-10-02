@@ -1,6 +1,6 @@
 import type { RunSnapshot, StageName } from "../../shared/types/contracts";
 
-export type StageState = "done" | "active" | "pending";
+export type StageState = "done" | "active" | "pending" | "skipped";
 
 export const STAGES: ReadonlyArray<{ name: StageName; label: string }> = [
   { name: "profiling", label: "Profiling" },
@@ -18,5 +18,5 @@ export function stageState(snapshot: RunSnapshot, name: StageName): StageState {
   const status = snapshot.stages[name];
   if (status === "done") return "done";
   if (status === "started") return snapshot.status === "running" ? "active" : "pending";
-  return "pending";
+  return snapshot.status === "completed" ? "skipped" : "pending";
 }

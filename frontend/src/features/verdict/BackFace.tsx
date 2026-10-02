@@ -1,15 +1,17 @@
-import type { DecisionRule, Flip } from "../../shared/types/contracts";
+import type { DecisionRule, Flip, SearchSummary } from "../../shared/types/contracts";
 import { ChangeItem } from "./ChangeItem";
 import { describeFlip } from "./flipKind";
 import { ResultStats } from "./ResultStats";
+import { SearchNote } from "./SearchNote";
 
 interface Props {
   flip: Flip;
   hidden: boolean;
   rule: DecisionRule | null;
+  search?: SearchSummary | null;
 }
 
-export function BackFace({ flip, hidden, rule }: Props) {
+export function BackFace({ flip, hidden, rule, search }: Props) {
   const kind = rule ? describeFlip(rule, flip) : null;
   const many = flip.changes.length > 1;
   const lead = many
@@ -44,6 +46,7 @@ export function BackFace({ flip, hidden, rule }: Props) {
           Not reproduced on a fresh re-execution: treat as unconfirmed
         </p>
       )}
+      <SearchNote search={search} flipFound />
       <p className="vc-caveat">
         Borges searches for flips, so this is the nearest crossing it found, not a typical analysis.
       </p>

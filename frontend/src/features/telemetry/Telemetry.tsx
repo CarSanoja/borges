@@ -1,5 +1,6 @@
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { Counter } from "./Counter";
+import { codingSentence } from "./codingSummary";
 import { StageTimeline } from "./StageTimeline";
 import { formatCost, formatCount, formatTokens } from "./telemetryFormat";
 import "./telemetry.css";
@@ -10,6 +11,7 @@ interface Props {
 
 export function Telemetry({ snapshot }: Props) {
   const { usage } = snapshot;
+  const coding = snapshot.report?.coding;
   const tokens = usage.tokens_in + usage.tokens_out;
   return (
     <section aria-label="Telemetry" className="tm">
@@ -36,6 +38,7 @@ export function Telemetry({ snapshot }: Props) {
           </>
         )}
       </div>
+      {coding && <p className="tm-coding">{codingSentence(coding)}</p>}
       <StageTimeline snapshot={snapshot} />
     </section>
   );

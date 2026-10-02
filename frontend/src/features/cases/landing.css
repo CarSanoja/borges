@@ -227,3 +227,24 @@
 .upload-fields .btn-primary {
   align-self: flex-start;
 }
+
+.landing-live-note {
+  max-width: 62ch;
+  margin: 0 auto var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  background: var(--gold-soft);
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.case-live-only {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  color: var(--gold);
+}

@@ -1,11 +1,12 @@
 import type { UniverseDetail } from "../../shared/types/contracts";
 import { CopyButton } from "./CopyButton";
+import { reproduceCommand } from "./reproduceCommand";
 
-const HINT_CASE = "Run it from a fresh clone of the repository: it re-executes this universe on the committed dataset and checks it against the recording.";
+const HINT_CASE = "Run it from a fresh clone of the repository after uv sync: it re-executes this universe on the committed dataset and checks it against the recording.";
 const HINT_SCRIPT = "Download the script, then run the command with a parquet copy of the data this run analysed.";
 
 export function ReproduceBlock({ detail, hasRun }: { detail: UniverseDetail; hasRun: boolean }) {
-  const command = detail.reproduce_command;
+  const command = detail.reproduce_command ? reproduceCommand(detail.reproduce_command) : "";
   const isCase = detail.reproduce_kind === "case";
   return (
     <footer className="u-repro">

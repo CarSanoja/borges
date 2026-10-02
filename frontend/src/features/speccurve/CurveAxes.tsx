@@ -1,4 +1,5 @@
 import type { Layout } from "./specCurveLayout";
+import { wrapLabel } from "./wrapLabel";
 import { formatNumber } from "../verdict/verdictFormat";
 
 interface Props {
@@ -11,6 +12,8 @@ export function CurveAxes({ layout, threshold, yLabel }: Props) {
   const { y, left, width, right, top, curveHeight } = layout;
   const x2 = width - right;
   const ticks = y.ticks(5);
+  const lines = wrapLabel(yLabel, Math.floor(curveHeight / 6.4));
+  const lineHeight = 13;
   const thresholdY = threshold === null ? null : y(threshold);
   return (
     <g className="sc-axes">
@@ -19,7 +22,12 @@ export function CurveAxes({ layout, threshold, yLabel }: Props) {
         transform={`translate(12, ${top + curveHeight / 2}) rotate(-90)`}
         textAnchor="middle"
       >
-        {yLabel.length > 34 ? `${yLabel.slice(0, 33)}…` : yLabel}
+        <title>{yLabel}</title>
+        {lines.map((line, index) => (
+          <tspan key={index} x={0} dy={index === 0 ? 0 : lineHeight}>
+            {line}
+          </tspan>
+        ))}
       </text>
       <text className="sc-axis-label" x={x2} y={top + curveHeight + 20} textAnchor="end">
         universes, sorted by estimate

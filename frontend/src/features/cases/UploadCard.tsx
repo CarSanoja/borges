@@ -50,52 +50,54 @@ export function UploadCard({ health, onOpenRun }: Props) {
           <p>{INSTEAD}</p>
         </div>
       )}
-      <form onSubmit={submit} aria-label="Bring your own data">
-        <fieldset disabled={!available || busy} className="upload-fields">
-          <label className="upload-field">
-            <span>Dataset (CSV or parquet)</span>
-            <input type="file" accept=".csv,.parquet,text/csv" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          </label>
-          <label className="upload-field">
-            <span>Question</span>
-            <textarea rows={2} value={form.question} onChange={field("question")} placeholder="Does the new onboarding raise activation?" />
-          </label>
-          <label className="upload-field">
-            <span>Decision metric</span>
-            <input value={form.metric} onChange={field("metric")} placeholder="activation lift, treatment minus control" />
-          </label>
-          <div className="upload-row">
+      {available && (
+        <form onSubmit={submit} aria-label="Bring your own data">
+          <fieldset disabled={busy} className="upload-fields">
             <label className="upload-field">
-              <span>Positive when the estimate is</span>
-              <select value={form.comparator} onChange={field("comparator")}>
-                <option value="gt">above the threshold</option>
-                <option value="lt">below the threshold</option>
-              </select>
+              <span>Dataset (CSV or parquet)</span>
+              <input type="file" accept=".csv,.parquet,text/csv" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
             </label>
             <label className="upload-field">
-              <span>Threshold</span>
-              <input inputMode="decimal" value={form.threshold} onChange={field("threshold")} />
+              <span>Question</span>
+              <textarea rows={2} value={form.question} onChange={field("question")} placeholder="Does the new onboarding raise activation?" />
             </label>
             <label className="upload-field">
-              <span>Alpha</span>
-              <input inputMode="decimal" value={form.alpha} onChange={field("alpha")} />
+              <span>Decision metric</span>
+              <input value={form.metric} onChange={field("metric")} placeholder="activation lift, treatment minus control" />
             </label>
-          </div>
-          <div className="upload-row">
-            <label className="upload-field">
-              <span>Positive verdict</span>
-              <input value={form.positiveLabel} onChange={field("positiveLabel")} />
-            </label>
-            <label className="upload-field">
-              <span>Negative verdict</span>
-              <input value={form.negativeLabel} onChange={field("negativeLabel")} />
-            </label>
-          </div>
-          <button type="submit" className="btn btn-primary">
-            Start the analysis
-          </button>
-        </fieldset>
-      </form>
+            <div className="upload-row">
+              <label className="upload-field">
+                <span>Positive when the estimate is</span>
+                <select value={form.comparator} onChange={field("comparator")}>
+                  <option value="gt">above the threshold</option>
+                  <option value="lt">below the threshold</option>
+                </select>
+              </label>
+              <label className="upload-field">
+                <span>Threshold</span>
+                <input inputMode="decimal" value={form.threshold} onChange={field("threshold")} />
+              </label>
+              <label className="upload-field">
+                <span>Alpha</span>
+                <input inputMode="decimal" value={form.alpha} onChange={field("alpha")} />
+              </label>
+            </div>
+            <div className="upload-row">
+              <label className="upload-field">
+                <span>Positive verdict</span>
+                <input value={form.positiveLabel} onChange={field("positiveLabel")} />
+              </label>
+              <label className="upload-field">
+                <span>Negative verdict</span>
+                <input value={form.negativeLabel} onChange={field("negativeLabel")} />
+              </label>
+            </div>
+            <button type="submit" className="btn btn-primary">
+              Start the analysis
+            </button>
+          </fieldset>
+        </form>
+      )}
       {error && (
         <p className="case-error" role="alert">
           {error}

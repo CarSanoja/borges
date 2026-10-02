@@ -122,6 +122,21 @@ export interface DecisionInfluence {
   n_alternatives: number;
 }
 
+export interface SearchSummary {
+  levels_explored: number;
+  max_combinations_per_level: number;
+  universe_budget: number;
+  universes_used: number;
+  budget_exhausted: boolean;
+}
+
+export interface CodingSummary {
+  options: number;
+  smoke_tested: number;
+  repaired_after_smoke: number;
+  failed: number;
+}
+
 export interface Report {
   question: string;
   original_verdict: string;
@@ -135,6 +150,8 @@ export interface Report {
   caveats: string[];
   n_failed?: number;
   failed?: string[];
+  search?: SearchSummary | null;
+  coding?: CodingSummary | null;
 }
 
 export interface Garden {
@@ -161,6 +178,7 @@ export interface CaseCard {
   reference_label: string | null;
   reference: ReferenceEstimate[];
   story: string;
+  live_only?: boolean;
 }
 
 export type StageName =
@@ -299,6 +317,16 @@ export type RunEvent =
   | EventBase<
       "option.coded",
       { step_id: string; option_id: string; ok: boolean; attempts: number; error: string | null }
+    >
+  | EventBase<
+      "option.smoke",
+      {
+        step_id: string;
+        option_id: string;
+        status: "passed" | "repaired" | "failed";
+        attempts: number;
+        error: string | null;
+      }
     >
   | EventBase<"option.proposed", { step_id: string; option: Option }>
   | EventBase<

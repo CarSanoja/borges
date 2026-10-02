@@ -122,3 +122,28 @@ describe("VerdictCard", () => {
     expect(document.querySelector(".vc-command")).toBeNull();
   });
 });
+
+describe("VerdictCard search summary", () => {
+  const search = { levels_explored: 2, max_combinations_per_level: 10, universe_budget: 24, universes_used: 24, budget_exhausted: true };
+
+  it("states the bounded search on the flipped face and says when the budget ran out", () => {
+    const snapshot = foldEvents("t", events);
+    render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search } }} />);
+    expect(screen.getByText(/Smallest flip found within 24 universes, 2 levels\./)).toBeInTheDocument();
+    expect(screen.getByText(/search budget ran out \(24 of 24 universes used\)/)).toBeInTheDocument();
+  });
+
+  it("omits the budget warning when the search finished within budget", () => {
+    const snapshot = foldEvents("t", events);
+    const done = { ...search, levels_explored: 1, budget_exhausted: false };
+    render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search: done } }} />);
+    expect(screen.getByText(/within 24 universes, 1 level\./)).toBeInTheDocument();
+    expect(screen.queryByText(/search budget ran out/)).toBeNull();
+  });
+
+  it("renders without a summary for old recordings", () => {
+    const snapshot = foldEvents("t", events);
+    render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search: undefined } }} />);
+    expect(screen.queryByText(/Smallest flip found within/)).toBeNull();
+  });
+});

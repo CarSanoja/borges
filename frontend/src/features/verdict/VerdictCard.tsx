@@ -29,7 +29,7 @@ export function VerdictCard({ snapshot }: Props) {
     <section className="vc" aria-label="Verdict" data-state={flip ? (turned ? "flipped" : "found") : "original"}>
       <div className="vc-inner" data-turned={flip !== null && turned}>
         <FrontFace snapshot={snapshot} verdict={verdict} hidden={turned && flip !== null} />
-        {flip && <BackFace flip={flip} hidden={!turned} rule={activeRule(snapshot)} />}
+        {flip && <BackFace flip={flip} hidden={!turned} rule={activeRule(snapshot)} search={snapshot.report?.search} />}
       </div>
       {flip && (
         <button type="button" className="vc-toggle" onClick={toggle} aria-pressed={turned}>

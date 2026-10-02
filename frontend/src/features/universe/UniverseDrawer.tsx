@@ -1,8 +1,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect } from "react";
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { ReproduceBlock } from "./ReproduceBlock";
 import { StepDetailRow } from "./StepDetailRow";
+import { useDialogFocus } from "./useDialogFocus";
 import { useUniverseDetail } from "./useUniverseDetail";
 import "./universe.css";
 import "./universeCode.css";
@@ -19,14 +19,7 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
   const detail = useUniverseDetail(runId, snapshot, universeId);
   const open = detail !== null;
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  const dialogRef = useDialogFocus(open, onClose);
 
   const universe = detail?.universe;
   const result = universe?.result;
@@ -38,10 +31,14 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
   return (
     <AnimatePresence>
       {detail && universe && (
-        <motion.aside
+        <motion.div
           key="universe-drawer"
+          ref={dialogRef}
           className="u-drawer"
-          aria-label="Universe"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="u-drawer-title"
+          tabIndex={-1}
           data-run={runId ?? ""}
           initial={reduced ? { opacity: 0 } : { x: "100%" }}
           animate={reduced ? { opacity: 1 } : { x: 0 }}
@@ -51,7 +48,7 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
           <header className="u-head">
             <div>
               <p className="eyebrow">Universe · {universe.kind}</p>
-              <h3 className="u-id mono">{universe.id}</h3>
+              <h3 id="u-drawer-title" className="u-id mono">{universe.id}</h3>
             </div>
             <button type="button" className="u-close" aria-label="Close" onClick={onClose}>
               Close
@@ -76,7 +73,7 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
             ))}
           </ol>
           <ReproduceBlock detail={detail} hasRun={runId !== null} />
-        </motion.aside>
+        </motion.div>
       )}
     </AnimatePresence>
   );
