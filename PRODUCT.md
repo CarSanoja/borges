@@ -1,7 +1,8 @@
 # Borges — product description
 
-> **Every conclusion is one path through a garden of forking analyses.
-> Borges walks the others, and shows you the one defensible choice that flips your decision.**
+> **How fragile or robust is this decision, and which analytic choice matters?
+> Borges re-runs the analysis along other defensible paths, reports how many agree with
+> yours, and shows the smallest flip it found.**
 
 ## The problem
 
@@ -21,8 +22,9 @@ choices, routinely supports opposite conclusions.
   along a single path, and nobody shows you the paths it didn't take.
 
 Statisticians call this the *garden of forking paths*, after Jorge Luis Borges' 1941 story
-about a labyrinth in which every possible choice happens at once. Until now the garden was a
-metaphor, because nobody could afford to walk it.
+about a labyrinth in which every possible choice happens at once. Multiverse and
+specification-curve tools already walk part of the garden when an analyst lists the paths;
+Borges tries to make that cheap enough to do on every analysis, and to propose paths nobody listed.
 
 ## What Borges does
 
@@ -42,17 +44,19 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
    state and proposes new defensible choices aimed at reversing the conclusion. An
    independent judge scores how defensible each one is, and only defensible ones enter the
    garden.
-4. **Finds the minimal flip.** Borges searches for the smallest set of defensible changes
-   (one decision, then two, then three) that turns your decision around, and re-executes it from scratch
-   to prove it reproduces.
+4. **Finds the smallest flip a bounded search can find.** Borges searches one decision, then
+   two, then three, trying at most 10 combinations per level (a capped beam search, ordered by
+   how close each got to the threshold), so the result is the smallest flip found, not a
+   proven minimum. It re-executes the winner from scratch to prove it reproduces. The search
+   budget is reported with the verdict.
 5. **Lets you step into any universe.** Every universe shows its exact code, row counts,
    result, checkpoint ids, and a command you can paste to reproduce it
-   (`borges reproduce --case <id> --universe <id>` for the recorded demos, or a downloadable
+   (`uv run borges reproduce --case <id> --universe <id>` after `uv sync`, for the recorded demos, or a downloadable
    script that runs on your own copy of the data).
 
 The output is a **fragility report**:
 - the original verdict;
-- the minimal defensible flip and its justification;
+- the smallest defensible flip found by the bounded search, and its justification;
 - which decisions move the result most, measured by intervening on that decision alone;
 - the share of explored universes that agree with you, and the range of the effect across them;
 - the full specification curve, with the human teams' results as a reference lane where a
@@ -64,11 +68,14 @@ ratio 1.34 to 1.20, p 0.0006 to 0.055).
 
 ## Who it is for
 
-- **Product and growth teams** shipping on A/B tests. First audience: the cost of a false
-  "ship" is real and recurring.
-- **Anyone acting on an AI analyst's answer.** Borges is the second opinion of a thousand
-  analysts.
-- **Researchers before submission, reviewers, data journalists.**
+- **Anyone acting on an AI analyst's answer.** Borges is a second opinion that shows how many
+  other defensible analyses agree.
+- **Researchers before submission, reviewers, data journalists**: the cases that work end to
+  end today are many-analysts studies with real data and published team results.
+- **Product and growth teams shipping on A/B tests** are a plausible next audience, not a
+  validated one. The only business-style cases are a synthetic checkout test (planted effect)
+  and a live-only real bank-telemarketing case (`bank_marketing_calls`, CC BY 4.0) that no one
+  has run yet. There is no business user or pilot behind this claim.
 
 ## Related work
 
@@ -77,28 +84,42 @@ What exists, verified against the primary sources (September and October 2026):
 | Work | What it does | Source |
 |---|---|---|
 | Specification curve analysis (Simonsohn, Simmons, Nelson 2020) and multiverse analysis (Steegen et al. 2016) | Run all defensible combinations of analytic choices and show the distribution of results. The idea Borges builds on | [Nature Human Behaviour](https://doi.org/10.1038/s41562-020-0912-z) |
-| `specr` (Masur and Scharkow) | R package to set up, run and plot a specification curve, with inference on the curve in recent versions. The analyst declares outcomes, predictors, models, controls and subsets in `setup()`; it proposes nothing | [CRAN](https://cran.r-project.org/package=specr), [site](https://masurp.github.io/specr/) |
-| Boba (Liu, Kale, Althoff, Heer; IEEE TVCG 2021) | A DSL in which the analyst writes shared code once plus local variations; the compiler emits one script per path, and a visualizer links results to the decision space to find consequential decisions | [paper](https://arxiv.org/pdf/2007.05551), [project](https://idl.uw.edu/papers/boba) |
+| `specr` (Masur and Scharkow) | R package to set up, run and plot a specification curve, with inference on the curve in the development version 1.0.1 (May 2024). The analyst declares outcomes, predictors, models, controls and subsets in `setup()`; it proposes nothing | [CRAN](https://cran.r-project.org/package=specr), [site](https://masurp.github.io/specr/) |
+| Boba (Liu, Kale, Althoff, Heer; IEEE TVCG, VAST 2020) | A DSL in which the analyst writes shared code once plus local variations; the compiler emits one script per path, and a visualizer links results to the decision space to find consequential decisions | [paper](https://arxiv.org/pdf/2007.05551), [project](https://idl.uw.edu/papers/boba) |
 | `multiverse` R package (Sarma, Kale, Moon, Taback, Chevalier, Hullman, Kay) | Declare alternatives with `branch()` inside an R notebook; builds the multiverse from local changes to one analysis, runs paths in parallel and isolates failures. Alternatives are never proposed automatically | [CRAN](https://cran.r-project.org/package=multiverse), [docs](https://mucollective.github.io/multiverse/) |
 | ForkSCOPE (Balaji, Yeltekin, Zheng, arXiv 2609.12438, Sept 2026) | Human-AI pipeline that induces the forks and a taxonomy bottom-up from the code of many end-to-end analyses and shows them in an evidence-linked viewer. Its fork-to-outcome attribution is observational: choices co-occur and were not assigned | [arXiv](https://arxiv.org/abs/2609.12438) |
-| "The Agentic Garden of Forking Paths" (Miao, Pritchard, Zou, arXiv 2607.01507, July 2026) | AI agents with different personas reproduce 72% of a human ideological gap on 42 teams' immigration analyses; introduces the m-value and an Agentic Bootstrap to place a reported finding in the space of plausible analyses | [arXiv](https://arxiv.org/abs/2607.01507) |
-| "Many AI analysts, one dataset" (Bertran, Fogliato, Wu; PNAS 2026) | About 5,000 autonomous analyst runs over 3 datasets, 4 LLMs and 5 personas; verdicts and effect sizes reverse between runs and persona steering shifts the distribution | [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC13393493/) |
+| "The Agentic Garden of Forking Paths" (Miao, Pritchard, Zou, arXiv 2607.01507, July 2026; a different paper from the one above) | AI agents with different personas reproduce 72% of a human ideological gap on 42 teams' immigration analyses; introduces the m-value and an Agentic Bootstrap to place a reported finding in the space of plausible analyses. We found no public code for it | [arXiv](https://arxiv.org/abs/2607.01507) |
+| "Many AI analysts, one dataset" (Bertran, Fogliato, Wu; arXiv 2602.18710, Feb 2026; PNAS 2026) and its open-source code, [amazon-science/agentic-forking-path](https://github.com/amazon-science/agentic-forking-path) (Apache-2.0) | The closest open implementation. Autonomous data-scientist agents (Inspect AI, Docker containers) each analyse the same dataset and hypothesis under a different persona prompt (neutral, skeptical, confirmation-seeking) over several independent epochs and models. A separate judge audits each run; a 3-pass LLM extraction then reads the analytic decisions off the finished runs, builds a taxonomy, and reports hypothesis-support rates per persona, p-value distributions, specification curves and a "compliance gap" as a p-hacking diagnostic. About 5,000 analyst runs over 3 datasets, 4 LLMs and 5 personas; verdicts and effect sizes reverse between runs and persona steering shifts the distribution | [arXiv](https://arxiv.org/abs/2602.18710), [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC13393493/), [code](https://github.com/amazon-science/agentic-forking-path) |
 
 **What Borges does that these do not.**
 1. **An adversary that proposes forks on the live intermediate state.** Boba, `multiverse`
-   and `specr` need the analyst to list every alternative up front. The AI-analyst studies
-   and ForkSCOPE sample whole independent analyses and read the forks off afterwards.
+   and `specr` need the analyst to list every alternative up front. `agentic-forking-path`,
+   the PNAS study and ForkSCOPE sample whole independent analyses and read the forks off
+   afterwards: a fork exists only if some agent happened to take it, and nothing is re-run
+   from a shared state.
    Borges's adversary reads the real row counts and estimates at a step, argues against the
    conclusion with code, and an independent judge scores how defensible each proposal is
    before it enters the garden. This is designed and tested with scripted models; whether
    Nemotron proposes good forks is the first thing the live run must show.
-2. **The minimal defensible flip.** It searches one change, then two, then three, and
-   re-executes the winner from scratch, so the output is the smallest decision that turns
-   yours around, not only a distribution.
+2. **The smallest defensible flip found.** It searches one change, then two, then three
+   (at most 10 combinations per level) and re-executes the winner from scratch, so the output
+   is a specific decision that turns yours around, not only a distribution. It is the
+   result of a capped search, not a proof of minimality.
 3. **Influence by intervention on a shared-prefix checkpointed execution.** Sibling
    universes differ in exactly one choice from the same checkpoint, so the influence of a
    decision is an interventional contrast under a fixed continuation protocol, where
    ForkSCOPE's attribution is observational.
+
+**Against `agentic-forking-path`, precisely.** It answers "how do autonomous analysts with
+different incentives diverge?": its forks are whole independent analyses by personas, found
+by sampling, and its decisions are extracted from the finished reports by an LLM. Borges
+answers "how fragile is this one analysis, and which choice matters?": forks are explicit
+options in a plan, executed from shared checkpoints, an adversary proposes new ones against
+the conclusion, and each universe can be re-executed with `borges reproduce`. They are
+similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
+sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
+5,000 real model runs and a published study, while Borges has never called a model. No
+head-to-head on the same dataset exists; we have not run their pipeline.
 
 **What it does not do better.**
 - `multiverse` also avoids recomputing shared work, and Boba and `multiverse` are mature,
@@ -111,6 +132,8 @@ What exists, verified against the primary sources (September and October 2026):
 - Borges explores the options its planner and adversary propose, under one estimand. Human
   teams also change the estimand and the model family, so Borges's curve is narrower than the
   teams' (red cards: 1.20 to 1.36 against 0.89 to 2.93).
+- Persona sampling covers choices an LLM analyst would make unprompted, including ones that
+  no planner listed; Borges's coverage is limited by its planner and adversary.
 - Mature tools are used and checked by researchers today; Borges has not run a live model
   and has no external users yet.
 
@@ -143,7 +166,8 @@ Borges is finished when all of these hold, on a clean clone:
    (odds ratio 1.20 to 1.36 over 30 universes) is narrower than the range of the 29 human teams
    (0.89 to 2.93), which is shown next to it; the report names the decisions that split
    "bias detected" from "no clear evidence". The two MARP cases (real, CC-BY 4.0) run the same
-   way against 110 and 105 teams.
+   way against 110 and 105 teams. A live-only real business case, `bank_marketing_calls` (UCI Bank Marketing,
+   CC BY 4.0), has no scripted fixtures or recording and runs only with `llm=nebius`.
 3. With `NEBIUS_API_KEY` set, the curated cases run **live on Nemotron via Token Factory**,
    under a hard spend cap, with the token and dollar cost shown. Live runs on a curated case
    use its own question and decision rule.

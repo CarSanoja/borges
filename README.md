@@ -1,7 +1,28 @@
 # Borges
 
-**Every conclusion is one path through a garden of forking analyses. Borges walks the
-others, and shows you the one defensible choice that flips your decision.**
+**How fragile or robust is this decision, and which analytic choice matters? Borges re-runs
+the analysis along other defensible paths, tells you how many agree with yours, and shows the
+smallest flip it found.**
+
+In three lines:
+
+1. You give it a dataset, a question and the rule you will act on ("ship if the lift is
+   positive with p < 0.05").
+2. Nemotron plans the analysis, every choice forks a real sandbox, and an adversary proposes
+   paths against your conclusion.
+3. You get the share of universes that agree, the decisions that move the result, the
+   smallest flip found by a bounded search, and a command that reproduces it.
+
+Quickstart, offline, no key, from a fresh clone (Python 3.13 and [uv](https://docs.astral.sh/uv/)):
+
+```bash
+uv sync
+uv run borges run --case marp_religiosity --llm scripted
+uv run borges reproduce --case red_cards --universe u_a64c6b99f5
+```
+
+The first runs a real-data case with scripted models in about 18 s; the second re-executes one
+recorded universe and prints `MATCH`. The status table below says what is and is not live.
 
 Built for the [Nebius x NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/)
 on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step runs as a
@@ -54,9 +75,10 @@ conversion lift is positive with p < 0.05"*.
    real data did at each step (row counts, the estimate) and proposes new options; an
    independent judge scores how defensible each one is, and only defensible ones enter the
    garden.
-4. **Borges finds the minimal defensible flip.** It tries one change, then two, then three,
-   always running first the combinations that moved the result closest to the threshold.
-   It then re-executes the winning universe from a fresh sandbox to prove it reproduces.
+4. **Borges looks for the smallest defensible flip.** It tries one change, then two, then
+   three (at most 10 combinations per level, those that moved the result closest to the
+   threshold first), so the answer is the smallest flip a bounded search found, not a proven
+   minimum. It re-executes the winning universe from a fresh sandbox to prove it reproduces.
 5. **You can step into any universe** and see its exact code, row counts, checkpoint ids
    and result.
 
@@ -66,7 +88,7 @@ conversion lift is positive with p < 0.05"*.
 |---|---|---|
 | Question | Does the new checkout increase conversion? | Do referees give dark-skinned players more red cards? |
 | Default analysis | **SHIP**: +0.53 pp, 95% CI [0.14, 0.92], p = 0.008 | **BIAS DETECTED**: OR 1.34, 95% CI [1.13, 1.58], p = 0.0006 |
-| Minimal flip | 1 change: exclude internal test accounts | 3 changes together: the second rater only, referees with 22+ dyads, full covariates |
+| Smallest flip found | 1 change: exclude internal test accounts | 3 changes together: the second rater only, referees with 22+ dyads, full covariates |
 | Flipped result | **DON'T SHIP**: −0.14 pp, [−0.50, 0.21], p = 0.43 | **NO CLEAR EVIDENCE**: OR 1.20, [1.00, 1.46], p = 0.055 |
 | Reproduced from scratch | yes | yes |
 | Explored | 7 universes, 22 sandbox checkpoints | 30 universes, 58 sandbox checkpoints |
@@ -101,6 +123,16 @@ also agrees more than the teams do on the cultural-norms question (89% of the 1,
 against 65% of the teams); the space holds the teams' common choices, not their tails.
 Both case READMEs list what is outside the option space.
 
+### A real business case, live only
+
+`bank_marketing_calls` (UCI Bank Marketing, 45,211 phone-campaign records, CC BY 4.0) asks
+whether each extra call to a customer lowers the chance of a term-deposit subscription.
+Nothing is planted. It has no scripted fixtures and no recording, so it runs only with
+`llm=nebius`, and a scripted run is refused with a clear message. It has not been run. Plain
+logistic regressions by the author gave an odds ratio of 0.86 to 0.93 per extra call in nine
+specifications, so a robust verdict is the expectation; what a live run adds is whether a
+defensible fork flips it. See `cases/bank_marketing_calls/README.md`.
+
 ### Real, unplanted data: the MARP cases
 
 `marp_religiosity` and `marp_norms` use the Many Analysts Religion Project (10,535
@@ -126,7 +158,7 @@ make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
-The web app has a recorded replay of all four cases, a "Run it now" button (scripted models,
+The web app has a recorded replay of the four recorded cases (the live-only case is listed but has no replay), a "Run it now" button (scripted models,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
 live on Nemotron" (the button says why when it is disabled). The recordings are scripted
 (hand-built), not live model runs. The landing page has a "bring your own data" card: it is
@@ -141,10 +173,11 @@ been exercised here.
 Every universe in the drawer carries a command you can paste. For the recorded demos:
 
 ```bash
-uv run --no-sync borges reproduce --case red_cards --universe u_a64c6b99f5
+uv sync   # once, from a fresh clone
+uv run borges reproduce --case red_cards --universe u_a64c6b99f5
 ```
 
-It re-executes that universe's steps on the case dataset with the local backend, and prints
+(`uv run --no-sync` works too once `uv sync` has run.) It re-executes that universe's steps on the case dataset with the local backend, and prints
 `MATCH` only if estimate, interval, p-value, n and verdict equal the recording (exit 1 and
 `MISMATCH` otherwise). It also re-runs the baseline, so the flip is shown end to end. Runs
 that are not recordings get a downloadable script, `python borges_<run>_<universe>.py --data
@@ -247,8 +280,14 @@ definition of done: [PRODUCT.md](PRODUCT.md).
 
 ## Related work
 
-Boba, the `multiverse` R package, `specr` and ForkSCOPE are compared in
-[PRODUCT.md](PRODUCT.md#related-work), with links and with what Borges does not do better.
+The closest open implementation is
+[amazon-science/agentic-forking-path](https://github.com/amazon-science/agentic-forking-path)
+(the code of "Many AI analysts, one dataset", Bertran, Fogliato and Wu): persona agents each
+run a whole independent analysis and an LLM extracts the forks afterwards, where Borges forks
+a shared checkpointed execution and has an adversary propose forks. It has been run live at
+scale; Borges has not, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
+are compared in [PRODUCT.md](PRODUCT.md#related-work), with links and with what Borges does
+not do better.
 
 ## What Borges does not claim
 
@@ -258,7 +297,7 @@ adversary propose, not every possible analysis. The robustness share is computed
 universes it explored, and the search deliberately favours universes likely to flip.
 Specification-curve and multiverse analysis are established ideas (Simonsohn et al. 2020;
 Steegen et al. 2016); what is new here is agents that discover the alternatives, fork real
-execution state mid-analysis, search for the minimal flip and prove it reproduces. That claim
+execution state mid-analysis, search for the smallest flip and prove it reproduces. That claim
 rests on a design that has been tested with scripted agents; whether Nemotron proposes good
 forks is untested until the first live run.
 
@@ -268,6 +307,9 @@ forks is untested until the first live run.
   effect.
 - **Red cards**: the Crowdstorming dataset by Silberzahn et al., real, CC0 1.0 on the
   [OSF (gvm2z)](https://osf.io/gvm2z/). See `cases/red_cards/README.md`.
+- **Bank marketing**: UCI Bank Marketing (Moro, Rita and Cortez, 2014), real, CC BY 4.0,
+  [doi:10.24432/C5K306](https://doi.org/10.24432/C5K306). See
+  `cases/bank_marketing_calls/README.md`.
 - **MARP**: Many Analysts Religion Project data and team results, real, CC-BY 4.0 (Hoogeveen,
   Sarafoglou, Aczel et al., 2022; OSF [qbdce](https://osf.io/qbdce/) and
   [gkxqy](https://osf.io/gkxqy/)). See `cases/marp_*/README.md`.

@@ -28,7 +28,7 @@ into `frontend/dist`, which FastAPI serves at `/`.
 | Domain | Responsibility | Key files |
 |---|---|---|
 | `analysis` | The plan (steps, options, decision rule), the LLM roles that create and judge it, the harness that turns an option into executable code | `models.py`, `planner.py`, `coder.py`, `adversary.py`, `judge.py`, `narrator.py`, `code_guard.py`, `code_guard_introspection.py`, `harness.py`, `profile.py` |
-| `garden` | Universes, prefix-shared execution, minimal-flip search, influence, verification | `models.py`, `executor.py`, `search.py`, `influence.py`, `verify.py` |
+| `garden` | Universes, prefix-shared execution, bounded flip search, influence, verification | `models.py`, `executor.py`, `search.py`, `influence.py`, `verify.py` |
 | `sandbox` | Branchable execution backends behind one protocol | `backend.py`, `local_backend.py`, `contree_backend.py`, `factory.py` |
 | `llm` | Role-based model routing, structured JSON output, disk cache, cost accounting, hard spend cap | `client.py`, `nebius_provider.py`, `scripted_provider.py`, `cache.py`, `spend.py`, `json_output.py`, `factory.py` |
 | `runs` | Orchestration, event bus, run store, replay, state folding | `events.py`, `orchestrator.py`, `bus.py`, `store.py`, `replay.py`, `state.py` |
@@ -45,9 +45,11 @@ chosen at step 3 and read by the model at step 5). Allowed imports: pandas, nump
 scipy(.stats), statsmodels(.api/.formula.api), math. `code_guard` enforces this with an AST
 allowlist. The guard is default-deny (underscore attributes, frame and traceback
 attributes, `type`, `getattr`, `exec`, computed string subscripts) and is a lint, not a
-sandbox: the bypass found by review is covered by
-`tests/analysis/test_code_guard_introspection.py`, and the isolation boundary is the backend
-and the server policy (section 7).
+sandbox. It stops accidents and the bypasses reviewers have found so far (covered by
+`tests/analysis/test_code_guard_introspection.py` and, for formula strings, by the formula
+check in `code_guard_formula.py`), but it is a pattern check on source text and is not
+claimed to be complete: code built from split or computed strings can be an escape route. The
+isolation boundary is the backend and the server policy (section 7).
 
 **Harness.** `harness.render_step(step, option)` produces a self-contained script. It
 loads `state/df.parquet` (or the root `data.parquet` on the first step) and `state/ctx.json`,
@@ -73,10 +75,10 @@ universes share every checkpoint before the step they change.
    candidates by the measured movement toward the opposite verdict of the parent plus that
    of the added change, and runs the top ten. It stops at the first level that flips, or
    when the universe budget is spent;
-5. verification of the minimal flip: re-execution from the root with no prefix cache, and
+5. verification of the smallest flip found: re-execution from the root with no prefix cache, and
    the result must match exactly.
 
-**Minimal flip** = the flipped universe with the fewest changes. Ties go to the higher
+**Smallest flip found** = the flipped universe with the fewest changes among those the capped search (ten combinations per level, `MAX_COMBINATIONS_PER_LEVEL`) explored; it is not a proven minimum. Ties go to the higher
 minimum defensibility, then to the larger move of the estimate.
 
 **Influence** of a decision = the mean absolute change in the estimate when that decision
@@ -141,7 +143,7 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 2. **Live garden.** A radial labyrinth grows from the dataset at the centre: one ring per
    step, one branch per option, every node a real sandbox checkpoint. Counters show
    universes, forks, tokens and dollars.
-3. **The flip.** The verdict card turns from SHIP to DON'T SHIP, the minimal-flip path lights
+3. **The flip.** The verdict card turns from SHIP to DON'T SHIP, the smallest-flip path lights
    up, and the justification and its source appear.
 4. **Step into the universe.** A drawer shows the exact code, row counts at each step, the
    result, the checkpoint ids, the judge score (or "planner option, not judged") and a
@@ -223,7 +225,10 @@ every step). Functions must be deterministic: any randomness uses a fixed seed.
 - `case.json`: a `CaseSpec`;
 - `data.parquet`: the dataset;
 - `fixtures/`: the scripted model responses;
-- `recorded/events.jsonl`: optional, a recorded run for offline replay.
+- `recorded/events.jsonl`: optional, a recorded run for offline replay;
+- `live_only` in `case.json` (default false): a live-only case has no `fixtures/` and no
+  recording, runs only with `llm=nebius`, and the registry refuses a scripted run with a clear
+  message (`CaseRegistry.require_scripted`).
 
 **Scripted fixtures.** A request `key` maps to the file `fixtures/<key with ":" replaced by
 "__">.json`, holding `{"model": str, "text": str, "parsed": object|null, "tokens_in": int,
