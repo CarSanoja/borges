@@ -44,12 +44,42 @@ into `frontend/dist`, which FastAPI serves at `/`.
 chosen at step 3 and read by the model at step 5). Allowed imports: pandas, numpy,
 scipy(.stats), statsmodels(.api/.formula.api), math. `code_guard` enforces this with an AST
 allowlist. The guard is default-deny (underscore attributes, frame and traceback
-attributes, `type`, `getattr`, `exec`, computed string subscripts) and is a lint, not a
-sandbox. It stops accidents and the bypasses reviewers have found so far (covered by
-`tests/analysis/test_code_guard_introspection.py` and, for formula strings, by the formula
-check in `code_guard_formula.py`), but it is a pattern check on source text and is not
-claimed to be complete: code built from split or computed strings can be an escape route. The
-isolation boundary is the backend and the server policy (section 7).
+attributes, `type`, `getattr`, `exec`, computed string subscripts) and is the first layer
+only: a lint that stops accidents and the bypasses reviewers have found (covered by
+`tests/analysis/test_code_guard_introspection.py` and, for formula strings, by
+`code_guard_formula.py`). It is a pattern check on source text and is not claimed to be
+complete. The second layer is the runtime policy below; the isolation boundary is the VM
+backend and the server policy (section 7).
+
+**Runtime policy.** `harness.render_step` embeds `analysis/runtime_policy.py` as the first line of
+every step file (`exec(compile(repr))`), so a PEP 578 audit hook is installed before any
+generated code runs, in the same process and the same code on the local backend and on
+ConTree. A denied event raises `PermissionError: runtime policy denied <event>` (patsy wraps
+it as `PatsyError`); the message carries no host path. Tracebacks shift by one line.
+- Blocked (tested): process creation (`subprocess.Popen`, `os.system`, `os.exec*`,
+  `os.spawn*`, `posix_spawn`, `fork`, `pty.spawn`, `_posixsubprocess.fork_exec`); network
+  (`socket` connect, bind, getaddrinfo, sendto, sendmsg, gethostby*, getnameinfo, getservby*;
+  `urllib` fails through these); `webbrowser.open`; all `ctypes.*` events and the import of
+  `cffi`, `_cffi_backend`, `_ctypes` from non-library code; write, append, create or truncate
+  opens, `remove`, `rename`, `rmdir`, `mkdir`, `symlink`, `link`, `truncate`, `chmod`,
+  `chown`, `chroot` and `shutil.rmtree/move/copyfile/copytree` outside the step's working
+  directory (`/dev/null` excepted); `os.chdir` out of it, including `..`; registering a later
+  audit hook (silently refused, because CPython swallows the exception). Paths use `realpath`.
+- Allowed on purpose: reads anywhere on the host, and any write inside the working directory
+  (`state/`, and `tempfile` through `TMPDIR=<fs>`, set by `LocalBackend._env`).
+- Not covered: native-code exploits in C extensions; CPU and memory abuse beyond rlimits
+  (CPU 600 s, file size 256 MB, 1024 processes, address space 3072 MB on Linux only) and the
+  120 s step timeout; host files readable by the user (for example `~/.ssh`); threads and
+  signals; a primitive that CPython does not audit. `import ctypes` succeeds (pre-imported)
+  but every `ctypes.*` event is denied. It is defense in depth under the guard, not VM or
+  container isolation, so the local backend is not an isolation boundary.
+- Cost: 0.6 ms install per step process, about 29 microseconds per read-open; on a step of
+  about 2.5 s the median was 2.481 s without and 2.583 s with (+4.1%), means 2.681 and 2.690
+  (+0.3%), within noise.
+- Evidence: `tests/sandbox/test_runtime_policy*.py` (34 tests, three real exploits through
+  the harness and `LocalBackend.run` without the guard); the four curated cases reproduce the
+  recorded universes, checkpoints and flips under the policy. Proven on the local backend
+  only: under ConTree the same prelude is embedded, but that path has never run live.
 
 **Harness.** `harness.render_step(step, option)` produces a self-contained script. It
 loads `state/df.parquet` (or the root `data.parquet` on the first step) and `state/ctx.json`,
@@ -167,8 +197,9 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
   far (no key). `make live-smoke` checks the ids and one call per role; `make record-live`
   records both curated cases under `BORGES_RUN_CAP_USD`.
 - `backend=local`: a directory per checkpoint (copy-on-write clone where available) and a
-  subprocess with timeout, resource limits, a scrubbed environment and the AST guard. It is
-  not an isolation boundary (shared filesystem and network). Used for development, CI and
+  subprocess with timeout, resource limits, a scrubbed environment, the AST guard and the
+  runtime audit-hook policy. It is not an isolation boundary (shared filesystem for reads,
+  and native code is not audited). Used for development, CI and
   scripted demos on a private or disposable machine.
 - `backend=contree`: Nebius Token Factory Sandboxes. Each step is `image.run(...,
   disposable=False)` on the parent image. VM isolation; contract-tested with a fake SDK, and
@@ -190,7 +221,7 @@ no key (400) or the spend cap is used up (403). `/api/health` reports
 case cards disable the live button with that reason. It also reports `uploads_available` and
 `uploads_unavailable_reason`, derived by `api/live_rules.py` with the same rules the policy
 uses. Uploads (CSV or parquet) need live mode; the local backend refuses them (400) unless
-`BORGES_ALLOW_UNTRUSTED_LOCAL=true`, and when `BORGES_LIVE_TOKEN` is set the header
+`BORGES_ALLOW_UNTRUSTED_LOCAL=true` (only `make dev` and `make serve` set it), and when `BORGES_LIVE_TOKEN` is set the header
 `X-Borges-Live-Token` must match it (the built-in UI does not send it). Live runs on a
 curated case are not refused on the local backend by the policy; that combination must not
 be exposed publicly.

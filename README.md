@@ -4,6 +4,33 @@
 the analysis along other defensible paths, tells you how many agree with yours, and shows the
 smallest flip it found.**
 
+> ## Judge it in 2 minutes
+>
+> **What Borges answers:** how fragile or robust a data decision is, and which analytic choice
+> moves it. It leads with the share of explored paths that agree with yours ("N of M paths
+> agree"), then the smallest flip it found and which kind it is: a *direction* flip (the sign
+> reverses) or only a *significance* flip (same sign, p crosses 0.05).
+>
+> - Hosted demo: TODO-OWNER (URL, none exists yet)
+> - Video: TODO-OWNER (link, not recorded yet)
+> - Offline, no key, from a fresh clone (Python 3.13 and [uv](https://docs.astral.sh/uv/)):
+>
+> ```bash
+> uv sync
+> uv run borges run --case marp_norms --llm scripted
+> uv run borges reproduce --case red_cards --universe u_a64c6b99f5
+> ```
+>
+> The first ends with `Universes: 15, checkpoints: 67, LLM calls: 24 scripted (0 cached)` and
+> `cost: $0.0000 (scripted replay, no model called)`. The second ends with `MATCH: estimate,
+> CI, p-value, n and verdict equal the recording; flip BIAS DETECTED -> NO CLEAR EVIDENCE
+> reproduced`. Both are scripted replays of hand-built option spaces: the data, the code and
+> every statistic are real, no model wrote the plan. The status table below says what is and
+> is not live.
+>
+> **The value:** one analysis is one path. Borges shows the other defensible paths, how many
+> agree, and, with a calibration study (`evidence/calibration.md`), how much to trust a flip.
+
 In three lines:
 
 1. You give it a dataset, a question and the rule you will act on ("ship if the lift is
@@ -11,18 +38,8 @@ In three lines:
 2. Nemotron plans the analysis, every choice forks a real sandbox, and an adversary proposes
    paths against your conclusion.
 3. You get the share of universes that agree, the decisions that move the result, the
-   smallest flip found by a bounded search, and a command that reproduces it.
-
-Quickstart, offline, no key, from a fresh clone (Python 3.13 and [uv](https://docs.astral.sh/uv/)):
-
-```bash
-uv sync
-uv run borges run --case marp_religiosity --llm scripted
-uv run borges reproduce --case red_cards --universe u_a64c6b99f5
-```
-
-The first runs a real-data case with scripted models in about 18 s; the second re-executes one
-recorded universe and prints `MATCH`. The status table below says what is and is not live.
+   smallest flip found by a bounded search (and whether it reverses the sign or only crosses
+   p = 0.05), and a command that reproduces it.
 
 Built for the [Nebius x NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/)
 on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step runs as a
@@ -259,24 +276,85 @@ definition of done: [PRODUCT.md](PRODUCT.md).
 
 ## Security model
 
-- **The server policy is the boundary, not the code guard.** The AST guard
-  (default-deny: no underscore attributes, frame and traceback attributes, `type`, `getattr`,
-  `exec`, computed string subscripts, and an exact import allowlist) is a lint that stops
-  accidents and the bypasses we know of. It is not a sandbox. The generated code comes from a
-  model or from an upload.
-- **The local backend is not isolation.** It runs each step as a subprocess of the server
-  with a scrubbed environment, resource limits and a timeout, and shares the machine's
-  filesystem and network. Use it for the scripted demos and on a private machine.
-- **Live and upload runs on a shared or public server need the VM backend.** Today the server
-  enforces that for uploads: with `BORGES_BACKEND=local` and `BORGES_ALLOW_UNTRUSTED_LOCAL`
-  not true, `POST /api/runs` with an `upload_id` is refused (400). Live runs on a curated
-  case are not refused on the local backend by the server, although the coder then writes
-  the code that runs; do not expose that combination publicly. Set `BORGES_BACKEND=contree`.
+Generated code comes from a model or from an upload. Three layers, from weakest to strongest:
+
+1. **AST code guard (first layer, a lint).** Default-deny: no underscore attributes, frame and
+   traceback attributes, `type`, `getattr`, `exec`, computed string subscripts, and an exact
+   import allowlist. It stops accidents and the bypasses we know of; it is not a sandbox.
+2. **Runtime audit-hook policy (defense in depth).** Every step file starts by installing a
+   PEP 578 audit hook (`src/borges/analysis/runtime_policy.py`, embedded by
+   `harness.render_step`) before any generated code runs. It runs inside the step process, the
+   same code on the local backend and on ConTree. A denied event raises
+   `PermissionError: runtime policy denied <event>`, with no host path in the message.
+   - Blocked (tested): process creation (`subprocess`, `os.system`, `os.exec*`, `os.spawn*`,
+     `posix_spawn`, `fork`, `pty.spawn`); network (`socket` connect, bind, getaddrinfo,
+     sendto, sendmsg, name lookups; `urllib` fails through these); `webbrowser.open`; every
+     `ctypes.*` event and the import of `cffi` from non-library code; writes, creates,
+     truncates, removes, renames, `mkdir`, links, `chmod` and `shutil` copies or moves outside
+     the step's working directory (`/dev/null` excepted); `os.chdir` out of it (including
+     `..`); registering a later audit hook. Paths are resolved with `realpath`, so symlinks and
+     `..` do not escape.
+   - Allowed on purpose: reads anywhere on the host (pandas, numpy, scipy, statsmodels and
+     pyarrow need them) and any write inside the step's own working directory.
+   - Overhead: 0.6 ms to install per step; about 29 microseconds per read-open; on a step of
+     about 2.5 s the median was 2.481 s without and 2.583 s with (+4.1%), means 2.681 and 2.690
+     (+0.3%), so the difference is within noise.
+   - The four curated cases give the same universes, checkpoints, flips and verdicts under the
+     policy as the committed recordings. 34 tests, three of them real exploits run through
+     the harness without the guard.
+3. **VM isolation (ConTree).** The same policy runs inside the VM. That path has never run
+   live.
+
+What the policy does **not** do:
+
+- **The local backend is not an isolation boundary.** The policy is not a VM or a container.
+- A native-code exploit in a C extension (numpy, pyarrow) runs below the interpreter and is
+  not audited.
+- CPU and memory abuse are bounded only by rlimits (CPU 600 s, file size 256 MB, 1024
+  processes, and 3072 MB address space on Linux only, not on macOS) and the 120 s step
+  timeout; writes inside the working directory can fill disk up to those limits.
+- Any file the server user can read is readable by generated code (for example `~/.ssh`) and
+  could be printed into a result or error.
+- A generated `import ctypes` succeeds silently (the module is pre-imported) but every
+  `ctypes.*` event is denied, so it can do nothing.
+- Audit hooks are defense in depth under the guard: an unaudited primitive in a new CPython
+  release would be a gap. Threads and signals are not restricted.
+- Proven on the local backend only: there is no `NEBIUS_API_KEY` here and no ConTree run.
+
+So: the local backend is for trusted-ish generated code behind the policy and the guard, and
+ConTree is the isolated path. Public deployments with live or upload runs should set
+`BORGES_BACKEND=contree`.
+
+- **Uploads are refused on the local backend** (`POST /api/runs` with an `upload_id` returns
+  400) unless `BORGES_ALLOW_UNTRUSTED_LOCAL` is true, which only `make dev` and `make serve`
+  set. Live runs on a curated case are not refused on the local backend by the server; do not
+  expose that combination publicly.
 - The server, not the client, picks the backend, clamps `max_universes`, limits concurrency
   (429), refuses live runs without a key (400) or past the spend cap (403), and can require
   `X-Borges-Live-Token` for uploads. The built-in UI does not send that header.
 - Never commit `.env`. CI (`.github/workflows/ci.yml`) runs lint, tests and the frontend
   build; a badge will exist once the repository is public.
+
+## How much to trust a flip
+
+`evidence/calibration.md` (offline, scripted, 504 synthetic checkout datasets of about 30,000
+sessions, the real pipeline, fixed menu of 5 steps x 2 options plus one scripted adversary
+option, seeds `20261002 + cell_index * 1,000,000 + i`, Wilson 95% intervals; nothing live):
+
+| Situation | Flip reported | Direction flip |
+|---|---|---|
+| Large true effect (0.010 absolute lift), no artefact, n = 80 | 13/80 = 16% [10, 26] | 0/80 [0, 5] |
+| Null effect, default analysis wrongly says SHIP, n = 80 | 71/80 = 89% [80, 94] | 0/80 [0, 5] |
+| Null effect with the planted artefact, n = 80 | 78/80 = 98% [91, 99]; via internal traffic 76/80 = 95% [88, 98] | 35/80 = 44% [33, 55] |
+| True effect at 80% power with the artefact, n = 80 | via internal traffic 55/80 = 69% [58, 78] | 0/80 [0, 5] |
+
+The uncomfortable conclusion: on clean data with a large true effect the search reports a
+significance-only flip 16% of the time, and in 272 clean datasets it never reported a
+direction flip (95% upper bound about 1.4%). A flip label must say which kind it is. A
+significance flip is weak evidence (it is expected from noise near the threshold); a direction
+flip is specific. The red-cards flip (OR 1.34 to 1.20) is of the weak kind. No flip does not
+prove no artefact: detection falls as the true effect grows (95%, 69%, 21%). The rates apply to
+this fixed menu, not to arbitrary datasets.
 
 ## Related work
 

@@ -38,7 +38,8 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
    snapshots the exact execution state and branches one universe per alternative. Shared
    prefixes are computed once. On the ConTree backend each checkpoint is a VM-isolated
    sandbox image. The default local backend is a subprocess per step (scrubbed environment,
-   AST code guard as a lint, per-step timeout) and is not isolation: live and upload runs on a
+   AST code guard as a first-layer lint, a runtime audit-hook policy that blocks process creation,
+   network and writes outside the step directory, per-step timeout) and is not isolation: live and upload runs on a
    shared server need the VM backend.
 3. **Argues against you, with code.** An adversarial analyst inspects the real intermediate
    state and proposes new defensible choices aimed at reversing the conclusion. An
@@ -66,6 +67,37 @@ The flip is presented as the nearest crossing Borges found, not as a typical ana
 search favours flips, and a p-value crossing can leave the effect positive (red cards: odds
 ratio 1.34 to 1.20, p 0.0006 to 0.055).
 
+### How much to trust a flip: the calibration result
+
+`evidence/calibration.md` (offline, scripted, nothing live): 504 synthetic checkout datasets of
+about 30,000 sessions through the real pipeline with a fixed menu (5 steps x 2 options plus
+one scripted adversary option), seeds `20261002 + cell_index * 1,000,000 + i`, Wilson 95%
+intervals. Headline cells have 80 datasets; the secondary cells (24 or 40) have intervals up
+to about 20 points.
+
+- Large true effect (0.010 lift, about 99% power), no artefact: a flip was reported in
+  13/80 = 16% (95% interval 10 to 26%), all significance crossings with the same sign; direction
+  flips 0/80 (upper bound 5%).
+- Null effect where the default analysis wrongly says SHIP (80 of 3,164 scanned datasets,
+  2.5%, the nominal rate): flip reported in 71/80 = 89% (80 to 94%), all significance
+  crossings, 0/80 direction flips.
+- Null effect with the planted artefact: flip reported in 78/80 = 98% (91 to 99%); through the
+  internal-traffic exclusion 76/80 = 95% (88 to 98%); direction flips 35/80 = 44% (33 to 55%).
+  At 80% power with the artefact: via internal traffic 55/80 = 69% (58 to 78%), 0 direction
+  flips; at a large effect with the artefact 5/24 = 21% (9 to 40%, small cell).
+- Direction flips on clean data: 0 of 272 datasets (upper 95% bound about 1.4%).
+
+The uncomfortable conclusion: the bounded search is biased toward flips of the significance
+kind. On clean data with a large true effect it reports a significance-only flip 16% of the
+time and never a direction flip in 272 clean datasets, so a flip label must say which kind it
+is. A significance flip (same sign, p crosses 0.05, like red cards OR 1.34 to 1.20) is weak
+evidence on its own; a sign-reversing flip is specific. Detection of the artefact falls as
+the true effect grows, so no flip does not prove no artefact. The rates apply to this fixed
+menu, not to arbitrary datasets, and the default analysis ignores clustering by user.
+
+**Verdict wording.** The docs and the verdict card lead with the robustness share ("N of M
+paths agree"), then the smallest flip found and its kind (direction or significance).
+
 ## Who it is for
 
 - **Anyone acting on an AI analyst's answer.** Borges is a second opinion that shows how many
@@ -85,6 +117,7 @@ What exists, verified against the primary sources (September and October 2026):
 |---|---|---|
 | Specification curve analysis (Simonsohn, Simmons, Nelson 2020) and multiverse analysis (Steegen et al. 2016) | Run all defensible combinations of analytic choices and show the distribution of results. The idea Borges builds on | [Nature Human Behaviour](https://doi.org/10.1038/s41562-020-0912-z) |
 | `specr` (Masur and Scharkow) | R package to set up, run and plot a specification curve, with inference on the curve in the development version 1.0.1 (May 2024). The analyst declares outcomes, predictors, models, controls and subsets in `setup()`; it proposes nothing | [CRAN](https://cran.r-project.org/package=specr), [site](https://masurp.github.io/specr/) |
+| RobustiPy (Valdenegro, Yan, Dai, Rahal; arXiv 2506.19958, June 2025; GPL-3.0) | Python library for multiverse and specification-curve analysis at scale: combinatorial specification search, bootstrap inference, model selection and averaging, joint inference, out-of-sample validation and explainable-AI attribution of covariates; benchmarked on about 672 million simulated regressions. Verified from the arXiv abstract and the project page; we did not run it or read its full source. Contrast: it enumerates specifications efficiently, whereas Borges has an adversary propose new forks mid-analysis on forked, checkpointed execution, searches for the smallest flip and reproduces it; RobustiPy is stronger on statistical inference over the curve and scale | [arXiv](https://arxiv.org/abs/2506.19958), [code](https://github.com/RobustiPy/robustipy), [docs](https://robustipy.readthedocs.io/) |
 | Boba (Liu, Kale, Althoff, Heer; IEEE TVCG, VAST 2020) | A DSL in which the analyst writes shared code once plus local variations; the compiler emits one script per path, and a visualizer links results to the decision space to find consequential decisions | [paper](https://arxiv.org/pdf/2007.05551), [project](https://idl.uw.edu/papers/boba) |
 | `multiverse` R package (Sarma, Kale, Moon, Taback, Chevalier, Hullman, Kay) | Declare alternatives with `branch()` inside an R notebook; builds the multiverse from local changes to one analysis, runs paths in parallel and isolates failures. Alternatives are never proposed automatically | [CRAN](https://cran.r-project.org/package=multiverse), [docs](https://mucollective.github.io/multiverse/) |
 | ForkSCOPE (Balaji, Yeltekin, Zheng, arXiv 2609.12438, Sept 2026) | Human-AI pipeline that induces the forks and a taxonomy bottom-up from the code of many end-to-end analyses and shows them in an evidence-linked viewer. Its fork-to-outcome attribution is observational: choices co-occur and were not assigned | [arXiv](https://arxiv.org/abs/2609.12438) |
@@ -197,5 +230,5 @@ Uploading your own dataset (CSV or parquet) works from the landing page card and
 a public instance they should run only on isolated sandboxes (`BORGES_BACKEND=contree`),
 and `BORGES_LIVE_TOKEN` should be set so that only callers who know the token can start
 them. The local backend runs generated code on the server's own machine, so it accepts
-uploads only when `BORGES_ALLOW_UNTRUSTED_LOCAL=true` (set by `make dev` and `make serve`,
+uploads (refused otherwise, 400) only when `BORGES_ALLOW_UNTRUSTED_LOCAL=true` (set only by `make dev` and `make serve`,
 meant for a private machine).
