@@ -10,6 +10,13 @@ from borges.sandbox.local_backend import LocalBackend
 from tests.sandbox.policy_support import checkpoint_files, make_step, run_step
 
 
+PROBE = "/tmp/borges_policy_probe"
+
+
+def probe_absent() -> bool:
+    return not os.path.exists(PROBE)
+
+
 def body(statement: str) -> str:
     return f"import os\n\n\ndef apply(df, ctx):\n    {statement}\n    return df\n"
 
@@ -58,7 +65,7 @@ async def test_denied_event(backend: LocalBackend, statement: str, event: str) -
     assert "PermissionError" in error or event == "import cffi"
     assert "runtime policy denied" in error
     assert event in error
-    assert not os.path.exists("/tmp/borges_policy_probe")
+    assert probe_absent()
 
 
 @pytest.mark.parametrize(
