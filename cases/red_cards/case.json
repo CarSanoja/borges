@@ -220,5 +220,22 @@
       "significant": true
     }
   ],
-  "story": "Twenty-nine teams analysed this dataset and disagreed on whether referees card dark-skinned players more. The default analysis gives OR 1.34 (95% CI 1.13 to 1.58): bias detected. No single analytic choice reverses that and no pair does; it takes three together, such as a full covariate set, frequent referees only and player-clustered errors, to land on no clear evidence (OR 1.20 to 1.25). The one single flip that existed, restricting to low-bias referees, is not defensible."
+  "story": "Twenty-nine teams analysed this dataset and disagreed on whether referees card dark-skinned players more. The default analysis gives OR 1.34 (95% CI 1.13 to 1.58): bias detected. No single analytic choice reverses that and no pair does; it takes three together, such as a full covariate set, frequent referees only and player-clustered errors, to land on no clear evidence (OR 1.20 to 1.25). The one single flip that existed, restricting to low-bias referees, is not defensible.",
+  "column_notes": {
+    "playerShort": "player id",
+    "refNum": "referee id",
+    "refCountry": "country id of the referee",
+    "games": "number of games the player and this referee shared (one row per player-referee dyad); it is not the player's total games",
+    "redCards": "number of red cards the referee gave this player across their shared games",
+    "yellowCards": "number of yellow cards the referee gave this player across their shared games",
+    "yellowReds": "number of second yellow cards (leading to a red) the referee gave this player across their shared games",
+    "rater1": "skin tone of the player rated by rater 1 from the photo, 0 very light to 1 very dark",
+    "rater2": "skin tone of the player rated by rater 2 from the photo, 0 very light to 1 very dark",
+    "position": "playing position of the player",
+    "leagueCountry": "country of the league the player plays in",
+    "height": "player height in centimetres",
+    "weight": "player weight in kilograms",
+    "meanIAT": "mean implicit-bias (race IAT) score of the referee's country of origin",
+    "meanExp": "mean explicit-bias score of the referee's country of origin"
+  }
 }

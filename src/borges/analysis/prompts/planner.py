@@ -3,6 +3,7 @@ from __future__ import annotations
 from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.profile_flags import describe_inclusion_candidates
 from borges.analysis.prompts import compact_json, messages
+from borges.analysis.prompts.notes import describe_column_notes
 from borges.analysis.schemas import PlannerOutput
 
 SYSTEM = """You are a senior statistician designing an analysis whose decision points are \
@@ -36,6 +37,19 @@ function returns. Specs must be implementable in pandas, numpy, scipy or statsmo
 or ctx key produced by an earlier option.
 - source is an optional short citation or convention name (e.g. "Tukey 1977") that justifies \
 the option.
+- produces lists the exact new column names (or ctx keys) that EVERY option of a transform or \
+feature step creates, under the same name and with the same meaning in every option. Later steps \
+and the model read these names, so each option of the step must create all of them and a \
+later spec may use only raw columns or names produced by earlier steps. Filter steps usually \
+produce nothing. Every transform and feature step must declare a non-empty produces.
+- Options never drop columns: filters drop rows, transforms and features add or change columns.
+- Every option keeps the direction and meaning of the estimand. No option may reverse the \
+coding of a variable or swap groups: a "control indicator" is not an alternative to a \
+"treatment indicator" because it only flips the sign of the effect. Alternatives must be \
+alternative ways of measuring or estimating the same signed quantity.
+- Constructed scores (PCA, factor scores, z-scores of composites) are oriented so that higher \
+means more of the construct, for example by requiring a positive correlation with the mean of \
+their items.
 - estimand states precisely the quantity the decision rule judges, in one sentence.
 
 Return only JSON matching the requested schema."""
@@ -59,12 +73,15 @@ def build_messages(
 ) -> list[dict[str, str]]:
     candidates = describe_inclusion_candidates(profile)
     hint = f"\n{candidates}\n" if candidates else ""
+    notes = describe_column_notes(profile)
+    notes_block = f"\n{notes}\n" if notes else ""
     user = (
         f"Question: {question}\n"
         f"Decision rule: {compact_json(rule)}\n"
         f"The final step's estimate, ci_low, ci_high and p_value feed this rule; "
         f"the metric is {rule.metric!r}.\n"
         f"Dataset profile: {compact_json(profile)}"
+        f"{notes_block}"
         f"{hint}"
     )
     return messages(SYSTEM, user)

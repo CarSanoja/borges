@@ -85,3 +85,11 @@ def test_flagged_columns_by_name_and_outlier() -> None:
     assert [c.name for c in outliers] == ["spend"]
     text = describe_inclusion_candidates(profile_dataframe(df, "d"))
     assert "isBot" in text and "spend" in text and "score" not in text
+
+
+def test_notes_are_copied_into_the_profile() -> None:
+    profile = profile_dataframe(_frame(), "d", column_notes={"x": "a measure", "ghost": "none"})
+    by_name = {c.name: c for c in profile.columns}
+    assert by_name["x"].note == "a measure"
+    assert by_name["flag"].note is None
+    assert "ghost" not in by_name

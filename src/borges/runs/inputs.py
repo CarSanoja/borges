@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from borges.analysis.models import DecisionRule
@@ -21,6 +21,7 @@ class ResolvedRun:
     data: bytes
     max_universes: int
     fixtures_dir: Path | None
+    column_notes: dict[str, str] = field(default_factory=dict)
 
 
 def resolve_run(
@@ -45,6 +46,7 @@ def resolve_run(
             data=data if data is not None else registry.data_bytes(case.id),
             max_universes=request.max_universes or case.max_universes,
             fixtures_dir=registry.fixtures_dir(case.id),
+            column_notes=dict(case.column_notes),
         )
     if data is None:
         raise ValueError("a run needs either a case_id or uploaded data")

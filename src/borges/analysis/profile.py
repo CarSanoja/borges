@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 
 import pandas as pd
 from pandas.api import types as pdt
@@ -47,13 +48,14 @@ def _summary(series: pd.Series) -> dict[str, float | str]:
     return _categorical_summary(series)
 
 
-def _profile_column(series: pd.Series, name: str) -> ColumnProfile:
+def _profile_column(series: pd.Series, name: str, note: str | None = None) -> ColumnProfile:
     return ColumnProfile(
         name=name,
         dtype=str(series.dtype),
         n_missing=int(series.isna().sum()),
         n_unique=int(series.nunique(dropna=True)),
         summary=_summary(series),
+        note=note,
     )
 
 
@@ -64,8 +66,14 @@ def _sample_rows(df: pd.DataFrame, sample: int) -> list[dict[str, object]]:
     return rows
 
 
-def profile_dataframe(df: pd.DataFrame, name: str, sample: int = 5) -> DatasetProfile:
-    columns = [_profile_column(df[col], str(col)) for col in df.columns]
+def profile_dataframe(
+    df: pd.DataFrame,
+    name: str,
+    sample: int = 5,
+    column_notes: Mapping[str, str] | None = None,
+) -> DatasetProfile:
+    notes = column_notes or {}
+    columns = [_profile_column(df[col], str(col), notes.get(str(col))) for col in df.columns]
     return DatasetProfile(
         name=name,
         n_rows=int(len(df)),

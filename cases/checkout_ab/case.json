@@ -16,5 +16,16 @@
   "max_universes": 40,
   "reference_label": null,
   "reference": [],
-  "story": "Fourteen days of checkout sessions, randomised by user. The default analysis shows a significant lift and says ship. But employees and QA testers placed test orders through the new checkout, and one defensible filter removes them and erases the lift."
+  "story": "Fourteen days of checkout sessions, randomised by user. The default analysis shows a significant lift and says ship. But employees and QA testers placed test orders through the new checkout, and one defensible filter removes them and erases the lift.",
+  "column_notes": {
+    "session_id": "unique id of the checkout session; one row per session",
+    "user_id": "id of the user; a user has 1 to 4 sessions and the variant is assigned per user",
+    "day": "day of the 14-day experiment, integers 0 to 13",
+    "variant": "experiment arm, exactly 'treatment' or 'control'; the estimand is treatment minus control",
+    "platform": "platform of the session: web, ios or android",
+    "is_internal": "True for sessions of internal staff or test users, who are not genuine customers",
+    "session_seconds": "session length in seconds; very short sessions are bot-like",
+    "converted": "1 if the session ended in a purchase, else 0; the outcome",
+    "revenue": "revenue of the session; 0 unless converted is 1"
+  }
 }

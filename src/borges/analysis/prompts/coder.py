@@ -6,6 +6,7 @@ from borges.analysis.code_guard_rules import ALLOWED_IMPORTS
 from borges.analysis.harness import RESULT_KEYS
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts import compact_json, messages
+from borges.analysis.prompts.notes import describe_column_notes
 
 ALLOWLIST = ", ".join(sorted(ALLOWED_IMPORTS))
 _REJECTED_IMPORT = re.compile(r"import of '([\w.]+)' is not allowed")
@@ -56,6 +57,10 @@ build new columns with `df.assign(**{name: values})` or `df.rename(columns=mappi
 - For the step of kind model: compute standard errors, confidence intervals and p-values with \
 statsmodels (the formula API or the sm.stats functions), never by hand-written formulas. A \
 hand-computed standard error that is wrong makes the whole analysis wrong.
+- Never drop columns: filters only drop rows, transforms and features keep every input column \
+and add or change columns. Keep the direction and coding of every variable. Never swap or \
+recode groups (a treatment indicator stays 1 for treatment). Orient a PCA or factor score so \
+that it correlates positively with the mean of its items (multiply it by -1 otherwise).
 - Be deterministic: any randomness uses a fixed seed.
 - Use exact column names. Do not mutate the input frame in place unless copying first. Do \
 not print. No comments.
@@ -80,14 +85,39 @@ def _earlier_specs(plan: AnalysisPlan, step: Step) -> list[dict[str, object]]:
     return earlier
 
 
+def _available_columns(plan: AnalysisPlan, step: Step) -> list[str]:
+    names = [c.name for c in plan.dataset.columns]
+    for prior in plan.steps:
+        if prior.id == step.id:
+            break
+        names.extend(n for n in prior.produces if n not in names)
+    return names
+
+
+def _step_requirements(plan: AnalysisPlan, step: Step) -> list[str]:
+    available = ", ".join(_available_columns(plan, step))
+    parts = [f"Columns available when this step runs: {available}"]
+    if step.produces:
+        names = ", ".join(step.produces)
+        parts.append(f"This step must create: {names}, with exactly these names for every option.")
+    if step.kind == "model":
+        parts.append(
+            "Read only the columns available when this step runs; do not read any other name."
+        )
+    return parts
+
+
 def build_messages(
     plan: AnalysisPlan, step: Step, option: Option, error: str | None
 ) -> list[dict[str, str]]:
     columns = [{"name": c.name, "dtype": c.dtype} for c in plan.dataset.columns]
     function = "estimate" if step.kind == "model" else "apply"
+    notes = describe_column_notes(plan.dataset)
     parts = [
         f"Estimand: {plan.estimand}",
         f"Columns: {compact_json(columns)}",
+        *([notes] if notes else []),
+        *_step_requirements(plan, step),
         f"Earlier steps and their possible options (columns or ctx keys they create may "
         f"or may not exist depending on the option chosen): "
         f"{compact_json(_earlier_specs(plan, step))}",

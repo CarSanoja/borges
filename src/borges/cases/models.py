@@ -28,6 +28,7 @@ class CaseSpec(BaseModel):
     reference: list[ReferenceEstimate] = Field(default_factory=list)
     story: str = ""
     live_only: bool = False
+    column_notes: dict[str, str] = Field(default_factory=dict)
 
 
 class LiveRecordingSummary(BaseModel):

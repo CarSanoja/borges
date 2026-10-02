@@ -13,8 +13,22 @@ def popt(option_id: str, default: bool = False) -> PlannedOption:
     return PlannedOption(id=option_id, label=option_id, rationale="r", spec="s", is_default=default)
 
 
-def pstep(step_id: str, kind: str, options: list[PlannedOption]) -> PlannedStep:
-    return PlannedStep(id=step_id, title=step_id, kind=kind, description="d", options=options)
+def pstep(
+    step_id: str,
+    kind: str,
+    options: list[PlannedOption],
+    produces: list[str] | None = None,
+) -> PlannedStep:
+    if produces is None:
+        produces = [f"{step_id}_col"] if kind in ("transform", "feature") else []
+    return PlannedStep(
+        id=step_id,
+        title=step_id,
+        kind=kind,
+        description="d",
+        options=options,
+        produces=produces,
+    )
 
 
 async def run(output: PlannerOutput) -> tuple[FakeLLM, object]:

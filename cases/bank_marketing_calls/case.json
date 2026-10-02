@@ -17,5 +17,24 @@
   "reference_label": null,
   "reference": [],
   "story": "45,211 customer records from phone campaigns of a Portuguese bank. A plain analysis says more calls to the same person means fewer subscriptions, so cap them. But who gets called many times is not random: hard-to-reach customers, the month, the contact channel and earlier campaigns all differ. Observational data, no planted effect; a live run only.",
-  "live_only": true
+  "live_only": true,
+  "column_notes": {
+    "age": "age of the customer in years",
+    "job": "type of job of the customer; has missing values",
+    "marital": "marital status of the customer",
+    "education": "education level of the customer; has missing values",
+    "default": "whether the customer has credit in default",
+    "balance": "average yearly balance of the customer in euros",
+    "housing": "whether the customer has a housing loan",
+    "loan": "whether the customer has a personal loan",
+    "contact": "contact communication type of the last contact (cellular or telephone); has missing values",
+    "day_of_week": "despite its name, the day of the month of the last contact",
+    "month": "month of the last contact",
+    "duration": "duration of the last call in seconds; only known after the call, so post-treatment for this question",
+    "campaign": "number of contacts to this customer during this campaign, including the last one; the exposure of interest",
+    "pdays": "days since the customer was last contacted in a previous campaign; -1 means never contacted before",
+    "previous": "number of contacts before this campaign",
+    "poutcome": "outcome of the previous campaign; has missing values",
+    "y": "1 if the customer subscribed to a term deposit, else 0; the outcome"
+  }
 }

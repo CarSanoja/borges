@@ -13,6 +13,7 @@ from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.analysis.narrator import narrate
 from borges.analysis.planner import plan_analysis
 from borges.analysis.profile import profile_dataframe
+from borges.analysis.smoke_review import llm_reviewer
 from borges.config import Settings
 from borges.garden.executor import GardenExecutor
 from borges.garden.influence import build_report
@@ -23,8 +24,9 @@ from borges.garden.verify import verify_flip
 from borges.llm.client import BudgetExceeded, LLMClient, UsageTotals
 from borges.runs.adversary_round import run_adversary_round
 from borges.runs.emitter import RunEmitter
-from borges.runs.events import OptionCodedData, OptionSmokeData
+from borges.runs.events import OptionCodedData, OptionReviewedData, OptionSmokeData
 from borges.runs.inputs import ResolvedRun
+from borges.runs.pipeline_caveats import mirror_caveat
 from borges.runs.runner import UniverseRunner, publish_plan
 from borges.sandbox.backend import BranchBackend
 
@@ -81,7 +83,12 @@ class Pipeline:
         resolved = self.resolved
         async with self._stage("profiling"):
             frame = load_dataframe(resolved.data)
-            profile = await asyncio.to_thread(profile_dataframe, frame, resolved.dataset_name)
+            profile = await asyncio.to_thread(
+                profile_dataframe,
+                frame,
+                resolved.dataset_name,
+                column_notes=resolved.column_notes,
+            )
         async with self._stage("planning"):
             plan = await plan_analysis(self.llm, profile, resolved.question, resolved.decision_rule)
             await publish_plan(self.emitter, plan)
@@ -122,8 +129,31 @@ class Pipeline:
             )
             await self.emitter.emit("option.smoke", payload.model_dump(mode="json"))
 
+        async def on_review(
+            step_id: str,
+            option_id: str,
+            faithful: bool,
+            changes_estimand: bool,
+            problem: str,
+            model: str,
+        ) -> None:
+            payload = OptionReviewedData(
+                step_id=step_id,
+                option_id=option_id,
+                faithful=faithful,
+                changes_estimand=changes_estimand,
+                problem=problem,
+                model=model,
+            )
+            await self.emitter.emit("option.reviewed", payload.model_dump(mode="json"))
+
         smoke = SmokeConfig(
-            self.backend, resolved.data, on_smoke, self.settings.borges_step_timeout_s
+            self.backend,
+            resolved.data,
+            on_smoke,
+            self.settings.borges_step_timeout_s,
+            reviewer=llm_reviewer(self.llm, plan),
+            on_review=on_review,
         )
         async with self._stage("coding"):
             plan = await code_plan(
@@ -268,6 +298,9 @@ class Pipeline:
                 "scale of the baseline) and were excluded as broken implementations, not counted "
                 "as flips."
             )
+        mirrored = mirror_caveat(self.flip, plan.decision_rule.threshold)
+        if mirrored:
+            self.caveats.append(mirrored)
         self.report.caveats = [*self.caveats, *self.report.caveats]
         await self._narrate(plan, self.report)
         return self.report

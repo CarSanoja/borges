@@ -5,6 +5,7 @@ from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
 
 MIN_BRANCHING_STEPS = 3
+PRODUCING_KINDS = ("transform", "feature")
 
 
 def _step_text(step: PlannedStep) -> str:
@@ -32,6 +33,13 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
         problems.append(
             f"Only {branching} steps have two or more options; at least "
             f"{MIN_BRANCHING_STEPS} are required."
+        )
+    missing = [s.id for s in steps if s.kind in PRODUCING_KINDS and not s.produces]
+    if missing:
+        problems.append(
+            "These transform or feature steps do not declare produces; list the exact new "
+            "column names or ctx keys that every option of the step creates, under the same "
+            f"name and meaning: {', '.join(missing)}."
         )
     flags, outliers = flagged_columns(profile)
     names = [c.name for c in flags + outliers]

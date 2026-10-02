@@ -134,7 +134,8 @@ def test_scripted_plans_meet_the_rule() -> None:
     for case in ["checkout_ab", "red_cards", "marp_norms", "marp_religiosity"]:
         data = json.loads(Path(f"cases/{case}/fixtures/planner.json").read_text())
         out = PlannerOutput.model_validate(data["parsed"])
-        assert plan_shortfalls(out.steps, make_profile()) == [], case
+        problems = plan_shortfalls(out.steps, make_profile())
+        assert [p for p in problems if "produces" not in p] == [], case
 
 
 def no_model() -> PlannerOutput:
@@ -190,3 +191,37 @@ async def test_ids_from_the_model_are_normalised() -> None:
     assert ids == ["trim_rows", "scale", "trim_rows_2", "m"]
     assert [o.id for o in plan.steps[0].options] == ["ols_demographics", "ols_demographics_2"]
     assert [o.id for o in plan.steps[-1].options] == ["ols", "welch_t"]
+
+
+def undeclared() -> PlannerOutput:
+    return PlannerOutput(
+        estimand="E",
+        steps=[
+            pstep("trim", "filter", [popt("a", True), popt("b")]),
+            pstep("scale", "transform", [popt("a", True), popt("b")], produces=[]),
+            pstep("m", "model", [popt("ols", True), popt("welch")]),
+        ],
+    )
+
+
+def test_transform_without_produces_is_a_shortfall() -> None:
+    problems = plan_shortfalls(undeclared().steps, make_profile())
+    assert len(problems) == 1 and "produces" in problems[0] and "scale" in problems[0]
+
+
+def test_filter_without_produces_is_fine() -> None:
+    assert plan_shortfalls(broad().steps, make_profile()) == []
+
+
+async def test_missing_produces_triggers_one_reask_with_feedback() -> None:
+    class Seq(FakeLLM):
+        async def complete(self, role, messages, **kw):  # type: ignore[no-untyped-def]
+            self.responses["planner:retry"] = broad()
+            return await super().complete(role, messages, **kw)
+
+    llm = Seq({"planner": undeclared()})
+    plan = await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))
+    assert llm.keys() == ["planner", "planner:retry"]
+    feedback = llm.calls[1].messages[-1]["content"]
+    assert "produces" in feedback and "scale" in feedback
+    assert [s.produces for s in plan.steps] == [[], ["scale_col"], []]

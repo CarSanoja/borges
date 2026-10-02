@@ -37,6 +37,7 @@ class ColumnProfile(BaseModel):
     n_missing: int
     n_unique: int
     summary: dict[str, float | str] = Field(default_factory=dict)
+    note: str | None = None
 
 
 class DatasetProfile(BaseModel):
@@ -135,3 +136,6 @@ class CodingSummary(BaseModel):
     smoke_tested: int = 0
     repaired_after_smoke: int = 0
     failed: int = 0
+    steps_reviewed: int = 0
+    options_flagged: int = 0
+    options_dropped_by_review: int = 0
