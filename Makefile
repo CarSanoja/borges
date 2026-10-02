@@ -1,7 +1,7 @@
 BORGES = uv run --no-sync borges
 FRONTEND = pnpm -C frontend
 
-.PHONY: install lint test demo-cli demo-red-cards serve dev record-demos docker docker-run
+.PHONY: install lint test demo-cli demo-red-cards serve dev record-demos live-smoke record-live docker docker-run
 
 install:
 	uv sync --extra contree
@@ -37,6 +37,15 @@ dev:
 record-demos:
 	$(BORGES) record-demo --case checkout_ab --llm scripted
 	$(BORGES) record-demo --case red_cards --llm scripted
+	uv run --no-sync python scripts/export_recorded_run.py
+
+live-smoke:
+	uv run --no-sync python scripts/live_smoke.py
+
+record-live: export BORGES_RUN_CAP_USD ?= 0.50
+record-live: live-smoke
+	$(BORGES) record-demo --case checkout_ab --llm nebius
+	$(BORGES) record-demo --case red_cards --llm nebius
 	uv run --no-sync python scripts/export_recorded_run.py
 
 docker:
