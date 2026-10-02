@@ -34,18 +34,35 @@ async def test_each_local_backend_owns_a_directory_removed_on_close(tmp_path: Pa
 
 
 def test_contree_requires_key(tmp_path: Path) -> None:
-    settings = _settings(tmp_path, contree_base_url="https://example.invalid")
+    settings = _settings(tmp_path, contree_project_id="proj-9")
     with pytest.raises(SandboxError, match="API key"):
         make_backend(settings, "contree")
 
 
-def test_contree_requires_base_url(tmp_path: Path) -> None:
-    with pytest.raises(SandboxError, match="CONTREE_BASE_URL"):
+def test_contree_requires_project_id(tmp_path: Path) -> None:
+    with pytest.raises(SandboxError, match="NEBIUS_PROJECT_ID"):
         make_backend(_settings(tmp_path, contree_api_key="k"), "contree")
 
 
+def test_contree_defaults_to_token_factory_sandboxes(tmp_path: Path) -> None:
+    settings = _settings(tmp_path)
+    assert settings.contree_base_url == "https://api.tokenfactory.nebius.com/sandboxes/"
+
+
+def test_empty_env_values_keep_the_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("CONTREE_BASE_URL", "")
+    monkeypatch.setenv("CONTREE_PROJECT_ID", "")
+    monkeypatch.setenv("NEBIUS_PROJECT_ID", "proj-9")
+    settings = _settings(tmp_path, contree_api_key="k")
+    assert settings.contree_base_url == "https://api.tokenfactory.nebius.com/sandboxes/"
+    backend = make_backend(settings, "contree")
+    assert backend._client.config.auth.get_headers()["Project"] == "proj-9"
+
+
 def test_contree_falls_back_to_nebius_key(tmp_path: Path) -> None:
-    settings = _settings(tmp_path, nebius_api_key="k", contree_base_url="https://example.invalid")
+    settings = _settings(tmp_path, nebius_api_key="k", contree_project_id="proj-9")
     backend = make_backend(settings, "contree")
     assert backend.name == "contree"
 
@@ -56,11 +73,6 @@ def test_kind_overrides_setting(tmp_path: Path) -> None:
 
 
 def test_contree_project_id_comes_from_settings(tmp_path: Path) -> None:
-    settings = _settings(
-        tmp_path,
-        contree_api_key="k",
-        contree_base_url="https://example.invalid",
-        contree_project_id="proj-9",
-    )
+    settings = _settings(tmp_path, contree_api_key="k", contree_project_id="proj-9")
     backend = make_backend(settings, "contree")
     assert backend._client.config.auth.get_headers()["Project"] == "proj-9"

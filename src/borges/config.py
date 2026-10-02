@@ -3,10 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AliasChoices, Field
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+CONTREE_URL = "https://api.tokenfactory.nebius.com/sandboxes/"
 
 
 class Settings(BaseSettings):
@@ -16,11 +17,19 @@ class Settings(BaseSettings):
     nebius_base_url: str = "https://api.tokenfactory.nebius.com/v1/"
     tavily_api_key: str | None = None
     contree_api_key: str | None = None
-    contree_base_url: str | None = None
+    contree_base_url: str = CONTREE_URL
 
-    contree_project_id: str | None = Field(
-        default=None, validation_alias=AliasChoices("CONTREE_PROJECT_ID", "NEBIUS_PROJECT_ID")
-    )
+    contree_project_id: str | None = None
+    nebius_project_id: str | None = None
+
+    @field_validator("contree_base_url", mode="before")
+    @classmethod
+    def _contree_url_or_default(cls, value: object) -> object:
+        return value or CONTREE_URL
+
+    @property
+    def sandbox_project_id(self) -> str | None:
+        return self.contree_project_id or self.nebius_project_id
 
     borges_local_base_url: str = "http://localhost:11434/v1"
     borges_local_model: str = "nemotron-3-nano:30b"

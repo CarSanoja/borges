@@ -241,7 +241,7 @@ be exposed publicly.
 | `BORGES_BACKEND` | `contree` if uploads should run live; `local` otherwise. |
 | `BORGES_LIVE_TOKEN` | Set it to gate uploads. |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrent run limits (defaults 2 and 2). |
-| `CONTREE_PROJECT_ID` | ConTree project (falls back to `NEBIUS_PROJECT_ID`). |
+| `NEBIUS_PROJECT_ID` | Token Factory project for Sandboxes, required by the contree backend (`CONTREE_PROJECT_ID` overrides it). |
 | `/app/.borges` volume | Holds `spend.json` and the LLM cache; without a volume the spend ledger resets on every redeploy. |
 
 CI (`.github/workflows/ci.yml`) runs ruff, pytest and the frontend typecheck, tests and

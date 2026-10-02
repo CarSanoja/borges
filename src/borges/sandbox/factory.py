@@ -30,11 +30,10 @@ def make_backend(
             raise SandboxError(
                 "the contree backend needs an API key: set CONTREE_API_KEY (or NEBIUS_API_KEY)"
             )
-        if not settings.contree_base_url:
-            raise SandboxError("the contree backend needs CONTREE_BASE_URL to be set")
-        return ContreeBackend(
-            api_key=key,
-            base_url=settings.contree_base_url,
-            project_id=settings.contree_project_id,
-        )
+        project = settings.sandbox_project_id
+        if not project:
+            raise SandboxError(
+                "the contree backend needs the Nebius project id: set NEBIUS_PROJECT_ID"
+            )
+        return ContreeBackend(api_key=key, base_url=settings.contree_base_url, project_id=project)
     raise SandboxError(f"unknown sandbox backend: {chosen!r}")

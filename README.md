@@ -288,9 +288,10 @@ can be replayed exactly at no cost.
 
 ### Running on Nebius Sandboxes
 
-Set `CONTREE_API_KEY` (or reuse `NEBIUS_API_KEY`), `CONTREE_BASE_URL` and, if your account
-needs it, `CONTREE_PROJECT_ID`, then pass `--backend contree` (or set
-`BORGES_BACKEND=contree` on a server). The ConTree backend is contract-tested, and a live
+Set `NEBIUS_API_KEY` (the same Token Factory key; `CONTREE_API_KEY` overrides it) and
+`NEBIUS_PROJECT_ID` (from tokenfactory.nebius.com/project/api-keys), then pass
+`--backend contree` (or set `BORGES_BACKEND=contree` on a server). The endpoint defaults to
+`https://api.tokenfactory.nebius.com/sandboxes/`; `CONTREE_BASE_URL` overrides it. The ConTree backend is contract-tested, and a live
 test runs only when credentials are present; it has never run against the real service (the
 live Nemotron runs used the local backend), and there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
 once; after that, every analysis step is a non-disposable `image.run` on its parent image,
@@ -311,7 +312,7 @@ The image defaults to the scripted model and the local backend, with
 | `BORGES_LIVE_TOKEN` | When set, uploads need the header `X-Borges-Live-Token` |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
 | `BORGES_BACKEND` | `contree` for isolated sandboxes |
-| `CONTREE_PROJECT_ID` | ConTree project |
+| `NEBIUS_PROJECT_ID` | Token Factory project for Sandboxes (`CONTREE_PROJECT_ID` overrides it) |
 
 Mount a volume on `/app/.borges` (it is declared as a `VOLUME`): the spend ledger lives
 there, and without it the live budget resets on every redeploy. Run history is not kept:

@@ -29,9 +29,11 @@ def test_policy_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_project_id_prefers_contree_then_nebius(monkeypatch: pytest.MonkeyPatch) -> None:
-    assert settings(monkeypatch, NEBIUS_PROJECT_ID="n").contree_project_id == "n"
+    assert settings(monkeypatch, NEBIUS_PROJECT_ID="n").sandbox_project_id == "n"
     both = settings(monkeypatch, NEBIUS_PROJECT_ID="n", CONTREE_PROJECT_ID="c")
-    assert both.contree_project_id == "c"
+    assert both.sandbox_project_id == "c"
+    blank = settings(monkeypatch, NEBIUS_PROJECT_ID="n", CONTREE_PROJECT_ID="")
+    assert blank.sandbox_project_id == "n"
 
 
 def test_question_max_length() -> None:
