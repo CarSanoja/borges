@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from borges.analysis.models import DecisionRule
@@ -28,6 +30,19 @@ class CaseSpec(BaseModel):
     live_only: bool = False
 
 
+class LiveRecordingSummary(BaseModel):
+    recorded_at: str
+    models: dict[str, str] = Field(default_factory=dict)
+    llm_calls: int
+    tokens_in: int
+    tokens_out: int
+    cost_usd: float
+    verdict: str | None = None
+    flipped_verdict: str | None = None
+    flip_kind: Literal["direction", "significance"] | None = None
+    universes: int
+
+
 class CaseCard(BaseModel):
     id: str
     title: str
@@ -40,3 +55,4 @@ class CaseCard(BaseModel):
     reference: list[ReferenceEstimate] = Field(default_factory=list)
     story: str = ""
     live_only: bool = False
+    live_recording: LiveRecordingSummary | None = None

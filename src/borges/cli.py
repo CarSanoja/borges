@@ -118,10 +118,14 @@ def universe(run_id: str, universe_id: str) -> None:
 def reproduce(
     case: Annotated[str, typer.Option("--case", help="Case id")],
     universe: Annotated[str, typer.Option("--universe", help="Universe id from the recording")],
+    source: Annotated[str, typer.Option("--source", help="scripted or live")] = "scripted",
 ) -> None:
     """Re-execute one recorded universe on the case dataset and compare it to the recording."""
+    _validated(source, ("scripted", "live"), "--source")
     try:
-        plan, rep = asyncio.run(cli_runtime.reproduce_recorded(get_settings(), case, universe))
+        plan, rep = asyncio.run(
+            cli_runtime.reproduce_recorded(get_settings(), case, universe, source)
+        )
     except (KeyError, FileNotFoundError) as error:
         typer.echo(str(error).strip("'\""), err=True)
         raise typer.Exit(1) from error

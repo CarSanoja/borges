@@ -15,7 +15,7 @@ from borges.api.deps import (
     get_store,
     get_uploads,
 )
-from borges.api.recorded_detail import recorded_case_id, recorded_snapshot
+from borges.api.recorded_detail import recorded_origin, recorded_snapshot
 from borges.api.run_policy import LIVE_TOKEN_HEADER, enforce_run_policy
 from borges.api.sse import sse_response
 from borges.api.uploads import UploadStore
@@ -132,7 +132,9 @@ async def get_universe(
         detail = build_universe_detail(snapshot, universe_id)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"Unknown universe '{universe_id}'.") from None
-    return with_reproduce(detail, run_id, recorded_case_id(registry, run_id))
+    origin = recorded_origin(registry, run_id)
+    case_id, source = origin if origin else (None, "scripted")
+    return with_reproduce(detail, run_id, case_id, source)
 
 
 @router.get("/runs/{run_id}/universes/{universe_id}/script")

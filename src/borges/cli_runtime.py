@@ -47,22 +47,27 @@ def copy_recording(settings: Settings, run_id: str, case_id: str) -> Path:
     return target
 
 
-async def reproduce_recorded(settings: Settings, case_id: str, universe_id: str):
+async def reproduce_recorded(
+    settings: Settings, case_id: str, universe_id: str, source: str = "scripted"
+):
     from borges.cases.registry import CaseRegistry
     from borges.runs.reproduce import Reproduction, reproduce_universe
     from borges.runs.state import fold
     from borges.sandbox.factory import make_backend
 
     registry = CaseRegistry(settings.borges_cases_dir)
-    events = registry.recording(case_id)
+    events = registry.recording(case_id, source)
     if not events:
-        raise FileNotFoundError(f"case '{case_id}' has no committed recording")
+        raise FileNotFoundError(f"case '{case_id}' has no committed {source} recording")
     snapshot = fold(events, events[0].run_id)
     if snapshot.plan is None:
-        raise KeyError(f"the recording of '{case_id}' has no plan")
+        raise KeyError(f"the {source} recording of '{case_id}' has no plan")
     if universe_id not in snapshot.garden.universes:
         known = ", ".join(sorted(snapshot.garden.universes))
-        raise KeyError(f"unknown universe '{universe_id}' in case '{case_id}'; known: {known}")
+        raise KeyError(
+            f"unknown universe '{universe_id}' in the {source} recording of case "
+            f"'{case_id}'; known: {known}"
+        )
     backend = make_backend(settings, "local")
     try:
         rep: Reproduction = await reproduce_universe(

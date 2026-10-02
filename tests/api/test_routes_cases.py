@@ -40,7 +40,7 @@ class FakeRegistry:
     def card(self, case_id: str) -> CaseCard:
         return self.cards[case_id]
 
-    def recording(self, case_id: str) -> list[Event] | None:
+    def recording(self, case_id: str, source: str = "scripted") -> list[Event] | None:
         return self.events if case_id == "a" else None
 
 

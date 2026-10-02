@@ -5,19 +5,24 @@ from typing import Any
 from borges.runs.models import RunSnapshot
 from borges.runs.state import fold
 
+SOURCES = ("live", "scripted")
 
-def recorded_case_id(registry: Any, run_id: str) -> str | None:
+
+def recorded_origin(registry: Any, run_id: str) -> tuple[str, str] | None:
     for card in registry.list():
-        if not card.has_recording:
-            continue
-        events = registry.recording(card.id) or []
-        if events and events[0].run_id == run_id:
-            return card.id
+        for source in SOURCES:
+            available = card.live_recording is not None if source == "live" else card.has_recording
+            if not available:
+                continue
+            events = registry.recording(card.id, source) or []
+            if events and events[0].run_id == run_id:
+                return card.id, source
     return None
 
 
 def recorded_snapshot(registry: Any, run_id: str) -> RunSnapshot:
-    case_id = recorded_case_id(registry, run_id)
-    if case_id is None:
+    origin = recorded_origin(registry, run_id)
+    if origin is None:
         raise KeyError(run_id)
-    return fold(registry.recording(case_id) or [], run_id)
+    case_id, source = origin
+    return fold(registry.recording(case_id, source) or [], run_id)

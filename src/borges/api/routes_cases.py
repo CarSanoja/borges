@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -40,11 +40,15 @@ def case_recording(
     case_id: str,
     registry: Registry,
     speed: Annotated[float, Query(gt=0, le=100)] = 4.0,
+    source: Annotated[Literal["live", "scripted"] | None, Query()] = None,
 ):
-    _card_or_404(registry, case_id)
-    events = registry.recording(case_id)
+    card = _card_or_404(registry, case_id)
+    chosen = source or ("live" if card.live_recording else "scripted")
+    events = registry.recording(case_id, chosen)
     if not events:
-        raise HTTPException(status_code=404, detail=f"Case '{case_id}' has no recorded run.")
+        raise HTTPException(
+            status_code=404, detail=f"Case '{case_id}' has no {chosen} recorded run."
+        )
     from borges.runs.replay import replay_events
 
     return sse_response(replay_events(events, speed))

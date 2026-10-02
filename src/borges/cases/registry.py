@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pyarrow.parquet as pq
 
+from borges.cases.live_summary import LIVE_FOLDER, RecordingSource, summarize_live
 from borges.cases.models import CaseCard, CaseSpec
 from borges.runs.events import Event
 
@@ -45,11 +46,14 @@ class CaseRegistry:
         if self.get(case_id).live_only:
             raise ValueError(LIVE_ONLY_MESSAGE.format(case_id=case_id))
 
-    def _recording_path(self, case_id: str) -> Path:
-        return self._dir(case_id) / "recorded" / "events.jsonl"
+    def _recording_path(self, case_id: str, source: RecordingSource = "scripted") -> Path:
+        folder = LIVE_FOLDER if source == "live" else "recorded"
+        return self._dir(case_id) / folder / "events.jsonl"
 
-    def recording(self, case_id: str) -> list[Event] | None:
-        path = self._recording_path(case_id)
+    def recording(self, case_id: str, source: RecordingSource = "scripted") -> list[Event] | None:
+        if source not in ("scripted", "live"):
+            raise ValueError(f"unknown recording source '{source}'")
+        path = self._recording_path(case_id, source)
         if not path.is_file():
             return None
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -60,8 +64,12 @@ class CaseRegistry:
         dataset = self._dir(case_id) / spec.dataset_file
         n_rows = pq.ParquetFile(dataset).metadata.num_rows
         fields = spec.model_dump(include=set(CaseCard.model_fields) - {"n_rows", "has_recording"})
+        live = self.recording(case_id, "live")
         return CaseCard(
-            **fields, n_rows=n_rows, has_recording=self._recording_path(case_id).is_file()
+            **fields,
+            n_rows=n_rows,
+            has_recording=self._recording_path(case_id).is_file(),
+            live_recording=summarize_live(live) if live else None,
         )
 
     def list(self) -> list[CaseCard]:
