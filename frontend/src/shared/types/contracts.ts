@@ -264,6 +264,7 @@ export interface RunSnapshot {
   error: string | null;
   agents?: RunAgents | null;
   resumed?: number;
+  memory?: MemoryUsed | null;
   last_seq: number;
 }
 
@@ -402,10 +403,49 @@ export type RunEvent =
   | EventBase<"report.ready", { report: Report }>
   | EventBase<"run.finished", { status: "completed" | "failed" | "cancelled"; elapsed_s: number }>
   | EventBase<"run.failed", { error: string }>
+  | EventBase<"memory.used", MemoryUsed>
   | EventBase<"run.resumed", { reason: string; restored_universes: number; dropped_events: number }>
   | EventBase<"run.cancelled", { reason: string }>;
 
 export type RunEventType = RunEvent["type"];
+
+export type MemoryKind = "verdict" | "code" | "adversary" | "note";
+
+export interface MemoryUsed {
+  mode: "public-demo" | "keyed" | "off";
+  encrypted: boolean;
+  dataset: string;
+  reused: Partial<Record<MemoryKind, number>>;
+  stored: Partial<Record<MemoryKind, number>>;
+  sources: { run_id: string; count: number }[];
+  dropped: number;
+}
+
+export interface MemoryDataset {
+  dataset: string;
+  last_used: number;
+  verdict: number;
+  code: number;
+  adversary: number;
+  note: number;
+}
+
+export interface MemorySummary {
+  tenant: string;
+  mode: "public-demo" | "keyed" | "off";
+  enabled: boolean;
+  encrypted: boolean;
+  note: string;
+  totals: Record<MemoryKind, number>;
+  datasets: MemoryDataset[];
+  limits: Record<MemoryKind, { ttl_days: number; max_rows: number }>;
+}
+
+export interface MemoryForgotten {
+  tenant: string;
+  dataset: string | null;
+  removed: Record<MemoryKind, number>;
+}
 
 export interface AuditRecord {
   v: number;

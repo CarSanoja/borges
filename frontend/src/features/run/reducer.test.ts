@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildSampleRun } from "../../fixtures/sampleRun";
+import { sampleUsed } from "../memory/memoryFixture";
 import { applyEvent, foldEvents, initialSnapshot } from "./reducer";
 
 const events = buildSampleRun("r1");
@@ -105,5 +106,11 @@ describe("reducer", () => {
     const before = initialSnapshot("r1");
     applyEvent(before, events[0]!);
     expect(before.title).toBe("");
+  });
+
+  it("keeps what the run reused from memory", () => {
+    const used = sampleUsed({ reused: { verdict: 2 }, sources: [{ run_id: "r0", count: 2 }] });
+    const next = applyEvent(initialSnapshot("r1"), { seq: 1, ts: 1, run_id: "r1", type: "memory.used", data: used });
+    expect(next.memory?.reused.verdict).toBe(2);
   });
 });

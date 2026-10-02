@@ -3,6 +3,7 @@ import { RunPage } from "./features/run/RunPage";
 import { ReplayRoute } from "./features/run/ReplayRoute";
 import { NotFound } from "./features/notfound/NotFound";
 import { FleetPage } from "./features/fleet/FleetPage";
+import { MemoryPage } from "./features/memory/MemoryPage";
 import { TracePage } from "./features/trace/TracePage";
 import { IdentityBar } from "./features/identity/IdentityBar";
 import { navigate, replayPath, runPath, useLocation, useScrollToTop, withMock } from "./shared/router";
@@ -24,6 +25,8 @@ function Routes() {
   }
 
   if (route.name === "fleet") return <FleetPage />;
+
+  if (route.name === "memory") return <MemoryPage />;
 
   if (route.name === "trace") {
     return <TracePage key={`trace:${route.runId}`} runId={route.runId} />;

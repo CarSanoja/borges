@@ -116,6 +116,8 @@ function fold(snapshot: RunSnapshot, event: RunEvent): RunSnapshot {
       return { ...snapshot, status: "failed", error: event.data.error };
     case "run.resumed":
       return { ...snapshot, status: "running", resumed: (snapshot.resumed ?? 0) + 1 };
+    case "memory.used":
+      return { ...snapshot, memory: event.data };
     case "run.cancelled":
       return { ...snapshot, status: "cancelled" };
     case "option.coded":

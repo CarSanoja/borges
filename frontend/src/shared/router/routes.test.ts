@@ -7,6 +7,11 @@ describe("parseLocation", () => {
     expect(parseLocation("/fleet/x", "").route.name).toBe("not_found");
   });
 
+  it("matches the memory route", () => {
+    expect(parseLocation("/memory", "").route).toEqual({ name: "memory" });
+    expect(parseLocation("/memory/x", "").route.name).toBe("not_found");
+  });
+
   it("matches the landing route", () => {
     expect(parseLocation("/", "")).toEqual({ route: { name: "landing" }, mock: false });
   });

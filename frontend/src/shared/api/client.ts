@@ -5,6 +5,8 @@ import type {
   RecordingSource,
   Health,
   Me,
+  MemoryForgotten,
+  MemorySummary,
   PiiSummary,
   RunCreated,
   RunRequest,
@@ -60,6 +62,15 @@ export function getHealth(): Promise<Health> {
 
 export function getMe(): Promise<Me> {
   return request<Me>("/me");
+}
+
+export function getMemory(): Promise<MemorySummary> {
+  return request<MemorySummary>("/memory");
+}
+
+export function forgetMemory(dataset?: string): Promise<MemoryForgotten> {
+  const query = dataset ? `?dataset=${encodeURIComponent(dataset)}` : "";
+  return request<MemoryForgotten>(`/memory${query}`, { method: "DELETE" });
 }
 
 export function getAgents(): Promise<AgentCatalog> {

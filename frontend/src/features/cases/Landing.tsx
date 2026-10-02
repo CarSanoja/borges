@@ -1,6 +1,6 @@
 import type { Health } from "../../shared/types/contracts";
 import { backendLabel } from "../run/runLabels";
-import { AppLink, FLEET_PATH } from "../../shared/router";
+import { AppLink, FLEET_PATH, MEMORY_PATH } from "../../shared/router";
 import { CaseCardView } from "./CaseCardView";
 import { Hero } from "./Hero";
 import { LiveNote } from "./LiveNote";
@@ -35,6 +35,9 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
       <nav className="landing-nav" aria-label="Main">
         <AppLink to={FLEET_PATH} className="chip chip--link">
           Fleet
+        </AppLink>
+        <AppLink to={MEMORY_PATH} className="chip chip--link">
+          Memory
         </AppLink>
       </nav>
       <Hero

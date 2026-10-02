@@ -10,6 +10,7 @@ const CAPABILITY_LABELS: ReadonlyArray<readonly [string, string]> = [
   ["registry:publish", "publish agent versions"],
   ["registry:approve", "approve agent versions"],
   ["audit:read", "read the audit log"],
+  ["memory:write", "erase memories"],
 ];
 
 export function capabilitySummary(me: Me): string[] {
