@@ -4,6 +4,7 @@ import type {
   CaseCard,
   RecordingSource,
   Health,
+  Me,
   RunCreated,
   RunRequest,
   RunSnapshot,
@@ -11,7 +12,7 @@ import type {
   UniverseDetail,
 } from "../types/contracts";
 
-import { liveTokenHeaders } from "./liveToken";
+import { authHeaders } from "./apiKey";
 
 const BASE = "/api";
 
@@ -43,7 +44,7 @@ function errorMessage(text: string): string {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...init?.headers },
   });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
@@ -54,6 +55,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getHealth(): Promise<Health> {
   return request<Health>("/health");
+}
+
+export function getMe(): Promise<Me> {
+  return request<Me>("/me");
 }
 
 export function getAgents(): Promise<AgentCatalog> {
@@ -84,7 +89,7 @@ export interface UploadResult {
 export async function uploadDataset(file: File): Promise<UploadResult> {
   const form = new FormData();
   form.append("file", file);
-  const response = await fetch(`${BASE}/uploads`, { method: "POST", body: form, headers: liveTokenHeaders() });
+  const response = await fetch(`${BASE}/uploads`, { method: "POST", body: form, headers: authHeaders() });
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new ApiError(response.status, errorMessage(text) || response.statusText);
@@ -93,7 +98,7 @@ export async function uploadDataset(file: File): Promise<UploadResult> {
 }
 
 export function createRun(body: RunRequest): Promise<RunCreated> {
-  return request<RunCreated>("/runs", { method: "POST", body: JSON.stringify(body), headers: liveTokenHeaders() });
+  return request<RunCreated>("/runs", { method: "POST", body: JSON.stringify(body) });
 }
 
 export function getRun(runId: string): Promise<RunSnapshot> {

@@ -297,6 +297,16 @@ export interface UniverseDetail {
   script_filename?: string | null;
 }
 
+export interface Me {
+  principal: string;
+  kind: "anonymous" | "key" | "legacy";
+  anonymous: boolean;
+  scopes: string[];
+  key_id: string | null;
+  expires_at: number | null;
+  rate_limit: { limit: number; remaining: number; refill_per_s: number };
+}
+
 export interface Health {
   status: "ok";
   llm: "nebius" | "scripted" | "local";

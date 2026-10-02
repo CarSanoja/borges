@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, createRun, uploadDataset } from "./client";
+import { ApiError, createRun, getMe, uploadDataset } from "./client";
 
 function respond(status: number, body: string) {
   vi.stubGlobal(
@@ -35,21 +35,23 @@ function headersOf(mock: ReturnType<typeof vi.fn>, call: number): Headers {
   return new Headers(init.headers);
 }
 
-describe("live token header", () => {
+describe("api key header", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
-    window.localStorage.clear();
+    window.sessionStorage.clear();
   });
 
-  it("sends the stored token on uploads and runs, and nothing without one", async () => {
+  it("sends the stored key on uploads and runs, and nothing without one", async () => {
     const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response("{}", { status: 200 })));
     vi.stubGlobal("fetch", fetchMock);
     await uploadDataset(new File(["a,b\n1,2"], "d.csv"));
-    expect(headersOf(fetchMock, 0).has("X-Borges-Live-Token")).toBe(false);
-    window.localStorage.setItem("borges.liveToken", "secret");
+    expect(headersOf(fetchMock, 0).has("Authorization")).toBe(false);
+    window.sessionStorage.setItem("borges.apiKey", "bk_a_b");
     await uploadDataset(new File(["a,b\n1,2"], "d.csv"));
     await createRun({ case_id: "x" });
-    expect(headersOf(fetchMock, 1).get("X-Borges-Live-Token")).toBe("secret");
-    expect(headersOf(fetchMock, 2).get("X-Borges-Live-Token")).toBe("secret");
+    await getMe();
+    expect(headersOf(fetchMock, 1).get("Authorization")).toBe("Bearer bk_a_b");
+    expect(headersOf(fetchMock, 2).get("Authorization")).toBe("Bearer bk_a_b");
+    expect(headersOf(fetchMock, 3).get("Authorization")).toBe("Bearer bk_a_b");
   });
 });

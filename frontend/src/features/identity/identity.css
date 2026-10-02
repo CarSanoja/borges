@@ -1,0 +1,72 @@
+.identity-bar {
+  border-bottom: 1px solid var(--line);
+  background: var(--ink-800);
+  padding: var(--space-2) var(--gutter);
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.identity-bar-main,
+.identity-form {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.identity-who {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  padding: 2px var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  color: var(--paper-100);
+}
+
+.identity-who[data-state="named"] {
+  border-color: var(--verdigris);
+  color: var(--verdigris);
+}
+
+.identity-who[data-state="rejected"] {
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+}
+
+.identity-can,
+.identity-expiry {
+  color: var(--text-muted);
+}
+
+.identity-actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-4);
+}
+
+.identity-link,
+.identity-save {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.identity-form {
+  margin-top: var(--space-2);
+}
+
+.identity-form input {
+  min-width: min(100%, 22rem);
+  background: var(--ink-900);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--paper-100);
+  font-family: var(--font-mono);
+  padding: var(--space-1) var(--space-3);
+}

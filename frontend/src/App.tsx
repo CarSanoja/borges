@@ -4,9 +4,10 @@ import { ReplayRoute } from "./features/run/ReplayRoute";
 import { NotFound } from "./features/notfound/NotFound";
 import { FleetPage } from "./features/fleet/FleetPage";
 import { TracePage } from "./features/trace/TracePage";
+import { IdentityBar } from "./features/identity/IdentityBar";
 import { navigate, replayPath, runPath, useLocation, useScrollToTop, withMock } from "./shared/router";
 
-export function App() {
+function Routes() {
   const { route, mock } = useLocation();
   const home = () => navigate("/");
   useScrollToTop(`${route.name}:${"runId" in route ? route.runId : "caseId" in route ? route.caseId : ""}`);
@@ -46,5 +47,14 @@ export function App() {
       onOpenReplay={(caseId) => navigate(replayPath(caseId))}
       onOpenMock={() => navigate(withMock(runPath("sample")))}
     />
+  );
+}
+
+export function App() {
+  return (
+    <>
+      <IdentityBar />
+      <Routes />
+    </>
   );
 }
