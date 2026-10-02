@@ -807,7 +807,7 @@
     "ses": "self-reported socio-economic status of the respondent (numeric)",
     "education": "education level of the respondent (numeric)",
     "gdp_scaled": "scaled GDP of the respondent's country; constant within a country",
-    "attention_check": "1 if the respondent passed the survey attention check, 0 otherwise",
+    "attention_check": "answer code for the survey attention check: 1 means the respondent passed; any other value (2 to 7) means they failed",
     "rel_2": "religiosity questionnaire item 2 of 9; the nine rel_* items form the religiosity scale",
     "rel_3": "religiosity questionnaire item 3 of 9; the nine rel_* items form the religiosity scale",
     "rel_4": "religiosity questionnaire item 4 of 9; the nine rel_* items form the religiosity scale",
