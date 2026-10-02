@@ -314,6 +314,7 @@ The image defaults to the scripted model and the local backend, with
 | `BORGES_RATE_ANON_BURST`, `BORGES_RATE_ANON_PER_S`, `BORGES_RATE_KEY_BURST`, `BORGES_RATE_KEY_PER_S` | Token-bucket rate limits per principal (anonymous callers are limited per client address and stricter); 429 with `Retry-After` beyond them |
 | `BORGES_REGISTRY_FOUR_EYES` | `true`: a version cannot be approved by the principal that published it, and `borges agents approve` needs a key with `registry:approve` |
 | `BORGES_STORE_KEY` (falls back to `BORGES_AUDIT_ANCHOR_KEY`), `BORGES_STORE_KEY_AUTOGEN` | HMAC key for the key store and registry chains and their anchors; autogen creates one under `BORGES_HOME/identity/` (set by `make serve` and the Docker image). Unset means unkeyed: tamper-evident only against accidental edits |
+| `BORGES_MEMORY`, `BORGES_MEMORY_KEY`, `BORGES_MEMORY_SIMILARITY` | Memory bank: `true` turns it on (`make serve` and the Docker image do); the key encrypts memories at rest (AES-GCM) and is required for named tenants; without it only the public demo tenant is stored, unencrypted. Similarity threshold for near matches (0.9) |
 | `BORGES_AUDIT_ANCHOR_KEY`, `BORGES_AUDIT_ANCHOR_EVERY` | HMAC key and record interval for the signed checkpoints of the global audit chain |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
 | `BORGES_BACKEND` | `contree` for isolated sandboxes |
@@ -396,6 +397,25 @@ Runs go through a durable queue and survive restarts. Environment: `BORGES_JOB_L
 safe to repeat. `POST /api/runs/{id}/cancel` stops a run. `borges runs dead-letter`, `borges runs retry
 <run_id>`, `borges runs work` and `borges schedule add|list|remove` are the operator commands. See
 ARCHITECTURE.md section 6b.
+
+## Memory
+
+Agents remember across runs, in SQLite under `BORGES_HOME/memory/`, per tenant and per dataset
+fingerprint (sha256 of the data profile). The judge's verdicts on options, the coder's validated code,
+the options the adversary proposed in vain, and your own notes about a dataset are kept, and a later run
+reuses them: a second run of `checkout_ab` makes 0 judge and 0 coder calls instead of 7 and 11, and finds
+the same 7 universes and the same flip. Reused code is still checked by the code guard and the smoke
+test, and a memory never replaces a model call that could change the result: the signatures include the
+question, the estimand and the column notes. The run page shows a Memory note (how many memories, from
+which runs) and `/memory` lists counts with a forget button for keyed callers.
+
+- Tenants: the caller's key name; anonymous callers share `public-demo`, which stores curated cases run
+  as they are, unencrypted unless `BORGES_MEMORY_KEY` is set. Named tenants are stored only with the key.
+- Retrieval: exact signature, then the same schema on another dataset (verdicts), then similarity above
+  the threshold. A memory written by an agent version that is no longer approved is ignored.
+- Erasure: `DELETE /api/memory?dataset=<fp>` (scope `memory:write`), `borges memory forget --tenant T
+  [--dataset FP]`. Notes: `POST /api/memory/notes`, `borges memory note`. `borges memory fingerprint
+  --case ID` prints a case's fingerprint.
 
 ## Security model
 

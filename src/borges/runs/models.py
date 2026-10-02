@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from borges.analysis.models import AnalysisPlan, DecisionRule, Option, Step, StepTrace
 from borges.fleet.models import RunAgents
 from borges.garden.models import Flip, Garden, Report, Universe
-from borges.runs.events import StageName
+from borges.runs.events import MemoryUsedData, StageName
 
 RunStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
@@ -64,6 +64,7 @@ class RunSnapshot(BaseModel):
     error: str | None = None
     agents: RunAgents | None = None
     resumed: int = 0
+    memory: MemoryUsedData | None = None
     last_seq: int = 0
 
 

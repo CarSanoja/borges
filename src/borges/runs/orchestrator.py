@@ -19,7 +19,7 @@ from borges.runs.detail import build_universe_detail
 from borges.runs.emitter import RunEmitter
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
-from borges.runs.orchestrator_build import build_backend, build_gateway_and_llm
+from borges.runs.orchestrator_build import build_backend, build_gateway_and_llm, build_memory
 from borges.runs.orchestrator_events import announce, finish
 from borges.runs.orchestrator_meta import agents_provenance, new_run_meta
 from borges.runs.orchestrator_trace import (
@@ -219,7 +219,18 @@ class RunOrchestrator:
             armor_report = ArmorReport()
             gateway, llm = build_gateway_and_llm(self, run_id, request, resolved, armor_report)
             backend = build_backend(self, request, gateway)
-            pipeline = Pipeline(self.settings, llm, backend, emitter, resolved, armor_report)
+            memory = build_memory(
+                self,
+                run_id,
+                request,
+                resolved,
+                agents,
+                armor_report,
+                context is not None and context.resumed,
+            )
+            pipeline = Pipeline(
+                self.settings, llm, backend, emitter, resolved, armor_report, memory
+            )
             pipeline.agents = agents
             pipeline.context = context
             pipeline.restored = resume.restored if resume and resume.restored else None

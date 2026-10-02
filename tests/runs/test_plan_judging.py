@@ -143,3 +143,27 @@ async def test_ledger_records_accepted_and_rejected_judgements(
     rejected = ledger.find("s1", make_plan().step("s1").option("b"))
     assert rejected is not None and rejected.judgement.accepted is False
     assert ledger.find("s2", make_plan().step("s2").option("y")) is None
+
+
+async def test_remembered_verdicts_skip_the_judge_and_new_ones_are_remembered(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen = patch_judge(monkeypatch, {"y"}, set())
+
+    class Memory:
+        def __init__(self) -> None:
+            self.known = {"b": Judgement(defensibility=0.9, accepted=True, reason="remembered")}
+            self.stored: list[str] = []
+
+        def recall_verdict(self, plan: Any, step: Any, option: Any) -> Judgement | None:
+            return self.known.get(option.id)
+
+        def remember_verdict(self, plan: Any, step: Any, option: Any, judgement: Any) -> None:
+            self.stored.append(option.id)
+
+    memory, emitter = Memory(), Emitter()
+    await judge_plan_options(None, make_plan(), emitter, CodingSummary(), None, memory)
+    assert seen == ["planner:s2.y"]
+    assert memory.stored == ["y"]
+    assert judged(emitter)["b"]["reason"] == "remembered"
+    assert judged(emitter)["b"]["accepted"] is True

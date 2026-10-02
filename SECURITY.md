@@ -444,6 +444,25 @@ non-breaking spaces, zero-width characters and fullwidth forms first, accepts lo
 dashed IBANs and Unicode addresses, and covers texts of any length (text above two million
 characters is cut and marked `[redacted:unscanned]` rather than passed through).
 
+## Memory bank
+
+`src/borges/memory/` keeps what agents learn across runs. Memories are untrusted input that is
+written by models and read back into prompts later, so:
+
+| Threat | Control |
+|---|---|
+| One tenant reads another's memories | Every repository method takes the tenant first and puts it in every statement; a test proves tenant A reads nothing of B. With a key, the AES-GCM key is derived per tenant and the tenant is part of the authenticated data, so a row moved between tenants does not decrypt |
+| Memories stolen from the disk | Payloads are encrypted at rest with `BORGES_MEMORY_KEY`. Without it named tenants are not stored at all; only the `public-demo` tenant (curated cases, no uploaded data) is stored, in clear, and the Memory page says so |
+| A poisoned memory steers a later run | Every memory is screened by Armor (instruction-like text, tool poisoning, personal data) before it can reach a prompt and again before it is written; a hit is dropped and listed in the run's armor report. Verdicts and code are keyed to the question, estimand and column notes, and reused code still passes the code guard and the smoke test |
+| An old, bad agent version keeps influencing runs | Each memory records the agent, version and definition hash that wrote it; it is ignored when the registry no longer approves that definition or cannot be read |
+| Anonymous visitors fill or poison the shared memory | `public-demo` is written only by runs of curated cases with no edited question, rule or notes; anonymous callers cannot write notes or erase; each kind has a row and byte cap with LRU eviction and a TTL |
+| Memory changes a result | It never skips a model call whose answer is not already identical; a scripted test runs `checkout_ab` with and without memory and compares universes, flip and estimates. Resumed runs do not read memory |
+| Erasure is not possible or not provable | `DELETE /api/memory` and `borges memory forget` remove the rows and append a `memory.forget` audit record; `memory.read` and `memory.write` records carry tenant, principal, kind and counts, never payloads |
+
+Limits: the key is a single operator secret (no rotation); the public tenant is shared by design and
+unencrypted without a key; a memory is only as good as the judge or coder that produced it, and a
+near match (similarity) can reuse a verdict for a slightly different option.
+
 ## Runtime (queue, resume, cancel)
 
 - Cancel is authorised for the creating principal, an admin, or an anonymous caller whose run-quota

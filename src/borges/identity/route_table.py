@@ -40,6 +40,9 @@ ROUTE_TABLE: Final[dict[tuple[str, str], RouteRequirement]] = {
     ("GET", "/api/runs/{run_id}/audit"): s.RUNS_READ,
     ("POST", "/api/uploads"): s.UPLOADS_WRITE,
     ("GET", "/api/audit"): s.AUDIT_READ,
+    ("GET", "/api/memory"): s.MEMORY_READ,
+    ("DELETE", "/api/memory"): s.MEMORY_WRITE,
+    ("POST", "/api/memory/notes"): s.MEMORY_WRITE,
 }
 
 

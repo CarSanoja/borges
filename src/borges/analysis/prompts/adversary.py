@@ -31,7 +31,7 @@ Return only JSON matching the requested schema."""
 
 
 def build_messages(
-    plan: AnalysisPlan, baseline: Universe, max_proposals: int
+    plan: AnalysisPlan, baseline: Universe, max_proposals: int, avoid: list[str] | None = None
 ) -> list[dict[str, str]]:
     steps = [
         {
@@ -46,8 +46,16 @@ def build_messages(
     result = baseline.result.model_dump(mode="json") if baseline.result else None
     notes = describe_column_notes(plan.dataset)
     notes_block = f"{notes}\n" if notes else ""
+    avoid_block = (
+        "Earlier runs on this dataset already proposed these options and they were rejected or "
+        "duplicated an existing option; propose something different:\n"
+        + "\n".join(f"- {line}" for line in avoid)
+        + "\n"
+        if avoid
+        else ""
+    )
     user = (
-        f"{notes_block}Question: {plan.question}\nEstimand: {plan.estimand}\n"
+        f"{notes_block}{avoid_block}Question: {plan.question}\nEstimand: {plan.estimand}\n"
         f"Decision rule: {compact_json(plan.decision_rule)}\n"
         f"Plan: {compact_json(steps)}\n"
         f"Baseline choices: {compact_json(baseline.choices)}\n"

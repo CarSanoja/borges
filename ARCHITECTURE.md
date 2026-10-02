@@ -32,6 +32,7 @@ into `frontend/dist`, which FastAPI serves at `/`.
 | `sandbox` | Branchable execution backends behind one protocol | `backend.py`, `local_backend.py`, `contree_backend.py`, `factory.py` |
 | `llm` | Role-based model routing, structured JSON output, disk cache, cost accounting, hard spend cap | `client.py`, `nebius_provider.py`, `scripted_provider.py`, `cache.py`, `spend.py`, `json_output.py`, `factory.py` |
 | `runs` | Orchestration, event bus, run store, replay, state folding | `events.py`, `orchestrator.py`, `bus.py`, `store.py`, `replay.py`, `state.py` |
+| `memory` | Long-term memory per tenant and dataset fingerprint: SQLite repository, AES-GCM sealing, retrieval by signature then similarity, registry approval check, Armor screening | `repository.py`, `session.py`, `run_memory.py`, `signatures.py`, `seal.py`, `service.py` |
 | `cases` | Curated demo cases (dataset + pinned plan + hand-built scripted model responses) | `registry.py`, plus `cases/<id>/` data folders |
 | `api` | HTTP + SSE + static UI | `app.py`, `routes_*.py`, `run_policy.py`, `live_rules.py` |
 
@@ -159,6 +160,7 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 | `option.coded` | `OptionCodedData` |
 | `option.proposed` | `{"step_id": str, "option": Option}` |
 | `option.judged` | `OptionJudgedData` |
+| `memory.used` | `MemoryUsedData` (mode, reused and stored counts per kind, source runs) |
 | `checkpoint.created` | `CheckpointCreatedData` (root: `parent_id`, `step_id`, `option_id` null, `depth` 0) |
 | `universe.started` / `universe.finished` | `{"universe": Universe}` |
 | `flip.found` / `flip.verified` | `{"flip": Flip}` |
@@ -220,6 +222,22 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 - **Schedules.** `borges schedule add --case X --every 24h`; the loop runs only with `BORGES_SCHEDULER=true`.
   `GET /api/schedules` (admin). Minimum period 60 s; each slot is idempotent.
 - **Health.** `GET /api/health` adds `queue_depth`, `active_workers`, `oldest_job_age_s`, `dead_letter_count`.
+
+## 6c. Memory bank
+
+`src/borges/memory/` is read once per kind at the start of a run and written once at the end.
+
+- **Keys.** Tenant (key name, or `public-demo`), dataset fingerprint (sha256 of rows, dtypes, missing counts
+  and summaries; not name, notes or samples), family fingerprint (column names and dtypes) and a signature
+  per kind. Verdict and adversary signatures hash the question, estimand, step kind, conventional labels,
+  column notes and the option label and spec; code signatures hash what the coder is told.
+- **Use.** `judge_plan_options` and the adversary round ask `RunMemory` before calling the judge;
+  `prefill_code` fills remembered code into options before `code_plan`, so the guard and the smoke test
+  still run; the adversary prompt gets an avoid list and proposals rejected before are dropped; owner notes
+  are merged into column notes before the profile is screened. `Pipeline.run` flushes in a `finally` and
+  emits `memory.used`.
+- **Not used.** Resumed runs, runs of a tenant without storage, a memory from the same run, a memory whose
+  agent version is no longer approved, and anything Armor drops.
 
 ## 7. Run modes
 

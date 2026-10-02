@@ -89,3 +89,16 @@ async def test_coincidental_id_with_different_content_is_kept() -> None:
     out = AdversaryOutput(proposals=[proposed("d1", "adv_trim")])
     proposals = await propose_options(FakeLLM({"adversary": out}), plan, baseline())
     assert [p.option.id for p in proposals] == ["adv_trim"]
+
+
+async def test_avoid_hints_reach_the_prompt_only_when_given() -> None:
+    plan = make_plan()
+    llm = FakeLLM({"adversary": AdversaryOutput(proposals=[])})
+    await propose_options(llm, plan, baseline())
+    await propose_options(
+        llm, plan, baseline(), avoid=["Keep engaged only: keep engaged (rejected)"]
+    )
+    plain, steered = (call.messages[1]["content"] for call in llm.calls)
+    assert "Earlier runs" not in plain
+    assert "Earlier runs on this dataset" in steered
+    assert "- Keep engaged only: keep engaged (rejected)" in steered

@@ -14,6 +14,7 @@ from borges.api import (
     routes_cases,
     routes_health,
     routes_identity,
+    routes_memory,
     routes_policy,
     routes_run_create,
     routes_runs,
@@ -123,6 +124,7 @@ def create_app(
 
     for module in (
         routes_health,
+        routes_memory,
         routes_identity,
         routes_cases,
         routes_policy,

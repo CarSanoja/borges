@@ -12,6 +12,7 @@ from borges.config import Settings, get_settings
 from borges.fleet.cli import agents_app
 from borges.fleet.enforcement import RegistryBlocked
 from borges.identity.cli import keys_app
+from borges.memory.cli import memory_app
 from borges.runs.detail import build_universe_detail
 from borges.runs.models import RunRequest, RunSnapshot
 from borges.runs.orchestrator import new_run_id
@@ -22,6 +23,7 @@ app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no
 app.add_typer(audit_app, name="audit")
 app.add_typer(agents_app, name="agents")
 app.add_typer(keys_app, name="keys")
+app.add_typer(memory_app, name="memory")
 app.add_typer(runs_app, name="runs")
 app.add_typer(schedule_app, name="schedule")
 

@@ -72,6 +72,9 @@ class Settings(BaseSettings):
     borges_store_key: str | None = None
     borges_store_key_autogen: bool = False
     borges_armor_llm: bool = False
+    borges_memory: bool = False
+    borges_memory_key: str | None = None
+    borges_memory_similarity: float = 0.9
     borges_job_lease_s: float = 30.0
     borges_job_max_attempts: int = 3
     borges_job_backoff_s: float = 2.0

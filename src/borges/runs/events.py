@@ -17,6 +17,7 @@ EventType = Literal[
     "option.reviewed",
     "option.proposed",
     "option.judged",
+    "memory.used",
     "checkpoint.created",
     "universe.started",
     "universe.finished",
@@ -143,3 +144,22 @@ class RunResumedData(BaseModel):
 
 class RunCancelledData(BaseModel):
     reason: str
+
+
+class MemorySource(BaseModel):
+    run_id: str
+    count: int
+
+
+class MemoryUsedData(BaseModel):
+    mode: str
+    encrypted: bool
+    dataset: str = ""
+    reused: dict[str, int] = Field(default_factory=dict)
+    stored: dict[str, int] = Field(default_factory=dict)
+    sources: list[MemorySource] = Field(default_factory=list)
+    dropped: int = 0
+
+    @property
+    def reused_total(self) -> int:
+        return sum(self.reused.values())

@@ -84,3 +84,43 @@ async def test_round_neither_judges_nor_runs_the_duplicate(
     assert out == [] and judged == [] and runner.ran == []
     assert not [e for e in emitter.events if e[0] == "option.proposed"]
     assert adversary_round.judge_option is not None
+
+
+class FakeMemory:
+    def __init__(self, blocked: bool) -> None:
+        self.blocked_hit = blocked
+        self.remembered: list[tuple[str, str]] = []
+
+    def blocked(self, plan: Any, step: Any, option: Any) -> Any:
+        if not self.blocked_hit:
+            return None
+
+        class Hit:
+            payload = {"reason": "changes the estimand"}
+
+        return Hit()
+
+    def remember_blocked(self, plan: Any, step: Any, option: Any, why: str, reason: str) -> None:
+        self.remembered.append((why, reason))
+
+
+async def test_a_proposal_rejected_in_an_earlier_run_is_dropped_with_the_remembered_reason() -> (
+    None
+):
+    emitter = Emitter()
+    fresh = await drop_duplicates(
+        make_plan(), emitter, JudgedLedger(), [adversary_proposal()], FakeMemory(True)
+    )
+    assert fresh == []
+    [(kind, data)] = emitter.events
+    assert kind == "option.judged" and data["accepted"] is False and data["origin"] == "adversary"
+    assert data["reason"] == "rejected in an earlier run: changes the estimand"
+
+
+async def test_a_duplicate_of_the_plan_is_remembered_for_steering() -> None:
+    memory = FakeMemory(False)
+    proposal = duplicate()
+    plan = make_plan()
+    plan.step("s2").options.append(planner_option("alt_wellbeing"))
+    fresh = await drop_duplicates(plan, Emitter(), None, [proposal], memory)
+    assert fresh == [] and memory.remembered == [("duplicate", "repeats an option of the plan")]

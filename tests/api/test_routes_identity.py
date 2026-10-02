@@ -14,6 +14,7 @@ async def test_me_describes_the_anonymous_demo_principal(tmp_path) -> None:
     assert body["anonymous"] is True
     assert set(body["scopes"]) == {
         "cases:read",
+        "memory:read",
         "recordings:read",
         "runs:create:live:curated",
         "runs:create:scripted",

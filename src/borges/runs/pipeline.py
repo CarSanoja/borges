@@ -20,6 +20,7 @@ from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary
 from borges.garden.search import minimal_flip, single_flip_choices
 from borges.llm.client import LLMClient, UsageTotals
+from borges.memory.run_memory import RunMemory
 from borges.runs.emitter import RunEmitter
 from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
@@ -28,6 +29,7 @@ from borges.runs.pipeline_callbacks import coding_callbacks
 from borges.runs.pipeline_caveats import report_caveats
 from borges.runs.pipeline_data import load_dataframe
 from borges.runs.pipeline_finish import narrate_stage, verify_stage
+from borges.runs.pipeline_memory import finish_memory, prefill_code, recall_profile
 from borges.runs.pipeline_stages import (
     MAX_COMBINATIONS_PER_LEVEL,
     run_adversary,
@@ -56,6 +58,7 @@ class Pipeline:
         emitter: RunEmitter,
         resolved: ResolvedRun,
         armor: ArmorReport | None = None,
+        memory: RunMemory | None = None,
     ) -> None:
         self.settings = settings
         self.llm = llm
@@ -70,6 +73,7 @@ class Pipeline:
         self.caveats: list[str] = []
         self.coding = CodingSummary()
         self.judged = JudgedLedger()
+        self.memory = memory
         self.armor = armor if armor is not None else ArmorReport()
         self.armor_stage = ArmorStage(settings, llm, emitter, self.armor, self.coding)
         self.smoke: SmokeConfig | None = None
@@ -113,13 +117,16 @@ class Pipeline:
                 resolved.dataset_name,
                 column_notes=resolved.column_notes,
             )
+            profile = recall_profile(self, profile)
             self.armor_stage.record(resolved.armor)
             profile = await self.armor_stage.profile(profile)
         async with self.stage("planning"):
             plan = await plan_analysis(self.llm, profile, resolved.question, resolved.decision_rule)
             plan = await self.armor_stage.plan(plan)
             await publish_plan(self.emitter, plan)
-            await judge_plan_options(self.llm, plan, self.emitter, self.coding, self.judged)
+            await judge_plan_options(
+                self.llm, plan, self.emitter, self.coding, self.judged, self.memory
+            )
         self.checkpoint(PLAN_KEY, plan_payload(plan, self.judged, self.coding))
 
         on_coded, on_smoke, on_review = coding_callbacks(self.emitter)
@@ -135,6 +142,7 @@ class Pipeline:
         )
         self.smoke = smoke
         async with self.stage("coding"):
+            await prefill_code(self, plan, on_coded)
             plan = await code_plan(
                 self.llm,
                 plan,
@@ -204,9 +212,14 @@ class Pipeline:
         self.search.universes_used = len(self.garden.universes)
 
     async def run(self) -> Report:
-        plan = await self._plan()
-        await self._search(plan)
-        await verify_stage(self, plan)
+        plan: AnalysisPlan | None = None
+        try:
+            plan = await self._plan()
+            await self._search(plan)
+            await verify_stage(self, plan)
+            await finish_memory(self, plan, announce=True)
+        finally:
+            await finish_memory(self, plan, announce=False)
         self.caveats.extend(self.armor.caveats())
         self.report = build_report(plan, self.garden, self.flip)
         self.report.search = self.search

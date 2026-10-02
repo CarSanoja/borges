@@ -38,6 +38,7 @@ async def run_adversary(
                 pipeline.smoke,
                 pipeline.judged,
                 pipeline.armor_stage,
+                pipeline.memory,
             )
         except Exception as exc:
             pipeline.caveats.append(f"The adversary stage failed and was skipped: {exc}")

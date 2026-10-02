@@ -25,6 +25,7 @@ demo-red-cards:
 
 serve: export BORGES_REGISTRY_ENFORCE=true
 serve: export BORGES_STORE_KEY_AUTOGEN=true
+serve: export BORGES_MEMORY=true
 serve:
 	$(FRONTEND) build
 	$(BORGES) serve

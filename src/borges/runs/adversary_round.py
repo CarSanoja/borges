@@ -9,6 +9,7 @@ from borges.analysis.smoke_types import SmokeConfig
 from borges.garden.models import Universe
 from borges.llm.client import BudgetExceeded, LLMClient, LLMError
 from borges.llm.gather import gather_cancelling
+from borges.memory.run_memory import RunMemory
 from borges.runs.adversary_duplicates import drop_duplicates
 from borges.runs.adversary_review import review_proposal
 from borges.runs.emitter import RunEmitter
@@ -54,11 +55,16 @@ async def _judge_and_code(
     emitter: RunEmitter,
     proposal: Proposal,
     smoke: SmokeConfig | None = None,
+    memory: RunMemory | None = None,
 ) -> tuple[str, Option] | None:
     step = plan.step(proposal.step_id)
     option = proposal.option
+    judgement = memory.recall_verdict(plan, step, option) if memory else None
     try:
-        judgement = await judge_option(llm, plan, step, option)
+        if judgement is None:
+            judgement = await judge_option(llm, plan, step, option)
+            if memory is not None:
+                memory.remember_verdict(plan, step, option, judgement)
     except LLMError as exc:
         rejected = OptionJudgedData(
             step_id=step.id,
@@ -80,6 +86,8 @@ async def _judge_and_code(
     )
     await emitter.emit("option.judged", judged.model_dump(mode="json"))
     if not judgement.accepted:
+        if memory is not None:
+            memory.remember_blocked(plan, step, option, "rejected", judgement.reason)
         return None
     option = option.model_copy(
         update={
@@ -88,7 +96,9 @@ async def _judge_and_code(
         }
     )
     try:
-        code = await code_option(llm, plan, step, option)
+        code = memory.recall_code(plan, step, option) if memory else None
+        if code is None:
+            code = await code_option(llm, plan, step, option)
     except BudgetExceeded:
         raise
     except Exception as exc:
@@ -117,21 +127,24 @@ async def run_adversary_round(
     smoke: SmokeConfig | None = None,
     ledger: JudgedLedger | None = None,
     armor: ArmorStage | None = None,
+    memory: RunMemory | None = None,
 ) -> list[Universe]:
     """Propose options from the real baseline state, judge them, then flip each accepted one."""
     try:
-        proposed = await propose_options(llm, plan, baseline)
+        avoid = memory.avoid_hints(plan) if memory else None
+        extra = {"avoid": avoid} if avoid else {}
+        proposed = await propose_options(llm, plan, baseline, **extra)
     except LLMError:
         return []
     proposals = [p for p in proposed if any(s.id == p.step_id for s in plan.steps)]
-    proposals = await drop_duplicates(plan, emitter, ledger, proposals)
+    proposals = await drop_duplicates(plan, emitter, ledger, proposals, memory)
     if armor is not None:
         proposals = await armor.proposals(proposals)
     for proposal in proposals:
         payload = {"step_id": proposal.step_id, "option": proposal.option.model_dump(mode="json")}
         await emitter.emit("option.proposed", payload)
     outcomes = await gather_cancelling(
-        _judge_and_code(llm, plan, emitter, p, smoke) for p in proposals
+        _judge_and_code(llm, plan, emitter, p, smoke, memory) for p in proposals
     )
     accepted = [o for o in outcomes if o is not None]
     for step_id, option in accepted:

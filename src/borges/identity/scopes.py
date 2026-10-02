@@ -5,16 +5,25 @@ RUNS_READ = "runs:read"
 RUNS_CREATE_SCRIPTED = "runs:create:scripted"
 RUNS_CREATE_LIVE_CURATED = "runs:create:live:curated"
 RECORDINGS_READ = "recordings:read"
+MEMORY_READ = "memory:read"
 
 UPLOADS_WRITE = "uploads:write"
 RUNS_CREATE_LIVE_UPLOAD = "runs:create:live:upload"
 REGISTRY_PUBLISH = "registry:publish"
 REGISTRY_APPROVE = "registry:approve"
 AUDIT_READ = "audit:read"
+MEMORY_WRITE = "memory:write"
 ADMIN = "admin"
 
 PUBLIC_SCOPES: frozenset[str] = frozenset(
-    {CASES_READ, RUNS_READ, RUNS_CREATE_SCRIPTED, RUNS_CREATE_LIVE_CURATED, RECORDINGS_READ}
+    {
+        CASES_READ,
+        RUNS_READ,
+        RUNS_CREATE_SCRIPTED,
+        RUNS_CREATE_LIVE_CURATED,
+        RECORDINGS_READ,
+        MEMORY_READ,
+    }
 )
 NAMED_ONLY_SCOPES: frozenset[str] = frozenset(
     {
@@ -23,6 +32,7 @@ NAMED_ONLY_SCOPES: frozenset[str] = frozenset(
         REGISTRY_PUBLISH,
         REGISTRY_APPROVE,
         AUDIT_READ,
+        MEMORY_WRITE,
         ADMIN,
     }
 )

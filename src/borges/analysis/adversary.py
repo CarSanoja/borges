@@ -9,11 +9,15 @@ from borges.llm.client import LLMClient, Role
 
 
 async def propose_options(
-    llm: LLMClient, plan: AnalysisPlan, baseline: Universe, max_proposals: int = 4
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    baseline: Universe,
+    max_proposals: int = 4,
+    avoid: list[str] | None = None,
 ) -> list[Proposal]:
     response = await llm.complete(
         Role.ADVERSARY,
-        build_messages(plan, baseline, max_proposals),
+        build_messages(plan, baseline, max_proposals, avoid),
         key="adversary",
         schema=AdversaryOutput,
         max_tokens=2500,

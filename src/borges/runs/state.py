@@ -6,7 +6,7 @@ from typing import Any
 from borges.analysis.models import AnalysisPlan, DecisionRule, Option
 from borges.fleet.models import RunAgents
 from borges.garden.models import Flip, Report, Universe
-from borges.runs.events import Event
+from borges.runs.events import Event, MemoryUsedData
 from borges.runs.models import CheckpointNode, RunSnapshot, UsageSnapshot
 
 
@@ -55,6 +55,8 @@ def _apply(snapshot: RunSnapshot, event: Event) -> None:
                 snapshot.agents = RunAgents.model_validate(data["agents"])
         case "run.resumed":
             snapshot.resumed += 1
+        case "memory.used":
+            snapshot.memory = MemoryUsedData.model_validate(data)
         case "stage":
             snapshot.stages[data["name"]] = data["status"]
         case "plan.ready":
