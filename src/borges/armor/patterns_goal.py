@@ -46,6 +46,26 @@ STEERING = (
     ),
 )
 
+STEERING = (
+    *STEERING,
+    (
+        "steering.regardless",
+        r"\b(?:regardless\s+of|irrespective\s+of|no\s+matter\s+what|whatever)\b(?:\W+\w+){0,3}?\W+(?:data|results?|evidence|numbers?|inputs?|findings?)\b",
+    ),
+    (
+        "steering.answer_anyway",
+        r"\b(?:answer|say|respond|reply|conclude|report)\s+(?:yes|no|ship|positive|negative)\b.{0,20}\b(?:no\s+matter|regardless|whatever|anyway)\b",
+    ),
+    (
+        "steering.correct_output",
+        r"\bthe\s+(?:correct|right|only\s+acceptable|required)\s+(?:output|answer|conclusion|decision)\b(?:\W+\w+){0,4}?\W+(?:is|should\s+be)\b",
+    ),
+    (
+        "steering.pressure",
+        r"\b(?:already\s+decided|decision\s+(?:has\s+)?(?:already\s+)?been\s+made)\b|\bmake\s+the\s+(?:analysis|results?|data|numbers)\s+(?:support|say|show|confirm)\b|\bexpects?\s+an?\s+(?:ship|positive|significant|go)\s+(?:decision|result|outcome)\b",
+    ),
+)
+
 SENSITIVE = (
     r"(?:environment(?:\s+variables?)?|env(?:ironment)?\s+vars?|\.env\b|secrets?|api[ _-]?keys?|"
     r"(?:access|auth|api|bearer)\s+tokens?|credentials?|passwords?|passwd|system\s+prompt|"
@@ -62,7 +82,7 @@ EXFIL = (
     ),
     (
         "exfil.env_file",
-        r"(?:\.env\b|\bos\.environ|\bgetenv\b|/etc/passwd|/etc/shadow|~/\.ssh|\bid_rsa\b|\.aws/credentials)",
+        r"(?:\.env\b|\bos\.environ|\bgetenv\b|/etc/passwd|/etc/shadow|~/\.ssh|\bid_rsa\b|\.aws/credentials|/proc/(?:self|\d+)/)",
     ),
     (
         "exfil.send_url",
@@ -72,6 +92,10 @@ EXFIL = (
     (
         "exfil.reveal_prompt",
         r"\b(?:reveal|show|print|repeat|tell\s+me|revela|muestrame|repite)\b.{0,30}\b(?:system\s+prompt|your\s+instructions|your\s+rules|initial\s+prompt|hidden\s+prompt|prompt\s+del\s+sistema|tus\s+instrucciones)\b",
+    ),
+    (
+        "exfil.env_var",
+        r"\b(?:nebius|contree|tavily|openai|anthropic|aws|borges|huggingface|github)_\w*(?:key|token|secret|password)\b|\b\w+_api_key\b",
     ),
     ("exfil.dns", r"\b(?:nslookup|dig|ping)\s+\S+\.\S+|\bcurl\s+-|\bwget\s+"),
 )

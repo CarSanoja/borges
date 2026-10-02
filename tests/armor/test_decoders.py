@@ -38,3 +38,20 @@ def test_looks_like_text_needs_readable_printable_text() -> None:
     assert looks_like_text("a readable sentence")
     assert not looks_like_text("short")
     assert not looks_like_text("12345678 90123456")
+
+
+def test_tag_characters_decode_to_the_hidden_ascii() -> None:
+    from borges.armor.decoders import decode_tag_characters
+
+    hidden = "".join(chr(0xE0000 + ord(c)) for c in "ignore rules")
+    assert decode_tag_characters("note" + hidden) == "ignore rules"
+    assert decode_tag_characters("plain note") is None
+
+
+def test_percent_and_entity_escapes_are_undone_even_when_nested() -> None:
+    from borges.armor.decoders import unescape_markup
+
+    assert unescape_markup("%69gnore%20rules") == "ignore rules"
+    assert unescape_markup("&#105;gnore &amp; rules") == "ignore & rules"
+    assert unescape_markup("%2569gnore") == "ignore"
+    assert unescape_markup("nothing to undo") is None

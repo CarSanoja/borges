@@ -59,7 +59,7 @@ def card_valid(raw: str) -> bool:
 
 
 def iban_valid(raw: str) -> bool:
-    compact = re.sub(r"\s", "", raw).upper()
+    compact = re.sub(r"[\s-]", "", raw).upper()
     if not re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", compact):
         return False
     expected = IBAN_LENGTHS.get(compact[:2])

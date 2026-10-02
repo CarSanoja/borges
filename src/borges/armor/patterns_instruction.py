@@ -6,20 +6,31 @@ OVERRIDE_VERBS = (
     r"(?:ignor(?:e|es|ing|a|ar|en)|disregard|forget|override|overrule|bypass|skip|drop|"
     r"discard|neglect|olvida(?:r)?|descarta(?:r)?|omite|omitir|anula(?:r)?|salta(?:te|r)?|"
     r"desestima(?:r)?|deja de seguir|stop following|do not follow|don'?t follow|no sigas|"
-    r"no apliques|no sigan)"
+    r"no apliques|no sigan|"
+    r"ignorez|oubliez|oublie|ne tenez pas compte|ne tiens pas compte|passez outre|"
+    r"faites abstraction|desactivez|contournez|"
+    r"ignoriere|ignorieren|ignorieren sie|vergiss|vergessen sie|missachte|missachten sie|"
+    r"uebergehe|umgehe|umgehen sie|"
+    r"esqueca|esquecer|desconsidere|desconsidera|descarte|ignore|"
+    r"ignora|ignorare|dimentica|dimenticare|trascura|scarta|aggira|"
+    r"disregard(?:s|ing|ed)?|overrid(?:e|es|ing)|set aside)"
 )
 RULE_NOUNS = (
     r"(?:instructions?|rules?|prompts?|guidelines?|constraints?|directives?|decision[ -]?rules?|"
     r"criteria|safeguards?|filters?|guardrails?|restrictions?|instrucciones|reglas?|"
     r"regla de decision|restricciones|indicaciones|directrices|criterios|salvaguardas?|"
-    r"filtros?|politicas?)"
+    r"filtros?|politicas?|rubrics?|"
+    r"consignes|regles|contraintes|garde-fous|"
+    r"anweisungen|regeln|vorgaben|richtlinien|instruktionen|kriterien|beschraenkungen|"
+    r"instrucoes|regras|diretrizes|orientacoes|restricoes|"
+    r"istruzioni|regole|direttive|criteri|vincoli|indicazioni)"
 )
 
 OVERRIDE = (
     ("override.ignore_rules", rf"\b{OVERRIDE_VERBS}\b{FILLER}{RULE_NOUNS}\b"),
     (
         "override.previous",
-        r"\b(?:ignor\w+|disregard|forget|olvida\w*)\b.{0,30}\b(?:previous|prior|above|earlier|anterior\w*|previas?)\b",
+        r"\b(?:ignor\w+|disregard|forget|olvida\w*|oubli\w+|vergiss\w*|esqueca\w*|dimentica\w*)\b.{0,30}\b(?:previous|prior|above|earlier|anterior\w*|previas?|precedent\w*|vorherig\w*|fruher\w*|zuvor|anteriori)\b",
     ),
     (
         "override.new_instructions",
@@ -40,6 +51,26 @@ OVERRIDE = (
     (
         "override.reset",
         r"\b(?:reset|wipe|clear|borra(?:r)?|reinicia(?:r)?)\s+(?:your|all|tus|todas?)\s+(?:instructions?|memory|context|rules|instrucciones|memoria|contexto|reglas)\b",
+    ),
+)
+
+OVERRIDE = (
+    *OVERRIDE,
+    (
+        "override.delimiter",
+        r"(?:end of (?:the )?(?:data|input|document|dataset|context|prompt|notes?)|#{2,}\s*end\b)\W{1,12}(?:new|next|real|actual)\s+(?:task|instructions?|prompt|objective|assignment)\b",
+    ),
+    (
+        "override.obey",
+        r"\b(?:translate|translation)\b.{0,60}\b(?:then|and)\s+(?:obey|follow|execute|apply|comply)\b|\b(?:obey|execute|comply\s+with)\s+(?:the\s+)?(?:following|these|this)\s+(?:instructions?|commands?|orders?)\b",
+    ),
+    (
+        "override.ignore_idiom",
+        r"\b(?:haz|hacer|hagas|hazle)\s+caso\s+omiso\b|\b(?:pasa|pasar|pases)\s+por\s+alto\b|\bno\s+(?:tengas|tomes|tengan)\s+en\s+(?:cuenta|consideracion)\b|\bturn\s+a\s+blind\s+eye\b",
+    ),
+    (
+        "override.void",
+        r"\btreat\b.{0,40}\b(?:earlier|previous|prior|above|original)\b.{0,40}\b(?:void|null|invalid|irrelevant|obsolete|superseded)\b|\b(?:set|put)\s+aside\b.{0,40}\b(?:you\s+were\s+told|you(?:'ve| have)\s+been\s+told|everything|rules|instructions|methodology|guidelines)\b",
     ),
 )
 

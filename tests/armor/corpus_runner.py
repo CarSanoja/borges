@@ -47,8 +47,8 @@ class Score:
         return self.true_positives / flagged_total if flagged_total else 1.0
 
 
-def evaluate() -> Score:
-    attacks, benign = load("attacks.json"), load("benign.json")
+def evaluate(attacks_file: str = "attacks.json", benign_file: str = "benign.json") -> Score:
+    attacks, benign = load(attacks_file), load(benign_file)
     missed = [a["id"] for a in attacks if not flagged(a)]
     false_alarms = [b["id"] for b in benign if flagged(b)]
     return Score(len(attacks) - len(missed), missed, false_alarms, len(benign))

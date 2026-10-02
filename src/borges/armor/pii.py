@@ -3,10 +3,12 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 
+from borges.armor.pii_fold import fold_with_map
 from borges.armor.pii_patterns import DETECTORS, DOB_COLUMN, DOB_VALUE
 
 TOKEN = "[redacted:{kind}]"
-MAX_SCAN_CHARS = 20000
+MAX_SCAN_CHARS = 2_000_000
+UNSCANNED_TOKEN = "[redacted:unscanned]"
 
 
 @dataclass(frozen=True)
@@ -36,7 +38,12 @@ def _raw_matches(text: str, column: str | None) -> list[PiiMatch]:
 def find_pii(text: str, column: str | None = None) -> list[PiiMatch]:
     if not text or len(text) < 5 and not is_dob_column(column):
         return []
-    ordered = sorted(_raw_matches(text[:MAX_SCAN_CHARS], column), key=lambda m: (m.start, -m.end))
+    folded, origin = fold_with_map(text[:MAX_SCAN_CHARS])
+    raw = _raw_matches(folded, column)
+    ordered = sorted(
+        (PiiMatch(m.kind, origin[m.start], origin[m.end - 1] + 1) for m in raw),
+        key=lambda m: (m.start, -m.end),
+    )
     kept: list[PiiMatch] = []
     cursor = -1
     for match in ordered:
@@ -47,16 +54,20 @@ def find_pii(text: str, column: str | None = None) -> list[PiiMatch]:
 
 
 def redact_pii(text: str, column: str | None = None) -> str:
-    matches = find_pii(text, column)
-    if not matches:
+    unscanned = len(text) > MAX_SCAN_CHARS
+    head = text[:MAX_SCAN_CHARS]
+    matches = find_pii(head, column)
+    if not matches and not unscanned:
         return text
     pieces: list[str] = []
     cursor = 0
     for match in matches:
-        pieces.append(text[cursor : match.start])
+        pieces.append(head[cursor : match.start])
         pieces.append(TOKEN.format(kind=match.kind))
         cursor = match.end
-    pieces.append(text[cursor:])
+    pieces.append(head[cursor:])
+    if unscanned:
+        pieces.append(UNSCANNED_TOKEN)
     return "".join(pieces)
 
 

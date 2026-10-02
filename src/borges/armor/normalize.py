@@ -7,8 +7,10 @@ from dataclasses import dataclass
 from borges.armor.decoders import (
     decode_base64_tokens,
     decode_hex_tokens,
+    decode_tag_characters,
     join_spaced_letters,
     rot13,
+    unescape_markup,
 )
 
 TECHNIQUE_PLAIN = "plain"
@@ -19,6 +21,10 @@ TECHNIQUE_BASE64 = "base64"
 TECHNIQUE_HEX = "hex"
 TECHNIQUE_ROT13 = "rot13"
 TECHNIQUE_SPACED = "spaced-letters"
+TECHNIQUE_TAGS = "unicode-tags"
+TECHNIQUE_ESCAPED = "escaped"
+MAX_DEPTH = 3
+MAX_VARIANTS = 40
 
 KEEP_CONTROLS = frozenset("\n\t\r ")
 STRIPPED_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cs", "Mn", "Me"})
@@ -153,6 +159,21 @@ def normalize_identifier(value: str) -> str:
     return _SEPARATORS.sub(" ", folded).strip().lower()
 
 
+def _layers(text: str) -> list[tuple[str, str]]:
+    layers = [
+        *((TECHNIQUE_BASE64, item) for item in decode_base64_tokens(text)),
+        *((TECHNIQUE_HEX, item) for item in decode_hex_tokens(text)),
+        (TECHNIQUE_ROT13, rot13(fold_homoglyphs(text))),
+    ]
+    for technique, decoded in (
+        (TECHNIQUE_TAGS, decode_tag_characters(text)),
+        (TECHNIQUE_ESCAPED, unescape_markup(text)),
+    ):
+        if decoded is not None:
+            layers.append((technique, decoded))
+    return layers
+
+
 def variants_of(text: str) -> tuple[Variant, ...]:
     base = canonical(text)
     candidates = [
@@ -160,17 +181,24 @@ def variants_of(text: str) -> tuple[Variant, ...]:
         Variant(canonical(deleet(fold_homoglyphs(text))), TECHNIQUE_LEET),
         Variant(base[::-1], TECHNIQUE_REVERSED),
         Variant(canonical(join_spaced_letters(fold_homoglyphs(text))), TECHNIQUE_SPACED),
-        Variant(canonical(rot13(fold_homoglyphs(text))), TECHNIQUE_ROT13),
-    ]
-    decoded = [
-        *(Variant(canonical(item), TECHNIQUE_BASE64) for item in decode_base64_tokens(text)),
-        *(Variant(canonical(item), TECHNIQUE_HEX) for item in decode_hex_tokens(text)),
     ]
     seen: set[str] = set()
     unique: list[Variant] = []
-    for variant in [*candidates, *decoded]:
-        if variant.text in seen:
-            continue
-        seen.add(variant.text)
-        unique.append(variant)
+    for variant in candidates:
+        if variant.text not in seen:
+            seen.add(variant.text)
+            unique.append(variant)
+    frontier = [(text, "")]
+    for _ in range(MAX_DEPTH):
+        following: list[tuple[str, str]] = []
+        for source, trail in frontier:
+            for technique, decoded in _layers(source):
+                label = f"{trail}>{technique}" if trail else technique
+                folded = canonical(decoded)
+                if folded in seen or len(unique) >= MAX_VARIANTS:
+                    continue
+                seen.add(folded)
+                unique.append(Variant(folded, label))
+                following.append((decoded, label))
+        frontier = following
     return tuple(unique)

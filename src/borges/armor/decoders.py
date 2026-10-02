@@ -3,7 +3,9 @@ from __future__ import annotations
 import base64
 import binascii
 import codecs
+import html
 import re
+from urllib.parse import unquote
 
 MIN_DECODED_CHARS = 8
 MIN_TEXT_RATIO = 0.75
@@ -54,3 +56,30 @@ def rot13(text: str) -> str:
 
 def join_spaced_letters(text: str) -> str:
     return SPACED_LETTERS.sub(lambda m: SEPARATOR_RUN.sub("", m.group(0)), text)
+
+
+TAG_BASE = 0xE0000
+TAG_FIRST = 0xE0020
+TAG_LAST = 0xE007E
+URL_ESCAPE = re.compile(r"%[0-9a-fA-F]{2}")
+ENTITY = re.compile(r"&(?:#\d{1,7}|#[xX][0-9a-fA-F]{1,6}|[A-Za-z]{2,8});")
+UNESCAPE_PASSES = 3
+
+
+def decode_tag_characters(text: str) -> str | None:
+    """Unicode tag characters (U+E0020..U+E007E) smuggle ASCII invisibly; map them back."""
+    decoded = [chr(ord(char) - TAG_BASE) for char in text if TAG_FIRST <= ord(char) <= TAG_LAST]
+    return "".join(decoded) if len(decoded) >= 4 else None
+
+
+def unescape_markup(text: str) -> str | None:
+    """Undo percent-encoding and HTML entities, repeatedly, when the text uses either."""
+    if URL_ESCAPE.search(text) is None and ENTITY.search(text) is None:
+        return None
+    current = text
+    for _ in range(UNESCAPE_PASSES):
+        decoded = html.unescape(unquote(current))
+        if decoded == current:
+            break
+        current = decoded
+    return current if current != text else None

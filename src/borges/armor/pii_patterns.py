@@ -6,11 +6,14 @@ from dataclasses import dataclass
 
 from borges.armor import pii_validators as check
 
-EMAIL = re.compile(
-    r"(?<![\w.%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
+EMAIL = re.compile(r"(?<![\w.%+-])[\w.%+-]+@[\w-]+(?:\.[\w-]+)*\.[^\W\d_]{2,}")
+EMAIL_SPELLED = re.compile(
+    r"(?<![\w.%+-])[\w.%+-]+\s?[\[(\{]\s?(?:at|@)\s?[\])\}]\s?[\w-]+(?:\.[\w-]+)*\.[^\W\d_]{2,}",
+    re.IGNORECASE,
 )
 IBAN = re.compile(
-    r"(?<![A-Za-z0-9])[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?(?![A-Za-z0-9])"
+    r"(?<![A-Za-z0-9])[A-Z]{2}\d{2}(?:[ -]?[A-Z0-9]{4}){2,7}(?:[ -]?[A-Z0-9]{1,3})?(?![A-Za-z0-9])",
+    re.IGNORECASE,
 )
 CARD = re.compile(r"(?<![\w.-])\d(?:[ -]?\d){12,18}(?![\w-]|\.\d)")
 SSN = re.compile(r"(?<![\w.-])\d{3}-\d{2}-\d{4}(?![\w-]|\.\d)")
@@ -19,7 +22,8 @@ CURP = re.compile(
 )
 RFC = re.compile(r"(?<![A-Za-z0-9])[A-Z&Ñ]{3,4}\d{6}[A-Z0-9]{3}(?![A-Za-z0-9])")
 DNI = re.compile(
-    r"(?<![A-Za-z0-9])(?:\d{8}[- ]?[A-HJ-NP-TV-Z]|[XYZ][- ]?\d{7}[- ]?[A-HJ-NP-TV-Z])(?![A-Za-z0-9])"
+    r"(?<![A-Za-z0-9])(?:\d{8}[- ]?[A-HJ-NP-TV-Z]|[XYZ][- ]?\d{7}[- ]?[A-HJ-NP-TV-Z])(?![A-Za-z0-9])",
+    re.IGNORECASE,
 )
 PHONE = re.compile(
     r"(?<![\w.+-])(?:\+\d{1,3}[ .-]?)?(?:\(\d{2,4}\)[ .-]?)?\d{2,4}[ .-]\d{2,4}[ .-]\d{2,4}(?:[ .-]\d{2,4})?(?![\w-])"
@@ -57,6 +61,7 @@ def phone_valid(raw: str) -> bool:
 
 DETECTORS: tuple[Detector, ...] = (
     Detector("email", EMAIL),
+    Detector("email", EMAIL_SPELLED),
     Detector("iban", IBAN, check.iban_valid),
     Detector("card", CARD, check.card_valid),
     Detector("ssn", SSN, check.ssn_valid),

@@ -16,6 +16,9 @@ Patterns = tuple[tuple[str, str], ...]
 TEXT_PATTERNS: Patterns = (*OVERRIDE, *ROLE, *STEERING, *EXFIL, *CODE)
 MODEL_OUTPUT_PATTERNS: Patterns = (*TEXT_PATTERNS, *CODE_STEERING)
 MAX_SCREEN_CHARS = 20000
+WINDOW_OVERLAP = 400
+MAX_TOTAL_CHARS = 1_000_000
+OVERSIZE = "input.oversize"
 
 
 @dataclass(frozen=True)
@@ -37,25 +40,37 @@ def _compiled(profile: ScreenProfile) -> tuple[tuple[str, re.Pattern[str]], ...]
     )
 
 
+def _windows(text: str) -> Iterable[str]:
+    step = MAX_SCREEN_CHARS - WINDOW_OVERLAP
+    for start in range(0, min(len(text), MAX_TOTAL_CHARS), step):
+        yield text[start : start + MAX_SCREEN_CHARS]
+
+
+def _scan(window: str, profile: ScreenProfile, found: dict[tuple[str, str], Finding]) -> None:
+    for variant in variants_of(window):
+        for name, pattern in _compiled(profile):
+            match = pattern.search(variant.text)
+            if match is None or (name, variant.technique) in found:
+                continue
+            found[(name, variant.technique)] = Finding(
+                category=name,
+                pattern=name,
+                technique=variant.technique,
+                quote=clip(match.group(0)),
+            )
+
+
 def screen_text(text: str, profile: ScreenProfile = UNTRUSTED_INPUT) -> list[Finding]:
     """Screen the original text and every normalised variant; return the distinct findings."""
     if not text or not text.strip():
         return []
-    sample = text[:MAX_SCREEN_CHARS]
     found: dict[tuple[str, str], Finding] = {}
-    for variant in variants_of(sample):
-        for name, pattern in _compiled(profile):
-            match = pattern.search(variant.text)
-            if match is None:
-                continue
-            key = (name, variant.technique)
-            if key not in found:
-                found[key] = Finding(
-                    category=name,
-                    pattern=name,
-                    technique=variant.technique,
-                    quote=clip(match.group(0)),
-                )
+    for window in _windows(text):
+        _scan(window, profile, found)
+    if len(text) > MAX_TOTAL_CHARS:
+        found[(OVERSIZE, "plain")] = Finding(
+            OVERSIZE, OVERSIZE, "plain", f"{len(text)} characters exceed the screening limit"
+        )
     return list(found.values())
 
 
