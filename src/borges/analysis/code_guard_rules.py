@@ -128,3 +128,45 @@ FORMULA_CALLS = frozenset(
 )
 
 IO_PREFIXES = ("read_", "to_", "save")
+
+INTROSPECTION_ATTRIBUTES = frozenset(
+    {
+        "gi_frame",
+        "gi_code",
+        "gi_yieldfrom",
+        "cr_frame",
+        "cr_code",
+        "cr_await",
+        "ag_frame",
+        "ag_code",
+        "f_back",
+        "f_builtins",
+        "f_globals",
+        "f_locals",
+        "f_code",
+        "f_trace",
+        "tb_frame",
+        "tb_next",
+        "co_code",
+        "mro",
+        "func_globals",
+    }
+)
+
+INTROSPECTION_NAMES = frozenset(
+    {
+        "type",
+        "super",
+        "object",
+        "memoryview",
+        "classmethod",
+        "staticmethod",
+        "property",
+        "builtins",
+        "chr",
+        "bytes",
+        "bytearray",
+    }
+)
+
+STRING_BUILDERS = frozenset({"join", "decode", "encode", "replace", "format", "translate"})

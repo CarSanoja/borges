@@ -3,6 +3,13 @@ from __future__ import annotations
 import ast
 import re
 
+from borges.analysis.code_guard_introspection import (
+    attribute_violations as introspection_attribute_violations,
+)
+from borges.analysis.code_guard_introspection import (
+    name_violations as introspection_name_violations,
+)
+from borges.analysis.code_guard_introspection import subscript_violations
 from borges.analysis.code_guard_rules import (
     ALLOWED_IMPORTS,
     ALLOWED_TO_ATTRIBUTES,
@@ -108,8 +115,12 @@ def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
             violations.extend(_import_violations(node))
         elif isinstance(node, ast.Attribute):
             violations.extend(_attribute_violations(node))
+            violations.extend(introspection_attribute_violations(node))
         elif isinstance(node, ast.Name):
             violations.extend(_name_violations(node))
+            violations.extend(introspection_name_violations(node))
+        elif isinstance(node, ast.Subscript):
+            violations.extend(subscript_violations(node))
         elif isinstance(node, ast.Constant):
             violations.extend(_constant_violations(node))
     return violations
