@@ -232,7 +232,17 @@ closed. `src/borges/identity/` holds the pieces.
 - **Audit.** Every denial, every 401 and every non-public-read allow goes to the global chain
   with the principal (`identity.access`). Public read allows are not recorded unless
   `BORGES_AUDIT_READS=true`, so anonymous traffic cannot fill the disk; rate-limit denials are
-  recorded at most once per ten seconds per bucket.
+  recorded at most once per ten seconds per bucket; repeated 401 and 403 denials from one
+  client on one route are recorded at most once per ten seconds too. A failed key counts
+  against the anonymous bucket of its client address, so guessing keys is rate-limited, and two
+  `Authorization` headers are refused as an invalid key.
+- **Run quota.** One anonymous client address may hold one running run at a time and start at
+  most `BORGES_ANON_RUNS_PER_MIN` scripted and `BORGES_ANON_LIVE_RUNS_PER_HOUR` live runs
+  (`BORGES_ANON_ACTIVE_RUNS`; named keys get four times the active runs), so one visitor
+  cannot hold both global run slots or drain the shared live budget. Over quota is 429 with
+  `Retry-After`, audited as `policy.run_quota`. JSON request bodies above 256 KiB are refused
+  with 413 before they are parsed. Behind a reverse proxy on the same host uvicorn reads the
+  real client from `X-Forwarded-For`; for another proxy address set `FORWARDED_ALLOW_IPS`.
 - **Agent tokens.** Each run mints a short-lived HMAC-SHA256 token per agent over the run id,
   agent principal, capabilities and expiry, with a per-process secret that is never written to
   disk. The orchestrator runs each agent's model calls under `calling_as()` with its token.
@@ -246,6 +256,8 @@ closed. `src/borges/identity/` holds the pieces.
   needs a key with `registry:approve`. The registry store is hash-chained and verified on load:
   a broken store is refused with a clear error (HTTP 503), and `borges agents verify` checks it.
   A principal holding two keys can still approve its own work; four-eyes compares principals.
+  With four-eyes on, publishing from the CLI needs a key too, so a publisher cannot be recorded
+  under an invented `--as` name and then approve under their own key.
 - **Audit anchoring.** The global chain writes a checkpoint (record count, head hash, time, HMAC
   with `BORGES_AUDIT_ANCHOR_KEY` when set) to `audit/global.anchor.jsonl` every
   `BORGES_AUDIT_ANCHOR_EVERY` records and when a run or the server ends. `borges audit verify
@@ -275,14 +287,17 @@ error:
    exceed the agent's ceiling.
 4. **Egress class** (`none`, `profile_only`, `sample_rows`): sample rows above the class are
    stripped from the messages, and kept rows are redacted for e-mail addresses and numbers of
-   nine or more digits. Raw rows pasted in some other shape (a JSON array of records or a
-   delimited table whose columns are the dataset's) above the class are denied. The detector
-   knows the dataset's column names from the run; it is a safeguard against accidents in prompt
-   building, not a data-loss-prevention product, and it does not see rows an agent re-encodes.
+   nine or more digits. Raw rows pasted in some other shape (a JSON array of records, JSON lines,
+   a Python repr, a column-wise object, or a delimited table whose columns are the dataset's)
+   above the class are denied, down to a single record for the `none` and `profile_only`
+   classes. The detector knows the dataset's column names from the run; it is a safeguard
+   against accidents in prompt building, not a data-loss-prevention product, and it does not
+   see header-less tables, arrays of bare values or key=value lines.
 5. **Armor-in hook** (Model Armor, see below): blocks prompt injection in what reaches the
    model and redacts personal data.
-6. **Budgets**: calls and cost per agent and per run are reserved before the call and settled
-   after it; concurrency per agent and per run is capped by queueing, not rejection.
+6. **Budgets**: calls and cost per agent and per run are reserved before every provider request
+   (each retry counts as a call and reserves its estimate again) and settled after it; a
+   cancelled or failed request releases its reservation and its breaker probe; concurrency per agent and per run is capped by queueing, not rejection.
 7. **Routing**: transient errors (5xx, 408, 429, timeouts, connection failures) are retried with
    exponential backoff and jitter; a per-model circuit breaker opens after repeated failures and
    lets one probe through after its cooldown; the call falls back to the next model **only if
@@ -293,7 +308,8 @@ error:
 Sandbox executions are authorised as the `harness` (the only executor), may only run
 `python steps/<id>.py` with files under `steps/`, with a timeout under the policy ceiling, and
 only for code that passed the code guard in this run (the guard records the code it approved;
-the gateway refuses a step file that contains anything else). The policy states that sandboxes
+the gateway refuses a step file that is not exactly the harness prelude, that approved code and
+the harness main, so code appended or prepended to approved code is refused). The policy states that sandboxes
 have no network egress; that is enforced by the sandbox backends (ConTree, resource-limited
 local process) and the code guard, and the gateway pins it as a declared, validated field rather
 than a check of its own.
@@ -317,8 +333,13 @@ run page.
 file names, column names, column notes, categorical cell values and sample rows. Every screen
 runs on the original and on normalised variants: Unicode NFKC, homoglyph folding, removal of
 invisible, zero-width and bidi control characters, accent stripping, leetspeak, reversed text,
-spaced-out letters, rot13 and decoded base64 or hex runs. The patterns (English and Spanish)
-cover instruction override ("ignore the decision rule"), role and system impersonation, result
+spaced-out letters, rot13, decoded base64 or hex runs, percent-encoding, HTML entities and
+Unicode tag characters (a payload hidden in U+E0020..U+E007E is decoded back to text), also
+nested up to three layers (base64 of base64, base64 of rot13). Long text is screened in
+overlapping windows over its whole length (a payload after 20,000 characters of padding is
+found); text above one million characters is flagged rather than skipped. The patterns
+(English and Spanish, with the override verbs and rule nouns also in French, German,
+Portuguese and Italian) cover instruction override ("ignore the decision rule"), role and system impersonation, result
 steering ("report p < 0.05", "always conclude SHIP", "the flip is ..."), exfiltration ("print the
 environment", "read .env", "send to http...") and tool or code steering ("import os",
 "subprocess", "open('/...')"). Actions:
@@ -350,6 +371,10 @@ instruction-like signals but no pattern hit) is classified by the judge's model 
 gateway, at most 12 texts per run; a failing or capped review fails closed (quarantine). Off by
 default.
 
+A second red-team corpus (`attacks_redteam.json`, `benign_redteam.json`) holds 30 further
+attacks in other languages and encodings, paraphrases, split notes and tag characters, with
+hard negatives for the new patterns; it also requires full recall and no false positive.
+
 `tests/armor/corpus/` holds 62 attacks (including homoglyph, zero-width, base64, hex, rot13,
 reversed, fullwidth, bidi, accent, Spanish and split-across-notes ones) and 73 benign texts
 from the five cases; a test requires 100% recall and zero false positives, and another proves
@@ -358,7 +383,12 @@ the curated cases and every recorded model output screen clean.
 Limits: this is a pattern screen for known phrasings, not a semantic guarantee; a novel
 paraphrase can pass, which is why the code guard, the runtime policy and the gateway stay
 independent layers. PII detection is validated by checksums where one exists, so it favours
-precision; free-form names and addresses are not detected.
+precision; free-form names and addresses are not detected, bare digit runs (a nine-digit phone
+or SSN with no separators) are left alone because they are indistinguishable from numeric data,
+and spelled-out addresses ("john at example dot com") are not read. PII detection folds
+non-breaking spaces, zero-width characters and fullwidth forms first, accepts lowercase and
+dashed IBANs and Unicode addresses, and covers texts of any length (text above two million
+characters is cut and marked `[redacted:unscanned]` rather than passed through).
 
 ## Server rules
 

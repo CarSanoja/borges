@@ -310,6 +310,7 @@ The image defaults to the scripted model and the local backend, with
 |---|---|
 | `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run on the local backend. `make dev` sets it to `true`; `make serve` does not |
 | `BORGES_LIVE_TOKEN` | Deprecated alias, kept so old setups hold: a request carrying this value in `X-Borges-Live-Token` is treated as a key with `uploads:write` and `runs:create:live:upload`. New setups should use API keys (below) |
+| `BORGES_ANON_ACTIVE_RUNS`, `BORGES_ANON_RUNS_PER_MIN`, `BORGES_ANON_LIVE_RUNS_PER_HOUR` | Per-client run quota for anonymous callers: concurrent runs, scripted starts per minute, live starts per hour (429 with `Retry-After`) |
 | `BORGES_RATE_ANON_BURST`, `BORGES_RATE_ANON_PER_S`, `BORGES_RATE_KEY_BURST`, `BORGES_RATE_KEY_PER_S` | Token-bucket rate limits per principal (anonymous callers are limited per client address and stricter); 429 with `Retry-After` beyond them |
 | `BORGES_REGISTRY_FOUR_EYES` | `true`: a version cannot be approved by the principal that published it, and `borges agents approve` needs a key with `registry:approve` |
 | `BORGES_AUDIT_ANCHOR_KEY`, `BORGES_AUDIT_ANCHOR_EVERY` | HMAC key and record interval for the signed checkpoints of the global audit chain |
