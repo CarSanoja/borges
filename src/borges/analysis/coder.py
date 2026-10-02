@@ -4,7 +4,8 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from borges.analysis.code_guard import check_code
-from borges.analysis.models import AnalysisPlan, Option, Step
+from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
+from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
@@ -14,9 +15,14 @@ OnCoded = Callable[[str, str, bool, int, str | None], Awaitable[None]]
 
 
 async def _request_code(
-    llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option, error: str | None = None
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    step: Step,
+    option: Option,
+    error: str | None = None,
+    suffix: str = ":repair",
 ) -> str:
-    key = f"coder:{step.id}.{option.id}" + (":repair" if error is not None else "")
+    key = f"coder:{step.id}.{option.id}" + (suffix if error is not None else "")
     response = await llm.complete(
         Role.CODER,
         build_messages(plan, step, option, error),
@@ -51,8 +57,21 @@ async def code_option(llm: LLMClient, plan: AnalysisPlan, step: Step, option: Op
     return code
 
 
+async def _smoke_repair(
+    llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option, error: str, attempt: int
+) -> tuple[str, str | None]:
+    code = await _request_code(llm, plan, step, option, error, suffix=f":smoke{attempt}")
+    violations = check_code(code, step.kind)
+    return code, ("\n".join(violations) if violations else None)
+
+
 async def code_plan(
-    llm: LLMClient, plan: AnalysisPlan, on_coded: OnCoded | None = None, concurrency: int = 6
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    on_coded: OnCoded | None = None,
+    concurrency: int = 6,
+    smoke: SmokeConfig | None = None,
+    summary: CodingSummary | None = None,
 ) -> AnalysisPlan:
     semaphore = asyncio.Semaphore(concurrency)
 
@@ -83,7 +102,18 @@ async def code_plan(
         target.options = [o for o in target.options if o.id != option.id]
     for step_id, (default_id, error) in failed_defaults.items():
         await _promote_sibling(coded, step_id, default_id, error, attempts_by_option, on_coded)
-    return coded
+    if summary is not None:
+        summary.options += len(pending)
+        summary.failed += sum(1 for code, _, _ in results if code is None)
+    if smoke is None:
+        return coded
+
+    async def repair(
+        step: Step, option: Option, error: str, attempt: int
+    ) -> tuple[str, str | None]:
+        return await _smoke_repair(llm, coded, step, option, error, attempt)
+
+    return await smoke_plan(smoke, coded, repair, summary, concurrency)
 
 
 async def _promote_sibling(

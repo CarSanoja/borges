@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from borges.analysis.models import AnalysisResult, StepTrace
+from borges.analysis.models import AnalysisResult, CodingSummary, StepTrace
 
 UniverseKind = Literal["baseline", "single", "adversary", "combination", "verification"]
 UniverseStatus = Literal["pending", "running", "done", "failed"]
@@ -56,6 +56,14 @@ class DecisionInfluence(BaseModel):
     n_alternatives: int
 
 
+class SearchSummary(BaseModel):
+    levels_explored: int = 0
+    max_combinations_per_level: int = 0
+    universe_budget: int = 0
+    universes_used: int = 0
+    budget_exhausted: bool = False
+
+
 class Report(BaseModel):
     question: str
     original_verdict: str
@@ -69,6 +77,8 @@ class Report(BaseModel):
     caveats: list[str] = Field(default_factory=list)
     n_failed: int = 0
     failed: list[str] = Field(default_factory=list)
+    search: SearchSummary | None = None
+    coding: CodingSummary | None = None
 
 
 class Garden(BaseModel):

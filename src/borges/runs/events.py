@@ -9,6 +9,7 @@ EventType = Literal[
     "stage",
     "plan.ready",
     "option.coded",
+    "option.smoke",
     "option.proposed",
     "option.judged",
     "checkpoint.created",
@@ -65,6 +66,14 @@ class OptionCodedData(BaseModel):
     step_id: str
     option_id: str
     ok: bool
+    attempts: int
+    error: str | None = None
+
+
+class OptionSmokeData(BaseModel):
+    step_id: str
+    option_id: str
+    status: Literal["passed", "repaired", "failed"]
     attempts: int
     error: str | None = None
 

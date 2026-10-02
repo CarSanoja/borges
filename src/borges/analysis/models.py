@@ -127,3 +127,10 @@ class Judgement(BaseModel):
 class Proposal(BaseModel):
     step_id: str
     option: Option
+
+
+class CodingSummary(BaseModel):
+    options: int = 0
+    smoke_tested: int = 0
+    repaired_after_smoke: int = 0
+    failed: int = 0

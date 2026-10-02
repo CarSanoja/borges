@@ -70,12 +70,22 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         scenario.calls.append("profile")
         return DatasetProfile(name=name, n_rows=len(df), columns=[])
 
-    async def code_plan(llm: Any, plan: AnalysisPlan, on_coded: Any, concurrency: int):
+    async def code_plan(
+        llm: Any, plan: AnalysisPlan, on_coded: Any, concurrency: int, **kwargs: Any
+    ):
         scenario.calls.append("code_plan")
         for step in plan.steps:
             for index, option in enumerate(step.options):
                 step.options[index] = option.model_copy(update={"code": f"code-{option.id}"})
                 await on_coded(step.id, option.id, True, 1, None)
+                smoke = kwargs.get("smoke")
+                if smoke is not None and smoke.on_smoke is not None:
+                    await smoke.on_smoke(step.id, option.id, "passed", 1, None)
+        summary = kwargs.get("summary")
+        if summary is not None:
+            count = sum(len(step.options) for step in plan.steps)
+            summary.options += count
+            summary.smoke_tested += count
         return plan
 
     async def repair_option(llm: Any, plan: AnalysisPlan, step: Step, option: Option, error: str):
