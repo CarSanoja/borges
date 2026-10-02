@@ -20,8 +20,8 @@ SMOKE_SEED = 7
 MAX_SMOKE_REPAIRS = 2
 ERROR_CHARS = 800
 
-OnSmoke = Callable[[str, str, str, int, str | None], Awaitable[None]]
-Repair = Callable[[Step, Option, str, int], Awaitable[tuple[str, str | None]]]
+OnSmoke = Callable[[str, str, str, int, str | None, list[str]], Awaitable[None]]
+Repair = Callable[[Step, Option, str, int], Awaitable[tuple[str, str | None, str]]]
 
 
 @dataclass
@@ -39,6 +39,7 @@ class _Outcome:
     attempts: int
     error: str | None
     checkpoint: Checkpoint | None
+    models: list[str]
 
 
 def sample_rows(data: bytes) -> bytes:
@@ -83,21 +84,24 @@ async def _smoke_option(
     config: SmokeConfig, repair: Repair, parent: Checkpoint, step: Step, option: Option
 ) -> _Outcome:
     attempts = 1
+    models: list[str] = []
     checkpoint, error = await _execute(config, parent, step, option)
     while error is not None and attempts <= MAX_SMOKE_REPAIRS:
         try:
-            code, violation = await repair(step, option, error, attempts)
+            code, violation, model = await repair(step, option, error, attempts)
         except LLMError as exc:
-            return _Outcome(option, "failed", attempts + 1, str(exc), None)
+            return _Outcome(option, "failed", attempts + 1, str(exc), None, models)
         attempts += 1
+        models.append(model)
         if violation is not None:
             error = violation
             continue
         option = option.model_copy(update={"code": code})
         checkpoint, error = await _execute(config, parent, step, option)
     if error is not None:
-        return _Outcome(option, "failed", attempts, error, None)
-    return _Outcome(option, "passed" if attempts == 1 else "repaired", attempts, None, checkpoint)
+        return _Outcome(option, "failed", attempts, error, None, models)
+    status = "passed" if attempts == 1 else "repaired"
+    return _Outcome(option, status, attempts, None, checkpoint, models)
 
 
 async def _smoke_step(
@@ -112,7 +116,7 @@ async def _smoke_step(
             outcome = await _smoke_option(config, repair, parent, step, option)
         if config.on_smoke is not None:
             await config.on_smoke(
-                step.id, option.id, outcome.status, outcome.attempts, outcome.error
+                step.id, option.id, outcome.status, outcome.attempts, outcome.error, outcome.models
             )
         return outcome
 

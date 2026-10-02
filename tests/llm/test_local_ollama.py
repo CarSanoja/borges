@@ -87,7 +87,7 @@ async def test_truncated_thinking_reply_is_a_clear_error() -> None:
 
 
 async def test_requests_disable_thinking_only_for_coder_and_narrator() -> None:
-    client = FakeClient(*[recorded("ollama_effort_none.json") for _ in range(5)])
+    client = FakeClient(*[recorded("ollama_effort_none.json") for _ in range(6)])
     llm = local(client)
     for role in Role:
         await llm.complete(role, MESSAGES, key=role.value)

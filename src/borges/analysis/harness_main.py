@@ -31,15 +31,44 @@ def __borges_main():
             raise ValueError("estimate() key '" + key + "' must be finite")
         return value
 
+    def _num(value):
+        return format(value, ".4g")
+
+    def _check_interval(out):
+        low, high, est = out["ci_low"], out["ci_high"], out["estimate"]
+        tol = 1e-6 * max(1.0, abs(low), abs(high))
+        inside = low - tol <= est <= high + tol
+        span = "the 95% interval [" + _num(low) + ", " + _num(high) + "]"
+        if low > high:
+            raise ValueError(
+                span + " is inverted: ci_low must be smaller than ci_high"
+                + ("" if inside else " and it does not contain the estimate " + _num(est))
+            )
+        if low == high:
+            raise ValueError(
+                span + " is degenerate"
+                + ("" if inside else " and does not contain the estimate " + _num(est))
+                + ": ci_low must be smaller than ci_high"
+            )
+        if not inside:
+            raise ValueError(
+                span + " does not contain the estimate " + _num(est)
+            )
+
     def _validate(payload):
         if not isinstance(payload, dict):
             raise ValueError("estimate() must return a dict")
-        keys = ("estimate", "ci_low", "ci_high", "p_value", "n")
+        keys = __RESULT_KEYS__
         out = {key: _finite(payload, key) for key in keys}
         if not 0.0 <= out["p_value"] <= 1.0:
-            raise ValueError("p_value must be between 0 and 1")
-        if out["ci_low"] > out["ci_high"]:
-            raise ValueError("ci_low must not exceed ci_high")
+            raise ValueError(
+                "p_value " + _num(out["p_value"]) + " is outside the range [0, 1]"
+            )
+        _check_interval(out)
+        if out["n"] < 1 or out["n"] != int(out["n"]):
+            raise ValueError(
+                "n must be a positive integer (the number of rows used), got " + _num(out["n"])
+            )
         out["n"] = int(out["n"])
         extra = payload.get("extra", {})
         if not isinstance(extra, dict):

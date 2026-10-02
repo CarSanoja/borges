@@ -68,6 +68,7 @@ class OptionCodedData(BaseModel):
     ok: bool
     attempts: int
     error: str | None = None
+    models: list[str] = Field(default_factory=list)
 
 
 class OptionSmokeData(BaseModel):
@@ -76,6 +77,7 @@ class OptionSmokeData(BaseModel):
     status: Literal["passed", "repaired", "failed"]
     attempts: int
     error: str | None = None
+    models: list[str] = Field(default_factory=list)
 
 
 class OptionJudgedData(BaseModel):

@@ -43,7 +43,14 @@ async def test_baseline_failure_is_repaired_once(tmp_path: Path, scenario: Scena
     assert snapshot.status == "completed"
     assert scenario.calls.count("repair:s1.a:s1/a: boom") == 1
     coded = [e.data for e in rig.store.events("r_test") if e.type == "option.coded"]
-    assert {"step_id": "s1", "option_id": "a", "ok": True, "attempts": 2, "error": None} in coded
+    assert {
+        "step_id": "s1",
+        "option_id": "a",
+        "ok": True,
+        "attempts": 2,
+        "error": None,
+        "models": [],
+    } in coded
     assert snapshot.plan.step("s1").option("a").code == "fixed"
     baseline = snapshot.garden.baseline
     assert baseline is not None and baseline.status == "done"

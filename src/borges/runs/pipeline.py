@@ -86,15 +86,30 @@ class Pipeline:
             await publish_plan(self.emitter, plan)
 
         async def on_coded(
-            step_id: str, option_id: str, ok: bool, attempts: int, error: str | None
+            step_id: str,
+            option_id: str,
+            ok: bool,
+            attempts: int,
+            error: str | None,
+            models: list[str] | None = None,
         ) -> None:
             payload = OptionCodedData(
-                step_id=step_id, option_id=option_id, ok=ok, attempts=attempts, error=error
+                step_id=step_id,
+                option_id=option_id,
+                ok=ok,
+                attempts=attempts,
+                error=error,
+                models=models or [],
             )
             await self.emitter.emit("option.coded", payload.model_dump(mode="json"))
 
         async def on_smoke(
-            step_id: str, option_id: str, status: str, attempts: int, error: str | None
+            step_id: str,
+            option_id: str,
+            status: str,
+            attempts: int,
+            error: str | None,
+            models: list[str] | None = None,
         ) -> None:
             payload = OptionSmokeData(
                 step_id=step_id,
@@ -102,6 +117,7 @@ class Pipeline:
                 status=status,
                 attempts=attempts,
                 error=error,
+                models=models or [],
             )
             await self.emitter.emit("option.smoke", payload.model_dump(mode="json"))
 

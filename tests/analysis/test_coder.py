@@ -62,7 +62,7 @@ async def test_code_plan_codes_missing_only_and_reports() -> None:
     events: list[tuple[str, str, bool, int, str | None]] = []
 
     async def on_coded(
-        step_id: str, option_id: str, ok: bool, attempts: int, err: str | None
+        step_id: str, option_id: str, ok: bool, attempts: int, err: str | None, models: list[str]
     ) -> None:
         events.append((step_id, option_id, ok, attempts, err))
 
@@ -86,7 +86,7 @@ async def test_code_plan_repairs_once(monkeypatch: pytest.MonkeyPatch) -> None:
     events: list[tuple[str, str, bool, int, str | None]] = []
 
     async def on_coded(*args) -> None:
-        events.append(args)
+        events.append(args[:5])
 
     coded = await code_plan(llm, make_plan(with_code=True), on_coded=on_coded)
     assert coded.step("d1").option("trim").code == "FIXED"

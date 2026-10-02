@@ -14,6 +14,7 @@ TRACE_PREFIX = "BORGES_TRACE "
 RESULT_PREFIX = "BORGES_RESULT "
 ERROR_PREFIX = "BORGES_ERROR "
 
+RESULT_KEYS = ("estimate", "ci_low", "ci_high", "p_value", "n")
 STEPS_DIR = "steps"
 _UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
 _POLICY_PARTS = ("runtime_policy_paths.py", "runtime_policy_config.py", "runtime_policy.py")
@@ -57,6 +58,7 @@ def render_step(
         MAIN_TEMPLATE.replace("__STEP_ID__", json.dumps(step.id))
         .replace("__OPTION_ID__", json.dumps(option.id))
         .replace("__KIND__", json.dumps(step.kind))
+        .replace("__RESULT_KEYS__", repr(RESULT_KEYS))
     )
     return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 

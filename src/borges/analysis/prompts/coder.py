@@ -1,9 +1,44 @@
 from __future__ import annotations
 
+import re
+
+from borges.analysis.code_guard_rules import ALLOWED_IMPORTS
+from borges.analysis.harness import RESULT_KEYS
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts import compact_json, messages
 
-SYSTEM = """You write one small, correct Python module implementing a single analysis option.
+ALLOWLIST = ", ".join(sorted(ALLOWED_IMPORTS))
+_REJECTED_IMPORT = re.compile(r"import of '([\w.]+)' is not allowed")
+_ALTERNATIVES = "use statsmodels or numpy"
+
+
+def _result_contract(kind: str) -> str:
+    if kind != "model":
+        return "def apply(df, ctx) returning a pandas DataFrame."
+    keys = ", ".join(f'"{key}"' for key in RESULT_KEYS)
+    return (
+        f"def estimate(df, ctx) returning a dict with exactly the keys {keys} (and optionally "
+        '"extra": dict[str, float]). "estimate", "ci_low", "ci_high" and "p_value" are floats '
+        'with "ci_low" < "ci_high" (a 95% interval that is not degenerate), "estimate" inside '
+        '[ci_low, ci_high] and "p_value" in [0, 1]; "n" is a positive int, the number of rows used.'
+    )
+
+
+def contract_reminder(kind: str) -> str:
+    return f"Contract: {_result_contract(kind)} Allowed imports, and only these: {ALLOWLIST}."
+
+
+def rejected_import_hints(error: str) -> list[str]:
+    roots: list[str] = []
+    for module in _REJECTED_IMPORT.findall(error):
+        root = module.split(".")[0]
+        if root not in roots:
+            roots.append(root)
+    return [f"{root} is not available; {_ALTERNATIVES}" for root in roots]
+
+
+_SYSTEM_TEMPLATE = """\
+You write one small, correct Python module implementing a single analysis option.
 
 Code contract:
 - The code is complete Python source defining exactly one function.
@@ -11,9 +46,8 @@ Code contract:
 DataFrame.
 - For the step of kind model: `def estimate(df, ctx)` returning a dict with float keys \
 "estimate", "ci_low", "ci_high", "p_value", an int "n", and optionally "extra": dict[str, float].
-- Top-level `import` / `from` of these modules only: pandas, numpy, math, scipy, scipy.stats, \
-statsmodels, statsmodels.api, statsmodels.formula.api. Any other top-level statement is \
-rejected. No file, network or process access, no eval/exec, no dunder access.
+- Top-level `import` / `from` of these modules only: __ALLOWLIST__. Any other top-level \
+statement is rejected. No file, network or process access, no eval/exec, no dunder access.
 - `ctx` is a JSON-serialisable dict that carries decisions forward; it may be mutated in \
 place. Store only JSON-serialisable values (lists, numbers, strings).
 - The code guard rejects subscripts whose key is built at run time. Never write \
@@ -25,6 +59,7 @@ not print. No comments.
 - Implement exactly the option spec; do not add other analysis choices.
 
 Return only JSON matching the requested schema, with the source in the `code` field."""
+SYSTEM = _SYSTEM_TEMPLATE.replace("__ALLOWLIST__", ALLOWLIST)
 
 
 def _earlier_specs(plan: AnalysisPlan, step: Step) -> list[dict[str, object]]:
@@ -56,7 +91,11 @@ def build_messages(
         f"Current step: {step.id} ({step.kind}) {step.title}. {step.description}",
         f"Option {option.id}: {option.label}\nSpec: {option.spec}",
         f"Write `{function}(df, ctx)`.",
+        contract_reminder(step.kind),
     ]
     if error is not None:
-        parts.append(f"Your previous code:\n{option.code}\nIt failed with:\n{error}\nFix it.")
+        hints = "".join(f"\n{hint}." for hint in rejected_import_hints(error))
+        parts.append(
+            f"Your previous code:\n{option.code}\nIt failed with:\n{error}{hints}\nFix it."
+        )
     return messages(SYSTEM, "\n\n".join(parts))

@@ -11,7 +11,7 @@ from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
 from borges.llm.gather import gather_cancelling
 
-OnCoded = Callable[[str, str, bool, int, str | None], Awaitable[None]]
+OnCoded = Callable[[str, str, bool, int, str | None, list[str]], Awaitable[None]]
 
 
 async def _request_code(
@@ -21,28 +21,35 @@ async def _request_code(
     option: Option,
     error: str | None = None,
     suffix: str = ":repair",
+    models: list[str] | None = None,
 ) -> str:
     key = f"coder:{step.id}.{option.id}" + (suffix if error is not None else "")
     response = await llm.complete(
-        Role.CODER,
+        Role.CODER if error is None else Role.REPAIRER,
         build_messages(plan, step, option, error),
         key=key,
         schema=CoderOutput,
         max_tokens=1500,
     )
+    if models is not None:
+        models.append(response.usage.model)
     return CoderOutput.model_validate(response.parsed).code
 
 
 async def generate_checked(
-    llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    step: Step,
+    option: Option,
+    models: list[str] | None = None,
 ) -> tuple[str | None, int, str | None]:
-    code = await _request_code(llm, plan, step, option)
+    code = await _request_code(llm, plan, step, option, models=models)
     violations = check_code(code, step.kind)
     if not violations:
         return code, 1, None
     error = "\n".join(violations)
     draft = option.model_copy(update={"code": code})
-    code = await _request_code(llm, plan, step, draft, error)
+    code = await _request_code(llm, plan, step, draft, error, models=models)
     violations = check_code(code, step.kind)
     if not violations:
         return code, 2, None
@@ -59,10 +66,13 @@ async def code_option(llm: LLMClient, plan: AnalysisPlan, step: Step, option: Op
 
 async def _smoke_repair(
     llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option, error: str, attempt: int
-) -> tuple[str, str | None]:
-    code = await _request_code(llm, plan, step, option, error, suffix=f":smoke{attempt}")
+) -> tuple[str, str | None, str]:
+    models: list[str] = []
+    code = await _request_code(
+        llm, plan, step, option, error, suffix=f":smoke{attempt}", models=models
+    )
     violations = check_code(code, step.kind)
-    return code, ("\n".join(violations) if violations else None)
+    return code, ("\n".join(violations) if violations else None), models[0]
 
 
 async def code_plan(
@@ -75,14 +85,17 @@ async def code_plan(
 ) -> AnalysisPlan:
     semaphore = asyncio.Semaphore(concurrency)
 
+    models_by_option: dict[tuple[str, str], list[str]] = {}
+
     async def work(step: Step, option: Option) -> tuple[str | None, int, str | None]:
+        models = models_by_option.setdefault((step.id, option.id), [])
         async with semaphore:
             try:
-                code, attempts, error = await generate_checked(llm, plan, step, option)
+                code, attempts, error = await generate_checked(llm, plan, step, option, models)
             except LLMError as exc:
                 code, attempts, error = None, 1, str(exc)
         if on_coded is not None:
-            await on_coded(step.id, option.id, code is not None, attempts, error)
+            await on_coded(step.id, option.id, code is not None, attempts, error, models)
         return code, attempts, error
 
     pending = [(s, o) for s in plan.steps for o in s.options if o.code is None]
@@ -101,7 +114,9 @@ async def code_plan(
             failed_defaults[step.id] = (option.id, error)
         target.options = [o for o in target.options if o.id != option.id]
     for step_id, (default_id, error) in failed_defaults.items():
-        await _promote_sibling(coded, step_id, default_id, error, attempts_by_option, on_coded)
+        await _promote_sibling(
+            coded, step_id, default_id, error, attempts_by_option, models_by_option, on_coded
+        )
     if summary is not None:
         summary.options += len(pending)
         summary.failed += sum(1 for code, _, _ in results if code is None)
@@ -110,7 +125,7 @@ async def code_plan(
 
     async def repair(
         step: Step, option: Option, error: str, attempt: int
-    ) -> tuple[str, str | None]:
+    ) -> tuple[str, str | None, str]:
         return await _smoke_repair(llm, coded, step, option, error, attempt)
 
     return await smoke_plan(smoke, coded, repair, summary, concurrency)
@@ -122,6 +137,7 @@ async def _promote_sibling(
     default_id: str,
     error: str | None,
     attempts_by_option: dict[tuple[str, str], int],
+    models_by_option: dict[tuple[str, str], list[str]],
     on_coded: OnCoded | None,
 ) -> None:
     target = coded.step(step_id)
@@ -132,7 +148,14 @@ async def _promote_sibling(
     if on_coded is not None:
         note = f"promoted to default because {default_id} failed coding: {error}"
         attempts = attempts_by_option.get((step_id, sibling.id), 1)
-        await on_coded(step_id, sibling.id, True, attempts, note)
+        await on_coded(
+            step_id,
+            sibling.id,
+            True,
+            attempts,
+            note,
+            models_by_option.get((step_id, sibling.id), []),
+        )
 
 
 async def repair_option(

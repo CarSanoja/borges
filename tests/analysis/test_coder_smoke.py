@@ -119,7 +119,7 @@ async def test_invalid_estimate_result_triggers_a_repair(tmp_path: Path) -> None
     await code_plan(llm, make_plan(), smoke=config(tmp_path, recorder))
     assert recorder.status("welch") == ("repaired", 2, None)
     prompt = next(c for c in llm.calls if c.key == "coder:m1.welch:smoke1").messages[1]["content"]
-    assert "ci_low must not exceed ci_high" in prompt
+    assert "is inverted" in prompt
 
 
 async def test_failing_default_promotes_a_smoked_sibling(tmp_path: Path) -> None:

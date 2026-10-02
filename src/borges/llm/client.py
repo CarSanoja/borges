@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 class Role(StrEnum):
     PLANNER = "planner"
     CODER = "coder"
+    REPAIRER = "repairer"
     ADVERSARY = "adversary"
     JUDGE = "judge"
     NARRATOR = "narrator"
@@ -33,6 +34,7 @@ ULTRA = ModelSpec(id="nvidia/Nemotron-3-Ultra-550b-a55b", input_usd_per_m=1.0, o
 DEFAULT_ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.PLANNER: SUPER,
     Role.CODER: NANO,
+    Role.REPAIRER: SUPER,
     Role.ADVERSARY: SUPER,
     Role.JUDGE: SUPER,
     Role.NARRATOR: ULTRA,
