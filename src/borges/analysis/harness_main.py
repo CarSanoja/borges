@@ -11,6 +11,7 @@ def __borges_main():
     import numbers as _numbers
     import numpy as _np
     import os as _os
+    import random as _random
     import sys as _sys
     import traceback as _tb
 
@@ -97,6 +98,8 @@ __SPLIT_HALF_CHECK__
 __CHECKS__
 __EFFECTS__
     seen = {}
+    _np.random.seed(0)
+    _random.seed(0)
     try:
         state_df = _os.path.join("state", "df.parquet")
         state_ctx = _os.path.join("state", "ctx.json")

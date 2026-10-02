@@ -37,6 +37,11 @@ def patch(monkeypatch: pytest.MonkeyPatch, propose: Any, judge: Any) -> None:
 
     monkeypatch.setattr(adversary_round, "code_option", code_option)
 
+    async def review_proposal(llm: Any, plan: Any, emitter: Any, step: Any, option: Any) -> Any:
+        return option
+
+    monkeypatch.setattr(adversary_round, "review_proposal", review_proposal)
+
 
 async def test_propose_llm_error_returns_no_universes(monkeypatch: pytest.MonkeyPatch) -> None:
     async def propose(*args: Any) -> Any:

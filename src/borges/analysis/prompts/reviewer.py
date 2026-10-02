@@ -10,7 +10,10 @@ For every option decide two things from the code and the observed effects.
 1. faithful: does the code do what the spec says, given the observed effects? Example: a \
 "keep all rows" filter that dropped half the rows, or every row of one group, is unfaithful. \
 So is a filter whose dropped_rows_by shows it removed a group the spec never mentions, or a \
-column the spec says is created that is missing or constant.
+column the spec says is created that is missing or constant. For the model step, the \
+estimator the spec names must be the one the code fits (a "Firth" or "Bayesian" option that fits \
+a plain Logit, or a "clustered" option without cluster-robust errors, is unfaithful), and \
+p_value must be a two-sided p-value for the null of no effect, not a share of bootstrap draws.
 2. changes_estimand: does the option change the question rather than the analysis? Examples: \
 swapping the groups, reversing the coding of a variable, measuring a different outcome. A \
 different but legitimate way to measure or clean the same thing does not change the estimand.

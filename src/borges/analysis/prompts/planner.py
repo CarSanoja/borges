@@ -32,7 +32,11 @@ or the estimand; options only change how the same quantity is estimated.
 - Ids are short snake_case, unique across steps for steps and unique within a step for options.
 - spec is a precise implementation instruction that uses the exact column names of the \
 dataset, states what is written to ctx if later steps depend on it, and says what the \
-function returns. Specs must be implementable in pandas, numpy, scipy or statsmodels.
+function returns. Specs must be implementable in pandas, numpy, scipy or statsmodels, and a \
+model option names only an estimator those libraries provide directly (for example OLS, WLS, \
+GLM families, Logit, Probit, Poisson, NegativeBinomial, MixedLM, GEE, robust or cluster-robust \
+covariance). No sampler is available: do not propose Bayesian models, Firth penalized \
+regression or other methods the code would have to approximate under a false name.
 - Steps run in order on the output of the previous step. Say in a spec when it needs a column \
 or ctx key produced by an earlier option.
 - source is an optional short citation or convention name (e.g. "Tukey 1977") that justifies \

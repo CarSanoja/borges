@@ -141,3 +141,14 @@ def test_aggregation_is_the_only_exception_to_keeping_columns() -> None:
 def test_model_step_starts_from_complete_cases() -> None:
     assert "dropna(subset=" in CODER_SYSTEM
     assert "cluster groups must have the same length" in CODER_SYSTEM
+
+
+def test_planner_names_only_estimators_the_libraries_provide() -> None:
+    assert "do not propose Bayesian models, Firth penalized" in PLANNER_SYSTEM
+
+
+def test_reviewer_checks_the_named_estimator_and_the_p_value() -> None:
+    from borges.analysis.prompts.reviewer import SYSTEM
+
+    assert "estimator the spec names must be the one the code fits" in SYSTEM
+    assert "not a share of bootstrap draws" in SYSTEM

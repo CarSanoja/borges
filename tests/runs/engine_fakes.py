@@ -112,6 +112,11 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
     async def code_option(llm: Any, plan: AnalysisPlan, step: Step, option: Option) -> str:
         return f"code-{option.id}"
 
+    async def review_proposal(
+        llm: Any, plan: AnalysisPlan, emitter: Any, step: Step, option: Option
+    ) -> Option:
+        return option
+
     def single_flip_choices(plan: AnalysisPlan) -> list[dict[str, str]]:
         defaults = plan.default_choices()
         return [
@@ -171,6 +176,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         (adversary_round, "propose_options", propose_options),
         (adversary_round, "judge_option", judge_option),
         (adversary_round, "code_option", code_option),
+        (adversary_round, "review_proposal", review_proposal),
     ]
     for module, name, value in patches:
         monkeypatch.setattr(module, name, value)

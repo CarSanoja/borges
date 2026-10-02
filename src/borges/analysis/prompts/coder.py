@@ -21,7 +21,8 @@ def _result_contract(kind: str) -> str:
         f"def estimate(df, ctx) returning a dict with exactly the keys {keys} (and optionally "
         '"extra": dict[str, float]). "estimate", "ci_low", "ci_high" and "p_value" are floats '
         'with "ci_low" < "ci_high" (a 95% interval that is not degenerate), "estimate" inside '
-        '[ci_low, ci_high] and "p_value" in [0, 1]; "n" is a positive int, the number of rows used.'
+        '[ci_low, ci_high] and "p_value" in [0, 1], the two-sided p-value for the null of no '
+        'effect; "n" is a positive int, the number of rows used.'
     )
 
 

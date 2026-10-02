@@ -234,3 +234,21 @@ def test_aggregation_does_not_carry_columns_that_vary_within_a_group(tmp_path: P
     assert _execute(tmp_path, "transform", DROPS_ARM).returncode == 0
     out = pd.read_parquet(tmp_path / "state" / "df.parquet")
     assert "converted" not in out.columns
+
+
+UNSEEDED = """
+import numpy as np
+
+def estimate(df, ctx):
+    draws = np.random.choice(len(df), size=len(df), replace=True)
+    value = float(df["x"].to_numpy()[draws].mean())
+    return {"estimate": value, "ci_low": value - 1.0, "ci_high": value + 1.0, "p_value": 0.5,
+            "n": int(len(df))}
+"""
+
+
+def test_unseeded_randomness_is_reproducible(tmp_path: Path) -> None:
+    pd.DataFrame({"x": np.arange(300, dtype=float)}).to_parquet(tmp_path / "data.parquet")
+    outputs = [_execute(tmp_path, "model", UNSEEDED).stdout for _ in range(2)]
+    assert parse_output(outputs[0])[1] == parse_output(outputs[1])[1]
+    assert parse_output(outputs[0])[1] is not None

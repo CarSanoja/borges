@@ -7,6 +7,7 @@ from borges.analysis.models import AnalysisPlan, Option, Proposal
 from borges.garden.models import Universe
 from borges.llm.client import BudgetExceeded, LLMClient, LLMError
 from borges.llm.gather import gather_cancelling
+from borges.runs.adversary_review import review_proposal
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData, OptionJudgedData
 from borges.runs.runner import UniverseRunner, publish_plan
@@ -55,7 +56,12 @@ async def _judge_and_code(
         )
         await emitter.emit("option.coded", failed.model_dump(mode="json"))
         return None
-    return step.id, option.model_copy(update={"code": code})
+    reviewed = await review_proposal(
+        llm, plan, emitter, step, option.model_copy(update={"code": code})
+    )
+    if reviewed is None:
+        return None
+    return step.id, reviewed
 
 
 async def run_adversary_round(
