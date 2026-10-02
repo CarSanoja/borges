@@ -38,7 +38,7 @@ def test_rendered_hook_is_one_installer_call_and_compiles() -> None:
     for part in ("_borges_make_access", "_borges_refuse", "_borges_walk", "_BORGES_BLOCKED_EVENTS"):
         assert part in rendered
     compile(rendered, "<hook>", "exec")
-    assert harness._POLICY_SOURCE.count("_borges_install_policy(None, None)") == 1
+    assert harness.POLICY_SOURCE.count("_borges_install_policy(None, None)") == 1
 
 
 def test_rendered_hook_behaves_as_before_the_split() -> None:

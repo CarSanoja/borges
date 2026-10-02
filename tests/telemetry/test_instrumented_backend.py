@@ -12,6 +12,7 @@ from borges.telemetry.instrumented_backend import InstrumentedBackend, instrumen
 from borges.telemetry.run_telemetry import RunTelemetry
 from borges.telemetry.scopes import option_span
 from borges.telemetry.trace_tree import read_spans
+from tests.gateway.rendered import rendered_step
 
 
 class FakeBackend:
@@ -120,7 +121,7 @@ async def test_backend_calls_are_gated_and_carry_the_policy(tmp_path: Path) -> N
         code = "def apply(df, ctx):\n    return df\n"
         gateway.evidence.record(code)
         result = await backend.run(
-            root, ["python", "steps/a.py"], files={"steps/a.py": code.encode()}
+            root, ["python", "steps/a.py"], files={"steps/a.py": rendered_step(code).encode()}
         )
     telemetry.close()
     assert result.ok

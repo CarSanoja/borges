@@ -39,6 +39,9 @@ class CircuitBreaker:
             return True
         return False
 
+    def abandon_probe(self) -> None:
+        self.probing = False
+
     def record_success(self) -> None:
         self.failures = 0
         self.opened_at = None

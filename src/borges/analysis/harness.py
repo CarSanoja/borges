@@ -27,16 +27,14 @@ _POLICY_PARTS = (
 _SIBLING_IMPORT = re.compile(
     r"^from borges\.analysis\.runtime_policy_\w+ import (?:\([^)]*\)|[^\n]*)\n", re.MULTILINE
 )
-_POLICY_SOURCE = "".join(
+POLICY_SOURCE = "".join(
     _SIBLING_IMPORT.sub("", (Path(__file__).parent / name).read_text()) for name in _POLICY_PARTS
 )
-_POLICY_CALL = "_borges_install_policy(None, None)"
+POLICY_CALL = "_borges_install_policy(None, None)"
 
 
 def policy_prelude(home: str | None = None, audit_path: str | None = None) -> str:
-    source = _POLICY_SOURCE.replace(
-        _POLICY_CALL, f"_borges_install_policy({home!r}, {audit_path!r})"
-    )
+    source = POLICY_SOURCE.replace(POLICY_CALL, f"_borges_install_policy({home!r}, {audit_path!r})")
     return f"exec(compile({source!r}, '<borges-policy>', 'exec'), {{}})\n"
 
 

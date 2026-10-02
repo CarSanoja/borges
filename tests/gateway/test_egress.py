@@ -103,3 +103,36 @@ def test_original_messages_are_not_mutated() -> None:
     before = json.dumps(messages)
     enforce_egress(messages, policy("profile_only"))
     assert json.dumps(messages) == before
+
+
+def violations_for(content: str, egress: str = "profile_only", bound: int = 0) -> list[str]:
+    message = [{"role": "user", "content": content}]
+    return enforce_egress(message, policy(egress, bound), COLUMNS).violations
+
+
+def test_a_handful_of_raw_records_still_exceeds_a_profile_only_class() -> None:
+    assert violations_for(json.dumps(rows(1)))
+    assert violations_for(json.dumps(rows(5)))
+
+
+def test_json_lines_and_python_reprs_are_detected() -> None:
+    jsonl = "\n".join(json.dumps(r) for r in rows(8))
+    assert violations_for(jsonl)
+    assert violations_for(repr(rows(4)))
+    assert violations_for("sample: " + repr(rows(9)), "sample_rows", 5)
+
+
+def test_columnar_dumps_are_detected() -> None:
+    columnar = {key: [row[key] for row in rows(7)] for key in rows(1)[0]}
+    assert violations_for(json.dumps(columnar))
+    assert not violations_for(json.dumps({"x": [1, 2, 3]}))
+
+
+def test_a_blank_line_after_the_header_does_not_hide_a_table() -> None:
+    table = "user_id,arm,converted,revenue\n\n" + "\n".join(f"{i},a,1,2.5" for i in range(9))
+    assert violations_for(table)
+
+
+def test_json_lines_within_the_bound_pass() -> None:
+    jsonl = "\n".join(json.dumps(r) for r in rows(5))
+    assert not violations_for(jsonl, "sample_rows", 5)

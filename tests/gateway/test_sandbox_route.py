@@ -10,6 +10,8 @@ from borges.gateway.policy_load import policy_for
 from borges.sandbox.backend import Checkpoint, ExecResult
 from borges.telemetry.caller import calling_as
 
+from .rendered import rendered_step
+
 CODE = "def apply(df, ctx):\n    return df\n"
 STEP = "steps/s1__o1.py"
 PARENT = Checkpoint("c0", None, "fake")
@@ -38,7 +40,7 @@ class FakeBackend:
 
 
 def step_files(code: str = CODE) -> dict[str, bytes]:
-    return {STEP: ("prelude()\n" + code.rstrip("\n") + "\nmain()\n").encode()}
+    return {STEP: rendered_step(code).encode()}
 
 
 async def run(gateway, backend, command=("python", STEP), files="default", limit=60.0):
@@ -158,3 +160,12 @@ async def test_sandbox_allow_does_not_double_the_audit_trail(make_gateway, audit
     gateway.evidence.record(CODE)
     await run(gateway, FakeBackend())
     assert not [r for r in audit.of("identity.authorize") if r.get("tool") == "sandbox.exec"]
+
+
+async def test_guarded_code_with_appended_payload_is_denied(make_gateway) -> None:
+    gateway, backend = make_gateway(), FakeBackend()
+    gateway.evidence.record(CODE)
+    payload = {STEP: (rendered_step(CODE) + "\nimport os\nos.system('id')\n").encode()}
+    with pytest.raises(GatewayDenied, match="never recorded as passing the code guard"):
+        await run(gateway, backend, files=payload)
+    assert not backend.runs

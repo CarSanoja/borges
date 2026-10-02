@@ -17,7 +17,9 @@ class CodeEvidence:
             self._codes[sha256_text(body)] = body
 
     def covers(self, text: str) -> bool:
-        return any(body in text for body in self._codes.values())
+        from borges.analysis.step_shape import is_rendered_step
+
+        return any(is_rendered_step(text, body) for body in self._codes.values())
 
     def __len__(self) -> int:
         return len(self._codes)

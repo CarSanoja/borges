@@ -108,7 +108,7 @@ async def test_numerical_stack_runs_an_ols_with_warnings_under_the_policy(
 
 
 def test_policy_functions_hold_no_cells_globals_or_keyword_defaults() -> None:
-    source = harness._POLICY_SOURCE
+    source = harness.POLICY_SOURCE
     script = "import json\n" + INSPECT % ("", source) + WALK
     done = subprocess.run(
         [sys.executable, "-c", script], capture_output=True, text=True, timeout=60, check=False

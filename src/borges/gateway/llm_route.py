@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from borges.gateway.armor_hooks import ArmorContext
-from borges.gateway.breaker import BreakerState
 from borges.gateway.egress import enforce_egress
 from borges.gateway.errors import GatewayDenied, GatewayUnavailable
-from borges.gateway.guard import gateway_call
+from borges.gateway.llm_attempts import ModelCall, run_model
 from borges.gateway.llm_models import (
     ModelChain,
     build_chain,
@@ -18,10 +17,8 @@ from borges.gateway.llm_models import (
     resolve_spec,
 )
 from borges.gateway.policy_models import AgentPolicy
-from borges.gateway.retry import backoff_delay, is_transient
 from borges.identity.actions import ToolAction
 from borges.llm.client import LLMClient, LLMResponse, Role
-from borges.llm.model_override import use_model
 from borges.llm.nebius_transport import estimate_prompt_tokens
 
 if TYPE_CHECKING:
@@ -124,7 +121,6 @@ class LLMRoute:
         context = ArmorContext(gw.run_id, agent_id, gw.principal_of(agent_id), chain.models[0], key)
         sent = gw.armor.screen_input(context, sent)
         tokens_in = estimate_prompt_tokens(sent)
-        counted = False
         last_error: BaseException | None = None
         attempts = 0
         for index, model in enumerate(chain.models):
@@ -138,48 +134,16 @@ class LLMRoute:
                 gw.authorize(agent_id, ToolAction(tool="model.invoke", target=model))
                 if spec is None:
                     raise gw.deny("model", f"no pricing known for model {model!r}", agent_id)
-            reservation = gw.budgets.reserve(
-                agent_id, estimate_cost(spec, tokens_in, max_tokens), count_call=not counted
+            estimate = estimate_cost(spec, tokens_in, max_tokens)
+            call = ModelCall(inner, role, sent, key, schema, max_tokens, temperature)
+            outcome = await run_model(
+                gw, call, model, estimate, spec if index > 0 else None, breaker, self._observe
             )
-            counted = True
-            override = spec if index > 0 else None
-            for attempt in range(1, gw.policy.retry.max_attempts + 1):
-                attempts += 1
-                try:
-                    async with gw.budgets.slot(agent_id):
-                        with gateway_call(), use_model(override):
-                            response = await inner.complete(
-                                role,
-                                sent,
-                                key=key,
-                                schema=schema,
-                                max_tokens=max_tokens,
-                                temperature=temperature,
-                            )
-                except Exception as exc:
-                    if not is_transient(exc):
-                        gw.budgets.release(reservation)
-                        raise
-                    breaker.record_failure()
-                    last_error = exc
-                    delay = backoff_delay(gw.policy.retry, attempt, gw.rng)
-                    final = attempt == gw.policy.retry.max_attempts
-                    if final or breaker.state is BreakerState.OPEN:
-                        self._observe("gateway.retry", agent_id, model, f"giving up: {exc!r}"[:200])
-                        break
-                    self._observe(
-                        "gateway.retry",
-                        agent_id,
-                        model,
-                        f"{type(exc).__name__}; retry in {delay:.2f}s",
-                    )
-                    await gw.sleep(delay)
-                    continue
-                breaker.record_success()
-                gw.budgets.settle(reservation, response.usage.cost_usd)
-                response = gw.armor.screen_output(context, response)
-                return Routed(response, model, attempts, index > 0, stripped, reservation.estimate)
-            gw.budgets.release(reservation)
+            attempts += outcome.attempts
+            if outcome.response is not None:
+                response = gw.armor.screen_output(context, outcome.response)
+                return Routed(response, model, attempts, index > 0, stripped, estimate)
+            last_error = outcome.error
         if last_error is not None:
             raise last_error
         raise GatewayUnavailable(
