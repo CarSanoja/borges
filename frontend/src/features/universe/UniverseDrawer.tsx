@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect } from "react";
 import type { RunSnapshot } from "../../shared/types/contracts";
-import { CopyButton } from "./CopyButton";
+import { ReproduceBlock } from "./ReproduceBlock";
 import { StepDetailRow } from "./StepDetailRow";
 import { useUniverseDetail } from "./useUniverseDetail";
 import "./universe.css";
@@ -75,13 +75,7 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
               <StepDetailRow key={stepDetail.step.id} detail={stepDetail} index={index} />
             ))}
           </ol>
-          <footer className="u-repro">
-            <p className="eyebrow">Reproduce</p>
-            <div className="u-repro-row">
-              <code className="mono">{detail.reproduce_command}</code>
-              <CopyButton text={detail.reproduce_command} />
-            </div>
-          </footer>
+          <ReproduceBlock detail={detail} hasRun={runId !== null} />
         </motion.aside>
       )}
     </AnimatePresence>

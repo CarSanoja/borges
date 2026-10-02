@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { buildSampleRun } from "../../fixtures/sampleRun";
 import type { RunSnapshot } from "../../shared/types/contracts";
+import * as client from "../../shared/api/client";
+import type { UniverseDetail } from "../../shared/types/contracts";
 import { foldEvents } from "../run/reducer";
+import { deriveDetail } from "./derive";
 import { UniverseDrawer } from "./UniverseDrawer";
 
 function withCode(base: RunSnapshot): RunSnapshot {
@@ -15,6 +18,8 @@ function withCode(base: RunSnapshot): RunSnapshot {
   return { ...base, plan: { ...base.plan, steps } };
 }
 
+vi.mock("../../shared/api/client");
+
 const snapshot = withCode(foldEvents("r1", buildSampleRun("r1")));
 
 describe("UniverseDrawer", () => {
@@ -25,7 +30,30 @@ describe("UniverseDrawer", () => {
     expect(document.querySelectorAll('[data-changed="true"]')).toHaveLength(changed);
     expect(screen.getAllByLabelText(/^Code for/).length).toBeGreaterThan(0);
     expect(screen.getByText("Reproduced from scratch")).toBeInTheDocument();
+  });
+
+  it("shows the command computed by the server for the run, never the stored steps chain", async () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    const derived = deriveDetail(snapshot, flipId) as UniverseDetail;
+    vi.mocked(client.getUniverse).mockResolvedValue({
+      ...derived,
+      reproduce_command: `borges reproduce --case checkout_ab --universe ${flipId}`,
+      reproduce_kind: "case",
+      script_url: `/api/runs/r1/universes/${flipId}/script`,
+      script_filename: `borges_r1_${flipId}.py`,
+    });
+    render(<UniverseDrawer runId="r1" snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
+    expect(await screen.findByText(`borges reproduce --case checkout_ab --universe ${flipId}`)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    expect(screen.queryByText(/python steps\//)).toBeNull();
+  });
+
+  it("labels defensibility with the judge score or as an unjudged planner option", () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
+    expect(screen.queryByText("n/a")).toBeNull();
+    const facts = Array.from(document.querySelectorAll(".u-facts dd")).map((el) => el.textContent ?? "");
+    expect(facts.some((text) => /judged\)|not judged/.test(text))).toBe(true);
   });
 
   it("falls back to the decision rule metric when the result has none", () => {

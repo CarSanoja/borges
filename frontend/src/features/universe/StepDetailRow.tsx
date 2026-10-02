@@ -1,5 +1,10 @@
-import type { UniverseStepDetail } from "../../shared/types/contracts";
+import type { Option, UniverseStepDetail } from "../../shared/types/contracts";
 import { CodeBlock } from "./CodeBlock";
+
+export function defensibilityText(option: Option): string {
+  if (option.defensibility !== null) return `${option.defensibility.toFixed(2)} (judged)`;
+  return option.origin === "adversary" ? "not judged" : "planner option, not judged";
+}
 
 function rows(value: number): string {
   return value.toLocaleString("en-US");
@@ -21,7 +26,7 @@ export function StepDetailRow({ detail, index }: { detail: UniverseStepDetail; i
       <dl className="u-facts">
         <div>
           <dt>Defensibility</dt>
-          <dd className="mono">{option.defensibility === null ? "n/a" : option.defensibility.toFixed(2)}</dd>
+          <dd className="mono">{defensibilityText(option)}</dd>
         </div>
         <div>
           <dt>Source</dt>

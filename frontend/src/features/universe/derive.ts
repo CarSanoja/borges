@@ -11,28 +11,6 @@ function pickOption(step: Step, optionId: string | undefined): Option | null {
   return chosen ?? step.options.find((option) => option.is_default) ?? step.options[0] ?? null;
 }
 
-function safeName(identifier: string): string {
-  return identifier.replace(/[^A-Za-z0-9_-]/g, "_");
-}
-
-export function reproduceCommandFor(snapshot: RunSnapshot, universeId: string): string {
-  const flip = snapshot.flip;
-  const universe = snapshot.garden.universes[universeId];
-  const steps = snapshot.plan?.steps ?? [];
-  if (steps.length === 0) {
-    if (flip && flip.universe_id === universeId && flip.reproduce_command) {
-      return flip.reproduce_command.replace(/^from checkpoint [^:]*:\s*/, "");
-    }
-    return "";
-  }
-  return steps
-    .map((step) => {
-      const option = pickOption(step, universe?.choices[step.id]);
-      return `python steps/${safeName(step.id)}__${safeName(option?.id ?? "")}.py`;
-    })
-    .join(" && ");
-}
-
 export function deriveDetail(snapshot: RunSnapshot, universeId: string): UniverseDetail | null {
   const universe = snapshot.garden.universes[universeId];
   const plan = snapshot.plan;
@@ -54,5 +32,5 @@ export function deriveDetail(snapshot: RunSnapshot, universeId: string): Univers
     });
   });
 
-  return { universe, steps, reproduce_command: reproduceCommandFor(snapshot, universeId) };
+  return { universe, steps, reproduce_command: "" };
 }

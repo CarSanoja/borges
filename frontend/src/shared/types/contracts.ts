@@ -254,6 +254,9 @@ export interface UniverseDetail {
   universe: Universe;
   steps: UniverseStepDetail[];
   reproduce_command: string;
+  reproduce_kind?: "case" | "script";
+  script_url?: string | null;
+  script_filename?: string | null;
 }
 
 export interface Health {

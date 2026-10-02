@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildSampleRun } from "../../fixtures/sampleRun";
 import { foldEvents } from "../run/reducer";
-import { deriveDetail, reproduceCommandFor } from "./derive";
+import { deriveDetail } from "./derive";
 
 const snapshot = foldEvents("r1", buildSampleRun("r1"));
 
@@ -18,37 +18,13 @@ describe("deriveDetail", () => {
     const changedIds = detail?.steps.filter((s) => s.changed).map((s) => s.step.id);
     expect(changedIds).toEqual(snapshot.garden.universes[flipId]?.changed);
     expect(detail?.steps.every((s) => s.trace !== null)).toBe(true);
-    expect(detail?.reproduce_command.length).toBeGreaterThan(0);
   });
 
-  it("never invents a borges reproduce command and mirrors the step chain", () => {
+  it("leaves the reproduce command to the server instead of inventing one", () => {
     const universeId = Object.keys(snapshot.garden.universes).find((id) => id !== snapshot.flip?.universe_id) ?? "";
-    const command = deriveDetail(snapshot, universeId)?.reproduce_command ?? "";
-    expect(command).not.toContain("borges reproduce");
-    const universe = snapshot.garden.universes[universeId];
-    const expected = (snapshot.plan?.steps ?? [])
-      .map((step) => {
-        const option = step.options.find((o) => o.id === universe?.choices[step.id]) ?? step.options.find((o) => o.is_default) ?? step.options[0];
-        return `python steps/${step.id}__${option?.id}.py`;
-      })
-      .join(" && ");
-    expect(command).toBe(expected);
-  });
-
-  it("never returns a checkpoint-prefixed command for the flip universe", () => {
-    const flipId = snapshot.flip?.universe_id ?? "";
-    const withPrefix = {
-      ...snapshot,
-      flip: snapshot.flip && {
-        ...snapshot.flip,
-        reproduce_command: "from checkpoint ck_05837668a5c9: python steps/a__b.py",
-      },
-    };
-    const command = deriveDetail(withPrefix, flipId)?.reproduce_command ?? "";
-    expect(command).not.toContain("from checkpoint");
-    expect(command.startsWith("python steps/")).toBe(true);
-    const noPlan = { ...withPrefix, plan: null };
-    expect(reproduceCommandFor(noPlan, flipId)).toBe("python steps/a__b.py");
+    const detail = deriveDetail(snapshot, universeId);
+    expect(detail?.reproduce_command).toBe("");
+    expect(detail?.script_url ?? null).toBeNull();
   });
 
   it("marks nothing changed for the baseline", () => {
