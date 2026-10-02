@@ -76,7 +76,7 @@ def test_flagged_columns_by_name_and_outlier() -> None:
     df = pd.DataFrame(
         {
             "isBot": [True] + [False] * 59,
-            "spend": [float(i % 7) for i in range(59)] + [50000.0],
+            "spend": [float(i % 13) for i in range(59)] + [50000.0],
             "score": list(range(60)),
         }
     )
