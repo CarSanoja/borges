@@ -1,5 +1,7 @@
 import "./hero.css";
+import type { Health } from "../../shared/types/contracts";
 import { HeroGarden } from "./HeroGarden";
+import { HeroMode } from "./HeroMode";
 
 const STEPS = [
   { n: "I", title: "Fork", text: "Every defensible choice becomes a real sandbox fork of the analysis." },
@@ -12,9 +14,11 @@ export const PITCH =
 
 interface Props {
   onWatchDemo: () => void;
+  health: Health | null;
+  healthLoaded: boolean;
 }
 
-export function Hero({ onWatchDemo }: Props) {
+export function Hero({ onWatchDemo, health, healthLoaded }: Props) {
   return (
     <header className="landing-hero">
       <div className="landing-copy">
@@ -25,10 +29,13 @@ export function Hero({ onWatchDemo }: Props) {
           <button type="button" className="btn btn-primary btn-cta" onClick={onWatchDemo}>
             Watch the 30-second demo
           </button>
-          <a className="btn btn-cta" href="#bring-your-own-data">
-            Bring your own data
-          </a>
+          {health?.uploads_available === true && (
+            <a className="btn btn-cta" href="#bring-your-own-data">
+              Bring your own data
+            </a>
+          )}
         </div>
+        {healthLoaded && <HeroMode health={health} />}
         <p className="landing-sub">29 research teams. Same data. Opposite answers.</p>
       </div>
       <HeroGarden />

@@ -30,7 +30,7 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
   const watchDemo = () => (demo ? onOpenReplay(demo.id) : onOpenMock());
   return (
     <main className="landing">
-      <Hero onWatchDemo={watchDemo} />
+      <Hero onWatchDemo={watchDemo} health={health} healthLoaded={healthLoaded} />
       {healthLoaded && !liveAvailable && <LiveNote health={health} liveOnlyCases={liveOnlyCases} />}
       <section className="landing-cases" aria-label="Cases">
         {cases.map((card) => (

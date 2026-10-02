@@ -99,3 +99,18 @@
     transform: none;
   }
 }
+
+.landing-mode {
+  max-width: 34rem;
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.landing-mode strong {
+  font-weight: 600;
+  color: var(--paper-100);
+}
+
+.landing-mode--live strong {
+  color: var(--verdigris);
+}
