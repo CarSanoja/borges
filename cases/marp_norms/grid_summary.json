@@ -1,0 +1,51 @@
+{
+  "rq": 2,
+  "n_universes": 1536,
+  "defaults": {
+    "religiosity": "mean_9_items",
+    "wellbeing": "overall_mean",
+    "norms": "individual_perception",
+    "exclusions": "all_participants",
+    "covariates": "none",
+    "scaling": "global_z",
+    "model": "multilevel_intercept"
+  },
+  "steps": [
+    "religiosity",
+    "wellbeing",
+    "norms",
+    "exclusions",
+    "covariates",
+    "scaling",
+    "model"
+  ],
+  "baseline_verdict": "DEPENDS ON NORMS",
+  "n_same_verdict": 1374,
+  "n_flipped": 162,
+  "share_same_verdict": 0.89453125,
+  "estimate_min": -0.001724563534779569,
+  "estimate_max": 0.04906794738942872,
+  "flipped_by_n_changes": {
+    "1": 1,
+    "2": 9,
+    "3": 36,
+    "4": 65,
+    "5": 42,
+    "6": 9
+  },
+  "single_flips": [
+    {
+      "choices": {
+        "religiosity": "mean_9_items",
+        "wellbeing": "overall_mean",
+        "norms": "individual_perception",
+        "exclusions": "all_participants",
+        "covariates": "none",
+        "scaling": "global_z",
+        "model": "ols_pooled"
+      },
+      "estimate": 0.0181506961784062,
+      "p_value": 0.05580569965968744
+    }
+  ]
+}

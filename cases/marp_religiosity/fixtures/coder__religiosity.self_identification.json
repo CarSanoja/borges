@@ -1,0 +1,9 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    out[\\\"rel\\\"] = out[\\\"rel_3\\\"]\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    out[\"rel\"] = out[\"rel_3\"]\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

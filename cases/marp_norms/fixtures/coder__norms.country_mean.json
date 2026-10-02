@@ -1,0 +1,9 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    perceived = out[[\\\"cnorm_1\\\", \\\"cnorm_2\\\"]].mean(axis=1)\\n    out[\\\"norm\\\"] = perceived.groupby(out[\\\"country\\\"], observed=True).transform(\\\"mean\\\")\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    perceived = out[[\"cnorm_1\", \"cnorm_2\"]].mean(axis=1)\n    out[\"norm\"] = perceived.groupby(out[\"country\"], observed=True).transform(\"mean\")\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,9 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    items = [\\\"rel_1\\\", \\\"rel_2\\\", \\\"rel_5\\\", \\\"rel_6\\\", \\\"rel_7\\\", \\\"rel_8\\\", \\\"rel_9\\\"]\\n    out[\\\"rel\\\"] = out[items].mean(axis=1)\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    items = [\"rel_1\", \"rel_2\", \"rel_5\", \"rel_6\", \"rel_7\", \"rel_8\", \"rel_9\"]\n    out[\"rel\"] = out[items].mean(axis=1)\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

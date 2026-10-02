@@ -1,0 +1,235 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"estimand\": \"Standardised coefficient of the religiosity by perceived-cultural-norms interaction on self-reported well-being across 10,535 participants in 24 countries; positive means religiosity goes with more well-being where religion is seen as more important. The option space is seeded from the analytic choices the 120 MARP teams documented.\", \"steps\": [{\"id\": \"religiosity\", \"title\": \"Measure religiosity\", \"kind\": \"feature\", \"description\": \"Nine self-report items, each rescaled to 0-1; teams combined them in different ways.\", \"options\": [{\"id\": \"mean_9_items\", \"label\": \"Mean of all nine items\", \"rationale\": \"Uses every religiosity item the questionnaire collected.\", \"spec\": \"rel = mean(rel_1 .. rel_9).\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 51 of 116 teams entered all nine items.\"}, {\"id\": \"mean_7_items\", \"label\": \"Mean of the seven graded items\", \"rationale\": \"Drops the two binary items (identification, denomination).\", \"spec\": \"rel = mean(rel_1, rel_2, rel_5 .. rel_9).\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 14 of 116 teams used these seven.\"}, {\"id\": \"self_identification\", \"label\": \"Religious self-identification only\", \"rationale\": \"A single, widely used survey item.\", \"spec\": \"rel = rel_3.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 13 of 116 teams used rel_3 alone.\"}, {\"id\": \"importance_items\", \"label\": \"Importance of religion to the person\", \"rationale\": \"Captures salience instead of practice or belief.\", \"spec\": \"rel = mean(rel_8, rel_9).\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 4 of 116 teams used rel_8 and rel_9 alone.\"}]}, {\"id\": \"wellbeing\", \"title\": \"Measure well-being\", \"kind\": \"feature\", \"description\": \"An 18-item scale with general, physical, psychological and social parts. Options are alternative measures of overall well-being; single facets answer a narrower question.\", \"options\": [{\"id\": \"overall_mean\", \"label\": \"Overall mean of 18 items\", \"rationale\": \"The headline composite supplied with the data.\", \"spec\": \"wb = wb_overall_mean.\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 31 of 116 teams modelled this composite.\"}, {\"id\": \"items_without_sexual_satisfaction\", \"label\": \"Mean of 17 items, no sexual satisfaction\", \"rationale\": \"That item is missing for 995 participants who did not disclose.\", \"spec\": \"wb = mean of the 17 items other than wb_soc_3.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 5 of 116 teams modelled the 17 items without it.\"}, {\"id\": \"mean_of_subscales\", \"label\": \"Mean of the three subscale means\", \"rationale\": \"Weights physical, psychological and social facets equally.\", \"spec\": \"wb = mean(wb_phys_mean, wb_psych_mean, wb_soc_mean).\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 21 of 116 teams modelled the three subscale means.\"}, {\"id\": \"general_items\", \"label\": \"Two general well-being items\", \"rationale\": \"Quality of life and satisfaction with health.\", \"spec\": \"wb = mean(wb_gen_1, wb_gen_2).\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 1 team used it alone; 48 included the items in a larger set.\"}]}, {\"id\": \"norms\", \"title\": \"Measure perceived cultural norms\", \"kind\": \"feature\", \"description\": \"Two items on how important religion is for the average person in the country.\", \"options\": [{\"id\": \"individual_perception\", \"label\": \"Each person's own perception\", \"rationale\": \"The questionnaire asks each respondent directly.\", \"spec\": \"norm = mean(cnorm_1, cnorm_2) per respondent.\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 109 of 114 teams entered the cnorm items at the individual level.\"}, {\"id\": \"country_mean\", \"label\": \"Country mean of the perception\", \"rationale\": \"Cultural norms are a property of a country, not of a person.\", \"spec\": \"norm = country average of mean(cnorm_1, cnorm_2).\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 25 of 120 team reports mention country-level or aggregated norms.\"}]}, {\"id\": \"exclusions\", \"title\": \"Choose which participants to keep\", \"kind\": \"filter\", \"description\": \"Some respondents failed the attention check embedded in the survey.\", \"options\": [{\"id\": \"all_participants\", \"label\": \"All participants\", \"rationale\": \"No data-driven exclusion; the full 10,535 respondents.\", \"spec\": \"No rows dropped.\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: the default in the data release.\"}, {\"id\": \"attention_check_passed\", \"label\": \"Attention check passed only\", \"rationale\": \"Inattentive responding adds noise to every item.\", \"spec\": \"Keep attention_check == 1.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 15 of 120 team reports mention the attention check.\"}]}, {\"id\": \"covariates\", \"title\": \"Adjust for context\", \"kind\": \"feature\", \"description\": \"Choose which participant and country attributes enter the model.\", \"options\": [{\"id\": \"none\", \"label\": \"No covariates\", \"rationale\": \"The raw association answers the question as asked.\", \"spec\": \"covariates = [].\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 29 of 116 teams adjusted for nothing.\"}, {\"id\": \"demographics\", \"label\": \"Age, gender, SES, education\", \"rationale\": \"Demographics relate to both religiosity and well-being.\", \"spec\": \"covariates = [age, gender, ses, education]; complete cases.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 56 of 116 teams adjusted for age and SES, usually with gender and education.\"}, {\"id\": \"demographics_gdp\", \"label\": \"Demographics plus country GDP\", \"rationale\": \"Wealth differs across the 24 countries.\", \"spec\": \"covariates = [age, gender, ses, education, gdp_scaled]; complete cases.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 32 of 116 teams adjusted for GDP.\"}]}, {\"id\": \"scaling\", \"title\": \"Standardise the variables\", \"kind\": \"transform\", \"description\": \"Convert variables to z-scores so the coefficient is a standardised beta.\", \"options\": [{\"id\": \"global_z\", \"label\": \"Z-scores over the whole sample\", \"rationale\": \"The usual standardised beta; keeps between-country differences.\", \"spec\": \"y, x (and m) = global z-scores.\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 18 of 120 team reports mention standardising.\"}, {\"id\": \"within_country_z\", \"label\": \"Centred within country\", \"rationale\": \"Isolates the within-country relation; 'with and between country centering'.\", \"spec\": \"y and x centred on their country mean and scaled; m stays a global z-score.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 8 of 120 team reports mention within-country centring.\"}]}, {\"id\": \"model\", \"title\": \"Fit the model\", \"kind\": \"model\", \"description\": \"Participants are nested in 24 countries; the model family decides how that is handled.\", \"options\": [{\"id\": \"multilevel_intercept\", \"label\": \"Multilevel model, random country intercept\", \"rationale\": \"The most common choice: respondents nested in countries.\", \"spec\": \"mixedlm y ~ terms, groups = country.\", \"is_default\": true, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 59 of 116 teams fit a multilevel, mixed or hierarchical model; 21 reports mention random intercepts.\"}, {\"id\": \"ols_pooled\", \"label\": \"Pooled OLS, robust errors\", \"rationale\": \"Ignores country structure, as a simple regression does.\", \"spec\": \"OLS y ~ terms with HC3 standard errors.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 29 of 116 teams fit a plain linear regression.\"}, {\"id\": \"ols_country_fe\", \"label\": \"OLS with country fixed effects\", \"rationale\": \"Absorbs country differences without distributional assumptions.\", \"spec\": \"OLS y ~ terms + C(country), HC3 standard errors.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: a fixed-effects specification of the same teams' linear models.\"}, {\"id\": \"multilevel_slope\", \"label\": \"Multilevel model, random country slopes\", \"rationale\": \"Lets the religiosity slope differ by country.\", \"spec\": \"mixedlm y ~ terms, groups = country, random slope on x.\", \"is_default\": false, \"source\": \"Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 11 of 120 team reports mention random slopes.\"}]}]}",
+  "parsed": {
+    "estimand": "Standardised coefficient of the religiosity by perceived-cultural-norms interaction on self-reported well-being across 10,535 participants in 24 countries; positive means religiosity goes with more well-being where religion is seen as more important. The option space is seeded from the analytic choices the 120 MARP teams documented.",
+    "steps": [
+      {
+        "id": "religiosity",
+        "title": "Measure religiosity",
+        "kind": "feature",
+        "description": "Nine self-report items, each rescaled to 0-1; teams combined them in different ways.",
+        "options": [
+          {
+            "id": "mean_9_items",
+            "label": "Mean of all nine items",
+            "rationale": "Uses every religiosity item the questionnaire collected.",
+            "spec": "rel = mean(rel_1 .. rel_9).",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 51 of 116 teams entered all nine items."
+          },
+          {
+            "id": "mean_7_items",
+            "label": "Mean of the seven graded items",
+            "rationale": "Drops the two binary items (identification, denomination).",
+            "spec": "rel = mean(rel_1, rel_2, rel_5 .. rel_9).",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 14 of 116 teams used these seven."
+          },
+          {
+            "id": "self_identification",
+            "label": "Religious self-identification only",
+            "rationale": "A single, widely used survey item.",
+            "spec": "rel = rel_3.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 13 of 116 teams used rel_3 alone."
+          },
+          {
+            "id": "importance_items",
+            "label": "Importance of religion to the person",
+            "rationale": "Captures salience instead of practice or belief.",
+            "spec": "rel = mean(rel_8, rel_9).",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 4 of 116 teams used rel_8 and rel_9 alone."
+          }
+        ]
+      },
+      {
+        "id": "wellbeing",
+        "title": "Measure well-being",
+        "kind": "feature",
+        "description": "An 18-item scale with general, physical, psychological and social parts. Options are alternative measures of overall well-being; single facets answer a narrower question.",
+        "options": [
+          {
+            "id": "overall_mean",
+            "label": "Overall mean of 18 items",
+            "rationale": "The headline composite supplied with the data.",
+            "spec": "wb = wb_overall_mean.",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 31 of 116 teams modelled this composite."
+          },
+          {
+            "id": "items_without_sexual_satisfaction",
+            "label": "Mean of 17 items, no sexual satisfaction",
+            "rationale": "That item is missing for 995 participants who did not disclose.",
+            "spec": "wb = mean of the 17 items other than wb_soc_3.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 5 of 116 teams modelled the 17 items without it."
+          },
+          {
+            "id": "mean_of_subscales",
+            "label": "Mean of the three subscale means",
+            "rationale": "Weights physical, psychological and social facets equally.",
+            "spec": "wb = mean(wb_phys_mean, wb_psych_mean, wb_soc_mean).",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 21 of 116 teams modelled the three subscale means."
+          },
+          {
+            "id": "general_items",
+            "label": "Two general well-being items",
+            "rationale": "Quality of life and satisfaction with health.",
+            "spec": "wb = mean(wb_gen_1, wb_gen_2).",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 1 team used it alone; 48 included the items in a larger set."
+          }
+        ]
+      },
+      {
+        "id": "norms",
+        "title": "Measure perceived cultural norms",
+        "kind": "feature",
+        "description": "Two items on how important religion is for the average person in the country.",
+        "options": [
+          {
+            "id": "individual_perception",
+            "label": "Each person's own perception",
+            "rationale": "The questionnaire asks each respondent directly.",
+            "spec": "norm = mean(cnorm_1, cnorm_2) per respondent.",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 109 of 114 teams entered the cnorm items at the individual level."
+          },
+          {
+            "id": "country_mean",
+            "label": "Country mean of the perception",
+            "rationale": "Cultural norms are a property of a country, not of a person.",
+            "spec": "norm = country average of mean(cnorm_1, cnorm_2).",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 25 of 120 team reports mention country-level or aggregated norms."
+          }
+        ]
+      },
+      {
+        "id": "exclusions",
+        "title": "Choose which participants to keep",
+        "kind": "filter",
+        "description": "Some respondents failed the attention check embedded in the survey.",
+        "options": [
+          {
+            "id": "all_participants",
+            "label": "All participants",
+            "rationale": "No data-driven exclusion; the full 10,535 respondents.",
+            "spec": "No rows dropped.",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: the default in the data release."
+          },
+          {
+            "id": "attention_check_passed",
+            "label": "Attention check passed only",
+            "rationale": "Inattentive responding adds noise to every item.",
+            "spec": "Keep attention_check == 1.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 15 of 120 team reports mention the attention check."
+          }
+        ]
+      },
+      {
+        "id": "covariates",
+        "title": "Adjust for context",
+        "kind": "feature",
+        "description": "Choose which participant and country attributes enter the model.",
+        "options": [
+          {
+            "id": "none",
+            "label": "No covariates",
+            "rationale": "The raw association answers the question as asked.",
+            "spec": "covariates = [].",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 29 of 116 teams adjusted for nothing."
+          },
+          {
+            "id": "demographics",
+            "label": "Age, gender, SES, education",
+            "rationale": "Demographics relate to both religiosity and well-being.",
+            "spec": "covariates = [age, gender, ses, education]; complete cases.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 56 of 116 teams adjusted for age and SES, usually with gender and education."
+          },
+          {
+            "id": "demographics_gdp",
+            "label": "Demographics plus country GDP",
+            "rationale": "Wealth differs across the 24 countries.",
+            "spec": "covariates = [age, gender, ses, education, gdp_scaled]; complete cases.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 32 of 116 teams adjusted for GDP."
+          }
+        ]
+      },
+      {
+        "id": "scaling",
+        "title": "Standardise the variables",
+        "kind": "transform",
+        "description": "Convert variables to z-scores so the coefficient is a standardised beta.",
+        "options": [
+          {
+            "id": "global_z",
+            "label": "Z-scores over the whole sample",
+            "rationale": "The usual standardised beta; keeps between-country differences.",
+            "spec": "y, x (and m) = global z-scores.",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 18 of 120 team reports mention standardising."
+          },
+          {
+            "id": "within_country_z",
+            "label": "Centred within country",
+            "rationale": "Isolates the within-country relation; 'with and between country centering'.",
+            "spec": "y and x centred on their country mean and scaled; m stays a global z-score.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 8 of 120 team reports mention within-country centring."
+          }
+        ]
+      },
+      {
+        "id": "model",
+        "title": "Fit the model",
+        "kind": "model",
+        "description": "Participants are nested in 24 countries; the model family decides how that is handled.",
+        "options": [
+          {
+            "id": "multilevel_intercept",
+            "label": "Multilevel model, random country intercept",
+            "rationale": "The most common choice: respondents nested in countries.",
+            "spec": "mixedlm y ~ terms, groups = country.",
+            "is_default": true,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 59 of 116 teams fit a multilevel, mixed or hierarchical model; 21 reports mention random intercepts."
+          },
+          {
+            "id": "ols_pooled",
+            "label": "Pooled OLS, robust errors",
+            "rationale": "Ignores country structure, as a simple regression does.",
+            "spec": "OLS y ~ terms with HC3 standard errors.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 29 of 116 teams fit a plain linear regression."
+          },
+          {
+            "id": "ols_country_fe",
+            "label": "OLS with country fixed effects",
+            "rationale": "Absorbs country differences without distributional assumptions.",
+            "spec": "OLS y ~ terms + C(country), HC3 standard errors.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: a fixed-effects specification of the same teams' linear models."
+          },
+          {
+            "id": "multilevel_slope",
+            "label": "Multilevel model, random country slopes",
+            "rationale": "Lets the religiosity slope differ by country.",
+            "spec": "mixedlm y ~ terms, groups = country, random slope on x.",
+            "is_default": false,
+            "source": "Hoogeveen, Sarafoglou et al. (2022), Religion, Brain & Behavior: 11 of 120 team reports mention random slopes."
+          }
+        ]
+      }
+    ]
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

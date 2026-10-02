@@ -1,0 +1,791 @@
+{
+  "id": "marp_religiosity",
+  "title": "Religion and well-being",
+  "subtitle": "110 research teams. Same data. All 110 found a positive effect.",
+  "question": "Do religious people self-report greater well-being?",
+  "decision_rule": {
+    "metric": "standardised coefficient of religiosity on well-being",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "POSITIVE ASSOCIATION",
+    "negative_label": "NO CLEAR EVIDENCE"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "marp_religiosity_wellbeing",
+  "max_universes": 40,
+  "reference_label": "110 of 120 research teams that reported a standardised effect (Hoogeveen, Sarafoglou et al., 2022)",
+  "reference": [
+    {
+      "label": "Team 3: RQ1: correlation; RQ2: linear regression",
+      "estimate": 0.13,
+      "ci_low": 0.111,
+      "ci_high": 0.149,
+      "significant": true
+    },
+    {
+      "label": "Team 4: GLM",
+      "estimate": 0.084,
+      "ci_low": 0.065,
+      "ci_high": 0.103,
+      "significant": true
+    },
+    {
+      "label": "Team 5: Bayesian multilevel cumulative link models",
+      "estimate": 0.307,
+      "ci_low": 0.115,
+      "ci_high": 0.509,
+      "significant": true
+    },
+    {
+      "label": "Team 7: Linear Mixed Effects Models",
+      "estimate": 0.09,
+      "ci_low": 0.06,
+      "ci_high": 0.12,
+      "significant": true
+    },
+    {
+      "label": "Team 8: We conducted a series of Bayesian multilevel regressions modeling t...",
+      "estimate": 0.13,
+      "ci_low": 0.103,
+      "ci_high": 0.156,
+      "significant": true
+    },
+    {
+      "label": "Team 9: Multiverse analyses of mixed effect models",
+      "estimate": 0.078,
+      "ci_low": 0.076,
+      "ci_high": 0.082,
+      "significant": true
+    },
+    {
+      "label": "Team 10: Bayesian linear regression using 'brms' package with default priors",
+      "estimate": 0.065,
+      "ci_low": 0.047,
+      "ci_high": 0.084,
+      "significant": true
+    },
+    {
+      "label": "Team 11: Multilevel (Gaussian) Bayesian regression",
+      "estimate": 0.12,
+      "ci_low": 0.099,
+      "ci_high": 0.141,
+      "significant": true
+    },
+    {
+      "label": "Team 12: generalized linear regression",
+      "estimate": 0.128,
+      "ci_low": 0.109,
+      "ci_high": 0.147,
+      "significant": true
+    },
+    {
+      "label": "Team 15: linear mixed model",
+      "estimate": 0.101,
+      "ci_low": 0.076,
+      "ci_high": 0.126,
+      "significant": true
+    },
+    {
+      "label": "Team 18: 2x3 factorial ANCOVA",
+      "estimate": 0.161,
+      "ci_low": 0.122,
+      "ci_high": 0.2,
+      "significant": true
+    },
+    {
+      "label": "Team 21: multiple (hierarchical) linear regression",
+      "estimate": 0.068,
+      "ci_low": 0.042,
+      "ci_high": 0.095,
+      "significant": true
+    },
+    {
+      "label": "Team 22: RQ1 - correlations RQ2 - hierarchical regression",
+      "estimate": 0.175,
+      "ci_low": 0.154,
+      "ci_high": 0.196,
+      "significant": true
+    },
+    {
+      "label": "Team 23: Mixed-effects multi-level linear model estimated with MPlus 7.4.",
+      "estimate": 0.1,
+      "ci_low": 0.08,
+      "ci_high": 0.12,
+      "significant": true
+    },
+    {
+      "label": "Team 25: linear mixed effects models",
+      "estimate": 0.106,
+      "ci_low": 0.087,
+      "ci_high": 0.125,
+      "significant": true
+    },
+    {
+      "label": "Team 26: I used a Bayesian Multilevel Structural Equation Model to investiga...",
+      "estimate": 0.131,
+      "ci_low": 0.108,
+      "ci_high": 0.153,
+      "significant": true
+    },
+    {
+      "label": "Team 27: Multiple regression + model comparisons",
+      "estimate": 0.072,
+      "ci_low": 0.053,
+      "ci_high": 0.092,
+      "significant": true
+    },
+    {
+      "label": "Team 28: Factor analysis, one-way ABOVA, bivariate correlations and multiple...",
+      "estimate": 0.057,
+      "ci_low": 0.033,
+      "ci_high": 0.08,
+      "significant": true
+    },
+    {
+      "label": "Team 30: One-way ANOVA, then multilevel moderated mediation models (which we...",
+      "estimate": 0.013,
+      "ci_low": 0.009,
+      "ci_high": 0.017,
+      "significant": true
+    },
+    {
+      "label": "Team 32: linear regression (OLS regression)",
+      "estimate": 0.047,
+      "ci_low": 0.027,
+      "ci_high": 0.067,
+      "significant": true
+    },
+    {
+      "label": "Team 33: Linear mixed model",
+      "estimate": 0.059,
+      "ci_low": 0.02,
+      "ci_high": 0.097,
+      "significant": true
+    },
+    {
+      "label": "Team 34: SEM, linear regression",
+      "estimate": 0.108,
+      "ci_low": 0.087,
+      "ci_high": 0.129,
+      "significant": true
+    },
+    {
+      "label": "Team 35: Stepwise linear regression",
+      "estimate": 0.126,
+      "ci_low": 0.108,
+      "ci_high": 0.143,
+      "significant": true
+    },
+    {
+      "label": "Team 38: One-way ANOVA to test H1 and network analyses to test H2",
+      "estimate": 0.012,
+      "ci_low": 0.008,
+      "ci_high": 0.017,
+      "significant": true
+    },
+    {
+      "label": "Team 39: Bayesian multilevel linear regression.",
+      "estimate": 0.097,
+      "ci_low": 0.072,
+      "ci_high": 0.123,
+      "significant": true
+    },
+    {
+      "label": "Team 40: Bayesian ANOVA & ANCOVA",
+      "estimate": 0.171,
+      "ci_low": 0.13,
+      "ci_high": 0.211,
+      "significant": true
+    },
+    {
+      "label": "Team 41: Multilevel linear regression with random intercepts.",
+      "estimate": 0.055,
+      "ci_low": 0.037,
+      "ci_high": 0.073,
+      "significant": true
+    },
+    {
+      "label": "Team 42: hierarchical linear model",
+      "estimate": 0.125,
+      "ci_low": 0.094,
+      "ci_high": 0.155,
+      "significant": true
+    },
+    {
+      "label": "Team 44: Multilevel linear regression",
+      "estimate": 0.099,
+      "ci_low": 0.079,
+      "ci_high": 0.119,
+      "significant": true
+    },
+    {
+      "label": "Team 45: Multilevel regression",
+      "estimate": 0.087,
+      "ci_low": 0.063,
+      "ci_high": 0.111,
+      "significant": true
+    },
+    {
+      "label": "Team 46: Correlations, Multilevel Modelling (Regressions)",
+      "estimate": 0.231,
+      "ci_low": 0.213,
+      "ci_high": 0.249,
+      "significant": true
+    },
+    {
+      "label": "Team 47: linear regression, moderation analyses",
+      "estimate": 0.19,
+      "ci_low": 0.171,
+      "ci_high": 0.209,
+      "significant": true
+    },
+    {
+      "label": "Team 48: multilevel linear regression models",
+      "estimate": 0.18,
+      "ci_low": 0.14,
+      "ci_high": 0.22,
+      "significant": true
+    },
+    {
+      "label": "Team 49: mixed-effects linear regression",
+      "estimate": 0.2,
+      "ci_low": 0.13,
+      "ci_high": 0.28,
+      "significant": true
+    },
+    {
+      "label": "Team 51: CFA and SEM",
+      "estimate": 0.198,
+      "ci_low": 0.173,
+      "ci_high": 0.223,
+      "significant": true
+    },
+    {
+      "label": "Team 53: generalized linear regression",
+      "estimate": 0.167,
+      "ci_low": 0.149,
+      "ci_high": 0.184,
+      "significant": true
+    },
+    {
+      "label": "Team 54: Random effects regression",
+      "estimate": 0.087,
+      "ci_low": 0.053,
+      "ci_high": 0.121,
+      "significant": true
+    },
+    {
+      "label": "Team 56: hierarchical linear regression",
+      "estimate": 0.114,
+      "ci_low": 0.093,
+      "ci_high": 0.135,
+      "significant": true
+    },
+    {
+      "label": "Team 58: RQ1: t-tests for testing differences between religious and non-reli...",
+      "estimate": 0.302,
+      "ci_low": 0.258,
+      "ci_high": 0.345,
+      "significant": true
+    },
+    {
+      "label": "Team 60: Multilevel modeling",
+      "estimate": 0.051,
+      "ci_low": 0.029,
+      "ci_high": 0.074,
+      "significant": true
+    },
+    {
+      "label": "Team 61: Regression / GLM",
+      "estimate": 0.104,
+      "ci_low": 0.079,
+      "ci_high": 0.129,
+      "significant": true
+    },
+    {
+      "label": "Team 62: Factor analysis and path analysis",
+      "estimate": 0.212,
+      "ci_low": 0.19,
+      "ci_high": 0.232,
+      "significant": true
+    },
+    {
+      "label": "Team 63: Mixed-effects linear regression model",
+      "estimate": 0.078,
+      "ci_low": 0.059,
+      "ci_high": 0.098,
+      "significant": true
+    },
+    {
+      "label": "Team 64: The statistical analysis technique can build a regression model and...",
+      "estimate": 0.128,
+      "ci_low": 0.109,
+      "ci_high": 0.147,
+      "significant": true
+    },
+    {
+      "label": "Team 65: I have used the following statistical techniques: Pearson r correla...",
+      "estimate": 0.092,
+      "ci_low": 0.074,
+      "ci_high": 0.11,
+      "significant": true
+    },
+    {
+      "label": "Team 67: Multilevel model",
+      "estimate": 0.115,
+      "ci_low": 0.093,
+      "ci_high": 0.137,
+      "significant": true
+    },
+    {
+      "label": "Team 70: Multi-Level Modeling (MLM/HLM)",
+      "estimate": 0.144,
+      "ci_low": 0.115,
+      "ci_high": 0.174,
+      "significant": true
+    },
+    {
+      "label": "Team 71: multilevel structural equation modelling",
+      "estimate": 0.097,
+      "ci_low": 0.065,
+      "ci_high": 0.129,
+      "significant": true
+    },
+    {
+      "label": "Team 72: Path Analysis",
+      "estimate": 0.185,
+      "ci_low": 0.155,
+      "ci_high": 0.195,
+      "significant": true
+    },
+    {
+      "label": "Team 74: Multilevel modeling",
+      "estimate": 0.092,
+      "ci_low": 0.065,
+      "ci_high": 0.118,
+      "significant": true
+    },
+    {
+      "label": "Team 75: linear regression",
+      "estimate": 0.14,
+      "ci_low": 0.12,
+      "ci_high": 0.16,
+      "significant": true
+    },
+    {
+      "label": "Team 76: generalized linear regression",
+      "estimate": 0.081,
+      "ci_low": 0.059,
+      "ci_high": 0.102,
+      "significant": true
+    },
+    {
+      "label": "Team 78: Moderation analysis with linear mixed model (LMM)",
+      "estimate": 0.112,
+      "ci_low": 0.093,
+      "ci_high": 0.131,
+      "significant": true
+    },
+    {
+      "label": "Team 79: t-test and linear regression",
+      "estimate": 0.198,
+      "ci_low": 0.155,
+      "ci_high": 0.24,
+      "significant": true
+    },
+    {
+      "label": "Team 80: Linear regressions",
+      "estimate": 0.087,
+      "ci_low": 0.07,
+      "ci_high": 0.105,
+      "significant": true
+    },
+    {
+      "label": "Team 82: generalized linear regression",
+      "estimate": 0.148,
+      "ci_low": 0.129,
+      "ci_high": 0.167,
+      "significant": true
+    },
+    {
+      "label": "Team 83: Bayesian hierarchical regression",
+      "estimate": 0.0883,
+      "ci_low": 0.065,
+      "ci_high": 0.112,
+      "significant": true
+    },
+    {
+      "label": "Team 84: Structural Equation Modeling (SEM)",
+      "estimate": 0.144,
+      "ci_low": 0.126,
+      "ci_high": 0.162,
+      "significant": true
+    },
+    {
+      "label": "Team 86: Hierarchical linear regression",
+      "estimate": 0.095,
+      "ci_low": 0.077,
+      "ci_high": 0.112,
+      "significant": true
+    },
+    {
+      "label": "Team 88: ANCOVA, MANCOVA, Partial correlation, Hierarchical linear regression",
+      "estimate": 0.007,
+      "ci_low": 0.004,
+      "ci_high": 0.011,
+      "significant": true
+    },
+    {
+      "label": "Team 89: Multilevel linear modeling",
+      "estimate": 0.13,
+      "ci_low": 0.083,
+      "ci_high": 0.171,
+      "significant": true
+    },
+    {
+      "label": "Team 91: generalized linear mixed effects regression",
+      "estimate": 0.096,
+      "ci_low": 0.078,
+      "ci_high": 0.114,
+      "significant": true
+    },
+    {
+      "label": "Team 92: Multi-level regression",
+      "estimate": 0.14,
+      "ci_low": 0.12,
+      "ci_high": 0.17,
+      "significant": true
+    },
+    {
+      "label": "Team 103: Multivariate regressions",
+      "estimate": 0.129,
+      "ci_low": 0.112,
+      "ci_high": 0.146,
+      "significant": true
+    },
+    {
+      "label": "Team 105: Bayesian Additive Regression Trees (BART)",
+      "estimate": 0.128,
+      "ci_low": 0.106,
+      "ci_high": 0.15,
+      "significant": true
+    },
+    {
+      "label": "Team 107: linear regression",
+      "estimate": 0.14,
+      "ci_low": 0.12,
+      "ci_high": 0.16,
+      "significant": true
+    },
+    {
+      "label": "Team 108: We analyzed the data using a multi-level model. When determining wh...",
+      "estimate": 0.136,
+      "ci_low": 0.115,
+      "ci_high": 0.157,
+      "significant": true
+    },
+    {
+      "label": "Team 109: Multilevel regression model",
+      "estimate": 0.199,
+      "ci_low": 0.17,
+      "ci_high": 0.228,
+      "significant": true
+    },
+    {
+      "label": "Team 110: Ordinal logistic regression",
+      "estimate": 0.249,
+      "ci_low": 0.195,
+      "ci_high": 0.302,
+      "significant": true
+    },
+    {
+      "label": "Team 111: linear regression",
+      "estimate": 0.19,
+      "ci_low": 0.17,
+      "ci_high": 0.21,
+      "significant": true
+    },
+    {
+      "label": "Team 117: Meta-analysis; SEM",
+      "estimate": 0.193,
+      "ci_low": 0.149,
+      "ci_high": 0.218,
+      "significant": true
+    },
+    {
+      "label": "Team 118: Mixed ANOVA",
+      "estimate": 0.123,
+      "ci_low": 0.102,
+      "ci_high": 0.144,
+      "significant": true
+    },
+    {
+      "label": "Team 120: Linear multilevel model",
+      "estimate": 0.112,
+      "ci_low": 0.093,
+      "ci_high": 0.131,
+      "significant": true
+    },
+    {
+      "label": "Team 123: Multilevel regression models (random-intercept models)",
+      "estimate": 0.076,
+      "ci_low": 0.058,
+      "ci_high": 0.094,
+      "significant": true
+    },
+    {
+      "label": "Team 126: We used multilevel modeling with random effects for country (random...",
+      "estimate": 0.17,
+      "ci_low": 0.116,
+      "ci_high": 0.225,
+      "significant": true
+    },
+    {
+      "label": "Team 129: Fixed Effects OLS Regression",
+      "estimate": 0.09,
+      "ci_low": 0.07,
+      "ci_high": 0.11,
+      "significant": true
+    },
+    {
+      "label": "Team 130: regression with robust standard error",
+      "estimate": 0.079,
+      "ci_low": 0.061,
+      "ci_high": 0.098,
+      "significant": true
+    },
+    {
+      "label": "Team 132: Linear mixed effects models.",
+      "estimate": 0.116,
+      "ci_low": 0.087,
+      "ci_high": 0.145,
+      "significant": true
+    },
+    {
+      "label": "Team 133: linear mixed effects modeling",
+      "estimate": 0.129,
+      "ci_low": 0.089,
+      "ci_high": 0.169,
+      "significant": true
+    },
+    {
+      "label": "Team 134: Multi-level model",
+      "estimate": 0.113,
+      "ci_low": 0.094,
+      "ci_high": 0.132,
+      "significant": true
+    },
+    {
+      "label": "Team 136: multiple linear regression and model comparison with anova function",
+      "estimate": 0.105,
+      "ci_low": 0.065,
+      "ci_high": 0.144,
+      "significant": true
+    },
+    {
+      "label": "Team 138: random-effect meta-analytic structural equation model",
+      "estimate": 0.14,
+      "ci_low": 0.11,
+      "ci_high": 0.18,
+      "significant": true
+    },
+    {
+      "label": "Team 141: T-test, Structural Equation Models, Multigroup analysis",
+      "estimate": 0.345,
+      "ci_low": 0.31,
+      "ci_high": 0.452,
+      "significant": true
+    },
+    {
+      "label": "Team 143: mixed effects model (multilevel model)",
+      "estimate": 0.139,
+      "ci_low": 0.095,
+      "ci_high": 0.182,
+      "significant": true
+    },
+    {
+      "label": "Team 146: Multiple Linear Regression",
+      "estimate": 0.12,
+      "ci_low": 0.11,
+      "ci_high": 0.14,
+      "significant": true
+    },
+    {
+      "label": "Team 147: multi-level modelling",
+      "estimate": 0.129,
+      "ci_low": 0.102,
+      "ci_high": 0.156,
+      "significant": true
+    },
+    {
+      "label": "Team 148: linear regression (OLS)",
+      "estimate": 0.118,
+      "ci_low": 0.094,
+      "ci_high": 0.142,
+      "significant": true
+    },
+    {
+      "label": "Team 149: Multilevel modeling with Bayesian estimates",
+      "estimate": 0.108,
+      "ci_low": 0.069,
+      "ci_high": 0.147,
+      "significant": true
+    },
+    {
+      "label": "Team 151: linear regression",
+      "estimate": 0.11,
+      "ci_low": 0.09,
+      "ci_high": 0.12,
+      "significant": true
+    },
+    {
+      "label": "Team 152: Linear multilevel Regression",
+      "estimate": 0.101,
+      "ci_low": 0.084,
+      "ci_high": 0.119,
+      "significant": true
+    },
+    {
+      "label": "Team 155: We used a two-step approach: In a first step, we fit a multiple-gro...",
+      "estimate": 0.124,
+      "ci_low": 0.107,
+      "ci_high": 0.14,
+      "significant": true
+    },
+    {
+      "label": "Team 158: multiple regression analyses",
+      "estimate": 0.093,
+      "ci_low": 0.076,
+      "ci_high": 0.111,
+      "significant": true
+    },
+    {
+      "label": "Team 159: Linear mixed models",
+      "estimate": 0.101,
+      "ci_low": 0.07,
+      "ci_high": 0.131,
+      "significant": true
+    },
+    {
+      "label": "Team 162: We ran a series of Multilevel Models in Mplus Version 8.5.",
+      "estimate": 0.067,
+      "ci_low": 0.027,
+      "ci_high": 0.106,
+      "significant": true
+    },
+    {
+      "label": "Team 165: Hierarchical Linear Models & Multilevel Response Surface Analysis",
+      "estimate": 0.096,
+      "ci_low": 0.068,
+      "ci_high": 0.124,
+      "significant": true
+    },
+    {
+      "label": "Team 168: Structural equation modeling",
+      "estimate": 0.169,
+      "ci_low": 0.129,
+      "ci_high": 0.217,
+      "significant": true
+    },
+    {
+      "label": "Team 175: Linear Mixed Models implemented in gamlj jamovi package.",
+      "estimate": 0.144,
+      "ci_low": 0.1,
+      "ci_high": 0.187,
+      "significant": true
+    },
+    {
+      "label": "Team 176: linear regression",
+      "estimate": 0.067,
+      "ci_low": 0.035,
+      "ci_high": 0.099,
+      "significant": true
+    },
+    {
+      "label": "Team 178: Non-Parametric Partial Correlation",
+      "estimate": 0.106,
+      "ci_low": 0.088,
+      "ci_high": 0.125,
+      "significant": true
+    },
+    {
+      "label": "Team 179: We computed all multilevel models with the statistical software R (...",
+      "estimate": 0.145,
+      "ci_low": 0.096,
+      "ci_high": 0.194,
+      "significant": true
+    },
+    {
+      "label": "Team 183: T-test, Anova, Regression",
+      "estimate": 0.121,
+      "ci_low": 0.102,
+      "ci_high": 0.14,
+      "significant": true
+    },
+    {
+      "label": "Team 184: multiple regression, moderation analysis (Hayes), EFA and CFA",
+      "estimate": 0.354,
+      "ci_low": 0.278,
+      "ci_high": 0.431,
+      "significant": true
+    },
+    {
+      "label": "Team 185: Linear Mixed Models, Principal Component Analysis, LASSO variable s...",
+      "estimate": 0.145,
+      "ci_low": 0.123,
+      "ci_high": 0.168,
+      "significant": true
+    },
+    {
+      "label": "Team 186: linear regression",
+      "estimate": 0.113,
+      "ci_low": 0.095,
+      "ci_high": 0.132,
+      "significant": true
+    },
+    {
+      "label": "Team 187: several ANOVAs",
+      "estimate": 0.199,
+      "ci_low": 0.179,
+      "ci_high": 0.219,
+      "significant": true
+    },
+    {
+      "label": "Team 188: Factor analysis and Linear regression analysis (OLS)",
+      "estimate": 0.12,
+      "ci_low": 0.095,
+      "ci_high": 0.146,
+      "significant": true
+    },
+    {
+      "label": "Team 189: ordinal logistic regression (proportional odds model)",
+      "estimate": 0.18,
+      "ci_low": 0.137,
+      "ci_high": 0.223,
+      "significant": true
+    },
+    {
+      "label": "Team 192: Multilevel linear regression",
+      "estimate": 0.146,
+      "ci_low": 0.127,
+      "ci_high": 0.165,
+      "significant": true
+    },
+    {
+      "label": "Team 193: Bayesian linear regression",
+      "estimate": 0.1,
+      "ci_low": 0.08,
+      "ci_high": 0.12,
+      "significant": true
+    },
+    {
+      "label": "Team 196: Linear mixed-effect model",
+      "estimate": 0.134,
+      "ci_low": 0.1,
+      "ci_high": 0.169,
+      "significant": true
+    }
+  ],
+  "story": "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. The default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 40 universes."
+}

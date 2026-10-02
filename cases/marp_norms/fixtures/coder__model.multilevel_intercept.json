@@ -1,0 +1,9 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"code\": \"import numpy as np\\nimport pandas as pd\\nimport statsmodels.formula.api as smf\\n\\n\\ndef estimate(df, ctx):\\n    data = df.copy()\\n    data[\\\"country\\\"] = data[\\\"country\\\"].astype(str)\\n    covariates = list(ctx.get(\\\"covariates\\\", []))\\n    terms = [\\\"x\\\", \\\"m\\\", \\\"x:m\\\"] + covariates\\n    term = \\\"x:m\\\"\\n    formula = \\\"y ~ \\\" + \\\" + \\\".join(terms)\\n    model = smf.mixedlm(formula, data, groups=data[\\\"country\\\"])\\n    fit = model.fit(reml=True, method=[\\\"powell\\\", \\\"lbfgs\\\"])\\n    if not fit.converged:\\n        raise ValueError(\\\"the mixed model did not converge\\\")\\n    low, high = fit.conf_int().loc[term]\\n    return {\\n        \\\"estimate\\\": float(fit.params[term]),\\n        \\\"ci_low\\\": float(low),\\n        \\\"ci_high\\\": float(high),\\n        \\\"p_value\\\": float(fit.pvalues[term]),\\n        \\\"n\\\": int(fit.nobs),\\n    }\\n\"}",
+  "parsed": {
+    "code": "import numpy as np\nimport pandas as pd\nimport statsmodels.formula.api as smf\n\n\ndef estimate(df, ctx):\n    data = df.copy()\n    data[\"country\"] = data[\"country\"].astype(str)\n    covariates = list(ctx.get(\"covariates\", []))\n    terms = [\"x\", \"m\", \"x:m\"] + covariates\n    term = \"x:m\"\n    formula = \"y ~ \" + \" + \".join(terms)\n    model = smf.mixedlm(formula, data, groups=data[\"country\"])\n    fit = model.fit(reml=True, method=[\"powell\", \"lbfgs\"])\n    if not fit.converged:\n        raise ValueError(\"the mixed model did not converge\")\n    low, high = fit.conf_int().loc[term]\n    return {\n        \"estimate\": float(fit.params[term]),\n        \"ci_low\": float(low),\n        \"ci_high\": float(high),\n        \"p_value\": float(fit.pvalues[term]),\n        \"n\": int(fit.nobs),\n    }\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

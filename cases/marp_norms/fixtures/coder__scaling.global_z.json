@@ -1,0 +1,9 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    columns = [c for c in (\\\"wb\\\", \\\"rel\\\", \\\"norm\\\") if c in out.columns]\\n    out = out.dropna(subset=columns)\\n    out[\\\"y\\\"] = (out[\\\"wb\\\"] - out[\\\"wb\\\"].mean()) / out[\\\"wb\\\"].std()\\n    out[\\\"x\\\"] = (out[\\\"rel\\\"] - out[\\\"rel\\\"].mean()) / out[\\\"rel\\\"].std()\\n    if \\\"norm\\\" in out.columns:\\n        out[\\\"m\\\"] = (out[\\\"norm\\\"] - out[\\\"norm\\\"].mean()) / out[\\\"norm\\\"].std()\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    columns = [c for c in (\"wb\", \"rel\", \"norm\") if c in out.columns]\n    out = out.dropna(subset=columns)\n    out[\"y\"] = (out[\"wb\"] - out[\"wb\"].mean()) / out[\"wb\"].std()\n    out[\"x\"] = (out[\"rel\"] - out[\"rel\"].mean()) / out[\"rel\"].std()\n    if \"norm\" in out.columns:\n        out[\"m\"] = (out[\"norm\"] - out[\"norm\"].mean()) / out[\"norm\"].std()\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

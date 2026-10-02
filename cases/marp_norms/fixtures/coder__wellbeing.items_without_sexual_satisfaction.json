@@ -1,0 +1,9 @@
+{
+  "model": "scripted-fixture",
+  "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    items = [\\n        \\\"wb_gen_1\\\", \\\"wb_gen_2\\\", \\\"wb_phys_1\\\", \\\"wb_phys_2\\\", \\\"wb_phys_3\\\", \\\"wb_phys_4\\\",\\n        \\\"wb_phys_5\\\", \\\"wb_phys_6\\\", \\\"wb_phys_7\\\", \\\"wb_psych_1\\\", \\\"wb_psych_2\\\", \\\"wb_psych_3\\\",\\n        \\\"wb_psych_4\\\", \\\"wb_psych_5\\\", \\\"wb_psych_6\\\", \\\"wb_soc_1\\\", \\\"wb_soc_2\\\",\\n    ]\\n    out[\\\"wb\\\"] = out[items].mean(axis=1)\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    items = [\n        \"wb_gen_1\", \"wb_gen_2\", \"wb_phys_1\", \"wb_phys_2\", \"wb_phys_3\", \"wb_phys_4\",\n        \"wb_phys_5\", \"wb_phys_6\", \"wb_phys_7\", \"wb_psych_1\", \"wb_psych_2\", \"wb_psych_3\",\n        \"wb_psych_4\", \"wb_psych_5\", \"wb_psych_6\", \"wb_soc_1\", \"wb_soc_2\",\n    ]\n    out[\"wb\"] = out[items].mean(axis=1)\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

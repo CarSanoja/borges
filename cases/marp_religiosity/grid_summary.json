@@ -1,0 +1,28 @@
+{
+  "rq": 1,
+  "n_universes": 768,
+  "defaults": {
+    "religiosity": "mean_9_items",
+    "wellbeing": "overall_mean",
+    "exclusions": "all_participants",
+    "covariates": "none",
+    "scaling": "global_z",
+    "model": "multilevel_intercept"
+  },
+  "steps": [
+    "religiosity",
+    "wellbeing",
+    "exclusions",
+    "covariates",
+    "scaling",
+    "model"
+  ],
+  "baseline_verdict": "POSITIVE ASSOCIATION",
+  "n_same_verdict": 768,
+  "n_flipped": 0,
+  "share_same_verdict": 1.0,
+  "estimate_min": 0.052513069864170266,
+  "estimate_max": 0.1560508740630309,
+  "flipped_by_n_changes": {},
+  "single_flips": []
+}
