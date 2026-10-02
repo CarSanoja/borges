@@ -10,9 +10,9 @@ export function formatNumber(value: number): string {
   return value.toFixed(3);
 }
 
-export function formatSigned(value: number): string {
+export function formatEstimate(value: number, threshold: number): string {
   const text = formatNumber(value);
-  return value > 0 ? `+${text}` : text;
+  return value > 0 && threshold === 0 ? `+${text}` : text;
 }
 
 export function formatP(value: number): string {

@@ -6,7 +6,7 @@ import { HeroMode } from "./HeroMode";
 const STEPS = [
   { n: "I", title: "Fork", text: "Every defensible choice becomes a real sandbox fork of the analysis." },
   { n: "II", title: "Argue", text: "An adversary argues against the conclusion, with code, on the actual data." },
-  { n: "III", title: "Flip", text: "Borges finds the one defensible change that reverses the decision." },
+  { n: "III", title: "Flip", text: "Borges finds the one defensible change that changes the decision." },
 ];
 
 export const PITCH =

@@ -14,12 +14,22 @@ def client(tmp_path):
     (root / "assets").mkdir(parents=True)
     (root / "index.html").write_text("<html>spa</html>")
     (root / "og.svg").write_text("<svg/>")
-    app = create_app(settings=Settings(borges_home=tmp_path, borges_frontend_dist=root))
+    run = tmp_path / "runs" / "r_20261002T033827_17e789"
+    run.mkdir(parents=True)
+    (run / "meta.json").write_text("{}")
+    app = create_app(
+        settings=Settings(
+            borges_home=tmp_path,
+            borges_frontend_dist=root,
+            borges_runs_dir=tmp_path / "runs",
+        )
+    )
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
 
 
 @pytest.mark.parametrize(
-    "path", ["/", "/replay/red_cards", "/run/r_20261002T033827_17e789", "/run/abc/"]
+    "path",
+    ["/", "/replay/red_cards", "/run/r_20261002T033827_17e789", "/run/r_20261002T033827_17e789/"],
 )
 async def test_known_client_routes_return_200_with_the_app(client, path) -> None:
     async with client:
@@ -28,7 +38,21 @@ async def test_known_client_routes_return_200_with_the_app(client, path) -> None
     assert "spa" in response.text
 
 
-@pytest.mark.parametrize("path", ["/nope", "/run", "/run/a/b", "/replay", "/runs/abc", "/admin/x"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/nope",
+        "/run",
+        "/run/a/b",
+        "/replay",
+        "/runs/abc",
+        "/admin/x",
+        "/run/r_nope",
+        "/run/abc/",
+        "/replay/nope",
+        "/replay/..%2Fetc",
+    ],
+)
 async def test_unknown_routes_return_404_with_the_app_html(client, path) -> None:
     async with client:
         response = await client.get(path)

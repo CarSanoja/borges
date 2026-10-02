@@ -87,7 +87,7 @@ describe("Landing", () => {
     const { unmount } = render(<Landing {...handlers} />);
     const heading = await screen.findByRole("heading", { name: "Bank calls?" });
     const card = heading.closest("article") as HTMLElement;
-    expect(within(card).getByText("Runs live on Nemotron")).toBeInTheDocument();
+    expect(within(card).getByText(/Needs live mode/)).toBeInTheDocument();
     expect(within(card).queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
     expect(within(card).queryByRole("button", { name: "Run it now" })).toBeNull();
     await userEvent.click(within(card).getByRole("button", { name: "See how it runs live" }));
@@ -124,5 +124,19 @@ describe("Landing", () => {
     expect(await screen.findByText("Red cards and skin tone")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Open the demo run" }));
     expect(handlers.onOpenMock).toHaveBeenCalled();
+  });
+});
+
+describe("Landing order", () => {
+  it("puts runnable cases first and the live-only card last", async () => {
+    vi.resetAllMocks();
+    const liveOnly = { ...redCards, id: "live", title: "Live only card", live_only: true, has_recording: false };
+    vi.mocked(client.getCases).mockResolvedValue([liveOnly, { ...checkout, title: "Runnable one" }]);
+    vi.mocked(client.getHealth).mockResolvedValue(health(false));
+    renderLanding();
+    await screen.findByText("Runnable one");
+    const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
+    expect(titles).toEqual(["Runnable one", "Live only card"]);
+    expect(screen.getByText(/Needs live mode/)).toBeInTheDocument();
   });
 });

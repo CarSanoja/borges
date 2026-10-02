@@ -24,9 +24,9 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
       {snapshot.report && <Robustness report={snapshot.report} range={effectRange(snapshot)} />}
       <span className="eyebrow">The original verdict</span>
       <h2 className="vc-verdict vc-verdict--gold">{verdict}</h2>
-      {result && <ResultStats result={result} tone="gold" />}
+      {result && <ResultStats result={result} tone="gold" threshold={rule?.threshold ?? 0} />}
       {rule && <p className="vc-rule">{ruleInWords(rule)}</p>}
-      {flip && !hidden && <p className="vc-hint">Borges found a fork that reverses this.</p>}
+      {flip && !hidden && <p className="vc-hint">Borges found a fork that changes this verdict.</p>}
       {clean && <p className="vc-clean">No defensible flip found</p>}
       {!flip && <SearchNote search={snapshot.report?.search} flipFound={false} explored={explored} />}
     </div>

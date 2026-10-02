@@ -27,7 +27,7 @@ describe("VerdictCard", () => {
 
   it("reveals the flip with changes and the reproduced badge", () => {
     const snapshot = foldEvents("t", events);
-    render(<VerdictCard snapshot={snapshot} />);
+    render(<VerdictCard snapshot={{ ...snapshot, flip: { ...snapshot.flip!, kind: "direction" } }} />);
     expect(screen.getByText("One defensible change reverses it:")).toBeInTheDocument();
     expect(screen.getByText(snapshot.flip!.flipped_verdict)).toBeInTheDocument();
     expect(screen.getByText(snapshot.flip!.changes[0]!.to_label)).toBeInTheDocument();

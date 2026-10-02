@@ -24,7 +24,7 @@ interface Props {
 
 export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
   const { cases: allCases, liveAvailable, health, healthLoaded } = useCases();
-  const cases = allCases;
+  const cases = [...allCases].sort((a, b) => Number(a.live_only === true) - Number(b.live_only === true));
   const liveOnlyCases = allCases.filter((card) => card.live_only);
   const demo = cases.find((card) => card.has_recording);
   const watchDemo = () => (demo ? onOpenReplay(demo.id) : onOpenMock());

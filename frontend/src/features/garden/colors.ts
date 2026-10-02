@@ -12,7 +12,7 @@ export const TONE_VAR: Record<Tone, string> = {
 export const TONE_LABEL: Record<Tone, string> = {
   baseline: "Original path",
   agree: "Agrees with the original",
-  flipped: "Reverses the decision",
+  flipped: "Changes the verdict",
   pending: "Pending or failed",
 };
 

@@ -15,14 +15,15 @@ interface Props {
 export function BackFace({ flip, hidden, rule, search, explored }: Props) {
   const kind = rule ? describeFlip(rule, flip) : null;
   const many = flip.changes.length > 1;
+  const verb = kind?.kind === "direction" ? "reverse it" : "change the verdict";
   const lead = many
-    ? `${flip.changes.length} defensible changes together reverse it:`
-    : "One defensible change reverses it:";
+    ? `${flip.changes.length} defensible changes together ${verb}:`
+    : `One defensible change ${verb === "reverse it" ? "reverses it" : "changes the verdict"}:`;
   return (
     <div className="vc-face vc-face--back" aria-hidden={hidden} inert={hidden}>
       <span className="eyebrow">The flipped verdict</span>
       <h2 className="vc-verdict vc-verdict--vermilion">{flip.flipped_verdict}</h2>
-      <ResultStats result={flip.flipped_result} tone="vermilion" />
+      <ResultStats result={flip.flipped_result} tone="vermilion" threshold={rule?.threshold ?? 0} />
       {kind && (
         <p className="vc-kind" data-kind={kind.kind}>
           <strong>{kind.title}.</strong> {kind.text}

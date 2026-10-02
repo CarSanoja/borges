@@ -30,7 +30,7 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
   return (
     <article className="case-card">
       <p className="eyebrow">{card.subtitle}</p>
-      {liveOnly && <p className="case-live-only">Runs live on Nemotron</p>}
+      {liveOnly && <p className="case-live-only">Needs live mode: runs only with a Nemotron key</p>}
       <h3 className="case-title">{card.title}</h3>
       <p className="case-question">{card.question}</p>
       <dl className="case-meta">
