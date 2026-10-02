@@ -30,6 +30,9 @@ class PrefixCache:
         self._nodes: dict[Prefix, PrefixNode] = {}
         self._locks: dict[Prefix, asyncio.Lock] = {}
 
+    def seed(self, prefix: Prefix, node: PrefixNode) -> None:
+        self._nodes[prefix] = node
+
     async def get_or_compute(
         self, prefix: Prefix, compute: Callable[[], Awaitable[PrefixNode]]
     ) -> PrefixNode:

@@ -171,3 +171,42 @@ def test_run_ids_with_a_newline_or_an_oversized_name_are_unknown_not_errors(tmp_
     store = RunStore(tmp_path)
     for bad in ("abc\n", "a" * 300, "..", "a/b", ""):
         assert store.exists(bad) is False
+
+
+def test_replace_events_rewrites_the_log_atomically(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {})
+    for seq in (1, 2, 3):
+        store.append(event("r_1", seq))
+    store.replace_events("r_1", [event("r_1", 1), event("r_1", 3)])
+    assert [e.seq for e in store.events("r_1")] == [1, 3]
+    assert not list((tmp_path / "r_1").glob("*.tmp"))
+    store.append(event("r_1", 4))
+    assert [e.seq for e in store.events("r_1")] == [1, 3, 4]
+    with pytest.raises(KeyError):
+        store.replace_events("ghost", [])
+
+
+def test_discard_removes_the_run_directory(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {})
+    store.discard("r_1")
+    assert not store.exists("r_1")
+    store.discard("r_1")
+
+
+def test_a_queued_run_without_events_reports_queued(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {"status": "queued"})
+    assert store.snapshot("r_1").status == "queued"
+    store.update_meta("r_1", status="running")
+    assert store.snapshot("r_1").status == "running"
+
+
+def test_a_queued_retry_keeps_its_events_but_reports_queued(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {"status": "queued"})
+    store.append(event("r_1", 1, "run.resumed"))
+    assert store.snapshot("r_1").status == "queued"
+    store.update_meta("r_1", status="running")
+    assert store.snapshot("r_1").status == "running"

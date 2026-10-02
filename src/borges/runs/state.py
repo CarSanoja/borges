@@ -53,6 +53,8 @@ def _apply(snapshot: RunSnapshot, event: Event) -> None:
             snapshot.backend = data.get("backend")
             if data.get("agents"):
                 snapshot.agents = RunAgents.model_validate(data["agents"])
+        case "run.resumed":
+            snapshot.resumed += 1
         case "stage":
             snapshot.stages[data["name"]] = data["status"]
         case "plan.ready":
@@ -75,6 +77,8 @@ def _apply(snapshot: RunSnapshot, event: Event) -> None:
             snapshot.report = Report.model_validate(data["report"])
         case "run.finished":
             snapshot.status = data["status"]
+        case "run.cancelled":
+            snapshot.status = "cancelled"
         case "run.failed":
             snapshot.status = "failed"
             snapshot.error = data.get("error")

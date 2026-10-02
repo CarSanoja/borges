@@ -169,3 +169,53 @@ async def test_budget_exceeded_on_the_adversary_becomes_a_caveat(
     assert snapshot.report is not None
     assert any("adversary" in c and "spend cap reached" in c for c in snapshot.report.caveats)
     assert ("adversary", "done") in stages(rig, "r_test")
+
+
+def runtime_context(tmp_path: Path, **fields):
+    from borges.runtime.checkpoints import SqliteCheckpointStore
+    from borges.runtime.context import RunContext
+    from borges.runtime.db import RuntimeDb
+
+    store = SqliteCheckpointStore(RuntimeDb(tmp_path / "rt.db"))
+    return RunContext("r_ctx", store, **fields), store
+
+
+async def test_stage_checkpoints_are_written_for_plan_and_coding(
+    tmp_path: Path, scenario: Scenario
+) -> None:
+    rig = make_rig(tmp_path)
+    context, store = runtime_context(tmp_path)
+    await rig.orchestrator.execute("r_ctx", RunRequest(case_id="demo"), context=context)
+    plan = store.load("r_ctx", "stage:plan")
+    coded = store.load("r_ctx", "stage:coded")
+    assert plan is not None and coded is not None
+    assert coded["plan"]["steps"][0]["options"][0]["code"] == "code-a"
+    assert coded["coding"]["options"] > 0 and "smoke_notes" in coded
+    assert store.last("r_ctx")["checkpoints"] >= 2
+
+
+async def test_cancel_is_honoured_at_the_next_stage_boundary(
+    tmp_path: Path, scenario: Scenario
+) -> None:
+    rig = make_rig(tmp_path)
+    context, _ = runtime_context(tmp_path)
+    original = scenario.entered_plan
+
+    class Trip:
+        def set(self) -> None:
+            context.cancel.set("stop now")
+            original.set()
+
+    scenario.entered_plan = Trip()
+    snapshot = await rig.orchestrator.execute("r_ctx", RunRequest(case_id="demo"), context=context)
+    assert snapshot.status == "cancelled"
+    done = [s for s in stages(rig, "r_ctx") if s[1] == "done"]
+    assert ("planning", "done") in done and ("coding", "done") not in done
+
+
+async def test_without_a_context_nothing_is_checkpointed(
+    tmp_path: Path, scenario: Scenario
+) -> None:
+    rig = make_rig(tmp_path)
+    snapshot = await rig.orchestrator.execute("r_ctx", RunRequest(case_id="demo"))
+    assert snapshot.status == "completed" and snapshot.resumed == 0

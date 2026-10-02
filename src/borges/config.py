@@ -72,6 +72,13 @@ class Settings(BaseSettings):
     borges_store_key: str | None = None
     borges_store_key_autogen: bool = False
     borges_armor_llm: bool = False
+    borges_job_lease_s: float = 30.0
+    borges_job_max_attempts: int = 3
+    borges_job_backoff_s: float = 2.0
+    borges_runtime_poll_s: float = 1.0
+    borges_idempotency_window_s: float = 600.0
+    borges_scheduler: bool = False
+    borges_scheduler_poll_s: float = 30.0
     borges_gateway_policy: Path = REPO_ROOT / "policy" / "gateway.json"
     borges_home: Path = REPO_ROOT / ".borges"
     borges_runs_dir: Path = REPO_ROOT / "runs"

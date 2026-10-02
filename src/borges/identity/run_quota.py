@@ -16,6 +16,11 @@ SCRIPTED = "scripted"
 LIVE = "live"
 
 
+def active_limit(settings: Settings, anonymous: bool) -> int:
+    base = settings.borges_anon_active_runs
+    return base if anonymous else base * NAMED_ACTIVE_FACTOR
+
+
 @dataclass
 class _Bucket:
     tokens: float
@@ -55,8 +60,7 @@ class RunQuota:
         return 60.0, 1.0
 
     def _active_limit(self, principal: Principal) -> int:
-        base = self._settings.borges_anon_active_runs
-        return base if principal.anonymous else base * NAMED_ACTIVE_FACTOR
+        return active_limit(self._settings, principal.anonymous)
 
     def _prune(self, now: float) -> None:
         if len(self._owners) < MAX_OWNERS:

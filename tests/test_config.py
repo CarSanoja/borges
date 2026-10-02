@@ -53,3 +53,16 @@ def test_otlp_endpoint_comes_from_the_standard_env_var(monkeypatch: pytest.Monke
     s = settings(monkeypatch, OTEL_EXPORTER_OTLP_ENDPOINT="http://collector:4318")
     assert s.otel_exporter_otlp_endpoint == "http://collector:4318"
     assert settings(monkeypatch, OTEL_EXPORTER_OTLP_ENDPOINT="").otel_exporter_otlp_endpoint is None
+
+
+def test_runtime_defaults() -> None:
+    settings = Settings(_env_file=None)
+    assert settings.borges_job_lease_s == 30.0 and settings.borges_job_max_attempts == 3
+    assert settings.borges_job_backoff_s == 2.0 and settings.borges_idempotency_window_s == 600.0
+    assert settings.borges_scheduler is False
+    assert settings.borges_runtime_poll_s > 0 and settings.borges_scheduler_poll_s > 0
+
+
+def test_scheduler_is_switched_on_by_the_environment(monkeypatch) -> None:
+    monkeypatch.setenv("BORGES_SCHEDULER", "true")
+    assert Settings(_env_file=None).borges_scheduler is True

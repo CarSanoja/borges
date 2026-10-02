@@ -19,8 +19,10 @@ def sweep_sandboxes(settings: Settings) -> None:
         shutil.rmtree(child, ignore_errors=True)
 
 
-def reconcile(settings: Settings, store: Any, orchestrator: Any) -> None:
+def reconcile(settings: Settings, store: Any, orchestrator: Any, runtime: Any = None) -> None:
     active = set(getattr(orchestrator, "tasks", {}))
+    if runtime is not None:
+        active |= runtime.known_run_ids()
     live_elsewhere = getattr(store, "live_elsewhere", lambda _active: [])(active)
     store.interrupt_running(active)
     if not live_elsewhere:

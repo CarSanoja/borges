@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import time
 from pathlib import Path
 from typing import Any
@@ -63,6 +64,19 @@ class RunStore:
         with (self._dir(event.run_id) / "events.jsonl").open("a", encoding="utf-8") as handle:
             handle.write(line + "\n")
             handle.flush()
+
+    def replace_events(self, run_id: str, events: list[Event]) -> None:
+        if not self.exists(run_id):
+            raise KeyError(run_id)
+        target = self._dir(run_id) / "events.jsonl"
+        temporary = target.with_suffix(".jsonl.tmp")
+        temporary.write_text(
+            "".join(event.model_dump_json() + "\n" for event in events), encoding="utf-8"
+        )
+        temporary.replace(target)
+
+    def discard(self, run_id: str) -> None:
+        shutil.rmtree(self._dir(run_id), ignore_errors=True)
 
     def events(self, run_id: str) -> list[Event]:
         if not self.exists(run_id):
@@ -128,7 +142,11 @@ class RunStore:
         return stale
 
     def snapshot(self, run_id: str) -> RunSnapshot:
-        return fold(self.events(run_id), run_id)
+        events = self.events(run_id)
+        snapshot = fold(events, run_id)
+        if snapshot.status == "running" and self.meta(run_id).get("status") == "queued":
+            snapshot.status = "queued"
+        return snapshot
 
     def list_runs(self) -> list[RunSummary]:
         if not self.runs_dir.is_dir():

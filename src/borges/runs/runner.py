@@ -4,13 +4,15 @@ from collections.abc import Sequence
 
 from borges.analysis.coder import repair_option
 from borges.analysis.models import AnalysisPlan, Option, Step
-from borges.garden.executor import GardenExecutor
+from borges.garden.executor import GardenExecutor, universe_id
 from borges.garden.models import Garden, Universe, UniverseKind
 from borges.llm.client import BudgetExceeded, LLMClient
 from borges.llm.gather import gather_cancelling
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData
 from borges.runs.universe_tracing import run_universe_traced
+from borges.runtime.context import RunContext
+from borges.runtime.universe_checkpoint import RestoredUniverses, universe_key, universe_payload
 
 
 async def publish_plan(emitter: RunEmitter, plan: AnalysisPlan) -> None:
@@ -28,6 +30,9 @@ class UniverseRunner:
         garden: Garden,
         emitter: RunEmitter,
         max_universes: int,
+        context: RunContext | None = None,
+        restored: RestoredUniverses | None = None,
+        root_id: str | None = None,
     ) -> None:
         self.llm = llm
         self.plan = plan
@@ -35,6 +40,9 @@ class UniverseRunner:
         self.garden = garden
         self.emitter = emitter
         self.max_universes = max_universes
+        self.context = context
+        self.restored = restored
+        self.root_id = root_id
 
     @property
     def remaining(self) -> int:
@@ -73,7 +81,27 @@ class UniverseRunner:
         await publish_plan(self.emitter, self.plan)
         return {**universe.choices, step.id: repaired.id}
 
+    def _restore(self, universe_id: str) -> Universe:
+        assert self.restored is not None
+        universe = self.restored.universe(universe_id)
+        self.garden.add(universe)
+        if universe.kind == "baseline":
+            self.garden.baseline_id = universe.id
+        self.emitter.universes_finished += 1
+        return universe
+
+    def _record(self, universe: Universe) -> None:
+        if self.context is None:
+            return
+        payload = universe_payload(universe, self.plan, self.root_id)
+        self.context.save(universe_key(universe.id), self.emitter.seq, payload)
+
     async def run(self, choices: dict[str, str], kind: UniverseKind) -> Universe:
+        if self.context is not None:
+            self.context.check()
+        full = {**self.plan.default_choices(), **choices}
+        if self.restored and universe_id(full) in self.restored.ids:
+            return self._restore(universe_id(full))
         universe = await run_universe_traced(self.executor, choices, kind)
         if universe.status == "failed":
             repaired = await self._repair(universe, kind)
@@ -82,6 +110,7 @@ class UniverseRunner:
         self.garden.add(universe)
         if kind == "baseline":
             self.garden.baseline_id = universe.id
+        self._record(universe)
         return universe
 
     async def run_many(

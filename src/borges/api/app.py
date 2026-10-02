@@ -15,11 +15,14 @@ from borges.api import (
     routes_health,
     routes_identity,
     routes_policy,
+    routes_run_create,
     routes_runs,
+    routes_runtime,
     routes_trace,
     routes_uploads,
 )
 from borges.api.body_limit import BodyLimitMiddleware
+from borges.api.runtime_wiring import attach_runtime
 from borges.api.spa import mount_frontend
 from borges.api.startup import reconcile, warn_unkeyed
 from borges.api.uploads import UploadStore
@@ -66,8 +69,15 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _build_missing(app)
         warn_unkeyed(resolved)
-        await asyncio.to_thread(reconcile, resolved, app.state.store, app.state.orchestrator)
+        runtime = attach_runtime(app)
+        await asyncio.to_thread(
+            reconcile, resolved, app.state.store, app.state.orchestrator, runtime
+        )
+        if runtime is not None:
+            await runtime.start()
         yield
+        if runtime is not None:
+            await runtime.stop()
         shutdown = getattr(app.state.orchestrator, "shutdown", None)
         if shutdown is not None:
             await shutdown()
@@ -79,9 +89,11 @@ def create_app(
     app.state.registry = registry
     app.state.store = store
     app.state.bus = bus
+    app.state.runtime = None
     app.state.uploads = UploadStore(
         resolved.borges_home / "uploads", resolved.borges_upload_quota_mb
     )
+    attach_runtime(app)
 
     app.add_middleware(BodyLimitMiddleware)
     app.state.authenticator = Authenticator(resolved)
@@ -115,6 +127,8 @@ def create_app(
         routes_cases,
         routes_policy,
         routes_agents,
+        routes_runtime,
+        routes_run_create,
         routes_runs,
         routes_trace,
         routes_uploads,

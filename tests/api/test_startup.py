@@ -119,3 +119,17 @@ def test_startup_is_quiet_with_a_key(tmp_path: Path, caplog: pytest.LogCaptureFi
     with caplog.at_level(logging.WARNING):
         assert not warn_unkeyed(settings)
     assert caplog.text == ""
+
+
+def test_reconcile_spares_runs_the_runtime_still_owns(tmp_path: Path) -> None:
+    store = RunStore(tmp_path / "runs")
+    seed_running(store, "r_queued")
+    seed_running(store, "r_zombie")
+
+    class Runtime:
+        def known_run_ids(self) -> set[str]:
+            return {"r_queued"}
+
+    reconcile(Settings(_env_file=None, borges_home=tmp_path), store, object(), Runtime())
+    assert store.meta("r_queued")["status"] == "running"
+    assert store.meta("r_zombie")["status"] == "failed"

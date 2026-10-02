@@ -78,6 +78,13 @@ class BudgetBook:
     def release(self, reservation: Reservation) -> None:
         self.settle(reservation, 0.0)
 
+    def release_outstanding(self) -> float:
+        released = 0.0
+        for account in self._accounts.values():
+            released += account.reserved
+            account.reserved = 0.0
+        return released
+
     def reserve_exec(self) -> None:
         account = self._accounts[SANDBOX]
         if account.calls + 1 > account.max_calls:

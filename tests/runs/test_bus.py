@@ -126,3 +126,21 @@ async def test_close_without_terminal_event_ends_live_subscribers(bus: EventBus)
     bus.close("r_1")
     assert await task == [1, 2]
     assert not bus.is_live("r_1")
+
+
+async def test_reopen_replaces_the_history_and_keeps_subscribers(bus: EventBus) -> None:
+    bus.open("r_1")
+    bus.publish(event(1))
+    bus.publish(event(2))
+    task = asyncio.create_task(collect(bus))
+    await asyncio.sleep(0)
+    bus.reopen("r_1", [event(1)])
+    bus.publish(event(3, "run.finished"))
+    assert await task == [1, 2, 3]
+    assert bus.is_live("r_1") is False
+
+
+async def test_reopen_creates_a_live_channel(bus: EventBus) -> None:
+    assert bus.is_live("r_1") is False
+    bus.reopen("r_1", [event(1)])
+    assert bus.is_live("r_1") is True

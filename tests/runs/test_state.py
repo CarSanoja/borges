@@ -219,3 +219,24 @@ def test_last_seq_is_the_maximum() -> None:
         ]
     )
     assert snapshot.last_seq == 7
+
+
+def test_resumed_events_are_counted() -> None:
+    snapshot = fold(
+        [
+            evt(1, "stage", {"name": "coding", "status": "started"}),
+            evt(2, "run.resumed", {"reason": "restart", "attempt": 1}),
+            evt(3, "run.resumed", {"reason": "retry", "attempt": 2}),
+        ]
+    )
+    assert snapshot.resumed == 2 and snapshot.status == "running"
+
+
+def test_a_cancelled_run_ends_cancelled() -> None:
+    snapshot = fold(
+        [
+            evt(1, "run.cancelled", {"reason": "by request"}),
+            evt(2, "run.finished", {"status": "cancelled", "elapsed_s": 1.0}),
+        ]
+    )
+    assert snapshot.status == "cancelled" and snapshot.error is None

@@ -46,7 +46,7 @@ def app(settings: Settings):
 async def _wait_finished(client: httpx.AsyncClient, run_id: str) -> dict:
     for _ in range(400):
         snapshot = (await client.get(f"/api/runs/{run_id}")).json()
-        if snapshot["status"] != "running":
+        if snapshot["status"] not in ("queued", "running"):
             return snapshot
         await asyncio.sleep(0.5)
     raise AssertionError("run did not finish")

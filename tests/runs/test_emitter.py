@@ -5,6 +5,7 @@ from pathlib import Path
 from borges.llm.client import UsageTotals
 from borges.runs.bus import EventBus
 from borges.runs.emitter import RunEmitter
+from borges.runs.events import Event
 from borges.runs.store import RunStore
 
 
@@ -56,3 +57,52 @@ async def test_personal_data_in_event_payloads_is_redacted(tmp_path: Path) -> No
     await emitter.emit("stage", {"name": "x", "detail": "failed for maria@example.com", "n": 3})
     stored = store.events("r_1")[0]
     assert stored.data == {"name": "x", "detail": "failed for [redacted:email]", "n": 3}
+
+
+def stage_event(seq: int, status: str) -> Event:
+    return Event(
+        seq=seq,
+        ts=1.0,
+        run_id="r_1",
+        type="stage",
+        data={"name": "coding", "status": status, "detail": ""},
+    )
+
+
+async def test_resumed_emitter_swallows_events_already_persisted(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {})
+    persisted = [stage_event(1, "started"), stage_event(2, "done")]
+    for item in persisted:
+        store.append(item)
+    bus = EventBus(store)
+    bus.open("r_1")
+    emitter = RunEmitter("r_1", store, bus, replay=persisted, last_seq=2)
+    assert emitter.has_pending("stage", {"name": "coding", "status": "done", "detail": ""})
+    await emitter.stage("coding", "started")
+    await emitter.stage("coding", "done")
+    assert [e.seq for e in store.events("r_1")] == [1, 2]
+    assert not emitter.has_pending("stage", {"name": "coding", "status": "done", "detail": ""})
+    await emitter.stage("coding", "done")
+    assert [e.seq for e in store.events("r_1")] == [1, 2, 3]
+
+
+async def test_each_persisted_event_is_swallowed_only_once(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {})
+    store.append(stage_event(5, "done"))
+    emitter = RunEmitter("r_1", EventBus(store).store, EventBus(store), [stage_event(5, "done")], 5)
+    emitter.bus.open("r_1")
+    await emitter.stage("coding", "done")
+    await emitter.stage("coding", "done")
+    assert [e.seq for e in store.events("r_1")] == [5, 6]
+
+
+async def test_a_different_payload_is_a_new_event(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    store.create("r_1", {})
+    bus = EventBus(store)
+    bus.open("r_1")
+    emitter = RunEmitter("r_1", store, bus, replay=[stage_event(1, "done")], last_seq=1)
+    await emitter.stage("planning", "done")
+    assert [e.seq for e in store.events("r_1")] == [2]

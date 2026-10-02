@@ -9,7 +9,7 @@ from borges.fleet.models import RunAgents
 from borges.garden.models import Flip, Garden, Report, Universe
 from borges.runs.events import StageName
 
-RunStatus = Literal["running", "completed", "failed"]
+RunStatus = Literal["queued", "running", "completed", "failed", "cancelled"]
 
 
 class RunRequest(BaseModel):
@@ -63,6 +63,7 @@ class RunSnapshot(BaseModel):
     usage: UsageSnapshot = Field(default_factory=UsageSnapshot)
     error: str | None = None
     agents: RunAgents | None = None
+    resumed: int = 0
     last_seq: int = 0
 
 

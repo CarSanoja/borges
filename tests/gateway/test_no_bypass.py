@@ -74,7 +74,7 @@ def test_the_orchestrator_is_the_only_caller_of_the_llm_factory() -> None:
         for path in SRC.rglob("*.py")
         if any(name == "llm_factory" for name, _ in called_names(path))
     }
-    assert callers == {"runs/orchestrator.py"}
+    assert callers == {"runs/orchestrator_build.py"}
 
 
 class SpyLLM:

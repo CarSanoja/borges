@@ -7,24 +7,21 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, cast
 
-from borges.armor.llm_armor import LLMArmor
 from borges.armor.report import ArmorReport
 from borges.cases.registry import CaseRegistry
 from borges.config import Settings
 from borges.fleet.models import RunAgents
-from borges.gateway.core import build_gateway
-from borges.gateway.dataset_columns import columns_of
+from borges.gateway.core import Gateway
 from borges.llm.factory import make_llm
 from borges.runs.bus import EventBus
 from borges.runs.detail import build_universe_detail
 from borges.runs.emitter import RunEmitter
-from borges.runs.events import RunFailedData, RunFinishedData, RunStartedData
 from borges.runs.inputs import ResolvedRun, resolve_run
 from borges.runs.models import RunRequest, RunSnapshot, UniverseDetail
-from borges.runs.orchestrator_identity import mint_identity
-from borges.runs.orchestrator_meta import agents_provenance, announced_models, outcome_meta
+from borges.runs.orchestrator_build import build_backend, build_gateway_and_llm
+from borges.runs.orchestrator_events import announce, finish
+from borges.runs.orchestrator_meta import agents_provenance, new_run_meta
 from borges.runs.orchestrator_trace import (
     TelemetryFactory,
     close_telemetry,
@@ -34,12 +31,11 @@ from borges.runs.orchestrator_trace import (
 )
 from borges.runs.ownership import owner_fields
 from borges.runs.pipeline import Pipeline
-from borges.runs.state import fold
 from borges.runs.store import RunStore
+from borges.runtime.context import RunCancelled, RunContext, RunRetry
+from borges.runtime.resume import ResumePlan, plan_resume
 from borges.sandbox.backend import BranchBackend
 from borges.sandbox.factory import make_backend
-from borges.telemetry.instrumented_backend import instrument_backend
-from borges.telemetry.instrumented_llm import instrument_llm
 from borges.telemetry.run_telemetry import RunTelemetry
 
 log = logging.getLogger("borges.run")
@@ -79,30 +75,25 @@ class RunOrchestrator:
     def live_count(self) -> int:
         return len(self._live & self.tasks.keys())
 
-    def _modes(self, request: RunRequest) -> tuple[str, str]:
+    def is_live(self, request: RunRequest) -> bool:
+        return self.modes(request)[0] == "nebius"
+
+    def modes(self, request: RunRequest) -> tuple[str, str]:
         return (
             request.llm or self.settings.borges_llm,
             request.backend or self.settings.borges_backend,
         )
 
-    def _register(self, run_id: str, request: RunRequest, resolved: ResolvedRun) -> None:
-        llm, backend = self._modes(request)
-        self.store.create(
-            run_id,
-            {
-                "case_id": resolved.case_id,
-                "title": resolved.title,
-                "status": "running",
-                "created_at": time.time(),
-                "llm": llm,
-                "backend": backend,
-                "cost_usd": 0.0,
-                "n_universes": 0,
-                "verdict": None,
-                "flipped_verdict": None,
-                **owner_fields(),
-            },
-        )
+    def register(
+        self,
+        run_id: str,
+        request: RunRequest,
+        resolved: ResolvedRun,
+        status: str = "running",
+        extra: dict[str, object] | None = None,
+    ) -> None:
+        meta = new_run_meta(resolved, *self.modes(request), status, extra)
+        self.store.create(run_id, meta)
         self.bus.open(run_id)
 
     async def start(
@@ -115,12 +106,23 @@ class RunOrchestrator:
             resolve_run, request, self.registry, self.settings, data, dataset_name
         )
         run_id = new_run_id()
-        self._register(run_id, request, resolved)
-        task = asyncio.create_task(self.execute(run_id, request, data, dataset_name))
-        self.tasks[run_id] = task
-        self._live.update([run_id] if self._modes(request)[0] == "nebius" else [])
-        task.add_done_callback(lambda _: self._forget(run_id))
+        self.register(run_id, request, resolved)
+        self.launch(run_id, request, data, dataset_name)
         return run_id
+
+    def launch(
+        self,
+        run_id: str,
+        request: RunRequest,
+        data: bytes | None = None,
+        dataset_name: str | None = None,
+        context: RunContext | None = None,
+    ) -> asyncio.Task[RunSnapshot]:
+        task = asyncio.create_task(self.execute(run_id, request, data, dataset_name, context))
+        self.tasks[run_id] = task
+        self._live.update([run_id] if self.modes(request)[0] == "nebius" else [])
+        task.add_done_callback(lambda _: self._forget(run_id))
+        return task
 
     def _forget(self, run_id: str) -> None:
         self.tasks.pop(run_id, None)
@@ -139,51 +141,10 @@ class RunOrchestrator:
         await asyncio.gather(*pending, return_exceptions=True)
 
     def snapshot(self, run_id: str) -> RunSnapshot:
-        return fold(self.store.events(run_id), run_id)
+        return self.store.snapshot(run_id)
 
     def universe_detail(self, run_id: str, universe_id: str) -> UniverseDetail:
         return build_universe_detail(self.snapshot(run_id), universe_id)
-
-    async def _announce(
-        self,
-        emitter: RunEmitter,
-        request: RunRequest,
-        resolved: ResolvedRun,
-        trace_id: str | None = None,
-        agents: RunAgents | None = None,
-    ) -> None:
-        llm, backend = self._modes(request)
-        started = RunStartedData(
-            case_id=resolved.case_id,
-            title=resolved.title,
-            question=resolved.question,
-            decision_rule=resolved.decision_rule.model_dump(mode="json"),
-            mode="live",
-            llm=cast(Literal["nebius", "scripted", "local"], llm),
-            backend=backend,
-            models=announced_models(self.settings, llm),
-            max_universes=resolved.max_universes,
-            trace_id=trace_id,
-            agents=agents,
-        )
-        await emitter.emit("run.started", started.model_dump(mode="json"))
-
-    async def _finish(
-        self, emitter: RunEmitter, started_at: float, error: str | None, pipeline: Pipeline | None
-    ) -> None:
-        status = "failed" if error else "completed"
-        finished = RunFinishedData(status=status, elapsed_s=time.monotonic() - started_at)
-        meta: dict[str, object] = {"status": status}
-        if pipeline is not None:
-            meta.update(outcome_meta(pipeline))
-        try:
-            self.store.update_meta(emitter.run_id, **meta)
-            if error:
-                await emitter.emit("run.failed", RunFailedData(error=error).model_dump())
-            await emitter.emit("run.finished", finished.model_dump(mode="json"))
-        finally:
-            self.bus.close(emitter.run_id)
-        log.info("run %s", status, extra={"run_id": emitter.run_id, "status": status})
 
     async def execute(
         self,
@@ -191,14 +152,19 @@ class RunOrchestrator:
         request: RunRequest,
         data: bytes | None = None,
         dataset_name: str | None = None,
+        context: RunContext | None = None,
     ) -> RunSnapshot:
         resolved = await asyncio.to_thread(
             resolve_run, request, self.registry, self.settings, data, dataset_name
         )
         if not self.store.exists(run_id):
-            self._register(run_id, request, resolved)
+            self.register(run_id, request, resolved)
+        if context is not None:
+            self.store.update_meta(
+                run_id, status="running", attempt=context.attempt, **owner_fields()
+            )
         telemetry = open_telemetry(self.telemetry_factory, self.settings, self.store, run_id)
-        llm_mode, backend_mode = self._modes(request)
+        llm_mode, backend_mode = self.modes(request)
         agents = agents_provenance(self.settings, llm_mode)
         if agents is not None:
             self.store.update_meta(run_id, agents=agents.model_dump(mode="json"))
@@ -209,11 +175,22 @@ class RunOrchestrator:
         }
         try:
             with run_scope(telemetry, self.store, run_id, attributes) as span:
-                snapshot = await self._execute(run_id, request, resolved, telemetry, agents)
+                snapshot = await self._execute(
+                    run_id, request, resolved, telemetry, agents, context
+                )
                 mark_outcome(span, snapshot.status)
                 return snapshot
         finally:
             close_telemetry(telemetry, self.store, run_id)
+
+    def _emitter(
+        self, run_id: str, context: RunContext | None
+    ) -> tuple[RunEmitter, ResumePlan | None]:
+        if context is None or not context.resumed:
+            return RunEmitter(run_id, self.store, self.bus), None
+        plan = plan_resume(self.store, self.bus, context)
+        emitter = RunEmitter(run_id, self.store, self.bus, plan.replay, plan.last_seq)
+        return emitter, plan
 
     async def _execute(
         self,
@@ -222,48 +199,50 @@ class RunOrchestrator:
         resolved: ResolvedRun,
         telemetry: RunTelemetry | None,
         agents: RunAgents | None = None,
+        context: RunContext | None = None,
     ) -> RunSnapshot:
         self.bus.open(run_id)
         started_at = time.monotonic()
-        emitter = RunEmitter(run_id, self.store, self.bus)
+        emitter, resume = self._emitter(run_id, context)
         pipeline: Pipeline | None = None
         backend: BranchBackend | None = None
+        gateway: Gateway | None = None
         error: str | None = None
         try:
-            await self._announce(
-                emitter, request, resolved, telemetry.trace_id if telemetry else None, agents
-            )
+            if resume is not None and resume.announced:
+                await emitter.emit("run.resumed", resume.event())
+            else:
+                trace_id = telemetry.trace_id if telemetry else None
+                modes = self.modes(request)
+                await announce(emitter, self.settings, request, resolved, modes, trace_id, agents)
             log.info("run started", extra={"run_id": run_id, "case_id": resolved.case_id})
-            llm_options: dict[str, Path | None] = {"fixtures_dir": resolved.fixtures_dir}
-            if self.record_dir is not None:
-                llm_options["record_dir"] = self.record_dir
-            identity = mint_identity(self.settings, run_id)
             armor_report = ArmorReport()
-            gateway = build_gateway(
-                self.settings,
-                run_id,
-                identity,
-                self._modes(request)[0],
-                armor=LLMArmor(armor_report),
-                dataset_columns=columns_of(resolved.data),
-            )
-            llm = instrument_llm(
-                self.llm_factory(self.settings, request.llm, **llm_options), identity, gateway
-            )
-            backend = instrument_backend(
-                self.backend_factory(self.settings, request.backend), gateway
-            )
+            gateway, llm = build_gateway_and_llm(self, run_id, request, resolved, armor_report)
+            backend = build_backend(self, request, gateway)
             pipeline = Pipeline(self.settings, llm, backend, emitter, resolved, armor_report)
             pipeline.agents = agents
+            pipeline.context = context
+            pipeline.restored = resume.restored if resume and resume.restored else None
             with gateway.bind():
                 await pipeline.run()
+        except RunCancelled as cancelled:
+            reason = str(cancelled) or "cancelled"
+            await finish(self.store, self.bus, emitter, started_at, None, pipeline, reason)
+            return self.snapshot(run_id)
         except asyncio.CancelledError:
-            await self._finish(emitter, started_at, "run cancelled", pipeline)
+            if context is None:
+                await finish(self.store, self.bus, emitter, started_at, "run cancelled", pipeline)
+            else:
+                self.bus.close(run_id)
             raise
         except Exception as exc:
+            if context is not None and context.failed(exc):
+                raise RunRetry(f"{type(exc).__name__}: {exc}") from exc
             error = f"{type(exc).__name__}: {exc}"
         finally:
+            if gateway is not None:
+                gateway.budgets.release_outstanding()
             if backend is not None:
                 await backend.close()
-        await self._finish(emitter, started_at, error, pipeline)
+        await finish(self.store, self.bus, emitter, started_at, error, pipeline)
         return self.snapshot(run_id)

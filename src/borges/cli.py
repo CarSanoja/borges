@@ -16,11 +16,14 @@ from borges.runs.detail import build_universe_detail
 from borges.runs.models import RunRequest, RunSnapshot
 from borges.runs.orchestrator import new_run_id
 from borges.runs.reproduce import reproduction_lines
+from borges.runtime.cli import runs_app, schedule_app
 
 app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
 app.add_typer(audit_app, name="audit")
 app.add_typer(agents_app, name="agents")
 app.add_typer(keys_app, name="keys")
+app.add_typer(runs_app, name="runs")
+app.add_typer(schedule_app, name="schedule")
 
 LlmOption = Annotated[str, typer.Option("--llm", help="scripted, nebius or local")]
 

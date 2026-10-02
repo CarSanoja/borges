@@ -8,6 +8,8 @@ from borges.fleet.models import RunAgents
 
 EventType = Literal[
     "run.started",
+    "run.resumed",
+    "run.cancelled",
     "stage",
     "plan.ready",
     "option.coded",
@@ -124,9 +126,20 @@ class UsageData(BaseModel):
 
 
 class RunFinishedData(BaseModel):
-    status: Literal["completed", "failed"]
+    status: Literal["completed", "failed", "cancelled"]
     elapsed_s: float
 
 
 class RunFailedData(BaseModel):
     error: str
+
+
+class RunResumedData(BaseModel):
+    reason: str
+    attempt: int
+    restored_universes: int
+    dropped_events: int
+
+
+class RunCancelledData(BaseModel):
+    reason: str

@@ -37,6 +37,10 @@ class EventBus:
     def open(self, run_id: str) -> None:
         self._channels.setdefault(run_id, _Channel())
 
+    def reopen(self, run_id: str, history: list[Event]) -> None:
+        channel = self._channels.setdefault(run_id, _Channel())
+        channel.history = list(history)
+
     def is_live(self, run_id: str) -> bool:
         return run_id in self._channels
 

@@ -6,7 +6,7 @@ import pytest
 
 from borges.cases.registry import CaseRegistry
 from borges.gateway.policy_load import policy_for
-from borges.runs import orchestrator as orchestrator_module
+from borges.runs import orchestrator_build as orchestrator_module
 from borges.runs.bus import EventBus
 from borges.runs.models import RunRequest
 from borges.runs.orchestrator import RunOrchestrator

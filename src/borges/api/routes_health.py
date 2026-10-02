@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 
 from borges.api.deps import get_settings
 from borges.api.live_rules import (
@@ -16,7 +16,9 @@ router = APIRouter()
 
 
 @router.get("/health")
-def health(settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, Any]:
+def health(
+    settings: Annotated[Settings, Depends(get_settings)], request: Request
+) -> dict[str, Any]:
     spend = read_spend(settings)
     reason = live_unavailable_reason(settings)
     uploads_reason = uploads_unavailable_reason(settings)
@@ -30,4 +32,18 @@ def health(settings: Annotated[Settings, Depends(get_settings)]) -> dict[str, An
         "backend": settings.borges_backend,
         "spend_usd": spend,
         "spend_cap_usd": settings.borges_spend_cap_usd,
+        **_capacity(request),
     }
+
+
+IDLE = {
+    "queue_depth": 0,
+    "active_workers": 0,
+    "oldest_job_age_s": None,
+    "dead_letter_count": 0,
+}
+
+
+def _capacity(request: Request) -> dict[str, Any]:
+    runtime = request.app.state.runtime
+    return runtime.stats() if runtime is not None else dict(IDLE)

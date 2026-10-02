@@ -95,3 +95,14 @@ async def test_concurrency_slot_caps_in_flight_calls(settings: Settings) -> None
 
     await asyncio.gather(*(work() for _ in range(8)))
     assert peak == 2
+
+
+def test_release_outstanding_returns_every_reservation(settings: Settings) -> None:
+    budgets = book(settings)
+    budgets.reserve("judge", 0.01)
+    budgets.reserve("judge", 0.02)
+    assert budgets.snapshot()["run"]["reserved_usd"] == pytest.approx(0.03)
+    assert budgets.release_outstanding() == pytest.approx(0.06)
+    assert budgets.snapshot()["run"]["reserved_usd"] == 0
+    assert budgets.snapshot()["judge"]["reserved_usd"] == 0
+    assert budgets.release_outstanding() == 0

@@ -37,3 +37,12 @@ def test_unknown_route_has_no_requirement() -> None:
 def test_label_joins_alternatives() -> None:
     assert scope_label(("a", "b")) == "a or b"
     assert scope_label("a") == "a"
+
+
+def test_runtime_routes_are_declared() -> None:
+    assert requirement_for("GET", "/api/runs/dead-letter") == "admin"
+    assert requirement_for("GET", "/api/schedules") == "admin"
+    cancel = requirement_for("POST", "/api/runs/{run_id}/cancel")
+    assert isinstance(cancel, tuple) and "runs:create:scripted" in cancel
+    assert match_route("GET", "/api/runs/dead-letter")[0] == "/api/runs/dead-letter"
+    assert match_route("POST", "/api/runs/r_1/cancel")[0] == "/api/runs/{run_id}/cancel"
