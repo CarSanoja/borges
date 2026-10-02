@@ -1,9 +1,9 @@
 {
-  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "model": "scripted",
   "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    ctx[\\\"bot_filter\\\"] = \\\"min_2s\\\"\\n    return df[df[\\\"session_seconds\\\"] >= 2.0].reset_index(drop=True)\\n\"}",
   "parsed": {
     "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    ctx[\"bot_filter\"] = \"min_2s\"\n    return df[df[\"session_seconds\"] >= 2.0].reset_index(drop=True)\n"
   },
-  "tokens_in": 1100,
-  "tokens_out": 41
+  "tokens_in": 0,
+  "tokens_out": 0
 }

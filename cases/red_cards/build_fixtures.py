@@ -13,7 +13,7 @@ from validation import fixture_path
 from borges.analysis.models import DecisionRule
 from borges.analysis.schemas import CoderOutput, NarratorOutput
 from borges.cases.models import CaseSpec, ReferenceEstimate
-from borges.llm.client import DEFAULT_ROLE_MODELS, Role
+from borges.llm.scripted_provider import SCRIPTED_MODEL
 from borges.runs.pipeline import MAX_COMBINATIONS_PER_LEVEL
 
 RULE = DecisionRule(
@@ -27,13 +27,13 @@ RULE = DecisionRule(
 REFERENCE_LABEL = "29 human research teams (Silberzahn et al., 2018)"
 
 
-def write_fixture(key: str, role: Role, parsed: Any, tokens_in: int, tokens_out: int) -> None:
+def write_fixture(key: str, parsed: Any) -> None:
     payload = {
-        "model": DEFAULT_ROLE_MODELS[role].id,
+        "model": SCRIPTED_MODEL,
         "text": json.dumps(parsed),
         "parsed": parsed,
-        "tokens_in": tokens_in,
-        "tokens_out": tokens_out,
+        "tokens_in": 0,
+        "tokens_out": 0,
     }
     path = fixture_path(key)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -115,15 +115,15 @@ def main() -> None:
     frame = pd.read_parquet(CASE_DIR / "data.parquet")
     info = summarize(frame, codes, RULE)
 
-    write_fixture("planner", Role.PLANNER, validated_planner().model_dump(), 2380, 1410)
+    write_fixture("planner", validated_planner().model_dump())
     for key, code in codes.items():
         parsed = CoderOutput(code=code).model_dump()
-        write_fixture(f"coder:{key}", Role.CODER, parsed, 910 + len(code) // 12, len(code) // 3)
-    write_fixture("adversary", Role.ADVERSARY, validated_adversary().model_dump(), 3120, 640)
+        write_fixture(f"coder:{key}", parsed)
+    write_fixture("adversary", validated_adversary().model_dump())
     for key in JUDGE:
-        write_fixture(f"judge:{key}", Role.JUDGE, validated_judge(key).model_dump(), 1480, 230)
+        write_fixture(f"judge:{key}", validated_judge(key).model_dump())
     narrator, story = narrate(info)
-    write_fixture("narrator", Role.NARRATOR, narrator.model_dump(), 4210, 520)
+    write_fixture("narrator", narrator.model_dump())
 
     spec = CaseSpec(
         id="red_cards",

@@ -25,11 +25,12 @@ async def test_replays_parsed_fixture(tmp_path: Path) -> None:
     response = await llm.complete(Role.CODER, [], key="coder:s1.o1", schema=Answer)
     assert response.parsed == {"value": 2, "label": "x"}
     assert (response.usage.model, response.usage.tokens_in, response.usage.cost_usd) == (
-        "fx",
-        7,
+        "scripted",
+        0,
         0.0,
     )
-    assert llm.totals.calls == 1 and llm.totals.tokens_out == 3
+    assert llm.totals.calls == 1 and llm.totals.tokens_in == 0 and llm.totals.tokens_out == 0
+    assert llm.totals.by_model == {"scripted": 0.0}
 
 
 async def test_parses_text_when_parsed_missing(tmp_path: Path) -> None:

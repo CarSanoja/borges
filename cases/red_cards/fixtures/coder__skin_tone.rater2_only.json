@@ -1,9 +1,9 @@
 {
-  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "model": "scripted",
   "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    out[\\\"skin_tone\\\"] = out[\\\"rater2\\\"]\\n    return out\\n\"}",
   "parsed": {
     "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    out[\"skin_tone\"] = out[\"rater2\"]\n    return out\n"
   },
-  "tokens_in": 919,
-  "tokens_out": 38
+  "tokens_in": 0,
+  "tokens_out": 0
 }

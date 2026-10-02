@@ -49,13 +49,18 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
             )
         lines.extend(f"Caveat: {caveat}" for caveat in report.caveats)
     usage = snapshot.usage
+    scripted = snapshot.llm == "scripted"
+    calls = f"{usage.llm_calls} scripted" if scripted else str(usage.llm_calls)
     lines.append(
         f"Universes: {usage.universes}, checkpoints: {usage.checkpoints}, "
-        f"LLM calls: {usage.llm_calls} ({usage.cached_calls} cached)"
+        f"LLM calls: {calls} ({usage.cached_calls} cached)"
     )
-    lines.append(
-        f"Tokens: {usage.tokens_in} in / {usage.tokens_out} out, cost: ${usage.cost_usd:.4f}"
-    )
+    if scripted:
+        lines.append("Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)")
+    else:
+        lines.append(
+            f"Tokens: {usage.tokens_in} in / {usage.tokens_out} out, cost: ${usage.cost_usd:.4f}"
+        )
     if snapshot.error:
         lines.append(f"Error: {snapshot.error}")
     return lines

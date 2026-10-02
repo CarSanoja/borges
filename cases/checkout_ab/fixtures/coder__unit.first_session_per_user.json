@@ -1,9 +1,9 @@
 {
-  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "model": "scripted",
   "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    ctx[\\\"unit\\\"] = \\\"first_session_per_user\\\"\\n    ordered = df.sort_values([\\\"day\\\", \\\"session_id\\\"], kind=\\\"mergesort\\\")\\n    first = ordered.drop_duplicates(subset=\\\"user_id\\\", keep=\\\"first\\\")\\n    return first.sort_values(\\\"session_id\\\").reset_index(drop=True)\\n\"}",
   "parsed": {
     "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    ctx[\"unit\"] = \"first_session_per_user\"\n    ordered = df.sort_values([\"day\", \"session_id\"], kind=\"mergesort\")\n    first = ordered.drop_duplicates(subset=\"user_id\", keep=\"first\")\n    return first.sort_values(\"session_id\").reset_index(drop=True)\n"
   },
-  "tokens_in": 1100,
-  "tokens_out": 81
+  "tokens_in": 0,
+  "tokens_out": 0
 }

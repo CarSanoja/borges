@@ -17,7 +17,6 @@ from borges.analysis.schemas import (
     PlannerOutput,
 )
 from borges.cases.models import CaseSpec
-from borges.llm.client import DEFAULT_ROLE_MODELS, Role
 
 CASE_DIR = Path(__file__).resolve().parents[2] / "cases" / "red_cards"
 sys.path.insert(0, str(CASE_DIR))
@@ -104,7 +103,7 @@ def test_every_fixture_validates_against_its_schema():
         payload = json.loads(path.read_text())
         assert set(payload) == {"model", "text", "parsed", "tokens_in", "tokens_out"}
         assert json.loads(payload["text"]) == payload["parsed"]
-        assert payload["tokens_in"] > 0 and payload["tokens_out"] > 0
+        assert payload["tokens_in"] == 0 and payload["tokens_out"] == 0
         name = path.stem
         if name.startswith("coder__"):
             CoderOutput.model_validate(payload["parsed"])
@@ -114,19 +113,11 @@ def test_every_fixture_validates_against_its_schema():
             FIXTURE_SCHEMAS[name].model_validate(payload["parsed"])
 
 
-def test_fixtures_use_the_role_models():
-    expected = {
-        "planner": Role.PLANNER,
-        "adversary": Role.ADVERSARY,
-        "narrator": Role.NARRATOR,
-    }
-    for name, role in expected.items():
-        payload = json.loads(fixture_path(name).read_text())
-        assert payload["model"] == DEFAULT_ROLE_MODELS[role].id
-    for path in (CASE_DIR / "fixtures").glob("coder__*.json"):
-        assert json.loads(path.read_text())["model"] == DEFAULT_ROLE_MODELS[Role.CODER].id
-    for path in (CASE_DIR / "fixtures").glob("judge__*.json"):
-        assert json.loads(path.read_text())["model"] == DEFAULT_ROLE_MODELS[Role.JUDGE].id
+def test_fixtures_are_labelled_scripted():
+    for path in (CASE_DIR / "fixtures").glob("*.json"):
+        payload = json.loads(path.read_text())
+        assert payload["model"] == "scripted"
+        assert "nemotron" not in path.read_text().lower().split('"text"')[0]
 
 
 def test_plan_has_a_coder_fixture_for_every_option(codes):

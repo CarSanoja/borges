@@ -16,7 +16,6 @@ from borges.analysis.schemas import (
     PlannerOutput,
 )
 from borges.cases.models import CaseSpec
-from borges.llm.client import DEFAULT_ROLE_MODELS, Role
 
 CASE_DIR = Path(__file__).resolve().parents[2] / "cases" / "checkout_ab"
 FIXTURES = CASE_DIR / "fixtures"
@@ -186,23 +185,14 @@ def test_adversary_and_judges() -> None:
 
 
 def test_fixture_envelopes() -> None:
-    expected_models = {
-        "planner": Role.PLANNER,
-        "adversary": Role.ADVERSARY,
-        "narrator": Role.NARRATOR,
-    }
     files = sorted(FIXTURES.glob("*.json"))
     assert len(files) == 17
     for path in files:
         record = json.loads(path.read_text())
         assert set(record) == {"model", "text", "parsed", "tokens_in", "tokens_out"}
         assert json.loads(record["text"]) == record["parsed"]
-        assert record["tokens_in"] > 0 and record["tokens_out"] > 0
-        stem = path.stem
-        role = expected_models.get(stem) or (
-            Role.CODER if stem.startswith("coder__") else Role.JUDGE
-        )
-        assert record["model"] == DEFAULT_ROLE_MODELS[role].id
+        assert record["tokens_in"] == 0 and record["tokens_out"] == 0
+        assert record["model"] == "scripted"
 
 
 def test_narrator_numbers_match_validation(

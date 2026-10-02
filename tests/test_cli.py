@@ -94,6 +94,15 @@ def test_run_prints_summary(captured) -> None:
     assert captured[0][0].case_id == "checkout_ab"
 
 
+def test_scripted_run_never_shows_token_counts(captured) -> None:
+    snapshot = _completed().model_copy(update={"llm": "scripted"})
+    captured.install(snapshot)
+    result = runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--llm", "scripted"])
+    assert "LLM calls: 3 scripted" in result.output
+    assert "Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay" in result.output
+    assert "10 in" not in result.output
+
+
 def test_run_json_output(captured) -> None:
     captured.install(_completed())
     result = runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--json"])

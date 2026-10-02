@@ -1,9 +1,9 @@
 {
-  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "model": "scripted",
   "text": "{\"code\": \"import pandas as pd\\nimport statsmodels.formula.api as smf\\n\\n\\ndef estimate(df, ctx):\\n    data = df.assign(treatment=(df[\\\"variant\\\"] == \\\"treatment\\\").astype(int))\\n    fit = smf.logit(\\\"converted ~ treatment + C(platform)\\\", data=data).fit(disp=False)\\n    margins = fit.get_margeff(at=\\\"overall\\\", method=\\\"dydx\\\", dummy=True).summary_frame()\\n    row = margins.loc[\\\"treatment\\\"]\\n    return {\\n        \\\"estimate\\\": 100 * float(row[\\\"dy/dx\\\"]),\\n        \\\"ci_low\\\": 100 * float(row[\\\"Conf. Int. Low\\\"]),\\n        \\\"ci_high\\\": 100 * float(row[\\\"Cont. Int. Hi.\\\"]),\\n        \\\"p_value\\\": float(row[\\\"Pr(>|z|)\\\"]),\\n        \\\"n\\\": int(fit.nobs),\\n        \\\"extra\\\": {\\\"log_odds\\\": float(fit.params[\\\"treatment\\\"])},\\n    }\\n\"}",
   "parsed": {
     "code": "import pandas as pd\nimport statsmodels.formula.api as smf\n\n\ndef estimate(df, ctx):\n    data = df.assign(treatment=(df[\"variant\"] == \"treatment\").astype(int))\n    fit = smf.logit(\"converted ~ treatment + C(platform)\", data=data).fit(disp=False)\n    margins = fit.get_margeff(at=\"overall\", method=\"dydx\", dummy=True).summary_frame()\n    row = margins.loc[\"treatment\"]\n    return {\n        \"estimate\": 100 * float(row[\"dy/dx\"]),\n        \"ci_low\": 100 * float(row[\"Conf. Int. Low\"]),\n        \"ci_high\": 100 * float(row[\"Cont. Int. Hi.\"]),\n        \"p_value\": float(row[\"Pr(>|z|)\"]),\n        \"n\": int(fit.nobs),\n        \"extra\": {\"log_odds\": float(fit.params[\"treatment\"])},\n    }\n"
   },
-  "tokens_in": 1100,
-  "tokens_out": 185
+  "tokens_in": 0,
+  "tokens_out": 0
 }

@@ -1,9 +1,9 @@
 {
-  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "model": "scripted",
   "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    out[\\\"skin_tone\\\"] = out[[\\\"rater1\\\", \\\"rater2\\\"]].mean(axis=1, skipna=False)\\n    return out\\n\"}",
   "parsed": {
     "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    out[\"skin_tone\"] = out[[\"rater1\", \"rater2\"]].mean(axis=1, skipna=False)\n    return out\n"
   },
-  "tokens_in": 922,
-  "tokens_out": 51
+  "tokens_in": 0,
+  "tokens_out": 0
 }

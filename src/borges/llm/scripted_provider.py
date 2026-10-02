@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from borges.llm.client import LLMError, LLMResponse, Role, Usage, UsageTotals
 from borges.llm.json_output import parse_model
 
+SCRIPTED_MODEL = "scripted"
 _UNSAFE = re.compile(r"[^A-Za-z0-9_.-]|\.{2,}")
 
 
@@ -65,9 +66,9 @@ class ScriptedLLM:
         if self.latency_s > 0:
             await asyncio.sleep(self.latency_s)
         usage = Usage(
-            model=str(record.get("model", "scripted")),
-            tokens_in=int(record.get("tokens_in", 0)),
-            tokens_out=int(record.get("tokens_out", 0)),
+            model=SCRIPTED_MODEL,
+            tokens_in=0,
+            tokens_out=0,
             cost_usd=0.0,
         )
         self.totals.add(usage)

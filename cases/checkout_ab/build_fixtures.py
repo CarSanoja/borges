@@ -15,7 +15,7 @@ from borges.analysis.schemas import (
     NarratorOutput,
 )
 from borges.cases.models import CaseSpec
-from borges.llm.client import DEFAULT_ROLE_MODELS, Role
+from borges.llm.scripted_provider import SCRIPTED_MODEL
 
 HERE = Path(__file__).parent
 FIXTURES = HERE / "fixtures"
@@ -65,15 +65,15 @@ def run_universe(frame: pd.DataFrame, choices: dict[str, str]) -> AnalysisResult
     raise RuntimeError("plan has no model step")
 
 
-def write_fixture(key: str, role: Role, parsed: object, tokens_in: int) -> None:
+def write_fixture(key: str, parsed: object) -> None:
     payload = parsed.model_dump(mode="json", exclude_none=False)
     text = json.dumps(payload, ensure_ascii=False)
     record = {
-        "model": DEFAULT_ROLE_MODELS[role].id,
+        "model": SCRIPTED_MODEL,
         "text": text,
         "parsed": payload,
-        "tokens_in": tokens_in,
-        "tokens_out": max(40, len(text) // 4),
+        "tokens_in": 0,
+        "tokens_out": 0,
     }
     path = FIXTURES / (key.replace(":", "__") + ".json")
     path.write_text(json.dumps(record, indent=2, ensure_ascii=False) + "\n")
@@ -128,12 +128,12 @@ def main() -> None:
     frame = pd.read_parquet(HERE / "data.parquet")
     (HERE / "case.json").write_text(CASE.model_dump_json(indent=2) + "\n")
 
-    write_fixture("planner", Role.PLANNER, planner_output(), 1850)
+    write_fixture("planner", planner_output())
     for key, code in CODES.items():
-        write_fixture(f"coder:{key}", Role.CODER, CoderOutput(code=code), 1100)
+        write_fixture(f"coder:{key}", CoderOutput(code=code))
 
     proposals = adversary_proposals()
-    write_fixture("adversary", Role.ADVERSARY, AdversaryOutput(proposals=proposals), 2600)
+    write_fixture("adversary", AdversaryOutput(proposals=proposals))
     verdicts = {
         "adv_ols_cluster_user": JudgeOutput(
             defensibility=0.74,
@@ -156,8 +156,8 @@ def main() -> None:
     }
     for proposal in proposals:
         key = f"{proposal.step_id}.{proposal.id}"
-        write_fixture(f"judge:{key}", Role.JUDGE, verdicts[proposal.id], 900)
-    write_fixture("narrator", Role.NARRATOR, narrator_output(frame), 3200)
+        write_fixture(f"judge:{key}", verdicts[proposal.id])
+    write_fixture("narrator", narrator_output(frame))
 
 
 if __name__ == "__main__":

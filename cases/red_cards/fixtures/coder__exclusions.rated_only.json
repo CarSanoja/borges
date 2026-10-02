@@ -1,9 +1,9 @@
 {
-  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+  "model": "scripted",
   "text": "{\"code\": \"import pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    keep = df[\\\"rater1\\\"].notna() & df[\\\"rater2\\\"].notna() & df[\\\"skin_tone\\\"].notna()\\n    return df[keep].copy()\\n\"}",
   "parsed": {
     "code": "import pandas as pd\n\n\ndef apply(df, ctx):\n    keep = df[\"rater1\"].notna() & df[\"rater2\"].notna() & df[\"skin_tone\"].notna()\n    return df[keep].copy()\n"
   },
-  "tokens_in": 922,
-  "tokens_out": 50
+  "tokens_in": 0,
+  "tokens_out": 0
 }

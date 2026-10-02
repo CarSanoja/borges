@@ -132,8 +132,10 @@ async def test_record_then_replay_round_trip(tmp_path: Path) -> None:
         Role.CODER, MESSAGES, key="coder:s1.o2:repair", schema=Answer
     )
     assert replayed.parsed == recorded.parsed
-    assert replayed.usage.model == recorded.usage.model
-    assert (replayed.usage.tokens_in, replayed.usage.tokens_out) == (50, 9)
+    assert recorded.usage.model != "scripted"
+    assert (recorded.usage.tokens_in, recorded.usage.tokens_out) == (50, 9)
+    assert replayed.usage.model == "scripted"
+    assert (replayed.usage.tokens_in, replayed.usage.tokens_out) == (0, 0)
     assert replayed.usage.cost_usd == 0.0
 
 

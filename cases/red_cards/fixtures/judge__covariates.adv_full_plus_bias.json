@@ -1,5 +1,5 @@
 {
-  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "model": "scripted",
   "text": "{\"defensibility\": 0.72, \"accepted\": true, \"reason\": \"Adjusting for referee-country bias scores is a standard confounder control, keeps the population and the estimand unchanged, and was used by published analysts.\", \"source\": \"Silberzahn et al. (2018), Advances in Methods and Practices in Psychological Science\"}",
   "parsed": {
     "defensibility": 0.72,
@@ -7,6 +7,6 @@
     "reason": "Adjusting for referee-country bias scores is a standard confounder control, keeps the population and the estimand unchanged, and was used by published analysts.",
     "source": "Silberzahn et al. (2018), Advances in Methods and Practices in Psychological Science"
   },
-  "tokens_in": 1480,
-  "tokens_out": 230
+  "tokens_in": 0,
+  "tokens_out": 0
 }
