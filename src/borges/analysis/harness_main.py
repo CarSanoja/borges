@@ -80,7 +80,7 @@ def __borges_main():
         _emit("BORGES_TRACE ", trace)
     except BaseException as exc:
         lines = [line for line in _tb.format_exc().strip().splitlines() if line.strip()]
-        roots = {_os.getcwd(), _os.path.realpath(_os.getcwd())}
+        roots = {_os.getcwd(), _os.path.realpath(_os.getcwd()), _sys.prefix, _sys.base_prefix}
 
         def _clean(text):
             for root in sorted(roots, key=len, reverse=True):

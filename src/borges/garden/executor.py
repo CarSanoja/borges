@@ -9,6 +9,7 @@ from typing import Any
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
+from borges.analysis.path_scrub import scrub_paths
 from borges.garden.models import Universe, UniverseKind
 from borges.garden.prefix_cache import Prefix, PrefixCache, PrefixNode
 from borges.runs.events import CheckpointCreatedData
@@ -106,8 +107,8 @@ class GardenExecutor:
             parsed = harness.parse_error(run.stdout)
             detail = (
                 (parsed[:ERROR_HEAD_CHARS] if parsed else None)
-                or _tail(run.stderr)
-                or _tail(run.stdout)
+                or scrub_paths(_tail(run.stderr))
+                or scrub_paths(_tail(run.stdout))
                 or f"exit code {run.exit_code}"
             )
             deterministic = parsed is not None

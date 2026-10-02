@@ -5,6 +5,7 @@ import re
 
 from borges.analysis.harness_main import MAIN_TEMPLATE
 from borges.analysis.models import AnalysisResult, Option, Step, StepTrace
+from borges.analysis.path_scrub import scrub_paths
 
 DATA_FILE = "data.parquet"
 STATE_DIR = "state"
@@ -67,4 +68,4 @@ def parse_error(stdout: str) -> str | None:
     error = errors[-1]
     head = f"{error.get('type', 'Error')}: {error.get('message', '')}"
     where = error.get("where")
-    return f"{head}\n{where}" if where else head
+    return scrub_paths(f"{head}\n{where}" if where else head)

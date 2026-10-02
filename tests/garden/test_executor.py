@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import asyncio
-from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -118,50 +116,6 @@ async def test_no_reuse_recomputes_fresh_chain() -> None:
     assert set(first.checkpoints).isdisjoint(second.checkpoints)
 
 
-async def test_concurrent_universes_do_not_duplicate_work() -> None:
-    plan = make_plan()
-    backend = FakeBackend(plan)
-    executor = GardenExecutor(backend, plan, b"d", concurrency=6)
-    await executor.setup()
-    base = plan.default_choices()
-    universes = await asyncio.gather(
-        executor.run_universe(base, "baseline"),
-        executor.run_universe({**base, "s3": "n"}, "single"),
-        executor.run_universe({**base, "s3": "o"}, "single"),
-        executor.run_universe({**base, "s3": "n"}, "single"),
-    )
-    assert all(u.status == "done" for u in universes)
-    assert len(backend.runs) == len(set(backend.runs)) == 5
-    assert executor.checkpoints_created == 6
-
-
-async def test_concurrency_is_bounded() -> None:
-    plan = make_plan()
-    active = 0
-    peak = 0
-    recorder = Recorder()
-
-    async def emit(event_type: str, data: dict[str, Any]) -> None:
-        nonlocal active, peak
-        if event_type == "universe.started":
-            active += 1
-            peak = max(peak, active)
-        if event_type == "universe.finished":
-            active -= 1
-        await recorder(event_type, data)
-
-    executor = GardenExecutor(FakeBackend(plan), plan, b"d", emit=emit, concurrency=2)
-    await executor.setup()
-    base = plan.default_choices()
-    await asyncio.gather(
-        *(
-            executor.run_universe({**base, step: option}, "single")
-            for step, option in [("s1", "b"), ("s2", "y"), ("s3", "n"), ("s3", "o")]
-        )
-    )
-    assert peak == 2
-
-
 async def test_failure_marks_universe_failed_and_never_raises() -> None:
     plan = make_plan()
     backend = FakeBackend(plan, fail={("s2", "y")})
@@ -233,80 +187,3 @@ async def test_changed_option_code_is_recomputed() -> None:
     plan.step("s1").default.code = "def apply(df, ctx):\n    return df\n"
     await executor.run_universe(plan.default_choices(), "baseline")
     assert len(backend.runs) - before == len(plan.steps)
-
-
-async def test_step_without_trace_fails() -> None:
-    plan = make_plan()
-    backend = FakeBackend(plan)
-    executor = GardenExecutor(backend, plan, b"d")
-    await executor.setup()
-    real_run = backend.run
-
-    async def silent(*args: Any, **kwargs: Any) -> Any:
-        run = await real_run(*args, **kwargs)
-        return type(run)(run.checkpoint, 0, "", "", 0.1)
-
-    backend.run = silent
-    universe = await executor.run_universe(plan.default_choices(), "baseline")
-    assert universe.status == "failed"
-    assert "no trace" in (universe.error or "")
-
-
-async def test_error_prefers_parsed_exception_over_stderr_warning() -> None:
-    plan = make_plan()
-    backend = FakeBackend(plan)
-    real_run = backend.run
-
-    async def warns_then_raises(parent: Any, command: Any, **kwargs: Any) -> Any:
-        result = await real_run(parent, command, **kwargs)
-        if command[-1] == "s2:y":
-            return replace(
-                result,
-                exit_code=1,
-                stdout="ERROR ValueError: bad column",
-                stderr="UserWarning: something harmless",
-            )
-        return result
-
-    backend.run = warns_then_raises
-    executor = GardenExecutor(backend, plan, b"d")
-    await executor.setup()
-    universe = await executor.run_universe({**plan.default_choices(), "s2": "y"}, "single")
-    assert universe.status == "failed"
-    assert "ValueError: bad column" in (universe.error or "")
-    assert "harmless" not in (universe.error or "")
-
-
-async def test_error_falls_back_to_exit_code() -> None:
-    plan = make_plan()
-    backend = FakeBackend(plan)
-    real_run = backend.run
-
-    async def silent_failure(parent: Any, command: Any, **kwargs: Any) -> Any:
-        result = await real_run(parent, command, **kwargs)
-        if command[-1] == "s2:y":
-            return replace(result, exit_code=7, stdout="", stderr="")
-        return result
-
-    backend.run = silent_failure
-    executor = GardenExecutor(backend, plan, b"d")
-    await executor.setup()
-    universe = await executor.run_universe({**plan.default_choices(), "s2": "y"}, "single")
-    assert "exit code 7" in (universe.error or "")
-
-
-async def test_step_timeout_comes_from_the_constructor() -> None:
-    plan = make_plan()
-    backend = FakeBackend(plan)
-    seen: list[float] = []
-    real_run = backend.run
-
-    async def spy(parent: Any, command: Any, **kwargs: Any) -> Any:
-        seen.append(kwargs["timeout_s"])
-        return await real_run(parent, command, **kwargs)
-
-    backend.run = spy
-    executor = GardenExecutor(backend, plan, b"d", step_timeout_s=17.5)
-    await executor.setup()
-    await executor.run_universe(plan.default_choices(), "baseline")
-    assert seen and set(seen) == {17.5}

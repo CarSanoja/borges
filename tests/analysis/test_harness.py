@@ -220,3 +220,14 @@ def test_traceback_and_message_carry_no_working_directory(workdir: Path) -> None
     assert message is not None and "ValueError: cannot read x" in message
     assert str(workdir) not in message
     assert str(workdir.resolve()) not in message
+
+
+def test_error_from_inside_a_library_carries_no_host_paths(workdir: Path) -> None:
+    code = "def apply(df, ctx):\n    return df.merge(df, on='nope')\n"
+    step, option = make_step("s1", "filter", code)
+    proc = run(workdir, step, option)
+    message = parse_error(proc.stdout)
+    assert message is not None and "KeyError" in message
+    for marker in ("/Users/", "/home/", ".venv", str(Path(sys.prefix))):
+        assert marker not in message
+    assert "site-packages/pandas" in message
