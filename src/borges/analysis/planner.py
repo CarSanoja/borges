@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from borges.analysis.models import (
     AnalysisPlan,
     DatasetProfile,
@@ -11,6 +13,25 @@ from borges.analysis.planner_validation import plan_shortfalls
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.schemas import PlannedStep, PlannerOutput
 from borges.llm.client import LLMClient, LLMError, Role
+
+
+def clean_id(raw: str, fallback: str) -> str:
+    cleaned = re.sub(r"[^a-z0-9_]+", "_", raw.strip().lower()).strip("_")
+    return cleaned or fallback
+
+
+def normalise_ids(out: PlannerOutput) -> PlannerOutput:
+    step_taken: set[str] = set()
+    steps: list[PlannedStep] = []
+    for si, step in enumerate(out.steps, 1):
+        opt_taken: set[str] = set()
+        options = [
+            o.model_copy(update={"id": _unique(clean_id(o.id, f"option_{oi}"), opt_taken)})
+            for oi, o in enumerate(step.options, 1)
+        ]
+        step_id = _unique(clean_id(step.id, f"step_{si}"), step_taken)
+        steps.append(step.model_copy(update={"id": step_id, "options": options}))
+    return out.model_copy(update={"steps": steps})
 
 
 def _unique(candidate: str, taken: set[str]) -> str:
@@ -63,7 +84,7 @@ async def _ask(llm: LLMClient, messages: list[dict[str, str]], key: str) -> Plan
     response = await llm.complete(
         Role.PLANNER, messages, key=key, schema=PlannerOutput, max_tokens=4096
     )
-    return PlannerOutput.model_validate(response.parsed)
+    return normalise_ids(PlannerOutput.model_validate(response.parsed))
 
 
 async def _broaden(

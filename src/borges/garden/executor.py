@@ -11,6 +11,7 @@ from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
 from borges.analysis.path_scrub import scrub_paths
 from borges.garden.models import Universe, UniverseKind
+from borges.garden.plausibility import implausible_message, is_implausible
 from borges.garden.prefix_cache import Prefix, PrefixCache, PrefixNode
 from borges.runs.events import CheckpointCreatedData
 from borges.sandbox.backend import BranchBackend, Checkpoint
@@ -50,6 +51,7 @@ class GardenExecutor:
         self.reuse_prefixes = reuse_prefixes
         self.step_timeout_s = step_timeout_s
         self.baseline_verdict: str | None = None
+        self.baseline_result: AnalysisResult | None = None
         self.root: Checkpoint | None = None
         self._cache = PrefixCache()
         self._semaphore = asyncio.Semaphore(concurrency)
@@ -175,6 +177,14 @@ class GardenExecutor:
             except Exception as exc:
                 checkpoints, traces, result, error = [], [], None, f"{type(exc).__name__}: {exc}"
             universe = universe.model_copy(update={"checkpoints": checkpoints, "traces": traces})
+            if (
+                result is not None
+                and kind != "baseline"
+                and self.baseline_result is not None
+                and is_implausible(self.baseline_result, result)
+            ):
+                error = implausible_message(self.baseline_result, result)
+                result = None
             if result is None:
                 universe.status = "failed"
                 universe.error = error
@@ -182,6 +192,7 @@ class GardenExecutor:
                 verdict = self.plan.decision_rule.label(result)
                 if kind == "baseline":
                     self.baseline_verdict = verdict
+                    self.baseline_result = result
                 universe.status = "done"
                 universe.result = result
                 universe.verdict = verdict

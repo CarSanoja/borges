@@ -15,6 +15,12 @@ def _step_text(step: PlannedStep) -> str:
 
 def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[str]:
     problems: list[str] = []
+    if not any(s.kind == "model" for s in steps):
+        problems.append(
+            "No step has kind 'model'. The last step must be the model step "
+            '(kind "model") that estimates the effect and returns estimate, ci_low, '
+            "ci_high and p_value."
+        )
     single = [s.id for s in steps if len(s.options) < 2]
     if single:
         problems.append(

@@ -135,3 +135,58 @@ def test_scripted_plans_meet_the_rule() -> None:
         data = json.loads(Path(f"cases/{case}/fixtures/planner.json").read_text())
         out = PlannerOutput.model_validate(data["parsed"])
         assert plan_shortfalls(out.steps, make_profile()) == [], case
+
+
+def no_model() -> PlannerOutput:
+    return PlannerOutput(
+        estimand="E",
+        steps=[
+            pstep("trim", "filter", [popt("a", True), popt("b")]),
+            pstep("scale", "transform", [popt("a", True), popt("b")]),
+            pstep("fit", "transform", [popt("a", True), popt("b")]),
+        ],
+    )
+
+
+async def test_missing_model_step_is_reasked_once_with_feedback() -> None:
+    class Seq(FakeLLM):
+        async def complete(self, role, messages, **kw):  # type: ignore[no-untyped-def]
+            self.responses["planner:retry"] = broad()
+            return await super().complete(role, messages, **kw)
+
+    llm = Seq({"planner": no_model()})
+    plan = await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))
+    assert llm.keys() == ["planner", "planner:retry"]
+    assert "kind 'model'" in llm.calls[1].messages[-1]["content"]
+    assert plan.steps[-1].kind == "model"
+
+
+async def test_missing_model_step_after_reask_still_fails() -> None:
+    import pytest
+
+    from borges.llm.client import LLMError
+
+    llm = FakeLLM({"planner": no_model(), "planner:retry": no_model()})
+    with pytest.raises(LLMError, match="no step of kind 'model'"):
+        await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))
+
+
+async def test_ids_from_the_model_are_normalised() -> None:
+    out = PlannerOutput(
+        estimand="E",
+        steps=[
+            pstep(
+                " Trim Rows", "filter", [popt(" ols_demographics", True), popt("OLS-demographics")]
+            ),
+            pstep("scale", "transform", [popt("a", True), popt("b")]),
+            pstep("m", "model", [popt(" ols ", True), popt("Welch T")]),
+            pstep("trim_rows", "filter", [popt("x", True), popt("y")]),
+        ],
+    )
+    plan = await plan_analysis(
+        FakeLLM({"planner": out}), make_profile(), "Q?", DecisionRule(metric="m")
+    )
+    ids = [s.id for s in plan.steps]
+    assert ids == ["trim_rows", "scale", "trim_rows_2", "m"]
+    assert [o.id for o in plan.steps[0].options] == ["ols_demographics", "ols_demographics_2"]
+    assert [o.id for o in plan.steps[-1].options] == ["ols", "welch_t"]

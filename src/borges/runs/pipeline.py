@@ -17,6 +17,7 @@ from borges.config import Settings
 from borges.garden.executor import GardenExecutor
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary, Universe
+from borges.garden.plausibility import IMPLAUSIBLE_REASON
 from borges.garden.search import combination_flip_choices, minimal_flip, single_flip_choices
 from borges.garden.verify import verify_flip
 from borges.llm.client import BudgetExceeded, LLMClient, UsageTotals
@@ -259,6 +260,13 @@ class Pipeline:
             self.caveats.append(
                 f"{self.report.n_failed} universes could not run and are left out of the "
                 "robustness figure."
+            )
+        implausible = sum(1 for line in self.report.failed if line.startswith(IMPLAUSIBLE_REASON))
+        if implausible:
+            self.caveats.append(
+                f"{implausible} universes produced an implausible estimate (far outside the "
+                "scale of the baseline) and were excluded as broken implementations, not counted "
+                "as flips."
             )
         self.report.caveats = [*self.caveats, *self.report.caveats]
         await self._narrate(plan, self.report)
