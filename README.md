@@ -115,8 +115,9 @@ conversion lift is positive with p < 0.05"*.
 | Explored | 7 universes, 22 sandbox checkpoints | 30 universes, 58 sandbox checkpoints |
 
 **The checkout data is synthetic and the answer is planted.** `cases/checkout_ab/generate.py`
-sets a true effect of zero and adds internal test accounts (58% conversion, concentrated in the
-treatment arm). The plan is hand-written and finds exactly that flip, so this case shows the
+sets a true effect of -0.2 pp (`TRUE_EFFECT = -0.0020`), adds a +0.4 pp novelty bump to the
+treatment arm on days 0-2 (`NOVELTY_BUMP = 0.004`) and adds internal test accounts (58%
+conversion, assigned to treatment with probability 0.80). The plan is hand-written and finds exactly that flip, so this case shows the
 mechanics, not discovery. The red-cards flip is a p-value crossing: the odds ratio goes from
 1.34 to 1.20 and stays above 1, with p moving from 0.0006 to 0.055. The evidence weakens; the
 effect does not reverse. The search favours flips, so this is the nearest crossing Borges

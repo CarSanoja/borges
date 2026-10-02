@@ -33,7 +33,7 @@ into `frontend/dist`, which FastAPI serves at `/`.
 | `llm` | Role-based model routing, structured JSON output, disk cache, cost accounting, hard spend cap | `client.py`, `nebius_provider.py`, `scripted_provider.py`, `cache.py`, `spend.py`, `json_output.py`, `factory.py` |
 | `runs` | Orchestration, event bus, run store, replay, state folding | `events.py`, `orchestrator.py`, `bus.py`, `store.py`, `replay.py`, `state.py` |
 | `cases` | Curated demo cases (dataset + pinned plan + hand-built scripted model responses) | `registry.py`, plus `cases/<id>/` data folders |
-| `api` | HTTP + SSE + static UI | `app.py`, `routes_*.py`, `schemas.py` |
+| `api` | HTTP + SSE + static UI | `app.py`, `routes_*.py`, `run_policy.py`, `live_rules.py` |
 
 ## 3. The execution model (the core idea)
 
@@ -57,14 +57,16 @@ generated code runs, in the same process and the same code on the local backend 
 ConTree. A denied event raises `PermissionError: runtime policy denied <event>` (patsy wraps
 it as `PatsyError`); the message carries no host path. Tracebacks shift by one line.
 - Blocked (tested): process creation (`subprocess.Popen`, `os.system`, `os.exec*`,
-  `os.spawn*`, `posix_spawn`, `fork`, `pty.spawn`, `_posixsubprocess.fork_exec`); network
+  `os.spawn*` through `os.fork`, `posix_spawn`, `fork`, `forkpty`, `pty.spawn`, and a direct
+  `_posixsubprocess.fork_exec` call, which has no audit event and is stubbed in the prelude
+  with its re-import denied); network
   (`socket` connect, bind, getaddrinfo, sendto, sendmsg, gethostby*, getnameinfo, getservby*;
   `urllib` fails through these); `webbrowser.open`; all `ctypes.*` events and the import of
-  `cffi`, `_cffi_backend`, `_ctypes` from non-library code; write, append, create or truncate
+  `cffi`, `_cffi_backend` and `_posixsubprocess`; write, append, create or truncate
   opens, `remove`, `rename`, `rmdir`, `mkdir`, `symlink`, `link`, `truncate`, `chmod`,
   `chown`, `chroot` and `shutil.rmtree/move/copyfile/copytree` outside the step's working
   directory (`/dev/null` excepted); `os.chdir` out of it, including `..`; registering a later
-  audit hook (silently refused, because CPython swallows the exception). Paths use `realpath`.
+  audit hook (silently refused, because CPython swallows the exception). Paths are resolved by the policy's own symlink walk, not `realpath`.
 - Reads are an allowlist (events `open` in read mode, `os.listdir`, `os.scandir`): the working
   directory, the Python roots (`sys.prefix` family, `sysconfig` paths, `sys.path` directories
   outside the home), system library roots, `/proc/<own pid>/` and a few device and time files.
@@ -78,9 +80,9 @@ it as `PatsyError`); the message carries no host path. Tracebacks shift by one l
   signals; a primitive that CPython does not audit. `import ctypes` succeeds (pre-imported)
   but every `ctypes.*` event is denied. It is defense in depth under the guard, not VM or
   container isolation, so the local backend is not an isolation boundary.
-- Cost: one statsmodels OLS step through `LocalBackend`, median of 10 runs, 0.886 s and 0.899 s
-  without the policy, 0.973 s and 0.984 s with it (about +0.09 s, +10%).
-- Evidence: `tests/sandbox/test_runtime_policy*.py` (34 tests, three real exploits through
+- Cost: one statsmodels OLS step through `LocalBackend`, median of 10 runs (2 Oct 2026, macOS):
+  0.925 s without the policy, 1.015 s with it (about +0.09 s, +10%).
+- Evidence: `tests/sandbox/test_runtime_policy*.py` (127 collected test cases, three real exploits through
   the harness and `LocalBackend.run` without the guard); the four curated cases reproduce the
   recorded universes, checkpoints and flips under the policy. Proven on the local backend
   only: under ConTree the same prelude is embedded, but that path has never run live.

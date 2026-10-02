@@ -22,7 +22,13 @@ def _borges_install_policy(home_override, audit_path):
     import os
     import resource
     import signal
+    import subprocess
     import sys
+
+    try:
+        import _posixsubprocess
+    except ImportError:
+        _posixsubprocess = None
 
     del ctypes
     root_real = _borges_walk(os.getcwd(), True)
@@ -238,7 +244,32 @@ def _borges_install_policy(home_override, audit_path):
         finally:
             depth[0] -= 1
 
-    def refuse(a=None, b=None, c=None, d=None, e=None, f=None, perm=PermissionError):
+    def refuse(
+        a=None,
+        b=None,
+        c=None,
+        d=None,
+        e=None,
+        f=None,
+        g=None,
+        h=None,
+        i=None,
+        j=None,
+        k=None,
+        m=None,
+        n=None,
+        o=None,
+        p=None,
+        q=None,
+        r=None,
+        s=None,
+        t=None,
+        u=None,
+        v=None,
+        w=None,
+        x=None,
+        perm=PermissionError,
+    ):
         raise perm("runtime policy denied a call that would reach the policy")
 
     for module, names in (
@@ -248,6 +279,8 @@ def _borges_install_policy(home_override, audit_path):
         (sys.modules.get("_signal"), ("signal", "setitimer", "alarm", "set_wakeup_fd")),
         (getattr(sys, "monitoring", None), ("use_tool_id", "set_events", "set_local_events")),
         (getattr(sys, "monitoring", None), ("register_callback",)),
+        (_posixsubprocess, ("fork_exec",)),
+        (subprocess, ("_fork_exec",)),
     ):
         for name in names:
             if module is not None and hasattr(module, name):

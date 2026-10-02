@@ -49,7 +49,8 @@ Norms are measured either as each person's own perception or as the country mean
 - Enumerating all 1,536 universes offline (`grid_summary.json`): 162 (10.5%) change the verdict;
   1 by one change, 9 by two, 36 by three, 65 by four, 42 by five and 9 by six. Estimates run
   from -0.002 to 0.049. The search found the single flip because it tries singles first, which
-  biases it toward small flips.
+  biases it toward small flips. The separate re-run in `evidence/grid_vs_search.md` counts 161
+  flipping universes (89.5% agree) instead of 162; the difference is one universe.
 - The 105 teams: interaction beta -0.045 to 0.282, median 0.039; 68 of 105 (65%) have an
   interval above zero. Borges's universes agree with the baseline more often (89%) than the
   teams do (65%) and span a narrower range: the option space is the teams' common choices, not

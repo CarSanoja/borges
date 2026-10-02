@@ -9,11 +9,9 @@ _BORGES_BLOCKED_EVENTS = frozenset(
         "subprocess.Popen",
         "os.system",
         "os.exec",
-        "os.spawn",
         "os.posix_spawn",
         "os.fork",
         "os.forkpty",
-        "os.startfile",
         "pty.spawn",
         "webbrowser.open",
         "socket.connect",
@@ -27,7 +25,6 @@ _BORGES_BLOCKED_EVENTS = frozenset(
         "socket.getservbyname",
         "socket.getservbyport",
         "sys.addaudithook",
-        "_posixsubprocess.fork_exec",
         "gc.get_objects",
         "gc.get_referrers",
         "gc.get_referents",
@@ -40,7 +37,7 @@ _BORGES_BLOCKED_EVENTS = frozenset(
         "resource.prlimit",
     }
 )
-_BORGES_BLOCKED_MODULES = frozenset({"cffi", "_cffi_backend"})
+_BORGES_BLOCKED_MODULES = frozenset({"cffi", "_cffi_backend", "_posixsubprocess"})
 _BORGES_TAMPER_ATTRS = frozenset({"__code__", "__defaults__", "__kwdefaults__", "__closure__"})
 _BORGES_FRAME_ATTRS = frozenset({"tb_frame", "gi_frame", "gi_code", "f_code", "__code__"})
 _BORGES_SECRET_PROC = frozenset({"environ", "mem", "maps", "smaps", "pagemap", "mountinfo"})

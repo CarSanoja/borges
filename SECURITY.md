@@ -48,9 +48,9 @@ file. The hook is now built so that there is nothing to swap:
 
 ## Routes closed and tested
 
-Each row has a regression test. 35 of the 38 new tests fail on the previous policy; the other
-three keep working behaviour (an OLS with warnings, lowering limits) or read the current source
-(the structure test).
+Each row has a regression test. Rule: a route is listed as blocked only if a test attempts it
+and shows the denial. `test_runtime_policy_blocked_events.py` attempts every name in the
+blocked-event list one by one and fails if the list gains a name without an attempt.
 
 | Route | How it is stopped | Test file |
 | --- | --- | --- |
@@ -60,6 +60,7 @@ three keep working behaviour (an OLS with warnings, lowering limits) or read the
 | Replacing `os.lstat` / `os.readlink` to hide a symlink that points outside | own symlink walk with bound builtins | `test_runtime_policy_routes.py` |
 | A path-like whose `__fspath__` runs inside the hook (`shutil.rmtree(obj)`) | non-`str`/`bytes` objects are denied, never converted | `test_runtime_policy_routes.py` |
 | `os.open(<dir outside>)` then `os.open(name, dir_fd=...)` to write elsewhere | opening a directory outside the working directory is denied | `test_runtime_policy_routes.py` |
+| `_posixsubprocess.fork_exec` called directly (CPython raises no audit event for it): the prelude replaces `fork_exec` on `_posixsubprocess` and `subprocess._fork_exec` with a refusal before the hook is installed, and denies the `import` event of `_posixsubprocess` (re-import after `sys.modules.pop`, `importlib.reload`, `ExtensionFileLoader`, `_imp.create_dynamic`) | stub plus denied import event | `test_runtime_policy_fork_exec.py` |
 | `os.kill` (including `os.kill(os.getppid(), 0)`), `os.killpg`, `signal.pthread_kill` | denied audit events | `test_runtime_policy_process.py` |
 | `signal.signal`, `_signal.signal`, `setitimer`, `alarm`, `set_wakeup_fd` (a handler receives the interrupted frame, possibly a hook frame) | replaced by a refusal in `signal` and `_signal` | `test_runtime_policy_process.py` |
 | `sys.settrace`, `sys.setprofile`, trace functions for new threads | denied audit events | `test_runtime_policy_process.py` |
@@ -89,16 +90,21 @@ partial (next section).
 - **Unaudited primitives.** `signal.pthread_sigmask`, `os.nice`, `os.fchmod` and `os.ftruncate`
   on a descriptor opened read-only earlier (their events carry a descriptor, which is allowed),
   and any C extension that does not emit audit events.
+- **Windows-only events.** `os.spawn` and `os.startfile` are audit events on Windows only; they
+  were removed from the blocked list because no test can attempt them on this machine. On
+  Windows the policy is untested.
+- **`resource.prlimit`.** It exists on Linux only; its test is skipped on macOS and was not run
+  in this round, so the denial is claimed for Linux but not shown here.
 - **Anything we did not think of.** The list above is what we found and tested. A new CPython
   release can also add an unaudited primitive.
 
 ## What the runtime policy blocks
 
-- **Process creation** (`subprocess`, `os.system`, `os.exec*`, `os.spawn*`, `posix_spawn`,
-  `fork`, `pty.spawn`); **network** (`socket` connect, bind, getaddrinfo, sendto, sendmsg, name
-  lookups; `urllib` fails through these); `webbrowser.open`; every `ctypes.*` event and the
-  import of `cffi`; process signals, tracing and monitoring hooks and rlimit increases (see the
-  routes table).
+- **Process creation** (`subprocess`, `os.system`, `os.exec*`, `os.spawn*` through `os.fork`,
+  `posix_spawn`, `fork`, `forkpty`, `pty.spawn`, direct `_posixsubprocess.fork_exec`);
+  **network** (`socket` connect, bind, getaddrinfo, sendto, sendmsg, name lookups; `urllib`
+  fails through these); `webbrowser.open`; every `ctypes.*` event and the import of `cffi`;
+  process signals, tracing and monitoring hooks and rlimit increases (see the routes table).
 - **Writes**, creates, truncates, removes, renames, `mkdir`, links, `chmod` and `shutil` copies
   or moves outside the step's working directory (`/dev/null` excepted); `os.chdir` out of it
   (including `..`); registering a later audit hook. Paths are resolved by the policy's own
@@ -158,9 +164,9 @@ code cannot set either.
 - With the read check forced to allow everything, 17 of the read tests fail, so they fail on
   the old behaviour. Tests: `tests/sandbox/test_runtime_policy.py` and
   `tests/sandbox/test_runtime_policy_reads.py`.
-- Overhead: one statsmodels OLS step through `LocalBackend`, median of 10 runs: 0.825 s without
-  the policy and 0.886 s with it (+0.06 s, +7%), measured on the macOS development machine
-  after the hardening.
+- Overhead: one statsmodels OLS step through `LocalBackend`, median of 10 runs (2 Oct 2026,
+  macOS development machine, other jobs running): 0.925 s without the policy and 1.015 s with
+  it (+0.09 s, +10%).
 - Hardening evidence (2 Oct 2026, macOS, Python 3.13.9): the four curated cases through
   `borges run --case X --llm scripted --json` give the same universe sets, statuses, estimates
   and p-values (9 decimals), checkpoint counts, flips and verdicts as

@@ -195,7 +195,7 @@ has been run live on a model.
    candidates by how far they move the estimate. The calibration measured the bias: with no
    real artefact and a false SHIP, a flip was reported 89% of the time, all of them
    significance crossings. For the same reason its robustness share is not a uniform
-   sample: checkout 83% against the grid's 50%, red cards 86% against 90%, marp_norms 93%
+   sample: checkout 86% against the grid's 50%, red cards 87% against 90%, marp_norms 93%
    against 89.5%. Read a reported flip by its kind. Evidence: `evidence/calibration.md`,
    `evidence/grid_vs_search.md`.
 3. **"Most flips are 'p crossed 0.05', which is noise near a threshold."** Agreed, and the
