@@ -96,10 +96,11 @@ async def test_writes_inside_working_directory_still_work(backend: LocalBackend)
     assert "sub/note.txt" in checkpoint_files(backend, result.checkpoint)
 
 
-async def test_reads_outside_working_directory_stay_allowed(backend: LocalBackend) -> None:
-    statement = "ctx['n'] = len(open('/etc/hosts').read()); ctx['l'] = len(os.listdir('/'))"
-    result, error = await run_step(backend, body(statement))
-    assert result.exit_code == 0, (result.stdout, result.stderr, error)
+async def test_reads_outside_the_allowlist_are_denied(backend: LocalBackend) -> None:
+    result, error = await run_step(backend, body("open('/etc/hosts').read()"))
+    assert result.exit_code != 0
+    assert error is not None
+    assert "PermissionError: runtime policy denied open for reading" in error
 
 
 async def test_library_stack_loads_under_policy(backend: LocalBackend) -> None:

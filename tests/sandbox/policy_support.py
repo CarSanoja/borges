@@ -26,11 +26,17 @@ def frame_bytes() -> bytes:
 
 
 async def run_step(
-    backend: LocalBackend, code: str, kind: str = "filter"
+    backend: LocalBackend,
+    code: str,
+    kind: str = "filter",
+    root_files: dict[str, bytes] | None = None,
+    policy_home: str | None = None,
+    policy_audit_path: str | None = None,
 ) -> tuple[ExecResult, str | None]:
     step, option = make_step(code, kind)
-    root = await backend.root({harness.DATA_FILE: frame_bytes()})
-    files = {harness.step_filename(step.id, option.id): harness.render_step(step, option).encode()}
+    root = await backend.root({harness.DATA_FILE: frame_bytes(), **(root_files or {})})
+    rendered = harness.render_step(step, option, policy_home, policy_audit_path)
+    files = {harness.step_filename(step.id, option.id): rendered.encode()}
     result = await backend.run(root, harness.step_command(step.id, option.id), files=files)
     return result, harness.parse_error(result.stdout)
 

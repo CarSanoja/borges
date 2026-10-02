@@ -17,7 +17,14 @@ ERROR_PREFIX = "BORGES_ERROR "
 STEPS_DIR = "steps"
 _UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
 _POLICY_SOURCE = (Path(__file__).parent / "runtime_policy.py").read_text()
-POLICY_PRELUDE = f"exec(compile({_POLICY_SOURCE!r}, '<borges-policy>', 'exec'))\n"
+_POLICY_CALL = "_borges_install_policy(None, None)"
+
+
+def policy_prelude(home: str | None = None, audit_path: str | None = None) -> str:
+    source = _POLICY_SOURCE.replace(
+        _POLICY_CALL, f"_borges_install_policy({home!r}, {audit_path!r})"
+    )
+    return f"exec(compile({source!r}, '<borges-policy>', 'exec'))\n"
 
 
 def _sanitise(identifier: str) -> str:
@@ -32,7 +39,12 @@ def step_command(step_id: str, option_id: str) -> list[str]:
     return ["python", step_filename(step_id, option_id)]
 
 
-def render_step(step: Step, option: Option) -> str:
+def render_step(
+    step: Step,
+    option: Option,
+    policy_home: str | None = None,
+    policy_audit_path: str | None = None,
+) -> str:
     if option.code is None:
         raise ValueError(f"option '{option.id}' of step '{step.id}' has no code")
     main = (
@@ -40,7 +52,7 @@ def render_step(step: Step, option: Option) -> str:
         .replace("__OPTION_ID__", json.dumps(option.id))
         .replace("__KIND__", json.dumps(step.kind))
     )
-    return POLICY_PRELUDE + option.code.rstrip("\n") + "\n" + main
+    return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 
 
 def _json_lines(stdout: str, prefix: str) -> list[dict[str, object]]:
