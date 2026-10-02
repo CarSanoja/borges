@@ -184,20 +184,3 @@ async def test_list_and_get_run(env: Env) -> None:
     assert runs[0]["run_id"] == "r1"
     assert snap["title"] == "hello"
     assert missing.status_code == 404
-
-
-async def test_events_stream_to_run_finished(env: Env) -> None:
-    async with env.client() as client:
-        response = await client.get("/api/runs/r1/events?from_seq=1")
-        missing = await client.get("/api/runs/nope/events")
-    assert response.headers["content-type"].startswith("text/event-stream")
-    assert "id: 1" in response.text
-    assert "id: 0" not in response.text
-    assert "event: run.finished" in response.text
-    assert missing.status_code == 404
-
-
-async def test_universe_404(env: Env) -> None:
-    async with env.client() as client:
-        assert (await client.get("/api/runs/r1/universes/u9")).status_code == 404
-        assert (await client.get("/api/runs/nope/universes/u9")).status_code == 404

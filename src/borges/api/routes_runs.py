@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import re
 from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -102,7 +103,7 @@ def run_events(
     last_event_id: Annotated[str | None, Header()] = None,
 ):
     _require_run(store, run_id)
-    if last_event_id is not None and last_event_id.strip().isdigit():
+    if last_event_id is not None and re.fullmatch(r"[0-9]{1,9}", last_event_id.strip()):
         from_seq = max(from_seq, int(last_event_id))
     return sse_response(bus.subscribe(run_id, from_seq))
 

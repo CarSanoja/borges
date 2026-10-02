@@ -115,3 +115,10 @@ async def test_scripted_runs_ignore_the_budget(tmp_path) -> None:
     env = Env(tmp_path, key="k", borges_spend_cap_usd=1.0)
     (tmp_path / "spend.json").write_text(json.dumps({"total_usd": 5.0}))
     assert (await post(env, {"case_id": "a", "llm": "scripted"})).status_code == 202
+
+
+async def test_non_ascii_live_token_is_403_not_500(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_allow_untrusted_local=True, borges_live_token="s3cret")
+    stub_upload(env)
+    response = await post(env, UPLOAD, {"X-Borges-Live-Token": "s\xe9".encode("latin-1")})
+    assert response.status_code == 403

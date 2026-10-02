@@ -93,8 +93,7 @@ class RunOrchestrator:
         self._register(run_id, request, resolved)
         task = asyncio.create_task(self.execute(run_id, request, data, dataset_name))
         self.tasks[run_id] = task
-        if self._modes(request)[0] == "nebius":
-            self._live.add(run_id)
+        self._live.update([run_id] if self._modes(request)[0] == "nebius" else [])
         task.add_done_callback(lambda _: self._forget(run_id))
         return run_id
 

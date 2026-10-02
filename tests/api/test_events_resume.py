@@ -40,3 +40,27 @@ async def test_last_event_id_never_lowers_from_seq(env: Env) -> None:
 
 async def test_garbage_last_event_id_is_ignored(env: Env) -> None:
     assert await fetch(env, "/api/runs/r1/events", {"Last-Event-ID": "abc"}) == [0]
+
+
+async def test_unicode_and_oversized_last_event_id_are_ignored(env: Env) -> None:
+    assert await fetch(env, "/api/runs/r1/events", {"Last-Event-ID": "1" * 5000}) == [0]
+    assert await fetch(env, "/api/runs/r1/events", {"Last-Event-ID": "\xb2".encode("latin-1")}) == [
+        0
+    ]
+
+
+async def test_events_stream_to_run_finished(env: Env) -> None:
+    async with env.client() as client:
+        response = await client.get("/api/runs/r1/events?from_seq=1")
+        missing = await client.get("/api/runs/nope/events")
+    assert response.headers["content-type"].startswith("text/event-stream")
+    assert "id: 1" in response.text
+    assert "id: 0" not in response.text
+    assert "event: run.finished" in response.text
+    assert missing.status_code == 404
+
+
+async def test_universe_404(env: Env) -> None:
+    async with env.client() as client:
+        assert (await client.get("/api/runs/r1/universes/u9")).status_code == 404
+        assert (await client.get("/api/runs/nope/universes/u9")).status_code == 404

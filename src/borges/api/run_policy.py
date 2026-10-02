@@ -49,7 +49,9 @@ def _check_upload_trust(settings: Settings, live_token: str | None) -> None:
             "or with BORGES_ALLOW_UNTRUSTED_LOCAL=true on a private machine.",
         )
     expected = settings.borges_live_token
-    if expected and not hmac.compare_digest(live_token or "", expected):
+    if expected and not hmac.compare_digest(
+        (live_token or "").encode("utf-8"), expected.encode("utf-8")
+    ):
         raise _reject(403, "Uploaded datasets need a valid live token.")
 
 
