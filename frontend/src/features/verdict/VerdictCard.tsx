@@ -3,7 +3,7 @@ import { BackFace } from "./BackFace";
 import { FrontFace } from "./FrontFace";
 import { useTurnOver } from "./useTurnOver";
 import { WalkingState } from "./WalkingState";
-import { activeFlip, originalVerdict } from "./verdictModel";
+import { activeFlip, activeRule, originalVerdict } from "./verdictModel";
 import "./verdict.css";
 import "./verdictBack.css";
 import "./verdictWalking.css";
@@ -29,7 +29,7 @@ export function VerdictCard({ snapshot }: Props) {
     <section className="vc" aria-label="Verdict" data-state={flip ? (turned ? "flipped" : "found") : "original"}>
       <div className="vc-inner" data-turned={flip !== null && turned}>
         <FrontFace snapshot={snapshot} verdict={verdict} hidden={turned && flip !== null} />
-        {flip && <BackFace flip={flip} hidden={!turned} />}
+        {flip && <BackFace flip={flip} hidden={!turned} rule={activeRule(snapshot)} />}
       </div>
       {flip && (
         <button type="button" className="vc-toggle" onClick={toggle} aria-pressed={turned}>

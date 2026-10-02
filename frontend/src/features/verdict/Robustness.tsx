@@ -1,11 +1,13 @@
 import type { Report } from "../../shared/types/contracts";
-import { formatPercent } from "./verdictFormat";
+import type { EffectRange } from "./flipKind";
+import { formatNumber, formatPercent } from "./verdictFormat";
 
 interface Props {
   report: Report;
+  range: EffectRange | null;
 }
 
-export function Robustness({ report }: Props) {
+export function Robustness({ report, range }: Props) {
   const agree = Math.max(0, report.n_universes - report.n_flipped);
   const failed = report.n_failed ?? 0;
   return (
@@ -20,6 +22,14 @@ export function Robustness({ report }: Props) {
       <p className="vc-robust__note">
         {agree} of {report.n_universes} explored universes agree
       </p>
+      {range && (
+        <p className="vc-robust__note vc-range">
+          Effect range across {range.n} {range.n === 1 ? "universe" : "universes"}:{" "}
+          <span className="mono">
+            {formatNumber(range.min)} to {formatNumber(range.max)}
+          </span>
+        </p>
+      )}
       {failed > 0 && (
         <p className="vc-robust__note vc-robust__note--warn" title={report.failed?.join("\n")}>
           {report.n_universes + failed} explored, {failed} could not run

@@ -70,4 +70,55 @@ describe("VerdictCard", () => {
     render(<VerdictCard snapshot={foldEvents("t", events)} />);
     expect(screen.queryByText(/could not run/)).toBeNull();
   });
+
+  it("says a direction flip changes side of the threshold, with the numbers", () => {
+    const snapshot = foldEvents("t", events);
+    const flip = {
+      ...snapshot.flip!,
+      baseline_result: { ...snapshot.flip!.baseline_result, estimate: 0.53, p_value: 0.008 },
+      flipped_result: { ...snapshot.flip!.flipped_result, estimate: -0.14, p_value: 0.43 },
+    };
+    const rule = { ...snapshot.decision_rule!, threshold: 0, comparator: "gt" as const };
+    render(<VerdictCard snapshot={{ ...snapshot, flip, decision_rule: rule }} />);
+    const kind = document.querySelector(".vc-kind");
+    expect(kind?.getAttribute("data-kind")).toBe("direction");
+    expect(kind?.textContent).toMatch(/Direction flip/);
+    expect(kind?.textContent).toMatch(/changes side of the threshold/);
+  });
+
+  it("says a significance flip weakens the evidence without reversing the effect", () => {
+    const snapshot = foldEvents("t", events);
+    const flip = {
+      ...snapshot.flip!,
+      baseline_result: { ...snapshot.flip!.baseline_result, estimate: 1.337, p_value: 0.00056 },
+      flipped_result: { ...snapshot.flip!.flipped_result, estimate: 1.204, p_value: 0.055 },
+    };
+    const rule = { ...snapshot.decision_rule!, threshold: 1, comparator: "gt" as const, alpha: 0.05 };
+    render(<VerdictCard snapshot={{ ...snapshot, flip, decision_rule: rule }} />);
+    const kind = document.querySelector(".vc-kind");
+    expect(kind?.getAttribute("data-kind")).toBe("significance");
+    expect(kind?.textContent).toMatch(/1\.34 to 1\.20/);
+    expect(kind?.textContent).toMatch(/0\.00056 to 0\.055/);
+    expect(kind?.textContent).toMatch(/does not reverse/);
+  });
+
+  it("shows the effect range across explored universes next to robustness", () => {
+    const snapshot = foldEvents("t", events);
+    const estimates = Object.values(snapshot.garden.universes)
+      .filter((u) => u.status === "done" && u.kind !== "verification")
+      .map((u) => u.result!.estimate);
+    render(<VerdictCard snapshot={snapshot} />);
+    const range = document.querySelector(".vc-range");
+    expect(range?.textContent).toContain(`Effect range across ${estimates.length} universes`);
+    expect(range?.textContent).toMatch(/to/);
+    expect(screen.getByText(/nearest crossing it found/)).toBeInTheDocument();
+  });
+
+  it("does not clamp the rationale of a change", () => {
+    const snapshot = foldEvents("t", events);
+    render(<VerdictCard snapshot={snapshot} />);
+    const why = document.querySelector(".vc-change__why");
+    expect(why?.textContent).toBe(snapshot.flip!.changes[0]!.rationale);
+    expect(document.querySelector(".vc-command")).toBeNull();
+  });
 });

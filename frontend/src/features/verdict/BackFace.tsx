@@ -1,13 +1,16 @@
-import type { Flip } from "../../shared/types/contracts";
+import type { DecisionRule, Flip } from "../../shared/types/contracts";
 import { ChangeItem } from "./ChangeItem";
+import { describeFlip } from "./flipKind";
 import { ResultStats } from "./ResultStats";
 
 interface Props {
   flip: Flip;
   hidden: boolean;
+  rule: DecisionRule | null;
 }
 
-export function BackFace({ flip, hidden }: Props) {
+export function BackFace({ flip, hidden, rule }: Props) {
+  const kind = rule ? describeFlip(rule, flip) : null;
   const many = flip.changes.length > 1;
   const lead = many
     ? `${flip.changes.length} defensible changes together reverse it:`
@@ -17,6 +20,11 @@ export function BackFace({ flip, hidden }: Props) {
       <span className="eyebrow">The flipped verdict</span>
       <h2 className="vc-verdict vc-verdict--vermilion">{flip.flipped_verdict}</h2>
       <ResultStats result={flip.flipped_result} tone="vermilion" />
+      {kind && (
+        <p className="vc-kind" data-kind={kind.kind}>
+          <strong>{kind.title}.</strong> {kind.text}
+        </p>
+      )}
       <p className="vc-lead">{lead}</p>
       <ul className={`vc-changes${many ? " vc-changes--many" : ""}`}>
         {flip.changes.map((change) => (
@@ -24,7 +32,7 @@ export function BackFace({ flip, hidden }: Props) {
         ))}
       </ul>
       {flip.reproduced === true && (
-        <p className="vc-badge" title={flip.reproduce_command ?? undefined}>
+        <p className="vc-badge">
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M3 8.5 6.5 12 13 4.5" />
           </svg>
@@ -36,7 +44,9 @@ export function BackFace({ flip, hidden }: Props) {
           Not reproduced on a fresh re-execution: treat as unconfirmed
         </p>
       )}
-      {flip.reproduce_command && flip.reproduced !== true && <code className="vc-command">{flip.reproduce_command}</code>}
+      <p className="vc-caveat">
+        Borges searches for flips, so this is the nearest crossing it found, not a typical analysis.
+      </p>
     </div>
   );
 }
