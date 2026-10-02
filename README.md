@@ -307,6 +307,12 @@ flip is specific. The red-cards flip (OR 1.34 to 1.20) is of the weak kind. No f
 prove no artefact: detection falls as the true effect grows (95%, 69%, 21%). The rates apply to
 this fixed menu, not to arbitrary datasets.
 
+Against a fixed full grid (what a hand-written multiverse or specr would run over the same
+seeded options), `evidence/grid_vs_search.md`: the grid ran 72, 32, 768 and 1,536 universes on
+red cards, checkout, MARP religiosity and MARP norms (27, 12, 204 and 424 s offline) and found
+the same smallest flip as Borges in all four cases, or none in either. Borges used 30, 7, 40 and
+15 universes. The objections a statistician would raise, with answers, are in `PRODUCT.md`.
+
 ## Related work
 
 The closest open implementation is
