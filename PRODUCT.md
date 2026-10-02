@@ -39,7 +39,8 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
    prefixes are computed once. On the ConTree backend each checkpoint is a VM-isolated
    sandbox image. The default local backend is a subprocess per step (scrubbed environment,
    AST code guard as a first-layer lint, a runtime audit-hook policy that blocks process creation,
-   network and writes outside the step directory, per-step timeout) and is not isolation: live and upload runs on a
+   network and writes outside the step directory and allowlists reads, denying `.env`,
+   `/proc/*/environ` and the user's home, per-step timeout) and is not isolation: live and upload runs on a
    shared server need the VM backend.
 3. **Argues against you, with code.** An adversarial analyst inspects the real intermediate
    state and proposes new defensible choices aimed at reversing the conclusion. An
@@ -229,6 +230,7 @@ Uploading your own dataset (CSV or parquet) works from the landing page card and
 (`llm=nebius` with `NEBIUS_API_KEY`), because there are no recorded responses for them. On
 a public instance they should run only on isolated sandboxes (`BORGES_BACKEND=contree`),
 and `BORGES_LIVE_TOKEN` should be set so that only callers who know the token can start
-them. The local backend runs generated code on the server's own machine, so it accepts
+them. The local backend runs generated code on the server's own machine (reads are allowlisted, and
+`.env`, `/proc/*/environ` and the user's home are denied, but it is not isolation), so it accepts
 uploads (refused otherwise, 400) only when `BORGES_ALLOW_UNTRUSTED_LOCAL=true` (set only by `make dev`,
 meant for a private machine).

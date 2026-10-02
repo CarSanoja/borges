@@ -276,64 +276,11 @@ definition of done: [PRODUCT.md](PRODUCT.md).
 
 ## Security model
 
-Generated code comes from a model or from an upload. Three layers, from weakest to strongest:
-
-1. **AST code guard (first layer, a lint).** Default-deny: no underscore attributes, frame and
-   traceback attributes, `type`, `getattr`, `exec`, computed string subscripts, and an exact
-   import allowlist. It stops accidents and the bypasses we know of; it is not a sandbox.
-2. **Runtime audit-hook policy (defense in depth).** Every step file starts by installing a
-   PEP 578 audit hook (`src/borges/analysis/runtime_policy.py`, embedded by
-   `harness.render_step`) before any generated code runs. It runs inside the step process, the
-   same code on the local backend and on ConTree. A denied event raises
-   `PermissionError: runtime policy denied <event>`, with no host path in the message.
-   - Blocked (tested): process creation (`subprocess`, `os.system`, `os.exec*`, `os.spawn*`,
-     `posix_spawn`, `fork`, `pty.spawn`); network (`socket` connect, bind, getaddrinfo,
-     sendto, sendmsg, name lookups; `urllib` fails through these); `webbrowser.open`; every
-     `ctypes.*` event and the import of `cffi` from non-library code; writes, creates,
-     truncates, removes, renames, `mkdir`, links, `chmod` and `shutil` copies or moves outside
-     the step's working directory (`/dev/null` excepted); `os.chdir` out of it (including
-     `..`); registering a later audit hook. Paths are resolved with `realpath`, so symlinks and
-     `..` do not escape.
-   - Allowed on purpose: reads anywhere on the host (pandas, numpy, scipy, statsmodels and
-     pyarrow need them) and any write inside the step's own working directory.
-   - Overhead: 0.6 ms to install per step; about 29 microseconds per read-open; on a step of
-     about 2.5 s the median was 2.481 s without and 2.583 s with (+4.1%), means 2.681 and 2.690
-     (+0.3%), so the difference is within noise.
-   - The four curated cases give the same universes, checkpoints, flips and verdicts under the
-     policy as the committed recordings. 34 tests, three of them real exploits run through
-     the harness without the guard.
-3. **VM isolation (ConTree).** The same policy runs inside the VM. That path has never run
-   live.
-
-What the policy does **not** do:
-
-- **The local backend is not an isolation boundary.** The policy is not a VM or a container.
-- A native-code exploit in a C extension (numpy, pyarrow) runs below the interpreter and is
-  not audited.
-- CPU and memory abuse are bounded only by rlimits (CPU 600 s, file size 256 MB, 1024
-  processes, and 3072 MB address space on Linux only, not on macOS) and the 120 s step
-  timeout; writes inside the working directory can fill disk up to those limits.
-- Any file the server user can read is readable by generated code (for example `~/.ssh`) and
-  could be printed into a result or error.
-- A generated `import ctypes` succeeds silently (the module is pre-imported) but every
-  `ctypes.*` event is denied, so it can do nothing.
-- Audit hooks are defense in depth under the guard: an unaudited primitive in a new CPython
-  release would be a gap. Threads and signals are not restricted.
-- Proven on the local backend only: there is no `NEBIUS_API_KEY` here and no ConTree run.
-
-So: the local backend is for trusted-ish generated code behind the policy and the guard, and
-ConTree is the isolated path. Public deployments with live or upload runs should set
-`BORGES_BACKEND=contree`.
-
-- **Uploads are refused on the local backend** (`POST /api/runs` with an `upload_id` returns
-  400) unless `BORGES_ALLOW_UNTRUSTED_LOCAL` is true, which only `make dev`
-  sets. Live runs on a curated case are not refused on the local backend by the server; do not
-  expose that combination publicly.
-- The server, not the client, picks the backend, clamps `max_universes`, limits concurrency
-  (429), refuses live runs without a key (400) or past the spend cap (403), and can require
-  `X-Borges-Live-Token` for uploads. The built-in UI does not send that header.
-- Never commit `.env`. CI (`.github/workflows/ci.yml`) runs lint, tests and the frontend
-  build; a badge will exist once the repository is public.
+Generated code runs behind three layers: an AST code guard (a lint), a runtime audit-hook policy
+embedded in every step (no process creation, no network, writes only inside the step directory,
+reads limited to an allowlist that denies `.env`, `/proc/*/environ` and the user's home), and VM
+isolation on ConTree. The local backend is not an isolation boundary, and uploads are refused on
+it unless `make dev` allows them. Full model and its limits: [SECURITY.md](SECURITY.md).
 
 ## How much to trust a flip
 

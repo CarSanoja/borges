@@ -65,17 +65,21 @@ it as `PatsyError`); the message carries no host path. Tracebacks shift by one l
   `chown`, `chroot` and `shutil.rmtree/move/copyfile/copytree` outside the step's working
   directory (`/dev/null` excepted); `os.chdir` out of it, including `..`; registering a later
   audit hook (silently refused, because CPython swallows the exception). Paths use `realpath`.
-- Allowed on purpose: reads anywhere on the host, and any write inside the working directory
-  (`state/`, and `tempfile` through `TMPDIR=<fs>`, set by `LocalBackend._env`).
+- Reads are an allowlist (events `open` in read mode, `os.listdir`, `os.scandir`): the working
+  directory, the Python roots (`sys.prefix` family, `sysconfig` paths, `sys.path` directories
+  outside the home), system library roots, `/proc/<own pid>/` and a few device and time files.
+  Always denied, before any allow rule: `.env` and `.env.*`, `/proc/*/environ`, `mem`, `maps`
+  and other pids' `/proc` entries, and everything under the real user's home outside the
+  working directory and Python roots. Writes stay confined to the working directory (`state/`,
+  and `tempfile` through `TMPDIR=<fs>`, set by `LocalBackend._env`). Full list: `SECURITY.md`.
 - Not covered: native-code exploits in C extensions; CPU and memory abuse beyond rlimits
   (CPU 600 s, file size 256 MB, 1024 processes, address space 3072 MB on Linux only) and the
-  120 s step timeout; host files readable by the user (for example `~/.ssh`); threads and
+  120 s step timeout; anything inside the read allowlist (installed packages, system roots); threads and
   signals; a primitive that CPython does not audit. `import ctypes` succeeds (pre-imported)
   but every `ctypes.*` event is denied. It is defense in depth under the guard, not VM or
   container isolation, so the local backend is not an isolation boundary.
-- Cost: 0.6 ms install per step process, about 29 microseconds per read-open; on a step of
-  about 2.5 s the median was 2.481 s without and 2.583 s with (+4.1%), means 2.681 and 2.690
-  (+0.3%), within noise.
+- Cost: one statsmodels OLS step through `LocalBackend`, median of 10 runs, 0.886 s and 0.899 s
+  without the policy, 0.973 s and 0.984 s with it (about +0.09 s, +10%).
 - Evidence: `tests/sandbox/test_runtime_policy*.py` (34 tests, three real exploits through
   the harness and `LocalBackend.run` without the guard); the four curated cases reproduce the
   recorded universes, checkpoints and flips under the policy. Proven on the local backend
@@ -198,8 +202,8 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
   records both curated cases under `BORGES_RUN_CAP_USD`.
 - `backend=local`: a directory per checkpoint (copy-on-write clone where available) and a
   subprocess with timeout, resource limits, a scrubbed environment, the AST guard and the
-  runtime audit-hook policy. It is not an isolation boundary (shared filesystem for reads,
-  and native code is not audited). Used for development, CI and
+  runtime audit-hook policy. It is not an isolation boundary (reads are allowlisted but the
+  allowed roots stay readable, and native code is not audited). Used for development, CI and
   scripted demos on a private or disposable machine.
 - `backend=contree`: Nebius Token Factory Sandboxes. Each step is `image.run(...,
   disposable=False)` on the parent image. VM isolation; contract-tested with a fake SDK, and
