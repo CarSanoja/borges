@@ -27,3 +27,12 @@ describe("RunHeader mode badge", () => {
     expect(screen.queryByText(/sandboxes/)).toBeNull();
   });
 });
+
+describe("RunHeader trace link", () => {
+  it("links to the trace of a stored run and omits it for the mock", () => {
+    const { rerender } = render(<RunHeader snapshot={snapshot} onHome={() => undefined} traceRunId="r1" />);
+    expect(screen.getByRole("link", { name: "Trace" })).toHaveAttribute("href", "/run/r1/trace");
+    rerender(<RunHeader snapshot={snapshot} onHome={() => undefined} />);
+    expect(screen.queryByRole("link", { name: "Trace" })).toBeNull();
+  });
+});

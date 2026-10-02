@@ -5,6 +5,7 @@ import type {
   RunCreated,
   RunRequest,
   RunSnapshot,
+  TraceResponse,
   UniverseDetail,
 } from "../types/contracts";
 
@@ -51,6 +52,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getHealth(): Promise<Health> {
   return request<Health>("/health");
+}
+
+export function getTrace(runId: string): Promise<TraceResponse> {
+  return request<TraceResponse>(`/runs/${encodeURIComponent(runId)}/trace`);
 }
 
 export function getCases(): Promise<CaseCard[]> {

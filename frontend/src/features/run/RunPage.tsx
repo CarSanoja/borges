@@ -50,7 +50,7 @@ export function RunPage({ source, onHome }: Props) {
       <a className="skip-link" href="#verdict" onClick={skipToVerdict}>
         Skip to verdict
       </a>
-      <RunHeader snapshot={snapshot} onHome={onHome} />
+      <RunHeader snapshot={snapshot} onHome={onHome} traceRunId={runId} />
       {source.kind === "replay" && source.recording && (
         <RecordingBanner
           caseId={source.caseId}

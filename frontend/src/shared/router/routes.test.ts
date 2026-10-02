@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseLocation, replayPath, runPath, withMock } from "./routes";
+import { parseLocation, replayPath, runPath, tracePath, withMock } from "./routes";
 
 describe("parseLocation", () => {
   it("matches the landing route", () => {
@@ -9,6 +9,12 @@ describe("parseLocation", () => {
   it("matches run and replay routes", () => {
     expect(parseLocation("/run/abc123", "").route).toEqual({ name: "run", runId: "abc123" });
     expect(parseLocation("/replay/checkout_ab", "").route).toEqual({ name: "replay", caseId: "checkout_ab", source: null });
+  });
+
+  it("matches the trace route of a run", () => {
+    expect(parseLocation("/run/abc123/trace", "").route).toEqual({ name: "trace", runId: "abc123" });
+    expect(tracePath("a b")).toBe("/run/a%20b/trace");
+    expect(parseLocation("/replay/x/trace", "").route.name).toBe("not_found");
   });
 
   it("detects mock mode", () => {

@@ -74,6 +74,17 @@
   color: var(--gold);
 }
 
+.chip--link {
+  text-decoration: none;
+  color: var(--gold);
+  border-color: var(--gold-soft);
+}
+
+.chip--link:hover,
+.chip--link:focus-visible {
+  background: var(--gold-soft);
+}
+
 .chip__dot {
   width: 7px;
   height: 7px;

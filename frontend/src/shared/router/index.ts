@@ -1,4 +1,4 @@
-export { parseLocation, replayPath, runPath, withMock } from "./routes";
+export { parseLocation, replayPath, runPath, tracePath, withMock } from "./routes";
 export type { Location, Route } from "./routes";
 export { navigate, useLocation } from "./useLocation";
 export { AppLink } from "./AppLink";

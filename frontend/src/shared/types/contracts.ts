@@ -328,6 +328,7 @@ export type RunEvent =
         backend: string;
         models: Record<string, string>;
         max_universes: number;
+        trace_id?: string | null;
       }
     >
   | EventBase<"stage", { name: StageName; status: "started" | "done"; detail: string }>
@@ -372,3 +373,57 @@ export type RunEvent =
   | EventBase<"run.failed", { error: string }>;
 
 export type RunEventType = RunEvent["type"];
+
+export interface AuditRecord {
+  v: number;
+  seq: number;
+  ts: string;
+  kind: string;
+  run_id: string | null;
+  trace_id: string | null;
+  span_id: string | null;
+  principal: string | null;
+  decision: "allow" | "deny" | "observe" | null;
+  reason: string | null;
+  data: Record<string, unknown>;
+  prev_hash: string;
+  hash: string;
+}
+
+export interface AuditChainStatus {
+  path: string;
+  exists: boolean;
+  ok: boolean;
+  records: number;
+  head_hash: string;
+  broken_seq: number | null;
+  broken_line: number | null;
+  reason: string | null;
+}
+
+export type SpanAttributeValue = string | number | boolean;
+
+export interface SpanNode {
+  span_id: string;
+  parent_span_id: string | null;
+  name: string;
+  kind: string | null;
+  status: string;
+  start_ns: number;
+  end_ns: number | null;
+  duration_ms: number | null;
+  attributes: Record<string, SpanAttributeValue>;
+  audit: AuditRecord[];
+  children: SpanNode[];
+}
+
+export interface TraceResponse {
+  run_id: string;
+  trace_id: string | null;
+  span_count: number;
+  spans_by_kind: Record<string, number>;
+  roots: SpanNode[];
+  unlinked_audit: AuditRecord[];
+  audit_chain: AuditChainStatus | null;
+  reason: string | null;
+}
