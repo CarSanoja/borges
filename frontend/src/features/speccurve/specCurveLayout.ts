@@ -22,7 +22,7 @@ export function makeLayout(width: number, rows: number, n: number, hasReference:
   const right = hasReference ? 96 : 20;
   const top = 18;
   const curveHeight = width < 640 ? 160 : 240;
-  const gap = 30;
+  const gap = hasReference ? 46 : 30;
   const rowHeight = 24;
   const innerWidth = Math.max(60, width - left - right);
   const step = Math.min(96, innerWidth / Math.max(n, MIN_SLOTS));

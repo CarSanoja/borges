@@ -27,7 +27,7 @@ export function ReferenceLane({ layout, reference, label }: Props) {
       <text className="sc-reference__value" x={center + 16} y={y(low)} dy="0.32em">
         {formatNumber(low)}
       </text>
-      <text className="sc-reference__label" x={width} y={top + curveHeight + 18} textAnchor="end">
+      <text className="sc-reference__label" x={width} y={top + curveHeight + 38} textAnchor="end">
         {label}
       </text>
       {reference.map((r, i) => (

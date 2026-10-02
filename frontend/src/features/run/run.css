@@ -109,20 +109,16 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 460px);
   gap: var(--space-4);
-  height: max(420px, calc(100dvh - var(--run-chrome)));
+  align-items: start;
 }
 
 .run-garden {
   min-width: 0;
-  min-height: 0;
+  height: max(420px, calc(100dvh - var(--run-chrome)));
 }
 
 .run-side {
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-strong) transparent;
 }
 
 .run-below {

@@ -1,6 +1,7 @@
 import { memo } from "react";
 import type { Step } from "../../shared/types/contracts";
 import { pointAt, WEDGE } from "./layout";
+import { fitRingTitle } from "./ringTitle";
 
 interface Props {
   steps: Step[];
@@ -30,9 +31,10 @@ interface FittedLabel {
 function fit(title: string, radius: number, aspect: number): FittedLabel {
   const arc = LABEL_SPAN * radius * aspect;
   const room = Math.floor(arc / CHAR_WIDTH);
-  if (title.length <= room) return { text: title };
-  if (title.length <= room * MAX_SQUEEZE) return { text: title, textLength: arc * 0.96 };
-  return { text: `${title.slice(0, Math.max(room - 1, 3)).trimEnd()}…` };
+  const picked = fitRingTitle(title, room, MAX_SQUEEZE);
+  if (!picked.fits) return { text: `${picked.text.slice(0, Math.max(room - 1, 3)).trimEnd()}…` };
+  if (picked.text.length <= room) return { text: picked.text };
+  return { text: picked.text, textLength: arc * 0.96 };
 }
 
 function RingsBase({ steps, radiusOf, aspect, showLabels }: Props) {
