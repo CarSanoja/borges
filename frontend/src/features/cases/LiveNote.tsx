@@ -13,13 +13,15 @@ export function liveReasonText(health: Health | null): string {
 
 interface Props {
   health: Health | null;
-  hiddenCases: CaseCard[];
+  liveOnlyCases: CaseCard[];
 }
 
-export function LiveNote({ health, hiddenCases }: Props) {
-  const needs = hiddenCases.length
-    ? ` ${hiddenCases.length === 1 ? "One case needs" : `${hiddenCases.length} cases need`} live mode: ${hiddenCases.map((card) => card.title).join(", ")}.`
-    : "";
+export function LiveNote({ health, liveOnlyCases }: Props) {
+  const count = liveOnlyCases.length;
+  const needs =
+    count > 0
+      ? ` ${count === 1 ? "One case runs" : `${count} cases run`} only live: open ${count === 1 ? "its card" : "their cards"} for the story, the data and the commands.`
+      : "";
   return (
     <p className="landing-live-note" role="status" aria-label="Live mode">
       Live runs are off here: {liveReasonText(health)}. The recorded and scripted runs below work.{needs}

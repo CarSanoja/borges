@@ -30,7 +30,7 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
   return (
     <article className="case-card">
       <p className="eyebrow">{card.subtitle}</p>
-      {liveOnly && <p className="case-live-only">Needs live mode</p>}
+      {liveOnly && <p className="case-live-only">Runs live on Nemotron</p>}
       <h3 className="case-title">{card.title}</h3>
       <p className="case-question">{card.question}</p>
       <dl className="case-meta">
@@ -47,6 +47,11 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
         {card.has_recording && (
           <button type="button" className="btn btn-primary" onClick={() => onOpenReplay(card.id)}>
             Watch the recorded run
+          </button>
+        )}
+        {liveOnly && !card.has_recording && (
+          <button type="button" className="btn btn-primary" onClick={() => onOpenReplay(card.id)}>
+            See how it runs live
           </button>
         )}
         {!liveOnly && (

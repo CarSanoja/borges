@@ -80,19 +80,26 @@ describe("Landing", () => {
     expect(screen.getAllByRole("status", { name: "Live mode" })).toHaveLength(1);
   });
 
-  it("lists live-only cases only when live is available, otherwise in the single note", async () => {
-    const liveOnly = { ...redCards, id: "bank", title: "Bank calls", live_only: true, has_recording: false };
+  it("lists live-only cases as cards that open the needs-live page, with or without a key", async () => {
+    const liveOnly = { ...redCards, id: "bank", title: "Bank calls?", live_only: true, has_recording: false };
     vi.mocked(client.getCases).mockResolvedValue([...cards, liveOnly]);
-    const { unmount } = render(<Landing onOpenRun={vi.fn()} onOpenReplay={vi.fn()} onOpenMock={vi.fn()} />);
-    expect(await screen.findByRole("status", { name: "Live mode" })).toHaveTextContent("One case needs live mode: Bank calls");
-    expect(screen.queryByRole("heading", { name: "Bank calls" })).toBeNull();
+    const handlers = { onOpenRun: vi.fn(), onOpenReplay: vi.fn(), onOpenMock: vi.fn() };
+    const { unmount } = render(<Landing {...handlers} />);
+    const heading = await screen.findByRole("heading", { name: "Bank calls?" });
+    const card = heading.closest("article") as HTMLElement;
+    expect(within(card).getByText("Runs live on Nemotron")).toBeInTheDocument();
+    expect(within(card).queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
+    expect(within(card).queryByRole("button", { name: "Run it now" })).toBeNull();
+    await userEvent.click(within(card).getByRole("button", { name: "See how it runs live" }));
+    expect(handlers.onOpenReplay).toHaveBeenCalledWith("bank");
+    const note = await screen.findByRole("status", { name: "Live mode" });
+    expect(note).toHaveTextContent("One case runs only live");
+    expect(note.textContent).not.toMatch(/\?\./);
     unmount();
     vi.mocked(client.getHealth).mockResolvedValue(health(true));
-    render(<Landing onOpenRun={vi.fn()} onOpenReplay={vi.fn()} onOpenMock={vi.fn()} />);
-    const heading = await screen.findByRole("heading", { name: "Bank calls" });
-    const card = heading.closest("article") as HTMLElement;
-    expect(within(card).getByRole("button", { name: /Run live on Nemotron/ })).toBeEnabled();
-    expect(within(card).queryByRole("button", { name: "Run it now" })).toBeNull();
+    render(<Landing {...handlers} />);
+    const live = (await screen.findByRole("heading", { name: "Bank calls?" })).closest("article") as HTMLElement;
+    expect(within(live).getByRole("button", { name: /Run live on Nemotron/ })).toBeEnabled();
     expect(screen.queryByRole("status", { name: "Live mode" })).toBeNull();
   });
 

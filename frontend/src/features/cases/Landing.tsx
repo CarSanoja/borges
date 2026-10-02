@@ -24,14 +24,14 @@ interface Props {
 
 export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
   const { cases: allCases, liveAvailable, health, healthLoaded } = useCases();
-  const cases = liveAvailable ? allCases : allCases.filter((card) => !card.live_only);
-  const hiddenCases = allCases.filter((card) => card.live_only && !liveAvailable);
+  const cases = allCases;
+  const liveOnlyCases = allCases.filter((card) => card.live_only);
   const demo = cases.find((card) => card.has_recording);
   const watchDemo = () => (demo ? onOpenReplay(demo.id) : onOpenMock());
   return (
     <main className="landing">
       <Hero onWatchDemo={watchDemo} />
-      {healthLoaded && !liveAvailable && <LiveNote health={health} hiddenCases={hiddenCases} />}
+      {healthLoaded && !liveAvailable && <LiveNote health={health} liveOnlyCases={liveOnlyCases} />}
       <section className="landing-cases" aria-label="Cases">
         {cases.map((card) => (
           <CaseCardView

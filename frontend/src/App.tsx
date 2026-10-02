@@ -1,5 +1,6 @@
 import { Landing } from "./features/cases/Landing";
 import { RunPage } from "./features/run/RunPage";
+import { ReplayRoute } from "./features/run/ReplayRoute";
 import { NotFound } from "./features/notfound/NotFound";
 import { navigate, replayPath, runPath, useLocation, useScrollToTop, withMock } from "./shared/router";
 
@@ -23,7 +24,8 @@ export function App() {
     const source = mock
       ? ({ kind: "mock" } as const)
       : ({ kind: "replay", caseId: route.caseId, speed: 1 } as const);
-    return <RunPage key={`replay:${route.caseId}:${mock}`} source={source} onHome={home} />;
+    if (mock) return <RunPage key={`replay:${route.caseId}:${mock}`} source={source} onHome={home} />;
+    return <ReplayRoute key={`replay:${route.caseId}`} caseId={route.caseId} onHome={home} />;
   }
 
   if (route.name === "not_found") {
