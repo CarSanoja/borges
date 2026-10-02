@@ -47,12 +47,16 @@ def _guarded(command: Callable[..., None]) -> Callable[..., None]:
 
 
 def _target(
-    seed: bool, scope: str, key: str | None = None, as_principal: str | None = None
+    seed: bool,
+    scope: str,
+    key: str | None = None,
+    as_principal: str | None = None,
+    mutating: bool = True,
 ) -> tuple[RegistryStore, Settings | None, str]:
     if seed:
         return seed_store(), None, SEED_ACTOR
     settings = get_settings()
-    needs_key = settings.borges_registry_four_eyes and scope == REGISTRY_APPROVE
+    needs_key = settings.borges_registry_four_eyes and mutating
     actor = resolve_actor(settings, scope, key, as_principal, needs_key)
     return open_store(settings), settings, actor.principal_id
 
@@ -61,7 +65,7 @@ def _target(
 @_guarded
 def list_agents(seed: SeedOption = False) -> None:
     """Show every agent with its version and approval state."""
-    store, settings, _ = _target(seed, REGISTRY_PUBLISH)
+    store, settings, _ = _target(seed, REGISTRY_PUBLISH, mutating=False)
     fleet = build_fleet(settings or get_settings())
     for descriptor in fleet.agents:
         record = store.by_definition(descriptor.agent_id, descriptor.definition_sha)

@@ -72,3 +72,30 @@ def test_missing_file_is_an_empty_valid_chain(tmp_path: Path) -> None:
     chain = ChainedJsonl(tmp_path / "none.jsonl")
     assert chain.read() == []
     assert chain.verify().ok
+
+
+def test_torn_last_line_is_ignored_on_read_and_quarantined_on_append(tmp_path: Path) -> None:
+    path = tmp_path / "c.jsonl"
+    chain = ChainedJsonl(path)
+    first = chain.append({"event": "a"})
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write('{"seq": 2, "event": "b", "prev_ha')
+    fresh = ChainedJsonl(path)
+    assert [e["event"] for e in fresh.read()] == ["a"]
+    assert fresh.verify().ok
+    nxt = fresh.append({"event": "c"})
+    assert nxt["prev_hash"] == first["hash"] and nxt["seq"] == 2
+    assert ChainedJsonl(path).verify().records == 2
+    assert path.with_name("c.jsonl.torn").read_text().startswith('{"seq": 2')
+
+
+def test_valid_last_record_missing_its_newline_is_kept(tmp_path: Path) -> None:
+    path = tmp_path / "c.jsonl"
+    chain = ChainedJsonl(path)
+    chain.append({"event": "a"})
+    path.write_text(path.read_text().rstrip("\n"))
+    fresh = ChainedJsonl(path)
+    assert len(fresh.read()) == 1
+    fresh.append({"event": "b"})
+    status = ChainedJsonl(path).verify()
+    assert status.ok and status.records == 2

@@ -11,25 +11,22 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 
 from borges.config import Settings
 from borges.identity.authentication import Authenticator
-from borges.identity.principal import Principal
+from borges.identity.principal import ANONYMOUS, Principal
 from borges.identity.rate_limit import RateLimiter, RateState
+from borges.identity.request_info import (
+    client_of,
+    forbidden_message,
+    headers_of,
+    is_public,
+    permits,
+)
 from borges.identity.route_table import OPEN, RouteRequirement, match_route, scope_label
-from borges.identity.scopes import PUBLIC_SCOPES
 from borges.telemetry.policy_audit import audit_global
 
 API_PREFIX = "/api"
 CATCH_ALL = "/{path:path}"
 DENY_AUDIT_INTERVAL_S = 10.0
 SAFE_METHODS = ("GET", "HEAD")
-
-
-def _client(scope: Scope) -> str:
-    client = scope.get("client")
-    return str(client[0]) if client else "unknown"
-
-
-def _headers(scope: Scope) -> dict[str, str]:
-    return {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope["headers"]}
 
 
 class IdentityMiddleware:
@@ -62,7 +59,7 @@ class IdentityMiddleware:
     ) -> None:
         method = scope["method"]
         quiet = (
-            decision == "allow" and not always and method in SAFE_METHODS and _public(requirement)
+            decision == "allow" and not always and method in SAFE_METHODS and is_public(requirement)
         )
         if quiet and not self.settings.borges_audit_reads:
             return
@@ -71,7 +68,7 @@ class IdentityMiddleware:
             "route": route or scope["path"][:120],
             "scope": scope_label(requirement) if requirement else None,
             "key_id": principal.key_id,
-            "client": _client(scope),
+            "client": client_of(scope),
         }
         await asyncio.to_thread(
             audit_global,
@@ -123,36 +120,65 @@ class IdentityMiddleware:
         if scope["method"] == "OPTIONS":
             await self.app(scope, receive, send)
             return
-        authentication = self.authenticator.authenticate(_headers(scope))
+        authentication = self.authenticator.authenticate(headers_of(scope))
         principal = authentication.principal
         matched = match_route(scope["method"], path)
         route = matched[0] if matched else None
         requirement = matched[1] if matched else None
         if authentication.failure is not None:
-            reason = f"api key rejected: {authentication.failure}"
-            await self._audit(principal, "deny", reason, scope, route, requirement, True)
-            await self._reject(send, 401, "The API key is not valid (unknown, revoked or expired).")
+            await self._bad_credentials(send, scope, route, requirement, authentication.failure)
             return
         if requirement is None and not self._serves(scope):
             await self.app(scope, receive, send)
             return
         if requirement is None:
             reason = "route declares no required scope; failing closed"
-            await self._audit(principal, "deny", reason, scope, route, None, True)
+            await self._audit_deny(principal, reason, scope, route, None)
             await self._reject(send, 403, "This route is not declared in the access table.")
             return
-        state = self.limiter.take(principal, _client(scope))
+        state = self.limiter.take(principal, client_of(scope))
         if not state.allowed:
             await self._rate_limited(send, principal, scope, route, requirement, state)
             return
-        if requirement != OPEN and not _permits(principal, requirement):
+        if requirement != OPEN and not permits(principal, requirement):
             reason = f"principal lacks {scope_label(requirement)}"
-            await self._audit(principal, "deny", reason, scope, route, requirement, True)
-            await self._reject(send, 403, _forbidden(principal, requirement))
+            await self._audit_deny(principal, reason, scope, route, requirement)
+            await self._reject(send, 403, forbidden_message(principal, requirement))
             return
         scope.setdefault("state", {})["principal"] = principal
         await self._audit(principal, "allow", None, scope, route, requirement, False)
         await self.app(scope, receive, send)
+
+    async def _audit_deny(
+        self,
+        principal: Principal,
+        reason: str,
+        scope: Scope,
+        route: str | None,
+        requirement: RouteRequirement | None,
+    ) -> None:
+        key = f"deny|{principal.id}|{client_of(scope)}|{scope['method']}|{route}|{reason[:60]}"
+        if self._worth_auditing_deny(key):
+            await self._audit(principal, "deny", reason, scope, route, requirement, True)
+
+    async def _bad_credentials(
+        self,
+        send: Send,
+        scope: Scope,
+        route: str | None,
+        requirement: RouteRequirement | None,
+        failure: str,
+    ) -> None:
+        client = client_of(scope)
+        state = self.limiter.take(ANONYMOUS, client)
+        if not state.allowed:
+            await self._rate_limited(
+                send, ANONYMOUS, scope, route or scope["path"][:120], requirement, state
+            )
+            return
+        reason = f"api key rejected: {failure}"
+        await self._audit_deny(ANONYMOUS, reason, scope, route, requirement)
+        await self._reject(send, 401, "The API key is not valid (unknown, revoked or expired).")
 
     async def _rate_limited(
         self,
@@ -163,7 +189,7 @@ class IdentityMiddleware:
         requirement: RouteRequirement,
         state: RateState,
     ) -> None:
-        key = self.limiter.bucket_key(principal, _client(scope))
+        key = self.limiter.bucket_key(principal, client_of(scope))
         if self._worth_auditing_deny(key):
             await self._audit(
                 principal, "deny", "rate limit exceeded", scope, route, requirement, True
@@ -175,22 +201,3 @@ class IdentityMiddleware:
             f"Rate limit exceeded for {principal.id}; retry in {retry}s.",
             [(b"retry-after", str(retry).encode())],
         )
-
-
-def _public(requirement: RouteRequirement | None) -> bool:
-    if requirement is None or requirement == OPEN:
-        return True
-    scopes = {requirement} if isinstance(requirement, str) else set(requirement)
-    return scopes <= PUBLIC_SCOPES
-
-
-def _permits(principal: Principal, requirement: RouteRequirement) -> bool:
-    if isinstance(requirement, str):
-        return principal.has(requirement)
-    return principal.has_any(requirement)
-
-
-def _forbidden(principal: Principal, requirement: RouteRequirement) -> str:
-    who = "Anonymous demo access" if principal.anonymous else principal.id
-    hint = " Paste an API key with this scope in the header." if principal.anonymous else ""
-    return f"{who} lacks the required scope: {scope_label(requirement)}.{hint}"

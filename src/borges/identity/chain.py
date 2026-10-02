@@ -44,6 +44,20 @@ def _body(record: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in record.items() if k not in HASH_FIELDS}
 
 
+def split_torn(text: str) -> tuple[str, str]:
+    """Separate a last line cut short by a crash (no newline and not valid JSON) from the rest."""
+    if not text or text.endswith("\n"):
+        return text, ""
+    cut = text.rfind("\n") + 1
+    partial = text[cut:]
+    try:
+        if isinstance(json.loads(partial), dict):
+            return text, ""
+    except ValueError:
+        pass
+    return text[:cut], partial
+
+
 class ChainedJsonl:
     """Append-only JSONL chained by prev_hash and hash; a leading unhashed prefix is legacy."""
 
@@ -91,7 +105,7 @@ class ChainedJsonl:
             return []
         if self._cache is not None and self._cache[0] == stamp:
             return self._cache[1]
-        events, status = self._load(self.path.read_text(encoding="utf-8"))
+        events, status = self._load(split_torn(self.path.read_text(encoding="utf-8"))[0])
         self._cache = (stamp, events, status)
         return events
 
@@ -115,7 +129,15 @@ class ChainedJsonl:
         with self.path.open("a+", encoding="utf-8") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX)
             handle.seek(0)
-            events, status = self._load(handle.read())
+            raw = handle.read()
+            complete, torn = split_torn(raw)
+            if torn:
+                with self.path.with_name(self.path.name + ".torn").open("a", encoding="utf-8") as q:
+                    q.write(torn + "\n")
+                handle.truncate(len(complete.encode("utf-8")))
+            elif raw and not raw.endswith("\n"):
+                handle.write("\n")
+            events, status = self._load(complete)
             body = {"seq": len(events) + 1, "ts": time.time(), **event}
             record = {
                 **body,

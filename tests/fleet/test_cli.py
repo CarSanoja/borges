@@ -72,7 +72,9 @@ def test_approve_records_the_principal_given_with_as(empty_home: Settings) -> No
 
 
 def test_four_eyes_needs_a_key_with_the_approve_scope(strict_home: Settings) -> None:
-    runner.invoke(cli.app, ["agents", "publish"])
+    runner.invoke(
+        cli.app, ["agents", "publish", "--key", key_for(strict_home, "p", "registry:publish")]
+    )
     bare = runner.invoke(cli.app, ["agents", "approve", "judge", "1.0.0", "--as", "caller://bob"])
     assert bare.exit_code == 1 and "registry:approve" in bare.output
     wrong = key_for(strict_home, "pub", "registry:publish")
@@ -91,9 +93,21 @@ def test_four_eyes_blocks_self_approval_and_allows_a_second_key(strict_home: Set
     assert locations.open_store(strict_home).get("judge", "1.0.0").history[-1].by == "caller://bob"
 
 
+def test_four_eyes_publish_cannot_be_attributed_to_an_invented_principal(
+    strict_home: Settings,
+) -> None:
+    bare = runner.invoke(cli.app, ["agents", "publish", "--as", "caller://ghost"])
+    assert bare.exit_code == 1 and "registry:publish" in bare.output
+    assert not locations.open_store(strict_home).records()
+    listing = runner.invoke(cli.app, ["agents", "list"])
+    assert listing.exit_code == 0
+
+
 def test_as_must_match_the_key_principal(strict_home: Settings) -> None:
     bob = key_for(strict_home, "bob", "registry:approve")
-    runner.invoke(cli.app, ["agents", "publish"])
+    runner.invoke(
+        cli.app, ["agents", "publish", "--key", key_for(strict_home, "p", "registry:publish")]
+    )
     result = runner.invoke(
         cli.app, ["agents", "approve", "judge", "1.0.0", "--key", bob, "--as", "caller://eve"]
     )
