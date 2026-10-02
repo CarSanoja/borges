@@ -2,6 +2,13 @@ from __future__ import annotations
 
 import ast
 
+from borges.analysis.code_guard_splits import (
+    column_names,
+    group_split_nodes,
+    is_column_base,
+    is_group_filter,
+)
+
 MISSING_CALLS = frozenset({"isna", "notna", "isnull", "notnull"})
 VALUE_CALLS = frozenset(
     {
@@ -53,8 +60,14 @@ def mask_kind(node: ast.expr, names: dict[str, str]) -> Kind:
         return _merge([mask_kind(node.left, names), mask_kind(node.right, names)])
     if isinstance(node, ast.Name):
         return names.get(node.id)
+    if isinstance(node, ast.Lambda):
+        return mask_kind(node.body, names)
+    if isinstance(node, ast.Attribute) and node.attr == "values":
+        return mask_kind(node.value, names)
     if isinstance(node, ast.Call):
         attr = _call_attr(node)
+        if attr in {"to_numpy", "astype"} and isinstance(node.func, ast.Attribute):
+            return mask_kind(node.func.value, names)
         if attr in MISSING_CALLS:
             return "missing"
         if attr in VALUE_CALLS:
@@ -130,7 +143,11 @@ def _extracts_column(node: ast.Subscript, parent: ast.AST | None) -> bool:
 
 
 def _subscript_error(
-    node: ast.Subscript, parent: ast.AST | None, masks: dict[str, str], results: set[str]
+    node: ast.Subscript,
+    parent: ast.AST | None,
+    masks: dict[str, str],
+    results: set[str],
+    columns: set[str],
 ) -> str | None:
     if not isinstance(node.ctx, ast.Load):
         return None
@@ -139,7 +156,7 @@ def _subscript_error(
         if _is_indexer(node) and isinstance(node.value, ast.Attribute)
         else node.value
     )
-    if _result_like(base, results):
+    if _result_like(base, results) or is_column_base(base, columns):
         return None
     if mask_kind(_row_selector(node), masks) != "value":
         return None
@@ -148,8 +165,19 @@ def _subscript_error(
     return f"line {node.lineno}: row filter `{ast.unparse(node)}`: {MESSAGE}"
 
 
-def _query_error(node: ast.Call, results: set[str]) -> str | None:
-    if _call_attr(node) != "query" or not isinstance(node.func, ast.Attribute):
+def _where_filter(node: ast.Call, masks: dict[str, str]) -> bool:
+    if _call_attr(node) not in {"where", "mask"} or not node.args:
+        return False
+    base = node.func.value if isinstance(node.func, ast.Attribute) else None
+    if isinstance(base, ast.Name) and base.id in {"np", "numpy", "pd"}:
+        return False
+    return mask_kind(node.args[0], masks) == "value"
+
+
+def _query_error(node: ast.Call, results: set[str], masks: dict[str, str]) -> str | None:
+    if not isinstance(node.func, ast.Attribute):
+        return None
+    if _call_attr(node) != "query" and not is_group_filter(node) and not _where_filter(node, masks):
         return None
     if _result_like(node.func.value, results):
         return None
@@ -158,14 +186,16 @@ def _query_error(node: ast.Call, results: set[str]) -> str | None:
 
 def row_filter_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     masks, results = _collect_names(func)
+    columns = column_names(func)
+    splits = group_split_nodes(func)
     violations: list[str] = []
     parents = {id(child): node for node in ast.walk(func) for child in ast.iter_child_nodes(node)}
     for node in ast.walk(func):
         found = None
-        if isinstance(node, ast.Subscript):
-            found = _subscript_error(node, parents.get(id(node)), masks, results)
+        if isinstance(node, ast.Subscript) and id(node) not in splits:
+            found = _subscript_error(node, parents.get(id(node)), masks, results, columns)
         elif isinstance(node, ast.Call):
-            found = _query_error(node, results)
+            found = _query_error(node, results, masks)
         if found and found not in violations:
             violations.append(found)
     return violations

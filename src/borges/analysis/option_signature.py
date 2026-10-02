@@ -24,9 +24,17 @@ def strip_id_prefixes(option_id: str) -> str:
     return stripped
 
 
+def _contained(a: str, b: str) -> bool:
+    return bool(a) and bool(b) and (a in b or b in a)
+
+
 def same_option(a: Option, b: Option) -> bool:
-    if strip_id_prefixes(a.id) == strip_id_prefixes(b.id):
+    label_a, label_b = normalise_text(a.label), normalise_text(b.label)
+    spec_a, spec_b = normalise_text(a.spec), normalise_text(b.spec)
+    if label_a and label_a == label_b:
         return True
-    if normalise_text(a.label) and normalise_text(a.label) == normalise_text(b.label):
+    if spec_a and spec_a == spec_b:
         return True
-    return bool(normalise_text(a.spec)) and normalise_text(a.spec) == normalise_text(b.spec)
+    if strip_id_prefixes(a.id) != strip_id_prefixes(b.id):
+        return False
+    return _contained(label_a, label_b) or _contained(spec_a, spec_b)

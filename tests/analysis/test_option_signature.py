@@ -13,8 +13,16 @@ def test_prefixes_are_stripped_repeatedly() -> None:
     assert strip_id_prefixes("opt_") == "opt_"
 
 
-def test_same_stripped_id_matches() -> None:
-    assert same_option(opt("adv_x", "a", "b"), opt("opt_x", "c", "d"))
+def test_same_stripped_id_with_overlapping_label_matches() -> None:
+    planner = opt("opt3b", "Psychological well-being mean", "s1")
+    adversary = opt("adv_opt3b", "Use psychological well-being mean as outcome", "s2")
+    assert same_option(adversary, planner)
+
+
+def test_coincidental_same_id_with_different_content_does_not_match() -> None:
+    planner = opt("opt2b", "Mean of religiosity items", "df['r'] = df[items].mean(axis=1)")
+    adversary = opt("adv_opt2b", "First principal component", "PCA on the items")
+    assert not same_option(adversary, planner)
 
 
 def test_same_normalised_label_matches() -> None:

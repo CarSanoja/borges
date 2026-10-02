@@ -51,6 +51,7 @@ async def test_duplicate_of_accepted_planner_alternative_is_skipped_silently() -
 async def test_duplicate_of_an_option_in_the_plan_is_skipped() -> None:
     plan = make_plan()
     proposal = adversary_proposal(option_id="adv_y")
+    proposal.option = proposal.option.model_copy(update={"label": "Label y"})
     assert await drop_duplicates(plan, Emitter(), None, [proposal]) == []
 
 

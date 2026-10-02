@@ -77,13 +77,15 @@ async def test_drops_duplicate_of_existing_label_and_prefixed_id() -> None:
     plan = make_plan()
     same_label = proposed("d1", "fresh_id")
     same_label.label = "label  TRIM!"
-    out = AdversaryOutput(
-        proposals=[
-            proposed("d1", "adv_trim"),
-            proposed("d1", "alt_opt_keep"),
-            same_label,
-            proposed("d1", "genuinely_new"),
-        ]
-    )
+    prefixed = proposed("d1", "adv_trim")
+    prefixed.label = "Label trim as well"
+    out = AdversaryOutput(proposals=[prefixed, same_label, proposed("d1", "genuinely_new")])
     proposals = await propose_options(FakeLLM({"adversary": out}), plan, baseline())
     assert [p.option.id for p in proposals] == ["adv_genuinely_new"]
+
+
+async def test_coincidental_id_with_different_content_is_kept() -> None:
+    plan = make_plan()
+    out = AdversaryOutput(proposals=[proposed("d1", "adv_trim")])
+    proposals = await propose_options(FakeLLM({"adversary": out}), plan, baseline())
+    assert [p.option.id for p in proposals] == ["adv_trim"]
