@@ -108,6 +108,9 @@ __EFFECTS__
             ctx = {}
         rows_before = int(len(df))
         seen.update({"columns": list(map(str, df.columns)), "ctx": list(map(str, ctx))})
+        nulls = df.isna().sum()
+        seen["rows"] = int(len(df))
+        seen["missing"] = {str(k): int(v) for k, v in nulls[nulls > 0].items()}
         trace = {
             "step_id": step_id,
             "option_id": option_id,
@@ -127,7 +130,7 @@ __EFFECTS__
         out = apply(df, ctx)
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
-        _check_columns(seen["columns"], out)
+        _check_columns(seen["columns"], rows_before, out, kind)
         _check_produces(out, ctx)
         _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)

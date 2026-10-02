@@ -42,7 +42,10 @@ feature step creates, under the same name and with the same meaning in every opt
 and the model read these names, so each option of the step must create all of them and a \
 later spec may use only raw columns or names produced by earlier steps. Filter steps usually \
 produce nothing. Every transform and feature step must declare a non-empty produces.
-- Options never drop columns: filters drop rows, transforms and features add or change columns.
+- Options never drop columns: filters drop rows, transforms and features add or change columns. \
+The exception is a step that aggregates rows (one row per user or group); its produces then lists \
+every column it keeps that later steps read (the group key, the treatment indicator, outcomes), \
+and every option of that step aggregates to the same unit.
 - Every option keeps the direction and meaning of the estimand. No option may reverse the \
 coding of a variable or swap groups: a "control indicator" is not an alternative to a \
 "treatment indicator" because it only flips the sign of the effect. Alternatives must be \

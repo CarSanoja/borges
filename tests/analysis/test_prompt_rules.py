@@ -131,3 +131,13 @@ def test_planner_rules_require_produces_and_forbid_reversals() -> None:
 def test_adversary_rules_forbid_reversals_and_point_to_notes() -> None:
     assert "never reverse the coding" in ADVERSARY_SYSTEM
     assert "column notes" in ADVERSARY_SYSTEM
+
+
+def test_aggregation_is_the_only_exception_to_keeping_columns() -> None:
+    assert "aggregates rows" in CODER_SYSTEM
+    assert "aggregates rows" in PLANNER_SYSTEM
+
+
+def test_model_step_starts_from_complete_cases() -> None:
+    assert "dropna(subset=" in CODER_SYSTEM
+    assert "cluster groups must have the same length" in CODER_SYSTEM

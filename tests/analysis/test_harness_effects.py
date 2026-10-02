@@ -16,6 +16,20 @@ def apply(df, ctx):
     return df.drop(columns=["z"])
 """
 
+FITS_WITH_NAN = """
+import statsmodels.api as sm
+
+def estimate(df, ctx):
+    X = sm.add_constant(df[["x"]])
+    fit = sm.OLS(df["x"], X).fit()
+    return {"estimate": 0.0, "ci_low": -1.0, "ci_high": 1.0, "p_value": 0.5, "n": len(df)}
+"""
+
+AGGREGATES = """
+def apply(df, ctx):
+    return df.groupby("variant", as_index=False).agg(x_mean=("x", "mean"))
+"""
+
 DROPS_CONTROL = """
 def apply(df, ctx):
     return df[df["variant"] != "control"].reset_index(drop=True)
@@ -72,11 +86,22 @@ def run(tmp_path: Path, step: Step, option: Option, smoke: bool = True):
     return done, parse_error(done.stdout), parse_output(done.stdout)[0]
 
 
-def test_dropping_a_column_fails(tmp_path: Path) -> None:
+def test_transform_keeping_rows_cannot_drop_a_column(tmp_path: Path) -> None:
     done, error, _ = run(tmp_path, *make("transform", DROPS_COLUMN))
     assert done.returncode == 1
     assert error is not None and "apply() dropped the columns ['z']" in error
     assert "never drop columns" in error
+
+
+def test_filter_dropping_a_column_fails(tmp_path: Path) -> None:
+    done, error, _ = run(tmp_path, *make("filter", DROPS_COLUMN))
+    assert done.returncode == 1
+    assert error is not None and "apply() dropped the columns ['z']" in error
+
+
+def test_aggregation_may_return_fewer_columns(tmp_path: Path) -> None:
+    done, error, _ = run(tmp_path, *make("transform", AGGREGATES))
+    assert done.returncode == 0, error
 
 
 def test_selecting_columns_fails(tmp_path: Path) -> None:
@@ -147,3 +172,16 @@ def test_effects_are_json_safe_with_non_finite_values(tmp_path: Path, kind: str)
     assert done.returncode == 0
     stats = traces[0].effects["columns"]["r"]
     assert stats["probe"]["0"] is None and stats["max"] is None
+
+
+def test_missing_values_are_counted_when_a_fit_fails(tmp_path: Path) -> None:
+    step, option = make("model", FITS_WITH_NAN)
+    frame = pd.DataFrame({"x": [1.0, None, 3.0, 4.0] * 50})
+    frame.to_parquet(tmp_path / "data.parquet")
+    (tmp_path / "step.py").write_text(render_step(step, option))
+    done = subprocess.run(
+        [sys.executable, "step.py"], cwd=tmp_path, capture_output=True, text=True, timeout=120
+    )
+    error = parse_error(done.stdout) or ""
+    assert done.returncode == 1
+    assert "missing values per column (200 rows): {'x': 50}" in error

@@ -11,10 +11,14 @@ KIND_NOTES = {
 }
 
 
+def p_text(p_value: float) -> str:
+    return "p < 1e-16" if p_value < 1e-16 else f"p = {p_value:.4g}"
+
+
 def result_line(result: AnalysisResult) -> str:
     return (
         f"estimate {result.estimate:+.4f}, 95% CI [{result.ci_low:+.4f}, "
-        f"{result.ci_high:+.4f}], p = {result.p_value:.4g}, n = {result.n}"
+        f"{result.ci_high:+.4f}], {p_text(result.p_value)}, n = {result.n}"
     )
 
 

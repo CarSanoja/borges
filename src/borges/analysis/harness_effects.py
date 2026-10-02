@@ -8,14 +8,16 @@ class EffectTrace(StepTrace):
 
 
 CHECKS_SOURCE = """
-    def _check_columns(before_cols, out):
+    def _check_columns(before_cols, rows_before, out, kind):
         lost = [c for c in before_cols if c not in out.columns]
-        if lost:
-            raise ValueError(
-                "apply() dropped the columns " + repr(lost)
-                + ": steps add or change columns and may drop rows, but never drop columns,"
-                + " because later steps and other options may need them"
-            )
+        if not lost or (kind != "filter" and len(out) != rows_before):
+            return
+        raise ValueError(
+            "apply() dropped the columns " + repr(lost)
+            + ": filters and steps that keep the rows never drop columns, because later"
+            + " steps and other options may need them; only a step that aggregates rows"
+            + " (one row per group) may return fewer columns"
+        )
 
     def _check_produces(out, ctx):
         for name in __PRODUCES__:
@@ -30,6 +32,15 @@ CHECKS_SOURCE = """
 
     def _explain(exc, seen):
         text = str(exc)
+        lowered = text.lower()
+        if seen and seen.get("missing") and (
+            "nan" in lowered or "same length" in lowered or "missing" in lowered
+        ):
+            text = (
+                text + " | missing values per column (" + str(seen.get("rows", 0)) + " rows): "
+                + repr(seen["missing"])
+                + "; keep complete cases of the columns the step uses before fitting"
+            )
         if not seen or not (isinstance(exc, KeyError) or "are in the [columns]" in text):
             return text
         cols = seen["columns"]

@@ -1,5 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import type { RunSnapshot } from "../../shared/types/contracts";
+import { formatP } from "../verdict/verdictFormat";
 import { ReproduceBlock } from "./ReproduceBlock";
 import { StepDetailRow } from "./StepDetailRow";
 import { useDialogFocus } from "./useDialogFocus";
@@ -61,8 +62,9 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
             {verified && <span className="u-badge">Reproduced from scratch</span>}
             {result && (
               <p className="mono u-result">
-                {result.metric || snapshot.decision_rule?.metric} {result.estimate.toFixed(3)} [{result.ci_low.toFixed(3)}, {result.ci_high.toFixed(3)}] · p=
-                {result.p_value.toPrecision(2)} · n={result.n.toLocaleString("en-US")}
+                {result.metric || snapshot.decision_rule?.metric} {result.estimate.toFixed(3)} [{result.ci_low.toFixed(3)}, {result.ci_high.toFixed(3)}] · p{" "}
+                {formatP(result.p_value).startsWith("<") ? "" : "= "}
+                {formatP(result.p_value)} · n={result.n.toLocaleString("en-US")}
               </p>
             )}
             {universe.error && <p className="case-error">{universe.error}</p>}

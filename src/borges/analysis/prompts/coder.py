@@ -58,9 +58,17 @@ build new columns with `df.assign(**{name: values})` or `df.rename(columns=mappi
 statsmodels (the formula API or the sm.stats functions), never by hand-written formulas. A \
 hand-computed standard error that is wrong makes the whole analysis wrong.
 - Never drop columns: filters only drop rows, transforms and features keep every input column \
-and add or change columns. Keep the direction and coding of every variable. Never swap or \
-recode groups (a treatment indicator stays 1 for treatment). Orient a PCA or factor score so \
-that it correlates positively with the mean of its items (multiply it by -1 otherwise).
+and add or change columns. The one exception is a step whose spec aggregates rows (one row per \
+group, e.g. per user): it returns the group key, the grouping variables the later steps need \
+(such as the treatment indicator) and the names this step must create. Keep the direction and \
+coding of every variable. Never swap or recode groups (a treatment indicator stays 1 for \
+treatment). Orient a PCA or factor score so that it correlates positively with the mean of its \
+items (multiply it by -1 otherwise).
+- For the step of kind model: start with complete cases, `data = df.dropna(subset=[...])` over \
+every column the model uses (outcome, predictors, offsets, weights, cluster or group columns), \
+build the model, its groups and its weights from that same frame, and return n = len(data). \
+statsmodels fails on missing values, and cluster groups must have the same length as the rows \
+used.
 - Be deterministic: any randomness uses a fixed seed.
 - Use exact column names. Do not mutate the input frame in place unless copying first. Do \
 not print. No comments.

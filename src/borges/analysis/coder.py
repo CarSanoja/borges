@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from borges.analysis.code_guard import check_code
-from borges.analysis.coder_normalise import strip_trailing_closer
+from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
@@ -36,8 +36,9 @@ async def _request_code(
     )
     if models is not None:
         models.append(response.usage.model)
-    code, normalised = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)
-    if normalised and notes is not None:
+    code, closed = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)
+    code, imported = add_missing_imports(code)
+    if (closed or imported) and notes is not None:
         notes.append(NORMALISED_NOTE)
     return code
 

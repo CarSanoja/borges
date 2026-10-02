@@ -8,7 +8,7 @@ import pytest
 
 from borges.analysis import coder
 from borges.analysis.coder import code_plan
-from borges.analysis.coder_normalise import strip_trailing_closer
+from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.schemas import CoderOutput
 from tests.analysis.fakes import FakeLLM, make_plan
 
@@ -67,3 +67,16 @@ async def test_a_repair_with_a_stray_brace_is_normalised_before_the_guard() -> N
     assert all("\n}" not in code for code in seen)
     keep = next(n for n in notes if n[1] == "keep")
     assert keep[2] is True and "stray closing-bracket" in (keep[4] or "")
+
+
+def test_missing_pandas_import_is_added() -> None:
+    code = "import statsmodels.api as sm\n\ndef estimate(df, ctx):\n    d = pd.get_dummies(df)\n"
+    fixed, changed = add_missing_imports(code)
+    assert changed
+    assert fixed.startswith("import pandas as pd\n")
+    ast.parse(fixed)
+
+
+def test_bound_names_are_left_alone() -> None:
+    code = "import pandas as pd\n\ndef apply(df, ctx):\n    np = 3\n    return pd.DataFrame(df)\n"
+    assert add_missing_imports(code) == (code, False)
