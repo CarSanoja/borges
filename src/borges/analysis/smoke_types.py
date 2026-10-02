@@ -38,6 +38,7 @@ class SmokeConfig:
     timeout_s: float = 60.0
     reviewer: Reviewer | None = None
     on_review: OnReview | None = None
+    result_check: Callable[[dict[str, Any]], str | None] | None = None
 
 
 @dataclass

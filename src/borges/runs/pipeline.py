@@ -13,6 +13,7 @@ from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.analysis.narrator import narrate
 from borges.analysis.planner import plan_analysis
 from borges.analysis.profile import profile_dataframe
+from borges.analysis.scale_check import scale_check
 from borges.analysis.smoke_review import llm_reviewer
 from borges.config import Settings
 from borges.garden.executor import GardenExecutor
@@ -154,6 +155,7 @@ class Pipeline:
             self.settings.borges_step_timeout_s,
             reviewer=llm_reviewer(self.llm, plan),
             on_review=on_review,
+            result_check=scale_check(plan.decision_rule),
         )
         async with self._stage("coding"):
             plan = await code_plan(

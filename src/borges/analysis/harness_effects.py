@@ -40,8 +40,15 @@ CHECKS_SOURCE = """
         return merged
 
     def _check_produces(out, ctx):
+        import fnmatch as _fnmatch
+
+        present = list(map(str, out.columns)) + list(map(str, ctx))
         for name in __PRODUCES__:
-            if name not in out.columns and name not in ctx:
+            if any(char in name for char in "*?["):
+                found = bool(_fnmatch.filter(present, name))
+            else:
+                found = name in out.columns or name in ctx
+            if not found:
                 raise ValueError(
                     "this step must produce " + repr(name)
                     + " (every option of the step writes the same names so later steps can read"

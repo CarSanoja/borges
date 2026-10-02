@@ -7,6 +7,7 @@ from borges.analysis.harness import RESULT_KEYS
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts import compact_json, messages
 from borges.analysis.prompts.notes import describe_column_notes
+from borges.analysis.scale_check import scale_instruction
 
 ALLOWLIST = ", ".join(sorted(ALLOWED_IMPORTS))
 _REJECTED_IMPORT = re.compile(r"import of '([\w.]+)' is not allowed")
@@ -133,6 +134,7 @@ def build_messages(
         f"Current step: {step.id} ({step.kind}) {step.title}. {step.description}",
         f"Option {option.id}: {option.label}\nSpec: {option.spec}",
         f"Write `{function}(df, ctx)`.",
+        *([scale_instruction(plan.decision_rule)] if step.kind == "model" else []),
         contract_reminder(step.kind),
     ]
     if error is not None:

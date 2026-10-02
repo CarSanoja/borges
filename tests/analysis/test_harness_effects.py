@@ -252,3 +252,22 @@ def test_unseeded_randomness_is_reproducible(tmp_path: Path) -> None:
     outputs = [_execute(tmp_path, "model", UNSEEDED).stdout for _ in range(2)]
     assert parse_output(outputs[0])[1] == parse_output(outputs[1])[1]
     assert parse_output(outputs[0])[1] is not None
+
+
+ADDS_DUMMIES = """
+def apply(df, ctx):
+    out = df.copy()
+    out["variant_control"] = (out["variant"] == "control").astype(int)
+    out["variant_treat"] = (out["variant"] == "treat").astype(int)
+    return out
+"""
+
+
+def test_wildcard_produced_name_matches_any_column(tmp_path: Path) -> None:
+    done, error, _ = run(tmp_path, *make("transform", ADDS_DUMMIES, produces=["variant_*"]))
+    assert done.returncode == 0, error
+
+
+def test_wildcard_produced_name_with_no_match_fails(tmp_path: Path) -> None:
+    done, error, _ = run(tmp_path, *make("transform", ADDS_DUMMIES, produces=["position_*"]))
+    assert done.returncode == 1 and error is not None and "'position_*'" in error

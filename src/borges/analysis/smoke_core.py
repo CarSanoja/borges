@@ -83,6 +83,8 @@ async def _attempt(
     checkpoint, error, effects, result = await execute(config, parent, step, option)
     if error is None and check is not None:
         error = check(effects)
+    if error is None and result is not None and config.result_check is not None:
+        error = config.result_check(result)
     return checkpoint, error, effects, result
 
 
