@@ -18,25 +18,16 @@ from borges.llm.client import (
     Usage,
     UsageTotals,
 )
-from borges.llm.json_output import parse_model, schema_instructions
+from borges.llm.json_output import parse_model
+from borges.llm.nebius_transport import (
+    TruncatedOutput,
+    create_completion,
+    estimate_prompt_tokens,
+    retry_messages,
+    with_schema_instructions,
+)
 from borges.llm.scripted_provider import fixture_name
 from borges.llm.spend import RunBudget, SpendLedger
-
-CHARS_PER_TOKEN = 3.5
-
-
-class TruncatedOutput(LLMError):
-    pass
-
-
-def with_schema_instructions(
-    messages: list[dict[str, str]], schema: type[BaseModel]
-) -> list[dict[str, str]]:
-    instructions = schema_instructions(schema)
-    if messages and messages[0]["role"] == "system":
-        head = {"role": "system", "content": f"{messages[0]['content']}\n\n{instructions}"}
-        return [head, *messages[1:]]
-    return [{"role": "system", "content": instructions}, *messages]
 
 
 class NebiusLLM:
@@ -90,15 +81,7 @@ class NebiusLLM:
             try:
                 parsed = parse_model(text, schema)
             except LLMError as first:
-                retry = [
-                    *sent,
-                    {"role": "assistant", "content": text},
-                    {
-                        "role": "user",
-                        "content": f"Your answer was invalid ({first}). "
-                        "Answer again with only the corrected JSON object.",
-                    },
-                ]
+                retry = retry_messages(sent, text, first)
                 text, t_in, t_out, extra = await self._call_keyed(
                     key, spec, retry, schema, max_tokens, temperature
                 )
@@ -171,8 +154,7 @@ class NebiusLLM:
         max_tokens: int,
         temperature: float,
     ) -> tuple[str, int, int, float]:
-        prompt_chars = sum(len(m["content"]) for m in messages)
-        estimate = spec.cost(int(prompt_chars / CHARS_PER_TOKEN), max_tokens)
+        estimate = spec.cost(estimate_prompt_tokens(messages), max_tokens)
         guards = [g for g in (self.ledger, self.run_budget) if g is not None]
         reserved: list[SpendLedger | RunBudget] = []
         try:
@@ -203,7 +185,7 @@ class NebiusLLM:
             "temperature": temperature,
             "extra_body": {"chat_template_kwargs": {"enable_thinking": spec.thinking}},
         }
-        response = await self._create(kwargs, schema)
+        response = await create_completion(self.client, kwargs, schema)
         try:
             text = response.choices[0].message.content or ""
         except (AttributeError, IndexError) as exc:
@@ -213,8 +195,7 @@ class NebiusLLM:
         tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0)
         tokens_out = int(getattr(usage, "completion_tokens", 0) or 0)
         if usage is None or not (tokens_in or tokens_out):
-            prompt_chars = sum(len(m["content"]) for m in messages)
-            tokens_in, tokens_out = int(prompt_chars / CHARS_PER_TOKEN), max_tokens
+            tokens_in, tokens_out = estimate_prompt_tokens(messages), max_tokens
         cost = spec.cost(tokens_in, tokens_out)
         self.totals.add(
             Usage(model=spec.id, tokens_in=tokens_in, tokens_out=tokens_out, cost_usd=cost)
@@ -225,19 +206,3 @@ class NebiusLLM:
         if truncated:
             raise TruncatedOutput("output truncated at max_tokens")
         return text, tokens_in, tokens_out, cost
-
-    async def _create(self, kwargs: dict[str, Any], schema: type[BaseModel] | None) -> Any:
-        try:
-            if schema is None:
-                return await self.client.chat.completions.create(**kwargs)
-            json_schema = {"name": schema.__name__, "schema": schema.model_json_schema()}
-            structured = {"type": "json_schema", "json_schema": json_schema}
-            try:
-                return await self.client.chat.completions.create(
-                    response_format=structured, **kwargs
-                )
-            except openai.BadRequestError:
-                fallback = {"type": "json_object"}
-                return await self.client.chat.completions.create(response_format=fallback, **kwargs)
-        except openai.OpenAIError as exc:
-            raise LLMError(f"Nebius request failed: {exc}") from exc
