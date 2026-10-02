@@ -1,18 +1,8 @@
 from __future__ import annotations
 
-import shlex
-
-from borges.analysis import harness
-from borges.analysis.models import AnalysisPlan
 from borges.garden.models import Universe
 from borges.runs.models import RunSnapshot, UniverseDetail, UniverseStepDetail
-
-
-def _chain_command(plan: AnalysisPlan, universe: Universe) -> str:
-    commands = [
-        shlex.join(harness.step_command(step.id, universe.choices[step.id])) for step in plan.steps
-    ]
-    return " && ".join(commands)
+from borges.runs.reproduce_commands import ReproducibleUniverse, with_reproduce
 
 
 def _checkpoint_id(universe: Universe, index: int, n_steps: int) -> str | None:
@@ -21,7 +11,9 @@ def _checkpoint_id(universe: Universe, index: int, n_steps: int) -> str | None:
     return universe.checkpoints[position] if position < len(universe.checkpoints) else None
 
 
-def build_universe_detail(snapshot: RunSnapshot, universe_id: str) -> UniverseDetail:
+def build_universe_detail(
+    snapshot: RunSnapshot, universe_id: str, recorded_case: str | None = None
+) -> ReproducibleUniverse:
     """Raises KeyError when the run has no plan yet or the universe is unknown."""
     universe = snapshot.garden.universes[universe_id]
     plan = snapshot.plan
@@ -38,7 +30,5 @@ def build_universe_detail(snapshot: RunSnapshot, universe_id: str) -> UniverseDe
         )
         for index, step in enumerate(plan.steps)
     ]
-    flip = snapshot.flip
-    verified = flip is not None and flip.universe_id == universe_id and flip.reproduce_command
-    command = flip.reproduce_command if verified and flip else _chain_command(plan, universe)
-    return UniverseDetail(universe=universe, steps=steps, reproduce_command=command or "")
+    detail = UniverseDetail(universe=universe, steps=steps, reproduce_command="")
+    return with_reproduce(detail, snapshot.run_id, recorded_case)

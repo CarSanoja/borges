@@ -11,6 +11,7 @@ from borges.config import Settings, get_settings
 from borges.runs.detail import build_universe_detail
 from borges.runs.models import RunRequest, RunSnapshot
 from borges.runs.orchestrator import new_run_id
+from borges.runs.reproduce import reproduction_lines
 
 app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
 
@@ -112,3 +113,19 @@ def universe(run_id: str, universe_id: str) -> None:
         typer.echo(str(error), err=True)
         raise typer.Exit(1) from error
     typer.echo("\n".join(universe_lines(detail)))
+
+
+@app.command()
+def reproduce(
+    case: Annotated[str, typer.Option("--case", help="Case id")],
+    universe: Annotated[str, typer.Option("--universe", help="Universe id from the recording")],
+) -> None:
+    """Re-execute one recorded universe on the case dataset and compare it to the recording."""
+    try:
+        plan, rep = asyncio.run(cli_runtime.reproduce_recorded(get_settings(), case, universe))
+    except (KeyError, FileNotFoundError) as error:
+        typer.echo(str(error).strip("'\""), err=True)
+        raise typer.Exit(1) from error
+    typer.echo("\n".join(reproduction_lines(case, plan, rep)))
+    if not rep.matches:
+        raise typer.Exit(1)

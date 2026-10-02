@@ -184,7 +184,9 @@ async def test_universe_detail_for_the_flip_and_for_a_plain_universe(
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
     flip_id = snapshot.flip.universe_id
     detail = rig.orchestrator.universe_detail("r_test", flip_id)
-    assert detail.reproduce_command == "python go.py"
+    assert (
+        detail.reproduce_command == f"python borges_r_test_{flip_id}.py --data path/to/data.parquet"
+    )
     assert [s.changed for s in detail.steps] == [False, True]
     assert detail.steps[1].option.code == "code-y"
     assert detail.steps[0].trace.rows_before == 3
@@ -192,7 +194,7 @@ async def test_universe_detail_for_the_flip_and_for_a_plain_universe(
 
     baseline = snapshot.garden.baseline
     plain = rig.orchestrator.universe_detail("r_test", baseline.id)
-    assert plain.reproduce_command == "python steps/s1__a.py && python steps/s2__x.py"
+    assert plain.reproduce_command.startswith(f"python borges_r_test_{baseline.id}.py --data")
     with pytest.raises(KeyError):
         rig.orchestrator.universe_detail("r_test", "u_missing")
 
