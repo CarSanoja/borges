@@ -16,6 +16,9 @@ statsmodels, statsmodels.api, statsmodels.formula.api. Any other top-level state
 rejected. No file, network or process access, no eval/exec, no dunder access.
 - `ctx` is a JSON-serialisable dict that carries decisions forward; it may be mutated in \
 place. Store only JSON-serialisable values (lists, numbers, strings).
+- The code guard rejects subscripts whose key is built at run time. Never write \
+`df[col + "_z"]` or `df[f"{col}_z"]`; write each column name as a plain string literal, or \
+build new columns with `df.assign(**{name: values})` or `df.rename(columns=mapping)`.
 - Be deterministic: any randomness uses a fixed seed.
 - Use exact column names. Do not mutate the input frame in place unless copying first. Do \
 not print. No comments.

@@ -121,13 +121,9 @@ async def test_record_then_replay_round_trip(tmp_path: Path) -> None:
     live = make(client, record_dir=record_dir)
     recorded = await live.complete(Role.CODER, MESSAGES, key="coder:s1.o2:repair", schema=Answer)
     path = record_dir / "coder__s1.o2__repair.json"
-    assert set(json.loads(path.read_text())) == {
-        "model",
-        "text",
-        "parsed",
-        "tokens_in",
-        "tokens_out",
-    }
+    stored = json.loads(path.read_text())
+    assert set(stored) == {"model", "text", "parsed", "tokens_in", "tokens_out", "latency_s"}
+    assert stored["latency_s"] >= 0
     replayed = await ScriptedLLM(record_dir).complete(
         Role.CODER, MESSAGES, key="coder:s1.o2:repair", schema=Answer
     )

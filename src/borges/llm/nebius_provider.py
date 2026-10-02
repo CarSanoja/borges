@@ -46,7 +46,9 @@ class NebiusLLM:
         record_dir: Path | None = None,
         client: Any = None,
         thinking_body: Callable[[bool], dict[str, Any]] = nebius_thinking_body,
+        retry_truncated_without_thinking: bool = False,
     ) -> None:
+        self.retry_truncated_without_thinking = retry_truncated_without_thinking
         self.thinking_body = thinking_body
         self.role_models = role_models
         self.cache = cache
@@ -100,6 +102,7 @@ class NebiusLLM:
             "parsed": parsed.model_dump(mode="json") if parsed else None,
             "tokens_in": tokens_in,
             "tokens_out": tokens_out,
+            "latency_s": round(time.perf_counter() - started, 3),
         }
         if self.cache:
             self.cache.put(cache_id, record)
@@ -147,6 +150,12 @@ class NebiusLLM:
     ) -> tuple[str, int, int, float]:
         try:
             return await self._call(spec, messages, schema, max_tokens, temperature)
+        except TruncatedOutput as exc:
+            if not (self.retry_truncated_without_thinking and spec.thinking):
+                raise LLMError(f"{key}: output truncated at max_tokens") from exc
+        quiet = spec.model_copy(update={"thinking": False})
+        try:
+            return await self._call(quiet, messages, schema, max_tokens, temperature)
         except TruncatedOutput as exc:
             raise LLMError(f"{key}: output truncated at max_tokens") from exc
 

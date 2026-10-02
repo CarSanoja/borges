@@ -30,6 +30,7 @@ def make_llm(
             base_url=settings.borges_local_base_url,
             role_models=local_role_models(settings.borges_local_model),
             thinking_body=ollama_thinking_body,
+            retry_truncated_without_thinking=True,
             cache=DiskCache(settings.borges_home / "llm-cache"),
             record_dir=record_dir,
         )

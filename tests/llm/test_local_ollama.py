@@ -107,3 +107,28 @@ async def test_nebius_keeps_chat_template_switch() -> None:
 def test_factory_local_uses_the_ollama_switch(tmp_path: Path) -> None:
     llm = make_llm(Settings(_env_file=None, borges_home=tmp_path), mode="local")
     assert llm.thinking_body is ollama_thinking_body
+
+
+async def test_truncated_thinking_reply_is_retried_without_thinking() -> None:
+    client = FakeClient(
+        recorded("ollama_truncated_thinking.json"), recorded("ollama_effort_none.json")
+    )
+    llm = local(client, retry_truncated_without_thinking=True)
+    response = await llm.complete(Role.PLANNER, MESSAGES, key="planner:x", max_tokens=40)
+    assert client.calls[0]["extra_body"] == {}
+    assert client.calls[1]["extra_body"] == {"reasoning_effort": "none"}
+    assert json.loads(response.text) == {"answer": 42, "label": "sum"}
+
+
+async def test_retry_without_thinking_still_fails_when_quiet_reply_is_truncated() -> None:
+    truncated = recorded("ollama_truncated_thinking.json")
+    client = FakeClient(truncated, truncated)
+    llm = local(client, retry_truncated_without_thinking=True)
+    with pytest.raises(LLMError, match="planner:x: output truncated"):
+        await llm.complete(Role.PLANNER, MESSAGES, key="planner:x", max_tokens=40)
+    assert len(client.calls) == 2
+
+
+def test_local_factory_enables_the_thinking_retry() -> None:
+    llm = make_llm(Settings(_env_file=None), "local")
+    assert isinstance(llm, NebiusLLM) and llm.retry_truncated_without_thinking
