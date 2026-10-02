@@ -13,7 +13,7 @@ LIVE_ONLY_MESSAGE = (
     "Case '{case_id}' is live-only: it has no scripted fixtures and no recording. "
     "Run it with llm=nebius and NEBIUS_API_KEY."
 )
-_SAFE_ID = re.compile(r"^[A-Za-z0-9_-]+$")
+_SAFE_ID = re.compile(r"[A-Za-z0-9_-]{1,128}")
 
 
 class CaseRegistry:
@@ -24,7 +24,7 @@ class CaseRegistry:
 
     def _dir(self, case_id: str) -> Path:
         directory = self.cases_dir / case_id
-        if not _SAFE_ID.match(case_id) or not (directory / "case.json").is_file():
+        if not _SAFE_ID.fullmatch(case_id) or not (directory / "case.json").is_file():
             raise KeyError(case_id)
         return directory
 

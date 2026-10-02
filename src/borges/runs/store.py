@@ -14,7 +14,7 @@ from borges.runs.ownership import is_orphan
 from borges.runs.state import fold
 
 TERMINAL_TYPES = frozenset({"run.finished", "run.failed"})
-_SAFE_ID = re.compile(r"^[A-Za-z0-9_-]+$")
+_SAFE_ID = re.compile(r"[A-Za-z0-9_-]{1,128}")
 
 
 class RunStore:
@@ -24,7 +24,7 @@ class RunStore:
         self.runs_dir = Path(runs_dir)
 
     def _dir(self, run_id: str) -> Path:
-        if not _SAFE_ID.match(run_id):
+        if not _SAFE_ID.fullmatch(run_id):
             raise KeyError(run_id)
         return self.runs_dir / run_id
 

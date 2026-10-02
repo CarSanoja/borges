@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     borges_rate_key_burst: int = 400
     borges_rate_key_per_s: float = 30.0
     borges_audit_reads: bool = False
+    borges_anon_active_runs: int = 1
+    borges_anon_runs_per_min: float = 6.0
+    borges_anon_live_runs_per_hour: float = 12.0
     borges_agent_token_ttl_s: int = 3600
     borges_audit_anchor_key: str | None = None
     borges_audit_anchor_every: int = 50

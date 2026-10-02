@@ -19,6 +19,7 @@ from borges.api import (
     routes_trace,
     routes_uploads,
 )
+from borges.api.body_limit import BodyLimitMiddleware
 from borges.api.spa import mount_frontend
 from borges.api.startup import reconcile
 from borges.api.uploads import UploadStore
@@ -28,6 +29,7 @@ from borges.identity.authentication import Authenticator
 from borges.identity.chain import ChainBroken
 from borges.identity.middleware import IdentityMiddleware
 from borges.identity.rate_limit import RateLimiter
+from borges.identity.run_quota import RunQuota
 from borges.telemetry.run_telemetry import anchor_global_audit
 
 CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
@@ -80,8 +82,10 @@ def create_app(
         resolved.borges_home / "uploads", resolved.borges_upload_quota_mb
     )
 
+    app.add_middleware(BodyLimitMiddleware)
     app.state.authenticator = Authenticator(resolved)
     app.state.limiter = RateLimiter(resolved)
+    app.state.run_quota = RunQuota(resolved)
     app.add_middleware(
         IdentityMiddleware,
         settings=resolved,

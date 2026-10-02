@@ -165,3 +165,9 @@ def test_unowned_run_is_interrupted_only_after_the_cutoff(tmp_path: Path) -> Non
     store.append(Event(seq=1, ts=time.time() - 3600, run_id="r_old", type="stage", data={}))
     assert store.interrupt_running(set()) == ["r_old"]
     assert store.meta("r_fresh")["status"] == "running"
+
+
+def test_run_ids_with_a_newline_or_an_oversized_name_are_unknown_not_errors(tmp_path: Path) -> None:
+    store = RunStore(tmp_path)
+    for bad in ("abc\n", "a" * 300, "..", "a/b", ""):
+        assert store.exists(bad) is False

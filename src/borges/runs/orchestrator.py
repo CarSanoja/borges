@@ -111,7 +111,9 @@ class RunOrchestrator:
         data: bytes | None = None,
         dataset_name: str | None = None,
     ) -> str:
-        resolved = resolve_run(request, self.registry, self.settings, data, dataset_name)
+        resolved = await asyncio.to_thread(
+            resolve_run, request, self.registry, self.settings, data, dataset_name
+        )
         run_id = new_run_id()
         self._register(run_id, request, resolved)
         task = asyncio.create_task(self.execute(run_id, request, data, dataset_name))
@@ -190,7 +192,9 @@ class RunOrchestrator:
         data: bytes | None = None,
         dataset_name: str | None = None,
     ) -> RunSnapshot:
-        resolved = resolve_run(request, self.registry, self.settings, data, dataset_name)
+        resolved = await asyncio.to_thread(
+            resolve_run, request, self.registry, self.settings, data, dataset_name
+        )
         if not self.store.exists(run_id):
             self._register(run_id, request, resolved)
         telemetry = open_telemetry(self.telemetry_factory, self.settings, self.store, run_id)

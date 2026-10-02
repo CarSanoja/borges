@@ -4,7 +4,7 @@ import inspect
 import re
 from typing import TYPE_CHECKING, Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import PlainTextResponse
 
 from borges.api.deps import (
@@ -25,6 +25,7 @@ from borges.armor.errors import ArmorRefusal
 from borges.config import Settings
 from borges.identity.deps import get_principal, require_scope
 from borges.identity.principal import Principal
+from borges.identity.run_quota import RunQuota
 from borges.identity.run_scopes import scope_for_run
 from borges.runs.detail import build_universe_detail
 from borges.runs.export_script import build_script
@@ -73,10 +74,24 @@ async def create_run(
     settings: Annotated[Settings, Depends(get_settings)],
     uploads: Annotated[UploadStore, Depends(get_uploads)],
     principal: Annotated[Principal, Depends(get_principal)],
+    http: Request,
 ) -> RunCreated:
     if request.case_id is None and request.upload_id is None:
         raise HTTPException(status_code=400, detail="Provide a case_id or an upload_id.")
     require_scope(principal, scope_for_run(request, settings))
+    quota: RunQuota = http.app.state.run_quota
+    client = http.client.host if http.client else "unknown"
+    audited_policy(
+        settings,
+        "run_quota",
+        quota.admit,
+        principal,
+        client,
+        (request.llm or settings.borges_llm) == "nebius",
+        lambda run_id: run_id in getattr(orchestrator, "tasks", {}),
+        principal=principal.id,
+        client=client,
+    )
     request = audited_policy(
         settings,
         "run",
@@ -104,6 +119,7 @@ async def create_run(
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    quota.record(principal, client, run_id)
     return RunCreated(run_id=run_id)
 
 

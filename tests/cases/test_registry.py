@@ -30,7 +30,7 @@ def test_list_returns_cards_sorted_and_ignores_folders_without_case_json(cases_d
 def test_get_and_unknown_ids(cases_dir: Path) -> None:
     registry = CaseRegistry(cases_dir)
     assert registry.get("alpha").dataset_name == "demo data"
-    for bad in ("missing", "no_case_json", "../alpha", ""):
+    for bad in ("missing", "no_case_json", "../alpha", "", "alpha\n", "a" * 300):
         with pytest.raises(KeyError):
             registry.get(bad)
 
