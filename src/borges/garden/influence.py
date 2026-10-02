@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
 from borges.garden.models import DecisionInfluence, Flip, Garden, Report
+from borges.garden.reversal import REVERSED_REASON
 
 
 def decision_influence(plan: AnalysisPlan, garden: Garden) -> list[DecisionInfluence]:
@@ -44,6 +45,15 @@ def failed_universes(garden: Garden) -> list[str]:
     return lines
 
 
+def reversal_caveats(garden: Garden) -> list[str]:
+    reasons = {
+        (u.error or "").strip().splitlines()[0]
+        for u in garden.universes.values()
+        if u.status == "failed" and (u.error or "").startswith(REVERSED_REASON)
+    }
+    return [f"A candidate flip was rejected: {reason}." for reason in sorted(reasons)]
+
+
 def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Report:
     baseline = garden.baseline
     if baseline is None or baseline.result is None or baseline.verdict is None:
@@ -61,4 +71,5 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         n_flipped=sum(1 for u in finished if u.flipped is True),
         n_failed=len(failed),
         failed=failed,
+        caveats=reversal_caveats(garden),
     )

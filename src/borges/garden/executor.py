@@ -13,6 +13,7 @@ from borges.garden.executor_errors import failure_detail
 from borges.garden.models import Universe, UniverseKind
 from borges.garden.plausibility import implausible_message, is_implausible
 from borges.garden.prefix_cache import Prefix, PrefixCache, PrefixNode
+from borges.garden.reversal import find_reversal
 from borges.runs.events import CheckpointCreatedData
 from borges.sandbox.backend import BranchBackend, Checkpoint
 
@@ -47,6 +48,7 @@ class GardenExecutor:
         self.baseline_verdict: str | None = None
         self.baseline_result: AnalysisResult | None = None
         self.root: Checkpoint | None = None
+        self.baseline_checkpoints: list[str] = []
         self._cache = PrefixCache()
         self._semaphore = asyncio.Semaphore(concurrency)
         self._created = 0
@@ -148,6 +150,9 @@ class GardenExecutor:
             return checkpoints, traces, None, "final step produced no result"
         return checkpoints, traces, result, None
 
+    def _flips(self, result: AnalysisResult) -> bool:
+        return self.plan.decision_rule.label(result) != self.baseline_verdict
+
     async def run_universe(self, choices: dict[str, str], kind: UniverseKind) -> Universe:
         if self.root is None:
             raise RuntimeError("GardenExecutor.setup() must be called before run_universe()")
@@ -172,6 +177,19 @@ class GardenExecutor:
             ):
                 error = implausible_message(self.baseline_result, result)
                 result = None
+            if result is not None and kind != "baseline" and self.baseline_checkpoints:
+                assert self.root is not None
+                reason = await find_reversal(
+                    self.backend,
+                    self.plan,
+                    self.root.id,
+                    self.baseline_checkpoints,
+                    checkpoints,
+                    full,
+                )
+                if reason is not None and self._flips(result):
+                    error = reason
+                    result = None
             if result is None:
                 universe.status = "failed"
                 universe.error = error
@@ -180,6 +198,7 @@ class GardenExecutor:
                 if kind == "baseline":
                     self.baseline_verdict = verdict
                     self.baseline_result = result
+                    self.baseline_checkpoints = checkpoints
                 universe.status = "done"
                 universe.result = result
                 universe.verdict = verdict
