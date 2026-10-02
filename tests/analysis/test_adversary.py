@@ -37,7 +37,7 @@ async def test_maps_and_filters_proposals() -> None:
             proposed("d1", "winsor"),
             proposed("d1", "adv_winsor"),
             proposed("zz", "unknown"),
-            proposed("d1", "trim"),
+            proposed("d1", "clip"),
             proposed("m1", "other", spec="  SPEC for welch ON outcome "),
             proposed("m1", "robust"),
             proposed("d1", "late"),
@@ -48,7 +48,7 @@ async def test_maps_and_filters_proposals() -> None:
     proposals = await propose_options(llm, plan, baseline(), max_proposals=3)
     assert [(p.step_id, p.option.id) for p in proposals] == [
         ("d1", "adv_winsor"),
-        ("d1", "adv_trim"),
+        ("d1", "adv_clip"),
         ("m1", "adv_robust"),
     ]
     option = proposals[0].option
@@ -71,3 +71,19 @@ async def test_drops_duplicate_of_existing_id_and_spec() -> None:
     )
     proposals = await propose_options(FakeLLM({"adversary": out}), plan, baseline())
     assert [p.option.id for p in proposals] == ["adv_x"]
+
+
+async def test_drops_duplicate_of_existing_label_and_prefixed_id() -> None:
+    plan = make_plan()
+    same_label = proposed("d1", "fresh_id")
+    same_label.label = "label  TRIM!"
+    out = AdversaryOutput(
+        proposals=[
+            proposed("d1", "adv_trim"),
+            proposed("d1", "alt_opt_keep"),
+            same_label,
+            proposed("d1", "genuinely_new"),
+        ]
+    )
+    proposals = await propose_options(FakeLLM({"adversary": out}), plan, baseline())
+    assert [p.option.id for p in proposals] == ["adv_genuinely_new"]

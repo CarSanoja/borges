@@ -6,11 +6,17 @@ from borges.llm.client import BudgetExceeded, LLMClient
 from borges.llm.gather import gather_cancelling
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionJudgedData
+from borges.runs.judged_ledger import JudgedLedger
 from borges.runs.runner import publish_plan
 
 
 async def _judge_alternative(
-    llm: LLMClient, plan: AnalysisPlan, emitter: RunEmitter, step: Step, option: Option
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    emitter: RunEmitter,
+    step: Step,
+    option: Option,
+    ledger: JudgedLedger | None = None,
 ) -> Option | None:
     try:
         judgement = await judge_option(llm, plan, step, option, "planner")
@@ -36,6 +42,8 @@ async def _judge_alternative(
         origin="planner",
     )
     await emitter.emit("option.judged", data.model_dump(mode="json"))
+    if ledger is not None:
+        ledger.record(step.id, option, judgement)
     if not judgement.accepted:
         return None
     return option.model_copy(
@@ -47,14 +55,18 @@ async def _judge_alternative(
 
 
 async def judge_plan_options(
-    llm: LLMClient, plan: AnalysisPlan, emitter: RunEmitter, summary: CodingSummary
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    emitter: RunEmitter,
+    summary: CodingSummary,
+    ledger: JudgedLedger | None = None,
 ) -> None:
     """Judge every non-default planner option; drop the rejected ones before any coding."""
     targets = [(s, o) for s in plan.steps for o in s.options if not o.is_default]
     if not targets:
         return
     outcomes = await gather_cancelling(
-        _judge_alternative(llm, plan, emitter, step, option) for step, option in targets
+        _judge_alternative(llm, plan, emitter, step, option, ledger) for step, option in targets
     )
     replaced = {
         (step.id, option.id): judged

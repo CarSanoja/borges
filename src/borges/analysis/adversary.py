@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan, Option, Proposal
+from borges.analysis.option_signature import same_option
 from borges.analysis.prompts.adversary import build_messages
 from borges.analysis.schemas import AdversaryOutput
 from borges.garden.models import Universe
 from borges.llm.client import LLMClient, Role
-
-
-def _norm(text: str) -> str:
-    return " ".join(text.lower().split())
 
 
 async def propose_options(
@@ -23,7 +20,7 @@ async def propose_options(
     )
     out = AdversaryOutput.model_validate(response.parsed)
     seen_ids = {s.id: {o.id for o in s.options} for s in plan.steps}
-    seen_specs = {_norm(o.spec) for s in plan.steps for o in s.options}
+    known: dict[str, list[Option]] = {s.id: list(s.options) for s in plan.steps}
     proposals: list[Proposal] = []
     for item in out.proposals:
         if len(proposals) >= max_proposals:
@@ -31,10 +28,6 @@ async def propose_options(
         if item.step_id not in seen_ids:
             continue
         option_id = item.id if item.id.startswith("adv_") else f"adv_{item.id}"
-        if option_id in seen_ids[item.step_id] or _norm(item.spec) in seen_specs:
-            continue
-        seen_ids[item.step_id].add(option_id)
-        seen_specs.add(_norm(item.spec))
         option = Option(
             id=option_id,
             label=item.label,
@@ -44,5 +37,11 @@ async def propose_options(
             origin="adversary",
             source=item.source,
         )
+        if option_id in seen_ids[item.step_id]:
+            continue
+        if any(same_option(option, other) for other in known[item.step_id]):
+            continue
+        seen_ids[item.step_id].add(option_id)
+        known[item.step_id].append(option)
         proposals.append(Proposal(step_id=item.step_id, option=option))
     return proposals

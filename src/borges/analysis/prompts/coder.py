@@ -63,6 +63,13 @@ hand-computed standard error that is wrong makes the whole analysis wrong. Take 
 confidence intervals from the fitted result (`pvalues`, `conf_int()`, or exp of them for \
 ratios), never recompute them from a hand-written distribution (`sm.norm`, `sm.t` and the \
 like do not exist).
+- A model step never selects rows by value: inside estimate() do not write `df[df["x"] == 1]`, \
+`.loc[<comparison>]`, `.query(...)` or an `isin`/`between` mask. The only rows a model may \
+drop are incomplete ones (`dropna`, or a mask that only tests isna/notna); excluding or keeping \
+records by value is a decision of a filter step and the code guard rejects it.
+- Return estimate, ci_low and ci_high in the units of the estimand: when the estimand or metric \
+says percentage points or percent, multiply the estimate and both bounds by 100 (a difference \
+in proportions of -0.0014 is -0.14 percentage points).
 - Never drop columns: filters only drop rows, transforms and features keep every input column \
 and add or change columns. The one exception is a step whose spec aggregates rows (one row per \
 group, e.g. per user): it returns the group key, the grouping variables the later steps need \

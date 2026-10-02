@@ -82,3 +82,11 @@ async def test_judge_option_passes_the_plan_column_notes() -> None:
     step = plan.step("d1")
     await judge_option(llm, plan, step, step.option("trim"))
     assert "cnorm_1: a positive item" in llm.calls[0].messages[1]["content"]
+
+
+def test_judge_prompt_rejects_linear_rescalings_of_the_conventional_option() -> None:
+    from borges.analysis.prompts.judge import SYSTEM
+
+    assert "only a linear rescaling of the conventional one" in SYSTEM
+    assert "sum instead of a mean" in SYSTEM
+    assert 'reason "equivalent to the conventional option"' in SYSTEM

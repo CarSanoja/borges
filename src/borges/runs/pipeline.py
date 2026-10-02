@@ -20,6 +20,7 @@ from borges.llm.client import BudgetExceeded, LLMClient, UsageTotals
 from borges.runs.adversary_round import run_adversary_round
 from borges.runs.emitter import RunEmitter
 from borges.runs.inputs import ResolvedRun
+from borges.runs.judged_ledger import JudgedLedger
 from borges.runs.pipeline_callbacks import coding_callbacks
 from borges.runs.pipeline_caveats import report_caveats
 from borges.runs.pipeline_data import load_dataframe
@@ -53,6 +54,7 @@ class Pipeline:
         self.report: Report | None = None
         self.caveats: list[str] = []
         self.coding = CodingSummary()
+        self.judged = JudgedLedger()
         self.smoke: SmokeConfig | None = None
         self.search = SearchSummary(
             max_combinations_per_level=MAX_COMBINATIONS_PER_LEVEL,
@@ -84,7 +86,7 @@ class Pipeline:
         async with self.stage("planning"):
             plan = await plan_analysis(self.llm, profile, resolved.question, resolved.decision_rule)
             await publish_plan(self.emitter, plan)
-            await judge_plan_options(self.llm, plan, self.emitter, self.coding)
+            await judge_plan_options(self.llm, plan, self.emitter, self.coding, self.judged)
 
         on_coded, on_smoke, on_review = coding_callbacks(self.emitter)
         smoke = SmokeConfig(
@@ -166,7 +168,7 @@ class Pipeline:
         async with self.stage("adversary"):
             try:
                 await run_adversary_round(
-                    self.llm, plan, runner, self.emitter, baseline, self.smoke
+                    self.llm, plan, runner, self.emitter, baseline, self.smoke, self.judged
                 )
             except Exception as exc:
                 self.caveats.append(f"The adversary stage failed and was skipped: {exc}")

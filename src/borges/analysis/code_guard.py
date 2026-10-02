@@ -10,6 +10,7 @@ from borges.analysis.code_guard_introspection import (
     name_violations as introspection_name_violations,
 )
 from borges.analysis.code_guard_introspection import subscript_violations
+from borges.analysis.code_guard_rows import row_filter_violations
 from borges.analysis.code_guard_rules import (
     ALLOWED_IMPORTS,
     ALLOWED_TO_ATTRIBUTES,
@@ -165,4 +166,6 @@ def check_code(code: str, kind: StepKind) -> list[str]:
         violations.append(f"the function must be named '{expected}', found '{func.name}'")
     violations.extend(_signature_violations(func, func.name))
     violations.extend(_body_violations(func))
+    if kind == "model":
+        violations.extend(row_filter_violations(func))
     return violations

@@ -130,3 +130,16 @@ async def test_accepted_alternative_runs_and_defaults_are_not_judged(
     assert sorted(scenario.planner_judged) == ["s1.b", "s2.y"]
     assert any(u.choices.get("s1") == "b" for u in snapshot.garden.universes.values())
     assert snapshot.report.coding.options_dropped_by_judge == 0
+
+
+async def test_ledger_records_accepted_and_rejected_judgements(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from borges.runs.judged_ledger import JudgedLedger
+
+    patch_judge(monkeypatch, {"b"}, {"y"})
+    ledger = JudgedLedger()
+    await judge_plan_options(None, make_plan(), Emitter(), CodingSummary(), ledger)
+    rejected = ledger.find("s1", make_plan().step("s1").option("b"))
+    assert rejected is not None and rejected.judgement.accepted is False
+    assert ledger.find("s2", make_plan().step("s2").option("y")) is None

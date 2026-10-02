@@ -186,3 +186,18 @@ def test_planner_makes_covariate_sets_options_of_the_model_step() -> None:
 def test_coder_takes_p_values_and_intervals_from_the_fitted_result() -> None:
     assert "from the fitted result (`pvalues`, `conf_int()`" in CODER_SYSTEM
     assert "never recompute them from a hand-written distribution" in CODER_SYSTEM
+
+
+def test_planner_requires_percent_units_to_be_scaled_by_100() -> None:
+    assert "percentage points or percent" in PLANNER_SYSTEM
+    assert "multiply the estimate and both interval bounds by 100" in PLANNER_SYSTEM
+
+
+def test_coder_returns_estimates_in_the_estimand_units() -> None:
+    assert "in the units of the estimand" in CODER_SYSTEM
+    assert "multiply the estimate and both bounds by 100" in CODER_SYSTEM
+
+
+def test_coder_forbids_row_selection_by_value_in_a_model_step() -> None:
+    assert "A model step never selects rows by value" in CODER_SYSTEM
+    assert "The only rows a model may drop are incomplete ones" in CODER_SYSTEM

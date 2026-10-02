@@ -14,6 +14,11 @@ When column notes are given, judge the option against what the data are said to 
 option that does not fit the data as described, or whose own rationale concedes it does not \
 fit, is indefensible.
 
+An option that is only a linear rescaling of the conventional one (a sum instead of a mean, \
+a z-score of the same scale, the first principal component of two standardised items) cannot \
+change a standardised estimate: set accepted=false with reason "equivalent to the conventional \
+option".
+
 Penalise any option that changes the question or the estimand, leaks the outcome, or looks \
 chosen to produce a result. Set accepted=true only when defensibility is at least 0.6. Give a \
 one or two sentence reason and, when one exists, a short source for the practice.
