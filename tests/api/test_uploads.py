@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import io
+import json
+import re
 
 import pandas as pd
 import pytest
@@ -98,3 +100,48 @@ def test_parquet_is_detected_by_content_when_the_name_lies(tmp_path) -> None:
 def test_corrupt_parquet_is_rejected_with_a_clear_message(tmp_path) -> None:
     with pytest.raises(ValueError, match="parquet file"):
         UploadStore(tmp_path).put(b"PAR1 not really", "x.parquet")
+
+
+def stored_columns(store: UploadStore, upload_id: str) -> list[str]:
+    return list(pd.read_parquet(io.BytesIO(store.get(upload_id)[0])).columns)
+
+
+def test_hostile_column_name_is_stored_as_identifier(tmp_path) -> None:
+    hostile = "I(__import__('os').system('x'))"
+    df = pd.DataFrame({hostile: range(60), "y": range(60)})
+    store = UploadStore(tmp_path)
+    upload_id, _ = store.put(df.to_csv(index=False).encode(), "d.csv")
+    columns = stored_columns(store, upload_id)
+    assert all(re.fullmatch(r"[a-z_][a-z0-9_]*", c) for c in columns)
+    assert "(" not in "".join(columns) and "__" not in "".join(columns)
+    meta = json.loads((tmp_path / f"{upload_id}.json").read_text())
+    assert meta["columns"][columns[0]] == hostile
+
+
+def test_column_names_are_normalised_and_deduplicated(tmp_path) -> None:
+    df = pd.DataFrame(
+        {"Age (Years)": range(60), "age_years_": range(60), "": range(60), "9lives": range(60)}
+    )
+    df.columns = ["Age (Years)", "age_years_", "", "9lives"]
+    store = UploadStore(tmp_path)
+    upload_id, _ = store.put(df.to_csv(index=False).encode(), "d.csv")
+    assert stored_columns(store, upload_id) == [
+        "age_years_",
+        "age_years__2",
+        "unnamed_2",
+        "_9lives",
+    ]
+
+
+def test_forbidden_names_are_not_kept_as_columns(tmp_path) -> None:
+    df = pd.DataFrame({"os": range(60), "open": range(60)})
+    store = UploadStore(tmp_path)
+    upload_id, _ = store.put(df.to_csv(index=False).encode(), "d.csv")
+    assert stored_columns(store, upload_id) == ["os_col", "open_col"]
+
+
+def test_empty_column_name_is_replaced() -> None:
+    frame = pd.DataFrame([[1, 2]], columns=["", "!!!"])
+    normalised, mapping = uploads_module.normalise_columns(frame)
+    assert list(normalised.columns) == ["column", "column_2"]
+    assert mapping == {"column": "", "column_2": "!!!"}

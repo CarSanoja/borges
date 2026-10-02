@@ -10,15 +10,72 @@ from borges.api.app import create_app
 from borges.config import Settings
 
 
-@pytest.fixture
-def client(tmp_path, monkeypatch: pytest.MonkeyPatch) -> httpx.AsyncClient:
+def build_client(tmp_path, monkeypatch: pytest.MonkeyPatch, **settings) -> httpx.AsyncClient:
     monkeypatch.setattr(
         uploads_module.profile_module,
         "profile_dataframe",
         lambda df, name, sample=5: DatasetProfile(name=name, n_rows=len(df), columns=[]),
     )
-    app = create_app(settings=Settings(borges_home=tmp_path))
+    app = create_app(settings=Settings(_env_file=None, borges_home=tmp_path, **settings))
     return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t")
+
+
+@pytest.fixture
+def client(tmp_path, monkeypatch: pytest.MonkeyPatch) -> httpx.AsyncClient:
+    return build_client(tmp_path, monkeypatch, borges_backend="contree", nebius_api_key="k")
+
+
+def table() -> bytes:
+    return pd.DataFrame({"a": range(60), "b": range(60)}).to_csv(index=False).encode()
+
+
+async def post_upload(client: httpx.AsyncClient, headers: dict | None = None):
+    async with client:
+        return await client.post(
+            "/api/uploads", files={"file": ("d.csv", table(), "text/csv")}, headers=headers or {}
+        )
+
+
+async def test_local_backend_refuses_uploads_by_default(tmp_path, monkeypatch) -> None:
+    client = build_client(tmp_path, monkeypatch, nebius_api_key="k")
+    response = await post_upload(client)
+    assert response.status_code == 403
+    assert "isolated sandboxes" in response.json()["detail"]
+    assert not list((tmp_path / "uploads").glob("*")) if (tmp_path / "uploads").exists() else True
+
+
+async def test_local_backend_accepts_uploads_with_flag(tmp_path, monkeypatch) -> None:
+    client = build_client(
+        tmp_path, monkeypatch, nebius_api_key="k", borges_allow_untrusted_local=True
+    )
+    assert (await post_upload(client)).status_code == 200
+
+
+async def test_contree_backend_accepts_uploads_when_live_available(tmp_path, monkeypatch) -> None:
+    client = build_client(tmp_path, monkeypatch, borges_backend="contree", nebius_api_key="k")
+    assert (await post_upload(client)).status_code == 200
+
+
+async def test_contree_backend_refuses_uploads_without_live(tmp_path, monkeypatch) -> None:
+    client = build_client(tmp_path, monkeypatch, borges_backend="contree")
+    response = await post_upload(client)
+    assert response.status_code == 403
+    assert "NEBIUS_API_KEY" in response.json()["detail"]
+
+
+async def test_upload_token_rule(tmp_path, monkeypatch) -> None:
+    def make() -> httpx.AsyncClient:
+        return build_client(
+            tmp_path,
+            monkeypatch,
+            borges_backend="contree",
+            nebius_api_key="k",
+            borges_live_token="secret",
+        )
+
+    assert (await post_upload(make())).status_code == 403
+    assert (await post_upload(make(), {"X-Borges-Live-Token": "wrong"})).status_code == 403
+    assert (await post_upload(make(), {"X-Borges-Live-Token": "secret"})).status_code == 200
 
 
 async def test_upload_returns_id_and_profile(client: httpx.AsyncClient) -> None:
@@ -54,7 +111,15 @@ async def test_upload_over_quota_is_413(tmp_path, monkeypatch: pytest.MonkeyPatc
         "profile_dataframe",
         lambda df, name, sample=5: DatasetProfile(name=name, n_rows=len(df), columns=[]),
     )
-    app = create_app(settings=Settings(borges_home=tmp_path, borges_upload_quota_mb=0))
+    app = create_app(
+        settings=Settings(
+            _env_file=None,
+            borges_home=tmp_path,
+            borges_upload_quota_mb=0,
+            borges_backend="contree",
+            nebius_api_key="k",
+        )
+    )
     csv = pd.DataFrame({"a": range(60), "b": range(60)}).to_csv(index=False)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://t") as http:

@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 from borges.analysis import profile as profile_module
+from borges.analysis.code_guard_rules import FORBIDDEN_MODULES, FORBIDDEN_NAMES
 from borges.analysis.models import DatasetProfile
 
 MAX_BYTES = 20 * 1024 * 1024
@@ -31,6 +32,35 @@ def _read_table(content: bytes, filename: str) -> pd.DataFrame:
     except Exception as exc:
         kind = "parquet file" if parquet else "CSV"
         raise ValueError(f"The file is not a readable {kind}: {exc}") from exc
+
+
+def _safe_identifier(raw: object) -> str:
+    text = re.sub(r"[^a-z0-9_]", "_", str(raw).lower())
+    text = re.sub(r"_{2,}", "_", text)
+    if not text.strip("_"):
+        return "column"
+    if text[0].isdigit():
+        text = f"_{text}"
+    if text in FORBIDDEN_NAMES or text in FORBIDDEN_MODULES:
+        text = f"{text}_col"
+    return text
+
+
+def normalise_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
+    seen: set[str] = set()
+    names: list[str] = []
+    mapping: dict[str, str] = {}
+    for original in df.columns:
+        base = _safe_identifier(original)
+        candidate = base
+        counter = 2
+        while candidate in seen:
+            candidate = f"{base}_{counter}"
+            counter += 1
+        seen.add(candidate)
+        names.append(candidate)
+        mapping[candidate] = str(original)
+    return df.set_axis(names, axis=1), mapping
 
 
 class UploadQuotaError(ValueError):
@@ -57,6 +87,7 @@ class UploadStore:
             raise ValueError(f"The table needs at least {MIN_COLUMNS} columns.")
         if df.shape[0] < MIN_ROWS:
             raise ValueError(f"The table needs at least {MIN_ROWS} rows.")
+        df, columns = normalise_columns(df)
         name = Path(filename).name or "upload.csv"
         profile = profile_module.profile_dataframe(df, name)
         upload_id = uuid.uuid4().hex
@@ -66,7 +97,7 @@ class UploadStore:
         if self.quota_bytes is not None and self._used_bytes() > self.quota_bytes:
             parquet.unlink(missing_ok=True)
             raise UploadQuotaError("The upload storage of this demo is full.")
-        self._meta_path(upload_id).write_text(json.dumps({"name": name}))
+        self._meta_path(upload_id).write_text(json.dumps({"name": name, "columns": columns}))
         return upload_id, profile
 
     def get(self, upload_id: str) -> tuple[bytes, str]:

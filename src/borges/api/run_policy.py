@@ -5,7 +5,12 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from borges.api.live_rules import UNTRUSTED_LOCAL_MESSAGE, read_spend, untrusted_local_blocked
+from borges.api.live_rules import (
+    UNTRUSTED_LOCAL_MESSAGE,
+    read_spend,
+    untrusted_local_blocked,
+    uploads_unavailable_reason,
+)
 from borges.config import Settings
 from borges.runs.models import RunRequest
 
@@ -49,6 +54,15 @@ def _check_upload_trust(settings: Settings, live_token: str | None) -> None:
         (live_token or "").encode("utf-8"), expected.encode("utf-8")
     ):
         raise _reject(403, "Uploaded datasets need a valid live token.")
+
+
+def enforce_upload_policy(settings: Settings, live_token: str | None) -> None:
+    if untrusted_local_blocked(settings):
+        raise _reject(403, UNTRUSTED_LOCAL_MESSAGE)
+    reason = uploads_unavailable_reason(settings)
+    if reason is not None:
+        raise _reject(403, reason)
+    _check_upload_trust(settings, live_token)
 
 
 def enforce_run_policy(
