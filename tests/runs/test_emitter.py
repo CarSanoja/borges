@@ -49,3 +49,10 @@ async def test_usage_without_probe_is_a_noop(tmp_path: Path) -> None:
     emitter, store, _ = make(tmp_path)
     await emitter.usage()
     assert store.events("r_1") == []
+
+
+async def test_personal_data_in_event_payloads_is_redacted(tmp_path: Path) -> None:
+    emitter, store, _ = make(tmp_path)
+    await emitter.emit("stage", {"name": "x", "detail": "failed for maria@example.com", "n": 3})
+    stored = store.events("r_1")[0]
+    assert stored.data == {"name": "x", "detail": "failed for [redacted:email]", "n": 3}

@@ -11,6 +11,8 @@ import pandas as pd
 from borges.analysis import profile as profile_module
 from borges.analysis.code_guard_rules import FORBIDDEN_MODULES, FORBIDDEN_NAMES
 from borges.analysis.models import DatasetProfile
+from borges.armor.profile_guard import guard_profile
+from borges.armor.upload_scan import PiiSummary, scan_dataframe
 
 MAX_BYTES = 20 * 1024 * 1024
 PARQUET_MAGIC = b"PAR1"
@@ -89,7 +91,8 @@ class UploadStore:
             raise ValueError(f"The table needs at least {MIN_ROWS} rows.")
         df, columns = normalise_columns(df)
         name = Path(filename).name or "upload.csv"
-        profile = profile_module.profile_dataframe(df, name)
+        profile, _ = guard_profile(profile_module.profile_dataframe(df, name))
+        pii = scan_dataframe(df)
         upload_id = uuid.uuid4().hex
         self.directory.mkdir(parents=True, exist_ok=True)
         parquet = self._parquet_path(upload_id)
@@ -97,8 +100,15 @@ class UploadStore:
         if self.quota_bytes is not None and self._used_bytes() > self.quota_bytes:
             parquet.unlink(missing_ok=True)
             raise UploadQuotaError("The upload storage of this demo is full.")
-        self._meta_path(upload_id).write_text(json.dumps({"name": name, "columns": columns}))
+        meta = {"name": name, "columns": columns, "pii": pii.model_dump(mode="json")}
+        self._meta_path(upload_id).write_text(json.dumps(meta))
         return upload_id, profile
+
+    def pii(self, upload_id: str) -> PiiSummary:
+        if not _ID_PATTERN.match(upload_id) or not self._meta_path(upload_id).exists():
+            raise KeyError(upload_id)
+        stored = json.loads(self._meta_path(upload_id).read_text()).get("pii")
+        return PiiSummary.model_validate(stored) if stored else PiiSummary()
 
     def get(self, upload_id: str) -> tuple[bytes, str]:
         if not _ID_PATTERN.match(upload_id):

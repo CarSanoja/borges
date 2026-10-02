@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from borges.analysis.path_scrub import scrub_paths
+from borges.armor.pii import redact_pii
 
 SECRET = re.compile(
     r"(?i)\b(?:sk|nvapi|csk|ctr|ghp|xox[bap])[-_][A-Za-z0-9_\-]{8,}"
@@ -13,5 +14,5 @@ REDACTED = "[redacted]"
 
 
 def redact_text(value: object, limit: int | None = None) -> str:
-    text = SECRET.sub(REDACTED, scrub_paths(str(value)))
+    text = redact_pii(SECRET.sub(REDACTED, scrub_paths(str(value))))
     return text[:limit] if limit is not None else text

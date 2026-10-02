@@ -20,6 +20,7 @@ class RunRequest(BaseModel):
     llm: Literal["nebius", "scripted", "local"] | None = None
     backend: Literal["local", "contree"] | None = None
     max_universes: int | None = Field(default=None, ge=1, le=200)
+    column_notes: dict[str, str] | None = Field(default=None, max_length=200)
 
 
 class RunCreated(BaseModel):

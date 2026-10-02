@@ -14,6 +14,7 @@ from borges.runs.adversary_review import review_proposal
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData, OptionJudgedData
 from borges.runs.judged_ledger import JudgedLedger
+from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.runner import UniverseRunner, publish_plan
 
 
@@ -115,6 +116,7 @@ async def run_adversary_round(
     baseline: Universe,
     smoke: SmokeConfig | None = None,
     ledger: JudgedLedger | None = None,
+    armor: ArmorStage | None = None,
 ) -> list[Universe]:
     """Propose options from the real baseline state, judge them, then flip each accepted one."""
     try:
@@ -123,6 +125,8 @@ async def run_adversary_round(
         return []
     proposals = [p for p in proposed if any(s.id == p.step_id for s in plan.steps)]
     proposals = await drop_duplicates(plan, emitter, ledger, proposals)
+    if armor is not None:
+        proposals = await armor.proposals(proposals)
     for proposal in proposals:
         payload = {"step_id": proposal.step_id, "option": proposal.option.model_dump(mode="json")}
         await emitter.emit("option.proposed", payload)

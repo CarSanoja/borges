@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -7,9 +8,12 @@ import httpx
 import pytest
 
 from borges.api.app import create_app
+from borges.armor.errors import ArmorRefusal
+from borges.armor.report import ArmorDecision
 from borges.config import Settings
 from borges.runs.events import Event
 from borges.runs.models import RunSnapshot, RunSummary
+from borges.telemetry.run_telemetry import global_audit_path
 from tests.identity.keys import bearer, make_key
 
 
@@ -190,3 +194,24 @@ async def test_list_and_get_run(env: Env) -> None:
     assert runs[0]["run_id"] == "r1"
     assert snap["title"] == "hello"
     assert missing.status_code == 404
+
+
+async def test_armor_refusal_is_400_and_audited(env: Env) -> None:
+    decision = ArmorDecision("refuse", "injection", "question", "override.ignore_rules")
+
+    async def refuse(request, data=None, dataset_name=None) -> str:
+        raise ArmorRefusal([decision])
+
+    env.orchestrator.start = refuse
+    async with env.client() as client:
+        response = await client.post("/api/runs", json={"case_id": "a"})
+    assert response.status_code == 400
+    assert "Armor refused the run" in response.json()["detail"]
+    records = [
+        json.loads(line)
+        for line in global_audit_path(env.app.state.settings).read_text().splitlines()
+    ]
+    refused = [r for r in records if r["kind"] == "armor.screen"]
+    assert refused[0]["decision"] == "deny"
+    assert refused[0]["principal"] == "caller://anonymous"
+    assert refused[0]["data"]["action"] == "refuse" and refused[0]["data"]["field"] == "question"

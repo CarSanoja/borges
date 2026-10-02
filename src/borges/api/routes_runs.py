@@ -19,6 +19,9 @@ from borges.api.recorded_detail import recorded_origin, recorded_snapshot
 from borges.api.run_policy import enforce_run_policy
 from borges.api.sse import sse_response
 from borges.api.uploads import UploadStore
+from borges.armor.audit import record_decision
+from borges.armor.audit_global import global_sink
+from borges.armor.errors import ArmorRefusal
 from borges.config import Settings
 from borges.identity.deps import get_principal, require_scope
 from borges.identity.principal import Principal
@@ -92,6 +95,13 @@ async def create_run(
         run_id = await _resolve(orchestrator.start(request, data=data, dataset_name=name))
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"Unknown case {exc}.") from exc
+    except ArmorRefusal as exc:
+        sink = global_sink(settings, principal.id)
+        for decision in exc.decisions:
+            record_decision(
+                decision, sink, principal.id, stage="run_request", case_id=request.case_id
+            )
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return RunCreated(run_id=run_id)

@@ -9,6 +9,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal, cast
 
+from borges.armor.llm_armor import LLMArmor
+from borges.armor.report import ArmorReport
 from borges.cases.registry import CaseRegistry
 from borges.config import Settings
 from borges.fleet.models import RunAgents
@@ -232,11 +234,13 @@ class RunOrchestrator:
             if self.record_dir is not None:
                 llm_options["record_dir"] = self.record_dir
             identity = mint_identity(self.settings, run_id)
+            armor_report = ArmorReport()
             gateway = build_gateway(
                 self.settings,
                 run_id,
                 identity,
                 self._modes(request)[0],
+                armor=LLMArmor(armor_report),
                 dataset_columns=columns_of(resolved.data),
             )
             llm = instrument_llm(
@@ -245,7 +249,7 @@ class RunOrchestrator:
             backend = instrument_backend(
                 self.backend_factory(self.settings, request.backend), gateway
             )
-            pipeline = Pipeline(self.settings, llm, backend, emitter, resolved)
+            pipeline = Pipeline(self.settings, llm, backend, emitter, resolved, armor_report)
             pipeline.agents = agents
             with gateway.bind():
                 await pipeline.run()

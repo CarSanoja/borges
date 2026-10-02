@@ -8,6 +8,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from borges.api.deps import get_settings, get_uploads
 from borges.api.run_policy import enforce_upload_policy
 from borges.api.uploads import MAX_BYTES, UploadQuotaError, UploadStore
+from borges.armor.audit import record_decision
+from borges.armor.audit_global import global_sink
+from borges.armor.errors import ArmorRefusal
 from borges.config import Settings
 from borges.identity.deps import get_principal
 from borges.identity.principal import Principal
@@ -31,6 +34,24 @@ async def create_upload(
         )
     except UploadQuotaError as exc:
         raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except ArmorRefusal as exc:
+        sink = global_sink(settings, principal.id)
+        for decision in exc.decisions:
+            record_decision(decision, sink, principal.id, stage="upload")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return {"upload_id": upload_id, "profile": profile.model_dump(mode="json")}
+    pii = uploads.pii(upload_id)
+    if pii.total_detections:
+        global_sink(settings, principal.id)(
+            "armor.upload_scan",
+            decision="observe",
+            reason=f"personal data found in {len(pii.columns)} column(s)",
+            upload_id=upload_id,
+            columns={c.column: c.kinds for c in pii.columns},
+        )
+    return {
+        "upload_id": upload_id,
+        "profile": profile.model_dump(mode="json"),
+        "pii": pii.model_dump(mode="json"),
+    }

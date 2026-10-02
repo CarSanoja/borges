@@ -11,6 +11,7 @@ from borges.analysis.planner import plan_analysis
 from borges.analysis.profile import profile_dataframe
 from borges.analysis.scale_check import scale_check
 from borges.analysis.smoke_review import llm_reviewer
+from borges.armor.report import ArmorReport
 from borges.config import Settings
 from borges.fleet.models import RunAgents
 from borges.garden.executor import GardenExecutor
@@ -22,6 +23,7 @@ from borges.runs.adversary_round import run_adversary_round
 from borges.runs.emitter import RunEmitter
 from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
+from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.pipeline_callbacks import coding_callbacks
 from borges.runs.pipeline_caveats import report_caveats
 from borges.runs.pipeline_data import load_dataframe
@@ -44,6 +46,7 @@ class Pipeline:
         backend: BranchBackend,
         emitter: RunEmitter,
         resolved: ResolvedRun,
+        armor: ArmorReport | None = None,
     ) -> None:
         self.settings = settings
         self.llm = llm
@@ -58,6 +61,8 @@ class Pipeline:
         self.caveats: list[str] = []
         self.coding = CodingSummary()
         self.judged = JudgedLedger()
+        self.armor = armor if armor is not None else ArmorReport()
+        self.armor_stage = ArmorStage(settings, llm, emitter, self.armor, self.coding)
         self.smoke: SmokeConfig | None = None
         self.search = SearchSummary(
             max_combinations_per_level=MAX_COMBINATIONS_PER_LEVEL,
@@ -87,8 +92,11 @@ class Pipeline:
                 resolved.dataset_name,
                 column_notes=resolved.column_notes,
             )
+            self.armor_stage.record(resolved.armor)
+            profile = await self.armor_stage.profile(profile)
         async with self.stage("planning"):
             plan = await plan_analysis(self.llm, profile, resolved.question, resolved.decision_rule)
+            plan = await self.armor_stage.plan(plan)
             await publish_plan(self.emitter, plan)
             await judge_plan_options(self.llm, plan, self.emitter, self.coding, self.judged)
 
@@ -173,7 +181,14 @@ class Pipeline:
         async with self.stage("adversary"):
             try:
                 await run_adversary_round(
-                    self.llm, plan, runner, self.emitter, baseline, self.smoke, self.judged
+                    self.llm,
+                    plan,
+                    runner,
+                    self.emitter,
+                    baseline,
+                    self.smoke,
+                    self.judged,
+                    self.armor_stage,
                 )
             except Exception as exc:
                 self.caveats.append(f"The adversary stage failed and was skipped: {exc}")
@@ -199,6 +214,7 @@ class Pipeline:
         plan = await self._plan()
         await self._search(plan)
         await verify_stage(self, plan)
+        self.caveats.extend(self.armor.caveats())
         self.report = build_report(plan, self.garden, self.flip)
         self.report.search = self.search
         self.report.coding = self.coding if self.coding.options else None

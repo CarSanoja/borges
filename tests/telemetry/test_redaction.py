@@ -37,3 +37,8 @@ def test_failure_and_verdict_reasons_pass_through_redaction(
     event_audit.audit_run_event("option.judged", {"reason": "see /private/tmp/secret.csv"})
     reasons = " ".join(str(item["reason"]) for item in seen)
     assert "/Users" not in reasons and "nvapi-" not in reasons and "/private" not in reasons
+
+
+def test_personal_data_is_redacted_from_audit_text() -> None:
+    out = redact_text("failed for maria@example.com at 192.168.1.10")
+    assert out == "failed for [redacted:email] at [redacted:ip_address]"

@@ -1,0 +1,440 @@
+[
+ {
+  "id": "b001",
+  "field": "question",
+  "source": "bank_marketing_calls",
+  "text": "Does each additional contact call to the same customer in a campaign reduce the chance that the customer subscribes to a term deposit?"
+ },
+ {
+  "id": "b002",
+  "field": "story",
+  "source": "bank_marketing_calls",
+  "text": "45,211 customer records from phone campaigns of a Portuguese bank. A plain analysis says more calls to the same person means fewer subscriptions, so cap them. But who gets called many times is not random: hard-to-reach customers, the month, the contact channel and earlier campaigns all differ. Observational data, no planted effect; a live run only."
+ },
+ {
+  "id": "b003",
+  "field": "decision_rule",
+  "source": "bank_marketing_calls",
+  "text": "odds ratio of subscribing per additional contact call in the campaign"
+ },
+ {
+  "id": "b004",
+  "field": "label",
+  "source": "bank_marketing_calls",
+  "text": "CAP THE CALLS"
+ },
+ {
+  "id": "b005",
+  "field": "label",
+  "source": "bank_marketing_calls",
+  "text": "NO CASE FOR A CAP"
+ },
+ {
+  "id": "b006",
+  "field": "file_name",
+  "source": "bank_marketing_calls",
+  "text": "bank_marketing_campaign"
+ },
+ {
+  "id": "b007",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "age of the customer in years"
+ },
+ {
+  "id": "b008",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "type of job of the customer; has missing values"
+ },
+ {
+  "id": "b009",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "marital status of the customer"
+ },
+ {
+  "id": "b010",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "education level of the customer; has missing values"
+ },
+ {
+  "id": "b011",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "whether the customer has credit in default"
+ },
+ {
+  "id": "b012",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "average yearly balance of the customer in euros"
+ },
+ {
+  "id": "b013",
+  "field": "column_note",
+  "source": "bank_marketing_calls",
+  "text": "whether the customer has a housing loan"
+ },
+ {
+  "id": "b014",
+  "field": "question",
+  "source": "checkout_ab",
+  "text": "Does the new checkout increase the conversion rate?"
+ },
+ {
+  "id": "b015",
+  "field": "story",
+  "source": "checkout_ab",
+  "text": "Fourteen days of checkout sessions, randomised by user. The default analysis shows a significant lift and says ship. But employees and QA testers placed test orders through the new checkout, and one defensible filter removes them and erases the lift."
+ },
+ {
+  "id": "b016",
+  "field": "decision_rule",
+  "source": "checkout_ab",
+  "text": "conversion lift, treatment minus control (percentage points)"
+ },
+ {
+  "id": "b017",
+  "field": "label",
+  "source": "checkout_ab",
+  "text": "SHIP"
+ },
+ {
+  "id": "b018",
+  "field": "label",
+  "source": "checkout_ab",
+  "text": "DON'T SHIP"
+ },
+ {
+  "id": "b019",
+  "field": "file_name",
+  "source": "checkout_ab",
+  "text": "checkout_sessions"
+ },
+ {
+  "id": "b020",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "unique id of the checkout session; one row per session"
+ },
+ {
+  "id": "b021",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "id of the user; a user has 1 to 4 sessions and the variant is assigned per user"
+ },
+ {
+  "id": "b022",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "day of the 14-day experiment, integers 0 to 13"
+ },
+ {
+  "id": "b023",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "experiment arm, exactly 'treatment' or 'control'; the estimand is treatment minus control"
+ },
+ {
+  "id": "b024",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "platform of the session: web, ios or android"
+ },
+ {
+  "id": "b025",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "True for sessions of internal staff or test users, who are not genuine customers"
+ },
+ {
+  "id": "b026",
+  "field": "column_note",
+  "source": "checkout_ab",
+  "text": "session length in seconds; very short sessions are bot-like"
+ },
+ {
+  "id": "b027",
+  "field": "question",
+  "source": "marp_norms",
+  "text": "Does the relation between religiosity and well-being depend on perceived cultural norms of religion?"
+ },
+ {
+  "id": "b028",
+  "field": "story",
+  "source": "marp_norms",
+  "text": "105 research teams analysed this dataset; 68 found that the religiosity-well-being relation grows with perceived cultural norms with an interval above zero. The default analysis gives interaction beta = 0.045 (95% CI 0.026 to 0.063), p < 0.001, n = 10,535. The verdict changes in 1 of 15 universes; the nearest is Pooled OLS, robust errors: interaction beta = 0.018 (95% CI -0.000 to 0.037), p = 0.056, n = 10,535."
+ },
+ {
+  "id": "b029",
+  "field": "decision_rule",
+  "source": "marp_norms",
+  "text": "standardised religiosity x cultural-norms interaction on well-being"
+ },
+ {
+  "id": "b030",
+  "field": "label",
+  "source": "marp_norms",
+  "text": "DEPENDS ON NORMS"
+ },
+ {
+  "id": "b031",
+  "field": "label",
+  "source": "marp_norms",
+  "text": "NO CLEAR EVIDENCE"
+ },
+ {
+  "id": "b032",
+  "field": "file_name",
+  "source": "marp_norms",
+  "text": "marp_religiosity_wellbeing"
+ },
+ {
+  "id": "b033",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "country of the respondent (24 countries); one of the 24 countries of the MARP survey"
+ },
+ {
+  "id": "b034",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "religiosity questionnaire item 1 of 9; the nine rel_* items form the religiosity scale"
+ },
+ {
+  "id": "b035",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "perceived cultural norm of religion, item 1 of 2 (the respondent's own perception)"
+ },
+ {
+  "id": "b036",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "perceived cultural norm of religion, item 2 of 2 (the respondent's own perception)"
+ },
+ {
+  "id": "b037",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "general well-being item 1 of 2"
+ },
+ {
+  "id": "b038",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "general well-being item 2 of 2"
+ },
+ {
+  "id": "b039",
+  "field": "column_note",
+  "source": "marp_norms",
+  "text": "physical well-being item 1 of 7; the wb_phys_* items feed wb_phys_mean"
+ },
+ {
+  "id": "b040",
+  "field": "question",
+  "source": "marp_religiosity",
+  "text": "Do religious people self-report greater well-being?"
+ },
+ {
+  "id": "b041",
+  "field": "story",
+  "source": "marp_religiosity",
+  "text": "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. The default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 40 universes."
+ },
+ {
+  "id": "b042",
+  "field": "decision_rule",
+  "source": "marp_religiosity",
+  "text": "standardised coefficient of religiosity on well-being"
+ },
+ {
+  "id": "b043",
+  "field": "label",
+  "source": "marp_religiosity",
+  "text": "POSITIVE ASSOCIATION"
+ },
+ {
+  "id": "b044",
+  "field": "question",
+  "source": "red_cards",
+  "text": "Are soccer referees more likely to give red cards to dark-skin-toned players than to light-skin-toned players?"
+ },
+ {
+  "id": "b045",
+  "field": "story",
+  "source": "red_cards",
+  "text": "Twenty-nine teams analysed this dataset and disagreed on whether referees card dark-skinned players more. The default analysis gives OR 1.34 (95% CI 1.13 to 1.58): bias detected. No single analytic choice reverses that and no pair does; it takes three together, such as a full covariate set, frequent referees only and player-clustered errors, to land on no clear evidence (OR 1.20 to 1.25). The one single flip that existed, restricting to low-bias referees, is not defensible."
+ },
+ {
+  "id": "b046",
+  "field": "decision_rule",
+  "source": "red_cards",
+  "text": "odds ratio of a red card per game, dark vs light skin tone"
+ },
+ {
+  "id": "b047",
+  "field": "label",
+  "source": "red_cards",
+  "text": "BIAS DETECTED"
+ },
+ {
+  "id": "b048",
+  "field": "file_name",
+  "source": "red_cards",
+  "text": "crowdstorming_dyads"
+ },
+ {
+  "id": "b049",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "player id"
+ },
+ {
+  "id": "b050",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "referee id"
+ },
+ {
+  "id": "b051",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "country id of the referee"
+ },
+ {
+  "id": "b052",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "number of games the player and this referee shared (one row per player-referee dyad); it is not the player's total games"
+ },
+ {
+  "id": "b053",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "number of red cards the referee gave this player across their shared games"
+ },
+ {
+  "id": "b054",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "number of yellow cards the referee gave this player across their shared games"
+ },
+ {
+  "id": "b055",
+  "field": "column_note",
+  "source": "red_cards",
+  "text": "number of second yellow cards (leading to a red) the referee gave this player across their shared games"
+ },
+ {
+  "id": "b056",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Does the new onboarding flow raise week-one retention?"
+ },
+ {
+  "id": "b057",
+  "field": "note",
+  "source": "synthetic",
+  "text": "age of the respondent in years; missing values are coded as empty"
+ },
+ {
+  "id": "b058",
+  "field": "note",
+  "source": "synthetic",
+  "text": "true for internal staff or test accounts, who are not genuine customers"
+ },
+ {
+  "id": "b059",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Customer lifetime value in euros, winsorised at the 99th percentile"
+ },
+ {
+  "id": "b060",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Weekly active minutes per user; ignore rows with missing values is not allowed"
+ },
+ {
+  "id": "b061",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Control group size and treatment group size are balanced by design"
+ },
+ {
+  "id": "b062",
+  "field": "note",
+  "source": "synthetic",
+  "text": "The report summarises the conversion rate and the confidence interval"
+ },
+ {
+  "id": "b063",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Pedidos por cliente durante la campaña, incluyendo el último"
+ },
+ {
+  "id": "b064",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Variable que indica si el cliente contrató el depósito a plazo"
+ },
+ {
+  "id": "b065",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Edad del encuestado en años; los valores faltantes están vacíos"
+ },
+ {
+  "id": "b066",
+  "field": "note",
+  "source": "synthetic",
+  "text": "p < 0.001 in the original study"
+ },
+ {
+  "id": "b067",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Odds ratio of conversion, treatment versus control"
+ },
+ {
+  "id": "b068",
+  "field": "note",
+  "source": "synthetic",
+  "text": "system_status_code"
+ },
+ {
+  "id": "b069",
+  "field": "note",
+  "source": "synthetic",
+  "text": "decision_rule_version"
+ },
+ {
+  "id": "b070",
+  "field": "note",
+  "source": "synthetic",
+  "text": "import_date"
+ },
+ {
+  "id": "b071",
+  "field": "note",
+  "source": "synthetic",
+  "text": "campaign_id"
+ },
+ {
+  "id": "b072",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Used import duty codes in the customs table"
+ },
+ {
+  "id": "b073",
+  "field": "note",
+  "source": "synthetic",
+  "text": "Reports are sent to the regional manager every Monday"
+ }
+]

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from borges.gateway.errors import GatewayDenied
-from borges.llm.client import LLMResponse
+from borges.llm.client import LLMError, LLMResponse
 
 
 @dataclass(frozen=True)
@@ -16,7 +16,7 @@ class ArmorContext:
     key: str
 
 
-class ArmorBlocked(GatewayDenied):
+class ArmorBlocked(GatewayDenied, LLMError):
     def __init__(self, reason: str, agent_id: str | None = None) -> None:
         super().__init__("armor", reason, agent_id)
 

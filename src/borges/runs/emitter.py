@@ -5,6 +5,7 @@ import time
 from collections.abc import Callable
 from typing import Any, cast
 
+from borges.armor.pii_deep import redact_deep
 from borges.llm.client import UsageTotals
 from borges.runs.bus import EventBus
 from borges.runs.events import Event, EventType, UsageData
@@ -33,7 +34,7 @@ class RunEmitter:
             ts=time.time(),
             run_id=self.run_id,
             type=cast(EventType, event_type),
-            data=data,
+            data=redact_deep(data),
         )
         self.store.append(event)
         self.bus.publish(event)
