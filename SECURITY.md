@@ -205,6 +205,56 @@ So: the local backend is for trusted-ish generated code behind the policy and th
 ConTree is the isolated path. Public deployments with live or upload runs should set
 `BORGES_BACKEND=contree`.
 
+## Access control (identity)
+
+The public demo stays free of charge and login-free; access control makes it safe rather than
+closed. `src/borges/identity/` holds the pieces.
+
+- **Principals.** Every `/api` request resolves to a principal. No credentials means
+  `caller://anonymous` with exactly `cases:read`, `runs:read`, `runs:create:scripted`,
+  `runs:create:live:curated` and `recordings:read`. A bearer key (`bk_<id>_<secret>`) resolves
+  to `caller://<name>` with its scopes plus those public ones. A key that is revoked, expired or
+  unknown gets 401 (it is never silently downgraded to anonymous). Named-only scopes:
+  `uploads:write`, `runs:create:live:upload`, `registry:publish`, `registry:approve`,
+  `audit:read`, `admin`.
+- **Key store.** `BORGES_HOME/identity/keys.jsonl`, append-only and hash-chained (`prev_hash`,
+  `hash`), verified on every read. Only a per-key salt and the HMAC-SHA256 of the secret are
+  stored. If the chain is broken, every key is refused (anonymous access keeps working) and
+  `borges keys verify` names the first bad line.
+- **One route table.** `identity/route_table.py` maps every method and path to a required scope.
+  The ASGI middleware rejects a method and path that are not in the table with 403 and an audit
+  record, so a new route is closed until someone declares it; a test fails if the app gains an
+  undeclared route. `POST /api/runs` is gated on the mode it asks for (scripted, live curated,
+  live upload).
+- **Rate limits.** Token buckets per principal; anonymous callers per client address and
+  stricter (`BORGES_RATE_*`). Behind a reverse proxy the client address is the proxy's, so all
+  anonymous visitors then share one bucket; raise `BORGES_RATE_ANON_*` accordingly.
+- **Audit.** Every denial, every 401 and every non-public-read allow goes to the global chain
+  with the principal (`identity.access`). Public read allows are not recorded unless
+  `BORGES_AUDIT_READS=true`, so anonymous traffic cannot fill the disk; rate-limit denials are
+  recorded at most once per ten seconds per bucket.
+- **Agent tokens.** Each run mints a short-lived HMAC-SHA256 token per agent over the run id,
+  agent principal, capabilities and expiry, with a per-process secret that is never written to
+  disk. The orchestrator runs each agent's model calls under `calling_as()` with its token.
+  `AgentAuthorizer` (a port of the Quanta harness) verifies a token and intersects its
+  capabilities with the fleet grant: forged, expired, wrong-run and unknown-agent tokens and
+  unmapped actions are denied and audited, and a `PermissionGate` applies DENY over QUARANTINE
+  over ALLOW. The model and sandbox gateway that enforces this on every call is a later wave;
+  today the tokens are minted, carried and verifiable, not yet checked per call.
+- **Registry governance.** Approvals record the approving principal. With
+  `BORGES_REGISTRY_FOUR_EYES=true` the publisher cannot approve their own version and the CLI
+  needs a key with `registry:approve`. The registry store is hash-chained and verified on load:
+  a broken store is refused with a clear error (HTTP 503), and `borges agents verify` checks it.
+  A principal holding two keys can still approve its own work; four-eyes compares principals.
+- **Audit anchoring.** The global chain writes a checkpoint (record count, head hash, time, HMAC
+  with `BORGES_AUDIT_ANCHOR_KEY` when set) to `audit/global.anchor.jsonl` every
+  `BORGES_AUDIT_ANCHOR_EVERY` records and when a run or the server ends. `borges audit verify
+  global` checks the chain against the anchors, so truncating the tail is detected. Without the
+  key the checkpoints are plain hashes: they catch accidents and unsophisticated edits, not an
+  attacker who rewrites the anchor file too, so copy the anchor file off the machine. A last
+  line cut short by a crash is moved to `global.jsonl.torn` and an `audit.torn_line` record
+  says so.
+
 ## Server rules
 
 - **Uploads are refused on the local backend** (`POST /api/runs` with an `upload_id` returns
@@ -212,7 +262,8 @@ ConTree is the isolated path. Public deployments with live or upload runs should
   sets. Live runs on a curated case are not refused on the local backend by the server; do not
   expose that combination publicly.
 - The server, not the client, picks the backend, clamps `max_universes`, limits concurrency
-  (429), refuses live runs without a key (400) or past the spend cap (403), and can require
-  `X-Borges-Live-Token` for uploads. The built-in UI does not send that header.
+  (429), refuses live runs without a key (400) or past the spend cap (403), and gates uploads and
+  other privileged actions by scope (next section). `X-Borges-Live-Token` is a deprecated alias
+  for a key with `uploads:write`; the built-in UI sends an API key instead.
 - Never commit `.env`. CI (`.github/workflows/ci.yml`) runs lint, tests and the frontend
   build; a badge will exist once the repository is public.

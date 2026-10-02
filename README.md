@@ -309,7 +309,10 @@ The image defaults to the scripted model and the local backend, with
 | Variable | Purpose |
 |---|---|
 | `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run on the local backend. `make dev` sets it to `true`; `make serve` does not |
-| `BORGES_LIVE_TOKEN` | When set, uploads need the header `X-Borges-Live-Token` |
+| `BORGES_LIVE_TOKEN` | Deprecated alias, kept so old setups hold: a request carrying this value in `X-Borges-Live-Token` is treated as a key with `uploads:write` and `runs:create:live:upload`. New setups should use API keys (below) |
+| `BORGES_RATE_ANON_BURST`, `BORGES_RATE_ANON_PER_S`, `BORGES_RATE_KEY_BURST`, `BORGES_RATE_KEY_PER_S` | Token-bucket rate limits per principal (anonymous callers are limited per client address and stricter); 429 with `Retry-After` beyond them |
+| `BORGES_REGISTRY_FOUR_EYES` | `true`: a version cannot be approved by the principal that published it, and `borges agents approve` needs a key with `registry:approve` |
+| `BORGES_AUDIT_ANCHOR_KEY`, `BORGES_AUDIT_ANCHOR_EVERY` | HMAC key and record interval for the signed checkpoints of the global audit chain |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
 | `BORGES_BACKEND` | `contree` for isolated sandboxes |
 | `NEBIUS_PROJECT_ID` | Token Factory project for Sandboxes (`CONTREE_PROJECT_ID` overrides it) |
@@ -317,6 +320,27 @@ The image defaults to the scripted model and the local backend, with
 Mount a volume on `/app/.borges` (it is declared as a `VOLUME`): the spend ledger lives
 there, and without it the live budget resets on every redeploy. Run history is not kept:
 `runs/` is not in the image, so old run links stop working after a redeploy.
+
+### Access control
+
+Every `/api` request resolves to a principal. With no credentials that is `caller://anonymous`,
+which holds exactly the public-demo scopes (`cases:read`, `runs:read`, `runs:create:scripted`,
+`runs:create:live:curated`, `recordings:read`): hackathon judges browse, watch recordings and
+start scripted or curated live runs with no login. Everything else needs a named API key
+(`Authorization: Bearer bk_...`); the web app has a field in its header to paste one, kept in
+`sessionStorage`.
+
+```bash
+uv run borges keys create --name ci --scopes uploads:write,runs:create:live:upload --expires 30d
+uv run borges keys list
+uv run borges keys revoke <key_id>
+```
+
+Keys live in an append-only, hash-chained store under `BORGES_HOME/identity/` and only their salted
+hashes are kept; the secret is printed once. `GET /api/me` shows the current principal, its scopes
+and its rate-limit state; `GET /api/audit` (scope `audit:read`) reads the global audit chain.
+Every route declares its required scope in one table and an undeclared route is denied.
+Details and limits: [SECURITY.md](SECURITY.md).
 
 ## How it is built
 
