@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 
 _TEMPLATE = """
@@ -93,6 +94,9 @@ def __borges_main():
         return out
 
 __SPLIT_HALF_CHECK__
+__CHECKS__
+__EFFECTS__
+    seen = {}
     try:
         state_df = _os.path.join("state", "df.parquet")
         state_ctx = _os.path.join("state", "ctx.json")
@@ -103,6 +107,7 @@ __SPLIT_HALF_CHECK__
         else:
             ctx = {}
         rows_before = int(len(df))
+        seen.update({"columns": list(map(str, df.columns)), "ctx": list(map(str, ctx))})
         trace = {
             "step_id": step_id,
             "option_id": option_id,
@@ -117,15 +122,24 @@ __SPLIT_HALF_CHECK__
             _emit("BORGES_TRACE ", trace)
             _emit("BORGES_RESULT ", result)
             return
+        ctx_before = set(ctx)
+        before = df.copy() if __SPLIT_HALF__ else None
         out = apply(df, ctx)
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
+        _check_columns(seen["columns"], out)
+        _check_produces(out, ctx)
         _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)
         out.to_parquet(state_df)
         with open(state_ctx, "w") as handle:
             _json.dump(ctx, handle)
         trace["rows_after"] = int(len(out))
+        if __SPLIT_HALF__:
+            try:
+                trace["effects"] = _effects(before, out, ctx_before, ctx)
+            except Exception:
+                pass
         _emit("BORGES_TRACE ", trace)
     except BaseException as exc:
         lines = [line for line in _tb.format_exc().strip().splitlines() if line.strip()]
@@ -140,7 +154,7 @@ __SPLIT_HALF_CHECK__
             "BORGES_ERROR ",
             {
                 "type": type(exc).__name__,
-                "message": _clean(str(exc)),
+                "message": _clean(_explain(exc, seen)),
                 "where": _clean("\\n".join(lines[-6:])),
             },
         )
@@ -149,4 +163,8 @@ __SPLIT_HALF_CHECK__
 
 __borges_main()
 """
-MAIN_TEMPLATE = _TEMPLATE.replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
+MAIN_TEMPLATE = (
+    _TEMPLATE.replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
+    .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
+    .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
+)

@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 
+from borges.analysis.harness_effects import EffectTrace
 from borges.analysis.harness_main import MAIN_TEMPLATE
 from borges.analysis.models import AnalysisResult, Option, Step, StepTrace
 from borges.analysis.path_scrub import scrub_paths
@@ -61,6 +62,7 @@ def render_step(
         .replace("__KIND__", json.dumps(step.kind))
         .replace("__RESULT_KEYS__", repr(RESULT_KEYS))
         .replace("__SPLIT_HALF__", repr(split_half))
+        .replace("__PRODUCES__", repr(list(step.produces)))
     )
     return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 
@@ -80,7 +82,9 @@ def _json_lines(stdout: str, prefix: str) -> list[dict[str, object]]:
 
 
 def parse_output(stdout: str) -> tuple[list[StepTrace], AnalysisResult | None]:
-    traces = [StepTrace.model_validate(p) for p in _json_lines(stdout, TRACE_PREFIX)]
+    traces: list[StepTrace] = [
+        EffectTrace.model_validate(p) for p in _json_lines(stdout, TRACE_PREFIX)
+    ]
     results = _json_lines(stdout, RESULT_PREFIX)
     result = AnalysisResult.model_validate(results[-1]) if results else None
     return traces, result

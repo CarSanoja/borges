@@ -1,0 +1,140 @@
+from __future__ import annotations
+
+from borges.analysis.models import StepTrace
+
+
+class EffectTrace(StepTrace):
+    effects: dict[str, object] | None = None
+
+
+CHECKS_SOURCE = """
+    def _check_columns(before_cols, out):
+        lost = [c for c in before_cols if c not in out.columns]
+        if lost:
+            raise ValueError(
+                "apply() dropped the columns " + repr(lost)
+                + ": steps add or change columns and may drop rows, but never drop columns,"
+                + " because later steps and other options may need them"
+            )
+
+    def _check_produces(out, ctx):
+        for name in __PRODUCES__:
+            if name not in out.columns and name not in ctx:
+                raise ValueError(
+                    "this step must produce " + repr(name)
+                    + " (every option of the step writes the same names so later steps can read"
+                    + " them); it is missing. Columns now: "
+                    + repr(list(map(str, out.columns))[:80])
+                    + "; ctx keys: " + repr(list(map(str, ctx)))
+                )
+
+    def _explain(exc, seen):
+        text = str(exc)
+        if not seen or not (isinstance(exc, KeyError) or "are in the [columns]" in text):
+            return text
+        cols = seen["columns"]
+        tail = " ..." if len(cols) > 80 else ""
+        return (
+            text + " | columns available (" + str(len(cols)) + "): " + repr(cols[:80]) + tail
+            + "; ctx keys: " + repr(seen["ctx"])
+        )
+"""
+
+EFFECTS_SOURCE = """
+    def _f(value):
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            return None
+        return value if _math.isfinite(value) else None
+
+    def _aligned(before, out):
+        if before.index.is_unique and out.index.is_unique:
+            if len(out.index.difference(before.index)) == 0:
+                reset = len(out) < len(before) and out.index.equals(_pd.RangeIndex(len(out)))
+                if not reset:
+                    return before.loc[out.index], out
+        if len(before) == len(out):
+            return before.reset_index(drop=True), out.reset_index(drop=True)
+        return None
+
+    def _changed_columns(before, out):
+        pair = _aligned(before, out)
+        if pair is None:
+            return []
+        old, new = pair
+        changed = []
+        for col in before.columns:
+            if col not in out.columns:
+                continue
+            try:
+                a, b = old[col], new[col]
+                same = (a.to_numpy(dtype=object) == b.to_numpy(dtype=object)) | (
+                    a.isna().to_numpy() & b.isna().to_numpy()
+                )
+                if not bool(_np.all(same)):
+                    changed.append(str(col))
+            except Exception:
+                continue
+        return changed
+
+    def _dropped_by(before, out):
+        found = {}
+        for col in before.columns:
+            if len(found) >= 5:
+                break
+            try:
+                if col not in out.columns or before[col].nunique(dropna=False) > 10:
+                    continue
+                gone = before[col].value_counts(dropna=False).sub(
+                    out[col].value_counts(dropna=False), fill_value=0
+                )
+                gone = {str(k): int(v) for k, v in gone.items() if v > 0}
+            except Exception:
+                continue
+            if gone:
+                found[str(col)] = gone
+        return found
+
+    def _column_stats(out, names):
+        stats = {}
+        for col in names:
+            series = out[col]
+            if not _pd.api.types.is_numeric_dtype(series.dtype):
+                continue
+            if len(stats) >= 10:
+                break
+            values = series.astype(float)
+            try:
+                head = values.sort_index().iloc[:200]
+            except TypeError:
+                head = values.iloc[:200]
+            stats[str(col)] = {
+                "mean": _f(values.mean()),
+                "sd": _f(values.std()),
+                "min": _f(values.min()),
+                "max": _f(values.max()),
+                "n_missing": int(values.isna().sum()),
+                "probe": {str(i): _f(v) for i, v in head.items()},
+            }
+        return stats
+
+    def _effects(before, out, ctx_before, ctx):
+        added = [c for c in out.columns if c not in before.columns]
+        changed = _changed_columns(before, out)
+        effects = {
+            "rows_before": int(len(before)),
+            "rows_after": int(len(out)),
+            "added": [str(c) for c in added],
+            "changed": changed,
+            "columns": _column_stats(out, [*added, *changed]),
+            "ctx_added": {
+                str(k): repr(ctx[k])[:200] for k in ctx if k not in ctx_before
+            },
+        }
+        if len(out) < len(before):
+            dropped = _dropped_by(before, out)
+            if dropped:
+                effects["dropped_rows_by"] = dropped
+        return effects
+"""
