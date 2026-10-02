@@ -53,7 +53,7 @@ You give Borges a dataset, a question and the decision rule you'll act on (for e
    budget is reported with the verdict.
 5. **Lets you step into any universe.** Every universe shows its exact code, row counts,
    result, checkpoint ids, and a command you can paste to reproduce it
-   (`uv run borges reproduce --case <id> --universe <id>` after `uv sync`, for the recorded demos, or a downloadable
+   (`uv run borges reproduce --case <id> --universe <id>` after `uv sync`, for the scripted demos, with `--source live` for the live recordings, or a downloadable
    script that runs on your own copy of the data).
 
 The output is a **fragility report**:
@@ -134,8 +134,10 @@ What exists, verified against the primary sources (September and October 2026):
    from a shared state.
    Borges's adversary reads the real row counts and estimates at a step, argues against the
    conclusion with code, and an independent judge scores how defensible each proposal is
-   before it enters the garden. This is designed and tested with scripted models; whether
-   Nemotron proposes good forks is the first thing the live run must show.
+   before it enters the garden. Designed and tested with scripted models, then run live: on
+   2 October 2026 Nemotron found the planted internal-traffic artefact in the checkout case
+   unprompted and proposed the listwise-deletion fork that makes the bank case's flip. That is
+   five recordings, one per case, not a measure of how reliably it proposes good forks.
 2. **The smallest defensible flip found.** It searches one change, then two, then three
    (at most 10 combinations per level) and re-executes the winner from scratch, so the output
    is a specific decision that turns yours around, not only a distribution. It is the
@@ -153,8 +155,9 @@ options in a plan, executed from shared checkpoints, an adversary proposes new o
 the conclusion, and each universe can be re-executed with `borges reproduce`. They are
 similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
 sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
-5,000 real model runs and a published study, while Borges has never called a model. We have
-not run their pipeline: it needs a live LLM API, which this machine does not have. The
+5,000 real model runs and a published study, while Borges has five live recordings (one per
+case, $0.0145 to $0.0326 each). We have not run their pipeline: it needs a live LLM API plus
+Docker and an Inspect set-up that we did not build. The
 measurable part, a fixed full grid over the same seeded options, was run offline (see
 "What a statistician would object to" and `evidence/grid_vs_search.md`); a head-to-head
 against their agents on the same dataset still does not exist.
@@ -172,13 +175,16 @@ against their agents on the same dataset still does not exist.
   teams' (red cards: 1.20 to 1.36 against 0.89 to 2.93).
 - Persona sampling covers choices an LLM analyst would make unprompted, including ones that
   no planner listed; Borges's coverage is limited by its planner and adversary.
-- Mature tools are used and checked by researchers today; Borges has not run a live model
-  and has no external users yet.
+- Mature tools are used and checked by researchers today; Borges has five live recordings
+  and no external users yet.
 
 ## What a statistician would object to
 
-Written as a skeptical reviewer would put it, each with Borges's honest answer. None of this
-has been run live on a model.
+Written as a skeptical reviewer would put it, each with Borges's honest answer. Items 1 to 6
+were answered with offline, scripted studies. Items 7 to 10 were raised by the live Nemotron
+runs of 2 October 2026 (`evidence/live-runs.md`); each came from a real failure and each has
+a check that now catches it. One live recording per case is still not an estimate of how
+often a model gets these right.
 
 1. **"Your option space is seeded by hand or by a model. It is not exhaustive, so 'robust'
    means robust to what you listed."** Correct. The curated cases are seeded from published
@@ -209,7 +215,7 @@ has been run live on a model.
 4. **"The LLM judge of defensibility has no ground truth."** True. Its scores gate which
    adversary proposals enter the garden, but there is no inter-rater check against human
    methodologists and no agreement statistic; in scripted mode the scores are fixtures, and
-   no model has judged anything. The seeded options of the curated cases do not depend on
+   in the live recordings Nemotron Super judged without any human comparison. The seeded options of the curated cases do not depend on
    the judge. Until a rater study exists, treat 'defensible' as a documented filter, not a
    validated measurement. No evidence file yet; this limit is open.
 5. **"Forking paths inflate false discoveries, and you report a flip, not a corrected
@@ -229,22 +235,48 @@ has been run live on a model.
    (outside the grid), a live model, or any cost in tokens. `agentic-forking-path` needs a
    live LLM API and was not run, and neither were `specr` or RobustiPy, so there is no
    comparison of forks, flips and cost against them. Evidence: `evidence/grid_vs_search.md`.
+7. **"Your standard errors are wrong."** They were, in the first live runs: the checkout fit
+   reported -0.14 pp with CI [-0.145, -0.138] and p = 0 (about 50 times too narrow), and
+   another gave [-341, +341] pp. Check now: the smoke test re-estimates on random halves of
+   the data (split-half standard error) and rejects intervals far too narrow or far too
+   wide. Implausible estimates (one run produced -398,439) are failed universes, never
+   flips.
+8. **"The label says one estimator and the code fits another."** It happened: the plan named
+   "Firth's penalized logistic regression" and the code was a plain Logit with an unseeded
+   bootstrap, and the run did not reproduce. Checks now: the planner may name only
+   estimators that statsmodels or scipy provide, step randomness is seeded, and Nemotron
+   Super reviews every option's code (adversary options included) against the estimator it
+   names and the effects observed in the smoke run. `borges reproduce --source live` then
+   re-executes the recorded universe and must match.
+9. **"You judged a coefficient against the wrong scale."** The bank case compared a log-odds
+   coefficient (-0.116) with the rule "odds ratio < 1", so no universe could ever flip.
+   Check now: a ratio rule requires positive estimates and intervals, and the coder is told
+   the scale the rule uses.
+10. **"The sign of a constructed score is arbitrary."** A PCA score without orientation
+    produced a mirror flip (+0.037 to -0.037 on the same rows), and a "control indicator"
+    option only reversed the sign. Check now: a deterministic orientation check fails
+    reversed columns, the coder is told to orient scores, and the report carries a caveat for
+    mirror flips. A flip that is only a reversed column is not a flip.
 
 ## Built on Nebius and NVIDIA
 
-- **NVIDIA Nemotron 3 on Nebius Token Factory**, three models in five roles:
-  - Super 120B plans, argues as the adversary and judges defensibility;
+- **NVIDIA Nemotron 3 on Nebius Token Factory**, three models in seven roles:
+  - Super 120B plans, argues as the adversary, judges defensibility, repairs failed code and
+    reviews every option's code against its spec;
   - Nano 30B writes the code for every branch (cheap and massively parallel);
   - Ultra 550B, with 1M of context, reads the whole garden and writes the report.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
   checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
   and contract-tested with a fake SDK; the only live check is a test that skips without
-  credentials, and it has never run against the real service.
+  credentials, and it has never run against the real service. The live Nemotron runs used
+  the local backend.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
-- **Status:** no Nemotron call has run yet (no key on the development machine). The demos
-  replay hand-built scripted fixtures, labelled as such. `make live-smoke` and
-  `make record-live` are the first live steps.
+- **Status:** all five cases ran live on Nemotron through Token Factory on 2 October 2026
+  (144 calls, $0.0145 to $0.0326 per case; `evidence/live-runs.md`), and each recorded
+  universe re-executes with `borges reproduce --source live`. The scripted replays remain as
+  the offline path, hand-built and labelled as such. Still missing: ConTree against the real
+  service, a public URL, and any outside user.
 - **Tavily (optional):** grounds an alternative's justification in methodological sources.
 
 ## Goal of the hackathon build (definition of done)
@@ -260,7 +292,7 @@ Borges is finished when all of these hold, on a clean clone:
    (0.89 to 2.93), which is shown next to it; the report names the decisions that split
    "bias detected" from "no clear evidence". The two MARP cases (real, CC-BY 4.0) run the same
    way against 110 and 105 teams. A live-only real business case, `bank_marketing_calls` (UCI Bank Marketing,
-   CC BY 4.0), has no scripted fixtures or recording and runs only with `llm=nebius`.
+   CC BY 4.0), has no scripted fixtures and runs only with `llm=nebius`; its recording is live.
 3. With `NEBIUS_API_KEY` set, the curated cases run **live on Nemotron via Token Factory**,
    under a hard spend cap, with the token and dollar cost shown. Live runs on a curated case
    use its own question and decision rule.
@@ -270,9 +302,10 @@ Borges is finished when all of these hold, on a clean clone:
    - see the verdict card flip;
    - step into the flipping universe;
    - read the spec curve and the decision influence.
-   Scripted demo runs replay offline and cost nothing; they are hand-built, not live model
-   runs, and are labelled as scripted replays. Live Nemotron runs stop when the spend cap is
-   used up. Not yet met: no live run has happened and there is no hosted demo.
+   The web app plays the live Nemotron recordings by default (met on 2 October 2026, five
+   cases). Scripted demo runs replay offline and cost nothing; they are hand-built, not live
+   model runs, and are labelled as scripted replays. Live Nemotron runs stop when the spend
+   cap is used up. Not yet met: there is no hosted demo.
 5. `make test` is green: Python unit and integration tests, ruff, the frontend type-check,
    tests and build, and an in-process end-to-end API test (a scripted run over HTTP, SSE
    events, the universe detail and the SPA fallback route).

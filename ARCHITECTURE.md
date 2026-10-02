@@ -130,12 +130,13 @@ world.
 | coder | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | 1 per option (+1 repair max) |
 | adversary | `nvidia/nemotron-3-super-120b-a12b` | 1 |
 | judge | `nvidia/nemotron-3-super-120b-a12b` | 1 per adversary option |
+| reviewer | `nvidia/nemotron-3-super-120b-a12b` | 1 per option, adversary options included |
 | narrator | `nvidia/Nemotron-3-Ultra-550b-a55b` | 1 |
 
-**No live cost has been measured.** Nothing has run on Token Factory yet. The earlier figure
-of about $0.02-0.05 per run was an estimate from the price table, not a measurement, and is
-withdrawn until `make record-live` produces one (TODO-LIVE). The scripted runs report 0
-tokens and $0. Money controls:
+**Live cost, measured on 2 October 2026** (`evidence/live-runs.md`): a complete live run of one
+case cost $0.0145 to $0.0326 (22 to 41 calls, 38k to 86k input tokens). The development day
+made 27 live runs, 18 completed, $0.31 recorded and $0.37 in the spend ledger with the smoke
+checks. The scripted runs report 0 tokens and $0. Money controls:
 - a content-addressed disk cache (`.borges/llm-cache/`), so repeated development runs are free;
 - a persistent spend ledger (`.borges/spend.json`) with a hard cap (`BORGES_SPEND_CAP_USD`),
   which raises before any call that would exceed it;
@@ -199,9 +200,11 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 
 - `llm=scripted`: deterministic hand-built responses from `cases/<id>/fixtures/`, labelled
   `scripted`, 0 tokens, $0. Used by tests, CI and the offline demo.
-- `llm=nebius`: live Nemotron through Token Factory, with cache and spend cap. Never run so
-  far (no key). `make live-smoke` checks the ids and one call per role; `make record-live`
-  records both curated cases under `BORGES_RUN_CAP_USD`.
+- `llm=nebius`: live Nemotron through Token Factory, with cache and spend cap. Ran live for
+  all five cases on 2 October 2026. `make live-smoke` checks the ids and one call per role;
+  `make record-live` records the cases under `BORGES_RUN_CAP_USD` into
+  `cases/<id>/recorded-live/` and never overwrites `recorded/`. `borges reproduce --source
+  live` re-executes a universe of those recordings.
 - `backend=local`: a directory per checkpoint (copy-on-write clone where available) and a
   subprocess with timeout, resource limits, a scrubbed environment, the AST guard and the
   runtime audit-hook policy. It is not an isolation boundary (reads are allowlisted but the
@@ -217,8 +220,8 @@ backend), taken from `run.started`. The landing footer follows `/api/health`.
 
 ### Public deployment
 
-There is no hosted demo yet. A public instance replays scripted runs (hand-built, not live
-model runs) on the local backend, and should run live or upload workloads only on
+There is no hosted demo yet. A public instance plays the live recordings (and the scripted
+replays, which are hand-built, not model runs) on the local backend, and should run live or upload workloads only on
 `BORGES_BACKEND=contree`. The server, not the client, chooses the backend. `POST /api/runs` applies a policy: it clamps
 `max_universes` to `BORGES_MAX_UNIVERSES`, answers 429 when `BORGES_MAX_ACTIVE_RUNS` runs are
 active or `BORGES_MAX_LIVE_RUNS` live runs are active, and rejects live runs when there is
@@ -262,9 +265,10 @@ every step). Functions must be deterministic: any randomness uses a fixed seed.
 - `case.json`: a `CaseSpec`;
 - `data.parquet`: the dataset;
 - `fixtures/`: the scripted model responses;
-- `recorded/events.jsonl`: optional, a recorded run for offline replay;
+- `recorded/events.jsonl`: optional, a scripted recording for offline replay;
+- `recorded-live/events.jsonl`: the live Nemotron recording, played by default by the web app;
 - `live_only` in `case.json` (default false): a live-only case has no `fixtures/` and no
-  recording, runs only with `llm=nebius`, and the registry refuses a scripted run with a clear
+  scripted recording (only `recorded-live/`), runs only with `llm=nebius`, and the registry refuses a scripted run with a clear
   message (`CaseRegistry.require_scripted`).
 
 **Scripted fixtures.** A request `key` maps to the file `fixtures/<key with ":" replaced by

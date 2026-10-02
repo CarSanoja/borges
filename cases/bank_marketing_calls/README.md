@@ -1,7 +1,9 @@
 # Bank telemarketing: cap the calls?
 
-A live-only case: it has no scripted fixtures and no recording, and it only runs with
-`llm=nebius` and a `NEBIUS_API_KEY`. Nothing in this directory was produced by a model.
+A live-only case: it has no scripted fixtures and no scripted recording, and it only runs with
+`llm=nebius` and a `NEBIUS_API_KEY`. Its recording, `recorded-live/events.jsonl`, was made
+live on Nemotron on 2 October 2026 (41 calls, $0.0326; see `evidence/live-runs.md`). Nothing
+else in this directory was produced by a model.
 
 ## The question and the rule
 

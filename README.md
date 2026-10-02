@@ -18,22 +18,23 @@ smallest flip it found.**
 > ```bash
 > uv sync
 > uv run borges run --case marp_norms --llm scripted
-> uv run borges reproduce --case red_cards --universe u_a64c6b99f5
+> uv run borges reproduce --case checkout_ab --source live --universe u_3a4a8a35a5
 > ```
 >
-> The first ends with `Universes: 15, checkpoints: 67, LLM calls: 24 scripted (0 cached)` and
-> `cost: $0.0000 (scripted replay, no model called)`. The second ends with `MATCH: estimate,
-> CI, p-value, n and verdict equal the recording; flip BIAS DETECTED -> NO CLEAR EVIDENCE
-> reproduced`. Both are scripted replays of hand-built option spaces: the data, the code and
-> every statistic are real, no model wrote the plan. The status table below says what is and
-> is not live.
+> The first is an offline scripted replay and ends with `Universes: 15, checkpoints: 67, LLM
+> calls: 24 scripted (0 cached)` and `cost: $0.0000 (scripted replay, no model called)`: the
+> data, the code and every statistic are real, no model wrote the plan. The second
+> re-executes a universe from the live Nemotron recording of the checkout case and prints
+> `MATCH` when the result equals the recording. All five cases were recorded live on 2
+> October 2026 for $0.0145 to $0.0326 each; the web app plays those recordings by default.
+> The status table below says what is and is not live.
 >
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
 > agree, and, with a calibration study (`evidence/calibration.md`), how much to trust a flip.
 
 <p align="center"><img src="assets/screenshots/replay-1280.png" alt="Borges replay of the red cards case at 1280 px: the garden of forking paths, the flipped verdict and the spec curve" width="760"> <img src="assets/screenshots/replay-390.png" alt="The same replay at 390 px wide" width="170"></p>
 
-<sub>Recorded scripted replay of the red cards case (no model is called on this server); the drawer view is in `assets/screenshots/replay-drawer-1280.png`.</sub>
+<sub>Screenshots of the scripted replay of the red cards case (no model called); the drawer view is in `assets/screenshots/replay-drawer-1280.png`. The web app plays the live Nemotron recording by default.</sub>
 
 In three lines:
 
@@ -52,19 +53,61 @@ Token Factory Sandboxes (ConTree, VM-isolated) with `BORGES_BACKEND=contree`.
 
 ## Status: what has and has not run
 
-Be clear about this before reading further.
+Be clear about this before reading further. The source of truth for every live number is
+[evidence/live-runs.md](evidence/live-runs.md).
 
 | | State today |
 |---|---|
-| Nemotron through Token Factory | **Code paths written and tested against fakes. Nothing has run live yet**: there has been no `NEBIUS_API_KEY` on the development machine. `make live-smoke` and `make record-live` are the first live steps |
-| ConTree sandboxes | Implemented against `contree-sdk` and contract-tested with a fake SDK. The live test is skipped without credentials. Never run against the real service |
-| What the demos replay | **Scripted fixtures, hand-built, not model output.** They carry the model label `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `LLM calls: 16 scripted`, `cost: $0.0000 (scripted replay, no model called)` |
-| What is real | The data, the option code, the sandbox execution and every statistic: each universe is really executed and re-executed by `borges reproduce` |
-| Hosted public demo | None yet |
+| Nemotron through Token Factory | **Ran live on 2 October 2026, all five cases, from an empty cache.** 144 calls in the five recordings (24, 32, 22, 25, 41), $0.0145 to $0.0326 per case. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The whole development day made 27 live runs, 18 completed, $0.31 recorded ($0.37 in the spend ledger with smoke checks) |
+| What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". A toggle switches to the scripted replay where one exists |
+| Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
+| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed a recorded live universe from scratch for all five cases and matched |
+| ConTree sandboxes | Implemented against `contree-sdk` and contract-tested with a fake SDK. The live test is skipped without credentials. **Still never run against the real service**: every live run above used the local subprocess backend |
+| Hosted public demo | **None yet**: no public URL, no video |
+| Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
 
-The recorded events (`cases/*/recorded/events.jsonl`) still list the configured role model
+The scripted recordings (`cases/*/recorded/events.jsonl`) still list the configured role model
 ids in the `run.started` `models` field, even though no model was called; the `llm` field of
 the same event says `scripted`.
+
+### The five live recordings
+
+| Case | Calls | Tokens in / out | Cost | Original verdict | Smallest flip found |
+|---|---|---|---|---|---|
+| checkout_ab | 24 | 38,219 / 6,055 | $0.0145 | DON'T SHIP: lift -0.13 pp [-0.79, +0.53] | Keep internal and bot-like sessions: +0.84 pp, SHIP (direction) |
+| red_cards | 32 | 57,433 / 7,318 | $0.0183 | BIAS DETECTED: OR 1.34 [1.14, 1.58] | none in 9 universes |
+| marp_religiosity | 22 | 66,078 / 5,201 | $0.0191 | POSITIVE ASSOCIATION: beta 0.090 [0.073, 0.107] | none in 24 universes |
+| marp_norms | 25 | 74,118 / 4,924 | $0.0205 | DEPENDS ON NORMS: interaction 0.023 [0.012, 0.033] | none in 16 universes |
+| bank_marketing_calls | 41 | 86,266 / 13,975 | $0.0326 | CAP THE CALLS: OR 0.878 per call [0.863, 0.892] | Listwise deletion plus robust SE: OR 0.88 [0.61, 1.27], p 0.50 (significance only) |
+
+Run ids, universe counts and the reproduce results are in `evidence/live-runs.md`. In the
+checkout case nobody scripted the plan: Nemotron found the planted internal-traffic artefact
+on its own. The live red-cards OR matches the default analysis the case cites. A single live
+run per case is one sample of a model: it is not a measure of how often Nemotron finds a flip.
+
+### What the live runs taught us
+
+The first live batches failed in ways the scripted demos could not show, and each failure
+became a safeguard with a test.
+
+- **Standard errors 50 times too small.** The checkout fit reported -0.14 pp with a 95% CI of
+  [-0.145, -0.138] and p = 0. A split-half standard error check now re-estimates on random
+  halves and rejects intervals far too narrow, and (after a CI of [-341, +341] pp) far too wide.
+- **A flip to -398,439.** A broken Bayesian option produced an absurd estimate that counted as
+  a flip. Implausible estimates are now failed universes, never flips.
+- **A label that did not match the estimator.** The plan said "Firth's penalized logistic
+  regression" and the code was a plain Logit with an unseeded bootstrap, so the run did not
+  reproduce. Randomness is now seeded, the planner may only name estimators that statsmodels
+  or scipy provide, and Nemotron Super reviews every option, adversary options included,
+  against the estimator it names.
+- **A ratio rule on the wrong scale.** The bank case judged a log-odds coefficient (-0.116)
+  against "odds ratio < 1", so no universe could ever flip. A ratio rule now requires
+  positive estimates and intervals, and the coder is told the scale.
+- **A sign that meant nothing.** A mirror flip (+0.037 to -0.037 on the same rows) came from
+  an unoriented PCA score, and a "control indicator" option only reversed the sign. Smoke
+  runs now report observed effects and a deterministic orientation check fails reversed columns.
+- **Columns that never existed.** Steps now declare the names they produce, aggregations
+  carry group-constant columns along, and model steps start from complete cases.
 
 ---
 
@@ -104,6 +147,11 @@ conversion lift is positive with p < 0.05"*.
    and result.
 
 ## The demo cases
+
+The numbers in this section and in the next two come from the scripted replays of the hand-built
+option spaces (the offline path). The live recordings above reached their own verdicts, for
+example DON'T SHIP for the checkout case as run, and are summarised in the status section and
+in `evidence/live-runs.md`.
 
 | | Checkout A/B test (synthetic, effect planted) | Red cards (real data, 146,028 dyads) |
 |---|---|---|
@@ -149,11 +197,13 @@ Both case READMEs list what is outside the option space.
 
 `bank_marketing_calls` (UCI Bank Marketing, 45,211 phone-campaign records, CC BY 4.0) asks
 whether each extra call to a customer lowers the chance of a term-deposit subscription.
-Nothing is planted. It has no scripted fixtures and no recording, so it runs only with
-`llm=nebius`, and a scripted run is refused with a clear message. It has not been run. Plain
+Nothing is planted. It has no scripted fixtures, so it runs only with `llm=nebius`, and a
+scripted run is refused with a clear message. Its only recording is the live one. Plain
 logistic regressions by the author gave an odds ratio of 0.86 to 0.93 per extra call in nine
-specifications, so a robust verdict is the expectation; what a live run adds is whether a
-defensible fork flips it. See `cases/bank_marketing_calls/README.md`.
+specifications. The live run (41 calls, $0.0326) gave OR 0.878 per call [0.863, 0.892], CAP
+THE CALLS, and found a significance-only flip: listwise deletion of rows with any missing
+covariate (45,211 to 7,842 rows) with robust standard errors gives OR 0.88 [0.61, 1.27], p
+0.50. See `cases/bank_marketing_calls/README.md`.
 
 ### Real, unplanted data: the MARP cases
 
@@ -180,24 +230,30 @@ make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
-The web app has a recorded replay of the four recorded cases (the live-only case is listed but has no replay), a "Run it now" button (scripted models,
+The web app plays the live recording of each of the five cases by default, with a toggle to the
+scripted replay for the four cases that have one (the bank case is live-only). It also has a "Run it now" button (scripted models,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
-live on Nemotron" (the button says why when it is disabled). The recordings are scripted
-(hand-built), not live model runs. The landing page has a "bring your own data" card: it is
+live on Nemotron" (the button says why when it is disabled). The landing page has a "bring your own data" card: it is
 enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
 the `contree` backend or `BORGES_ALLOW_UNTRUSTED_LOCAL=true`) and otherwise shows the exact
 reason. The same flow is available over the API (`POST /api/uploads`, CSV or parquet, then
-`POST /api/runs` with `upload_id`). Uploaded data always needs a live run, which has never
-been exercised here.
+`POST /api/runs` with `upload_id`). Uploaded data always needs a live run; the upload path
+has not been exercised with a live model, only the five curated cases have.
 
 ### Reproduce any universe
 
-Every universe in the drawer carries a command you can paste. For the recorded demos:
+Every universe in the drawer carries a command you can paste. For the scripted demos and for
+the live recordings:
 
 ```bash
 uv sync   # once, from a fresh clone
 uv run borges reproduce --case red_cards --universe u_a64c6b99f5
+uv run borges reproduce --case checkout_ab --source live --universe u_3a4a8a35a5
 ```
+
+`--source live` reads `cases/<case>/recorded-live/events.jsonl` instead of the scripted
+recording and re-executes that universe's code from scratch. It matched for all five cases
+(universe ids and results in `evidence/live-runs.md`).
 
 (`uv run --no-sync` works too once `uv sync` has run.) It re-executes that universe's steps on the case dataset with the local backend, and prints
 `MATCH` only if estimate, interval, p-value, n and verdict equal the recording (exit 1 and
@@ -206,20 +262,22 @@ that are not recordings get a downloadable script, `python borges_<run>_<univers
 path/to/data.parquet`, from `GET /api/runs/{run}/universes/{u}/script`. Universe ids are
 read from the recording; the drawer shows the right one.
 
-### Running live on Nemotron (not yet run)
+### Running live on Nemotron
 
 ```bash
 cp .env.example .env    # then set NEBIUS_API_KEY
 make live-smoke         # lists models, one structured call per role, cap 0.05 USD, exit 2 without a key
-make record-live        # live-smoke, then record-demo for both curated cases with --llm nebius, then export
+make record-live        # live-smoke, then each case live with --llm nebius, written to cases/<case>/recorded-live/
 ```
 
-`make live-smoke` checks the three model ids exist, makes one structured call per role and
+`make live-smoke` checks the model ids exist, makes one structured call per role and
 reports latency, tokens, cost and finish reason; it fails on a missing id or on reasoning
-content leaking when thinking is disabled. `make record-live` runs both demo cases live under
-`BORGES_RUN_CAP_USD` (default 0.50), and its recordings replace the scripted ones. Until it
-has run, the cost figure in `ARCHITECTURE.md` is an estimate, not a measurement. A single case
-can also be run with `uv run borges run --case checkout_ab --llm nebius --record`.
+content leaking when thinking is disabled. `make record-live` runs the cases live under
+`BORGES_RUN_CAP_USD` (default 0.50) and writes each recording to
+`cases/<case>/recorded-live/`. It never overwrites the scripted recordings in
+`cases/<case>/recorded/`. A single case can also be run with
+`uv run borges run --case checkout_ab --llm nebius --record`. A complete live run of one case
+cost between $0.015 and $0.033 on 2 October 2026.
 
 Spend is capped twice, per run (`BORGES_RUN_CAP_USD`, default $0.50) and in total
 (`BORGES_SPEND_CAP_USD`, default $5). When the total is used up, the web app disables the
@@ -233,8 +291,8 @@ can be replayed exactly at no cost.
 Set `CONTREE_API_KEY` (or reuse `NEBIUS_API_KEY`), `CONTREE_BASE_URL` and, if your account
 needs it, `CONTREE_PROJECT_ID`, then pass `--backend contree` (or set
 `BORGES_BACKEND=contree` on a server). The ConTree backend is contract-tested, and a live
-test runs only when credentials are present; it has never run against the real service, and
-there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
+test runs only when credentials are present; it has never run against the real service (the
+live Nemotron runs used the local backend), and there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
 once; after that, every analysis step is a non-disposable `image.run` on its parent image,
 so each checkpoint is a real sandbox image you can branch from again.
 
@@ -263,7 +321,7 @@ there, and without it the live budget resets on every redeploy. Run history is n
 
 | Layer | What |
 |---|---|
-| `analysis` | Planner, coder, adversary, judge and narrator roles; an AST guard that only lets generated code define `apply`/`estimate` and import an exact allowlist; the harness that turns an option into a script carrying state on disk between checkpoints |
+| `analysis` | Planner, coder, adversary, judge, reviewer and narrator roles; an AST guard that only lets generated code define `apply`/`estimate` and import an exact allowlist; the harness that turns an option into a script carrying state on disk between checkpoints |
 | `garden` | Prefix-shared execution with one lock per prefix, beam search over combinations, influence, verification from a fresh root |
 | `sandbox` | One fork protocol: `root`, `run(parent) -> child`, `read_file`; local copy-on-write and ConTree backends |
 | `llm` | Role routing on Token Factory, JSON-schema output with a fallback, disk cache, reserved spend ledger, scripted replay |
@@ -272,7 +330,8 @@ there, and without it the live budget resets on every redeploy. Run history is n
 
 | Role | Model on Token Factory |
 |---|---|
-| Planner, adversary, judge | `nvidia/nemotron-3-super-120b-a12b` |
+| Planner, adversary, judge, repairer | `nvidia/nemotron-3-super-120b-a12b` |
+| Reviewer: checks every option's code, adversary options included, against its spec, the estimator it names and the effects observed in the smoke run | `nvidia/nemotron-3-super-120b-a12b` |
 | Coder | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` |
 | Narrator | `nvidia/Nemotron-3-Ultra-550b-a55b` |
 
@@ -321,7 +380,7 @@ The closest open implementation is
 (the code of "Many AI analysts, one dataset", Bertran, Fogliato and Wu): persona agents each
 run a whole independent analysis and an LLM extracts the forks afterwards, where Borges forks
 a shared checkpointed execution and has an adversary propose forks. It has been run live at
-scale; Borges has not, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
+scale (about 5,000 analyst runs); Borges has five live recordings, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
 are compared in [PRODUCT.md](PRODUCT.md#related-work), with links and with what Borges does
 not do better.
 
@@ -330,12 +389,15 @@ not do better.
 Influence is an interventional contrast under a fixed continuation protocol, not a causal
 statement about the world. Borges explores the defensible space that its planner and
 adversary propose, not every possible analysis. The robustness share is computed over the
-universes it explored, and the search deliberately favours universes likely to flip.
+universes it explored, and the search deliberately favours universes likely to flip. The live
+runs are one recording per case: they show that Nemotron can plan, fork and be reproduced, not
+how often it finds a given flip.
 Specification-curve and multiverse analysis are established ideas (Simonsohn et al. 2020;
 Steegen et al. 2016); what is new here is agents that discover the alternatives, fork real
 execution state mid-analysis, search for the smallest flip and prove it reproduces. That claim
-rests on a design that has been tested with scripted agents; whether Nemotron proposes good
-forks is untested until the first live run.
+rests on a design that was tested with scripted agents and then run live once per case on
+Nemotron (`evidence/live-runs.md`). Five recordings show it works end to end and reproduces;
+they do not show that Nemotron's forks are reliably good, and there is no outside user yet.
 
 ## Data
 
@@ -350,7 +412,7 @@ forks is untested until the first live run.
   Sarafoglou, Aczel et al., 2022; OSF [qbdce](https://osf.io/qbdce/) and
   [gkxqy](https://osf.io/gkxqy/)). See `cases/marp_*/README.md`.
 
-The scripted fixtures were built by hand from computed numbers: each `build_fixtures.py`
+The scripted fixtures (the offline path) were built by hand from computed numbers: each `build_fixtures.py`
 runs the option code on the data and writes the planner, coder, adversary, judge and narrator
 responses, so every figure they state is computed, but no model wrote them.
 

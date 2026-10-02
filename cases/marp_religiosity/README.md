@@ -70,8 +70,9 @@ that the Hessian is not positive definite; they are kept, and all of them are po
 - `build_fixtures.py` writes `fixtures/` and `case.json`, runs the case once with the scripted
   provider, and builds the narrator from that run. `--grid` also rewrites `grid_summary.json`.
 - `recorded/events.jsonl` is `borges record-demo --case marp_religiosity --llm scripted`.
+- `recorded-live/events.jsonl` is the live Nemotron recording of 2 October 2026 (see
+  `evidence/live-runs.md`); the web app plays it by default.
 
-The fixtures are hand-built, not model output, and no live Nemotron call was made for this case:
-the usage they carry is zero and the model field reads `scripted-fixture`. Regenerate with
+The fixtures are hand-built, not model output: the usage they carry is zero and the model field reads `scripted-fixture`. Regenerate with
 `uv run --no-sync python cases/marp_religiosity/prepare.py` then
 `uv run --no-sync python cases/marp_religiosity/build_fixtures.py --grid`.
