@@ -244,7 +244,7 @@ The image defaults to the scripted model and the local backend, with
 
 | Variable | Purpose |
 |---|---|
-| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run on the local backend. `make dev` and `make serve` set it to `true` |
+| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run on the local backend. `make dev` sets it to `true`; `make serve` does not |
 | `BORGES_LIVE_TOKEN` | When set, uploads need the header `X-Borges-Live-Token` |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrency limits, 429 beyond them |
 | `BORGES_BACKEND` | `contree` for isolated sandboxes |
@@ -326,8 +326,8 @@ ConTree is the isolated path. Public deployments with live or upload runs should
 `BORGES_BACKEND=contree`.
 
 - **Uploads are refused on the local backend** (`POST /api/runs` with an `upload_id` returns
-  400) unless `BORGES_ALLOW_UNTRUSTED_LOCAL` is true, which only `make dev` and `make serve`
-  set. Live runs on a curated case are not refused on the local backend by the server; do not
+  400) unless `BORGES_ALLOW_UNTRUSTED_LOCAL` is true, which only `make dev`
+  sets. Live runs on a curated case are not refused on the local backend by the server; do not
   expose that combination publicly.
 - The server, not the client, picks the backend, clamps `max_universes`, limits concurrency
   (429), refuses live runs without a key (400) or past the spend cap (403), and can require

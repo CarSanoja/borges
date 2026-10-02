@@ -221,14 +221,14 @@ no key (400) or the spend cap is used up (403). `/api/health` reports
 case cards disable the live button with that reason. It also reports `uploads_available` and
 `uploads_unavailable_reason`, derived by `api/live_rules.py` with the same rules the policy
 uses. Uploads (CSV or parquet) need live mode; the local backend refuses them (400) unless
-`BORGES_ALLOW_UNTRUSTED_LOCAL=true` (only `make dev` and `make serve` set it), and when `BORGES_LIVE_TOKEN` is set the header
+`BORGES_ALLOW_UNTRUSTED_LOCAL=true` (only `make dev` sets it), and when `BORGES_LIVE_TOKEN` is set the header
 `X-Borges-Live-Token` must match it (the built-in UI does not send it). Live runs on a
 curated case are not refused on the local backend by the policy; that combination must not
 be exposed publicly.
 
 | Variable | Public instance |
 |---|---|
-| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` (the image default). `make dev` and `make serve` set `true`. |
+| `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` (the image default). `make dev` sets `true`; `make serve` does not. |
 | `BORGES_BACKEND` | `contree` if uploads should run live; `local` otherwise. |
 | `BORGES_LIVE_TOKEN` | Set it to gate uploads. |
 | `BORGES_MAX_ACTIVE_RUNS`, `BORGES_MAX_LIVE_RUNS` | Concurrent run limits (defaults 2 and 2). |

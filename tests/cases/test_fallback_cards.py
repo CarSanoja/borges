@@ -24,7 +24,7 @@ def _string_field(block: str, name: str) -> str:
 
 def test_fallback_cards_match_the_curated_cases() -> None:
     blocks = _fallback_blocks()
-    cards = [c for c in CaseRegistry(ROOT / "cases").list() if not c.live_only]
+    cards = CaseRegistry(ROOT / "cases").list()
     assert sorted(blocks) == sorted(card.id for card in cards)
     for card in cards:
         block = blocks[card.id]
@@ -33,3 +33,4 @@ def test_fallback_cards_match_the_curated_cases() -> None:
         assert _string_field(block, "positive_label") == card.decision_rule.positive_label
         assert _string_field(block, "negative_label") == card.decision_rule.negative_label
         assert re.search(rf"\bn_rows: {card.n_rows},", block), card.id
+        assert ("live_only: true" in block) == card.live_only, card.id

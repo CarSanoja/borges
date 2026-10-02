@@ -230,5 +230,5 @@ Uploading your own dataset (CSV or parquet) works from the landing page card and
 a public instance they should run only on isolated sandboxes (`BORGES_BACKEND=contree`),
 and `BORGES_LIVE_TOKEN` should be set so that only callers who know the token can start
 them. The local backend runs generated code on the server's own machine, so it accepts
-uploads (refused otherwise, 400) only when `BORGES_ALLOW_UNTRUSTED_LOCAL=true` (set only by `make dev` and `make serve`,
+uploads (refused otherwise, 400) only when `BORGES_ALLOW_UNTRUSTED_LOCAL=true` (set only by `make dev`,
 meant for a private machine).
