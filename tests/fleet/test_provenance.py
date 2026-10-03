@@ -11,7 +11,7 @@ def test_every_agent_is_recorded_with_version_and_sha(settings: Settings) -> Non
     result = run_provenance(settings, "nebius")
     assert len(result.agents) == 12 and len(result.registry_sha) == 64
     judge_use = next(a for a in result.agents if a.agent_id == "judge")
-    assert judge_use.version == "1.3.0" and judge_use.approval == "approved"
+    assert judge_use.version == "1.4.0" and judge_use.approval == "approved"
     assert judge_use.principal == "agent://borges/judge" and judge_use.prompt_sha
 
 
