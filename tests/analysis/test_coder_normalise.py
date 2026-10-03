@@ -55,9 +55,9 @@ async def test_a_repair_with_a_stray_brace_is_normalised_before_the_guard() -> N
     seen: list[str] = []
     real = coder.check_code
 
-    def spy(code, kind):
+    def spy(code, kind, intent=""):
         seen.append(code)
-        return real(code, kind)
+        return real(code, kind, intent)
 
     coder.check_code = spy
     try:
