@@ -5,11 +5,24 @@ from typing import Literal
 
 from borges.config import Settings
 from borges.llm.cache import DiskCache
-from borges.llm.client import LLMClient, LLMError
+from borges.llm.client import LLMClient, LLMError, Role
+from borges.llm.coder_model import nebius_role_models
 from borges.llm.local_models import local_role_models, ollama_thinking_body
 from borges.llm.nebius_provider import NebiusLLM
 from borges.llm.scripted_provider import ScriptedLLM
 from borges.llm.spend import RunBudget, SpendLedger
+
+
+def _check_coder_policy(settings: Settings) -> None:
+    from borges.gateway.policy_load import policy_for
+
+    agent = policy_for(settings).agent(Role.CODER.value)
+    chosen = settings.borges_coder_model
+    if agent is not None and chosen not in agent.allowed:
+        raise LLMError(
+            f"BORGES_CODER_MODEL {chosen!r} is not allowed for the coder by the gateway policy; "
+            f"allowed: {agent.allowed}"
+        )
 
 
 def make_llm(
@@ -36,9 +49,11 @@ def make_llm(
         )
     if not settings.nebius_api_key:
         raise LLMError("NEBIUS_API_KEY is not set")
+    _check_coder_policy(settings)
     return NebiusLLM(
         api_key=settings.nebius_api_key,
         base_url=settings.nebius_base_url,
+        role_models=nebius_role_models(settings.borges_coder_model),
         cache=DiskCache(settings.borges_home / "llm-cache"),
         ledger=SpendLedger(settings.borges_home / "spend.json", settings.borges_spend_cap_usd),
         run_budget=RunBudget(run_cap_usd or settings.borges_run_cap_usd),

@@ -78,7 +78,7 @@ class LLMRoute:
         if chain is None:
             raise gw.deny(
                 "model",
-                f"model {requested!r} is not allowed for {agent_id}; allowed: {agent.models}",
+                f"model {requested!r} is not allowed for {agent_id}; allowed: {agent.allowed}",
                 agent_id,
                 key=key,
             )

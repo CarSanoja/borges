@@ -12,6 +12,7 @@ from borges.telemetry.hashing import sha256_json
 
 class AgentPolicyView(BaseModel):
     models: list[str]
+    alternatives: list[str] = []
     max_tokens: int
     max_calls_per_run: int
     max_cost_usd_per_run: float
@@ -52,7 +53,9 @@ def agent_policy_section(
     section: dict[str, Any] = {}
     if agent is not None:
         section.update(
-            agent=agent.model_dump(mode="json"),
+            agent=agent.model_dump(
+                mode="json", exclude=None if agent.alternatives else {"alternatives"}
+            ),
             retry=policy.retry.model_dump(),
             breaker=policy.breaker.model_dump(),
             run=policy.run.model_dump(),

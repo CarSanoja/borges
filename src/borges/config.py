@@ -6,6 +6,8 @@ from typing import Literal
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from borges.llm.coder_model import DEFAULT_CODER_MODEL, validate_coder_model
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONTREE_URL = "https://api.tokenfactory.nebius.com/sandboxes/"
 
@@ -27,6 +29,11 @@ class Settings(BaseSettings):
     def _contree_url_or_default(cls, value: object) -> object:
         return value or CONTREE_URL
 
+    @field_validator("borges_coder_model", mode="before")
+    @classmethod
+    def _coder_model_allowed(cls, value: object) -> object:
+        return validate_coder_model(value) if value else DEFAULT_CODER_MODEL
+
     @field_validator("otel_exporter_otlp_endpoint", mode="before")
     @classmethod
     def _blank_endpoint_is_unset(cls, value: object) -> object:
@@ -41,6 +48,7 @@ class Settings(BaseSettings):
 
     borges_local_base_url: str = "http://localhost:11434/v1"
     borges_local_model: str = "nemotron-3-nano:30b"
+    borges_coder_model: str = DEFAULT_CODER_MODEL
     borges_llm: Literal["nebius", "scripted"] = "scripted"
     borges_backend: Literal["local", "contree"] = "local"
     borges_spend_cap_usd: float = 5.0

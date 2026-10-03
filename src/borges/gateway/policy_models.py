@@ -34,6 +34,7 @@ class RunLimits(Strict):
 
 class AgentPolicy(Strict):
     models: list[str] = Field(min_length=1)
+    alternatives: list[str] = Field(default_factory=list)
     max_tokens: int = Field(ge=1)
     max_calls_per_run: int = Field(ge=1)
     max_cost_usd_per_run: float = Field(gt=0)
@@ -45,6 +46,10 @@ class AgentPolicy(Strict):
     def _consistent(self) -> AgentPolicy:
         if len(set(self.models)) != len(self.models):
             raise ValueError("models lists a model twice")
+        if len(set(self.alternatives)) != len(self.alternatives):
+            raise ValueError("alternatives lists a model twice")
+        if set(self.alternatives) & set(self.models):
+            raise ValueError("alternatives repeats a model already in models")
         if self.egress != "sample_rows" and self.max_sample_rows:
             raise ValueError("max_sample_rows needs egress 'sample_rows'")
         if self.egress == "sample_rows" and self.max_sample_rows < 1:
@@ -54,6 +59,10 @@ class AgentPolicy(Strict):
     @property
     def primary(self) -> str:
         return self.models[0]
+
+    @property
+    def allowed(self) -> list[str]:
+        return [*self.models, *self.alternatives]
 
     @property
     def fallbacks(self) -> list[str]:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from borges.config import Settings
 from borges.fleet.models import RunAgents
 from borges.fleet.provenance import run_provenance
-from borges.llm.client import DEFAULT_ROLE_MODELS
+from borges.llm.coder_model import nebius_role_models
 from borges.runs.inputs import ResolvedRun
 from borges.runs.ownership import owner_fields
 
@@ -27,9 +27,10 @@ def agents_provenance(settings: Settings, llm: str) -> RunAgents | None:
 
 
 def announced_models(settings: Settings, llm: str) -> dict[str, str]:
+    role_models = nebius_role_models(settings.borges_coder_model)
     if llm == "local":
-        return {role.value: settings.borges_local_model for role in DEFAULT_ROLE_MODELS}
-    return {r.value: s.id if llm == "nebius" else llm for r, s in DEFAULT_ROLE_MODELS.items()}
+        return {role.value: settings.borges_local_model for role in role_models}
+    return {r.value: s.id if llm == "nebius" else llm for r, s in role_models.items()}
 
 
 def new_run_meta(

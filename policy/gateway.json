@@ -31,6 +31,7 @@
     },
     "coder": {
       "models": ["nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"],
+      "alternatives": ["nvidia/Nemotron-3_5-Lightning", "nvidia/nemotron-3-super-120b-a12b"],
       "max_tokens": 4096,
       "max_calls_per_run": 400,
       "max_cost_usd_per_run": 0.25,

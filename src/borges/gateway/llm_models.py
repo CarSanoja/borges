@@ -34,6 +34,8 @@ def resolve_spec(inner: LLMClient, model: str) -> ModelSpec | None:
 def build_chain(agent: AgentPolicy, requested: str, local_model: str | None) -> ModelChain | None:
     if requested in agent.models:
         return ModelChain(agent.models[agent.models.index(requested) :], requested, False)
+    if requested in agent.alternatives:
+        return ModelChain([requested], requested, False)
     if requested == SCRIPTED or (local_model is not None and requested == local_model):
         return ModelChain([requested], agent.primary, True)
     return None
