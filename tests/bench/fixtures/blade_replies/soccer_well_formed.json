@@ -1,0 +1,3 @@
+{
+ "text": "{\n  \"A1-B1\": {\n    \"rationale\": \"Both refer to the independent variable measuring player skin tone via normalized ratings from two raters on a 5-point scale from very light to very dark skin.\",\n    \"similarity\": 10\n  },\n  \"A2-B2\": {\n    \"rationale\": \"Both represent the dependent variable: the number of red cards a player received from a referee.\",\n    \"similarity\": 10\n  },\n  \"A7-B3\": {\n    \"rationale\": \"Both refer to the control variable representing the number of games in the player-referee dyad, listed as 'Number of games played by player' in A and explicitly as dyadic games in B.\",\n    \"similarity\": 10\n  }\n}"
+}

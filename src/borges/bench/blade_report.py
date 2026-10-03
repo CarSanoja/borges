@@ -14,8 +14,11 @@ METHOD = (
     "Borges explores universes (one analysis path each); every distinct universe is converted "
     "to BLADE's submission format (conceptual variables read off the executed code, transform "
     "code, model code). Matching follows BLADE: conceptual variables count as matched at "
-    "similarity 8 or more; coverage is the share of expert decisions matched by any universe; "
-    "hit rate is the mean share of a universe's decisions that match an expert decision. "
+    "similarity 8 or more; coverage is the share of expert decisions matched by any universe "
+    "(for models the denominator is the smaller of the expert models and the analyses, because "
+    "one analysis fits one model); hit rate is the mean share of a universe's decisions that "
+    "match an expert decision. A kind whose matcher reply is unavailable is reported as missing, "
+    "never as 0%. "
     "Transforms are matched semantically by the matcher, not by BLADE's data-value hashes, and "
     "BLADE's model-with-variables metric is not computed."
 )
@@ -50,8 +53,9 @@ def arm_row(arm: ArmResult) -> dict:
         row["metrics"] = {
             k: {x: v for x, v in arm.metrics[k].items() if x != "pairs"} for k in KINDS
         }
-        row["pairs"] = {k: arm.metrics[k]["pairs"] for k in KINDS}
-        row["mean_f1"] = round(mean_f1(arm.metrics), 4)
+        row["pairs"] = {k: arm.metrics[k].get("pairs", []) for k in KINDS}
+        score = mean_f1(arm.metrics)
+        row["mean_f1"] = None if score is None else round(score, 4)
     return row
 
 
@@ -81,6 +85,12 @@ def _pct(value: float) -> str:
     return f"{100 * value:.0f}%"
 
 
+def _cells(metrics: dict) -> str:
+    if "missing" in metrics:
+        return "missing | missing"
+    return f"{_pct(metrics['coverage'])} | {_pct(metrics['hit_rate'])}"
+
+
 def markdown(summary: dict) -> str:
     lines = [
         "# BLADE benchmark summary",
@@ -100,13 +110,11 @@ def markdown(summary: dict) -> str:
             )
             continue
         m = row["metrics"]
-        cells = " | ".join(
-            f"{_pct(m[k]['coverage'])} | {_pct(m[k]['hit_rate'])}"
-            for k in ("cvar", "model", "transform")
-        )
+        cells = " | ".join(_cells(m[k]) for k in ("cvar", "model", "transform"))
+        score = "-" if row["mean_f1"] is None else f"{row['mean_f1']:.2f}"
         lines.append(
             f"| {row['dataset']} | {row['arm']} | {row['analyses']} | {cells} | "
-            f"{row['mean_f1']:.2f} | {cost:.4f} |"
+            f"{score} | {cost:.4f} |"
         )
     for title, mapping in (("Skipped", summary["skipped"]), ("Notes", summary["notes"])):
         if mapping:

@@ -11,9 +11,12 @@ from borges.bench.blade_cost import CostRefused
 from borges.bench.blade_lexical import LexicalMatcher
 from borges.bench.blade_matcher import Matcher, make_llm_matcher
 from borges.bench.blade_report import write_outputs
+from borges.bench.blade_rescore import CachedMatcher, rescore
 from borges.bench.blade_source import BladeNotFound
 from borges.bench.blade_suite import BenchConfig, run_benchmark
 from borges.config import get_settings
+from borges.llm.cache import DiskCache
+from borges.llm.client import SUPER
 
 bench_app = typer.Typer(help="Measured benchmarks of Borges against external suites.")
 DEFAULT_OUT = "evidence/blade/{date}"
@@ -77,3 +80,31 @@ def blade(
     summary = write_outputs(result, chosen.name)
     typer.echo(summary.read_text(encoding="utf-8"))
     typer.echo(f"wrote {target}")
+
+
+@bench_app.command("blade-rescore")
+def blade_rescore(
+    out: Annotated[
+        Path, typer.Option(help="a finished benchmark folder, e.g. evidence/blade/<date>")
+    ],
+    blade_dir: Annotated[Path | None, typer.Option(help="clone of BLADE")] = None,
+    datasets: Annotated[str, typer.Option(help="comma-separated dataset ids, or all")] = "all",
+    live: Annotated[
+        bool, typer.Option(help="ask the model for replies missing from the cache")
+    ] = False,
+    matcher_model: Annotated[str | None, typer.Option(help="default: the Super model")] = None,
+) -> None:
+    """Re-score a finished run from its saved runs and matcher replies, without running Borges."""
+    chosen = None if datasets == "all" else [d.strip() for d in datasets.split(",") if d.strip()]
+    if live:
+        matcher, _ = build_matcher("llm", matcher_model, out)
+    else:
+        matcher = CachedMatcher(None, SUPER, DiskCache(out / "matcher-cache"))
+    try:
+        result = asyncio.run(rescore(out, matcher, blade_dir, chosen))
+    except (BladeNotFound, ValueError) as error:
+        typer.echo(str(error), err=True)
+        raise typer.Exit(1) from error
+    summary = write_outputs(result, matcher.name)
+    typer.echo(summary.read_text(encoding="utf-8"))
+    typer.echo(f"wrote {result.config.out}")

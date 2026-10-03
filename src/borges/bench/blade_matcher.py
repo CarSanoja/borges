@@ -1,32 +1,21 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
-from pydantic import RootModel
-
+from borges.bench.blade_pairs import MatchPair, parse_pairs
 from borges.bench.blade_prompts import SYSTEM, user_message
 from borges.llm.cache import DiskCache, cache_key
 from borges.llm.client import KNOWN_MODELS, SUPER, LLMError, ModelSpec
-from borges.llm.json_output import parse_model
 
 CHUNK = 40
 MAX_TOKENS = 4000
 MATCH_THRESHOLD = 8
-PAIR = re.compile(r"\d+")
 
 
-class MatchTable(RootModel[dict[str, Any]]):
+class MissingReply(RuntimeError):
     pass
-
-
-@dataclass(frozen=True)
-class MatchPair:
-    expert: int
-    agent: int
-    similarity: int
 
 
 @dataclass
@@ -46,23 +35,6 @@ class Matcher(Protocol):
     async def match(
         self, kind: str, question: str, schema: str, expert: list[str], agent: list[str]
     ) -> list[MatchPair]: ...
-
-
-def parse_pairs(text: str, n_expert: int, n_agent: int, offset: int = 0) -> list[MatchPair]:
-    table = parse_model(text, MatchTable).root
-    pairs: list[MatchPair] = []
-    for key, value in table.items():
-        numbers = PAIR.findall(key)
-        if len(numbers) != 2 or not isinstance(value, dict):
-            continue
-        left, right = int(numbers[0]) - 1, int(numbers[1]) - 1
-        try:
-            similarity = int(value.get("similarity", 10))
-        except (TypeError, ValueError):
-            continue
-        if 0 <= left < n_expert and 0 <= right < n_agent:
-            pairs.append(MatchPair(left, right + offset, similarity))
-    return pairs
 
 
 @dataclass

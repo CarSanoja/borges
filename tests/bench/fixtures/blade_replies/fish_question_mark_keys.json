@@ -1,0 +1,3 @@
+{
+ "text": "{\n  \"A1-B2\": {\n    \"rationale\": \"Both create a new variable representing fish caught per hour by dividing fish_caught by hours.\",\n    \"similarity\": 8\n  },\n  \"A2-B?\": {},\n  \"A3-B?\": {},\n  \"A4-B?\": {},\n  \"A5-B5\": {\n    \"rationale\": \"Both apply a log transformation to fish caught per hour (A uses log(1 + x), B uses log1p(x) which is mathematically identical).\",\n    \"similarity\": 8\n  }\n}"
+}

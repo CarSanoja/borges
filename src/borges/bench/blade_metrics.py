@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from borges.bench.blade_matcher import MATCH_THRESHOLD, Matcher, MatchPair
+from borges.bench.blade_matcher import MATCH_THRESHOLD, Matcher, MissingReply
+from borges.bench.blade_pairs import MatchPair
 from borges.bench.blade_source import Kind
 
 KINDS: tuple[Kind, ...] = ("cvar", "model", "transform")
@@ -68,7 +69,16 @@ async def evaluate(
         unique = list(dict.fromkeys(text for items in per_run for text in items))
         pairs: list[MatchPair] = []
         if unique and expert.get(kind):
-            pairs = await matcher.match(kind, question, schema, expert[kind], unique)
+            try:
+                pairs = await matcher.match(kind, question, schema, expert[kind], unique)
+            except MissingReply as gap:
+                results[kind] = {
+                    "kind": kind,
+                    "n_expert": len(expert[kind]),
+                    "n_agent_items": len(unique),
+                    "missing": str(gap),
+                }
+                continue
         metrics = kind_metrics(kind, expert.get(kind, []), per_run, {kind: pairs}, unique)
         results[kind] = {
             **asdict(metrics),
@@ -77,5 +87,7 @@ async def evaluate(
     return results
 
 
-def mean_f1(metrics: dict[str, dict]) -> float:
+def mean_f1(metrics: dict[str, dict]) -> float | None:
+    if any("missing" in metrics[k] for k in KINDS):
+        return None
     return sum(metrics[k]["f1"] for k in KINDS) / len(KINDS)
