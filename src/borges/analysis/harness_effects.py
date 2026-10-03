@@ -84,9 +84,16 @@ CHECKS_SOURCE = """
             return text
         cols = seen["columns"]
         tail = " ..." if len(cols) > 80 else ""
+        key = exc.args[0] if isinstance(exc, KeyError) and exc.args else None
+        hint = ""
+        if isinstance(key, str) and key in cols and key not in seen["ctx"]:
+            hint = (
+                "; " + repr(key) + " is a column of df, not a ctx key: read df[" + repr(key)
+                + "] and never look a column name up in ctx"
+            )
         return (
             text + " | columns available (" + str(len(cols)) + "): " + repr(cols[:80]) + tail
-            + "; ctx keys: " + repr(seen["ctx"])
+            + "; ctx keys: " + repr(seen["ctx"]) + hint
         )
 """
 

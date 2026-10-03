@@ -49,6 +49,11 @@ def estimate(df, ctx):
     return df["contact"].mean()
 """
 
+READS_COLUMN_FROM_CTX = """
+def estimate(df, ctx):
+    return df[ctx["x"]].mean()
+"""
+
 READS_MISSING_ROWS = """
 def apply(df, ctx):
     return df[["x"]]
@@ -271,3 +276,9 @@ def test_wildcard_produced_name_matches_any_column(tmp_path: Path) -> None:
 def test_wildcard_produced_name_with_no_match_fails(tmp_path: Path) -> None:
     done, error, _ = run(tmp_path, *make("transform", ADDS_DUMMIES, produces=["position_*"]))
     assert done.returncode == 1 and error is not None and "'position_*'" in error
+
+
+def test_column_read_from_ctx_gets_a_hint(tmp_path: Path) -> None:
+    done, error, _ = run(tmp_path, *make("model", READS_COLUMN_FROM_CTX))
+    assert done.returncode == 1 and error is not None
+    assert "'x' is a column of df, not a ctx key" in error

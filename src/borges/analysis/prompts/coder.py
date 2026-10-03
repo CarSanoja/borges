@@ -53,7 +53,10 @@ DataFrame.
 - Top-level `import` / `from` of these modules only: __ALLOWLIST__. Any other top-level \
 statement is rejected. No file, network or process access, no eval/exec, no dunder access.
 - `ctx` is a JSON-serialisable dict that carries decisions forward; it may be mutated in \
-place. Store only JSON-serialisable values (lists, numbers, strings).
+place. Store only JSON-serialisable values (lists, numbers, strings). Read data columns from \
+`df` by their literal names; ctx holds only what an earlier step stored in it (for example \
+ctx["covariates"]), so never look a column name up in ctx (`df["outcome"]`, not \
+`df[ctx["outcome"]]`).
 - The code guard rejects subscripts whose key is built at run time. Never write \
 `df[col + "_z"]` or `df[f"{col}_z"]`; write each column name as a plain string literal, or \
 build new columns with `df.assign(**{name: values})` or `df.rename(columns=mapping)`.
