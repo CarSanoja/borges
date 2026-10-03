@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from borges.analysis.models import AnalysisPlan, AnalysisResult
+from borges.garden.models import UniverseKind
+from borges.garden.plausibility import implausible_message, is_implausible
+from borges.garden.reversal import find_reversal
+from borges.sandbox.backend import BranchBackend
+
+
+async def screen_result(
+    backend: BranchBackend,
+    plan: AnalysisPlan,
+    root_id: str,
+    kind: UniverseKind,
+    baseline_result: AnalysisResult | None,
+    baseline_checkpoints: list[str],
+    checkpoints: list[str],
+    choices: dict[str, str],
+    result: AnalysisResult,
+) -> str | None:
+    if kind == "baseline":
+        return None
+    if baseline_result is not None and is_implausible(baseline_result, result):
+        return implausible_message(baseline_result, result)
+    if baseline_checkpoints:
+        return await find_reversal(
+            backend, plan, root_id, baseline_checkpoints, checkpoints, choices
+        )
+    return None

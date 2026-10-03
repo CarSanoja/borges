@@ -70,3 +70,10 @@ def test_n_must_be_a_positive_integer(workdir, n: float) -> None:  # noqa: F811
 def test_integral_float_n_and_zero_p_value_are_accepted(workdir) -> None:  # noqa: F811
     _, accepted = outcome(workdir, payload(n=40.0, p_value=0.0))
     assert accepted
+
+
+def test_near_zero_width_interval_is_degenerate(workdir) -> None:  # noqa: F811
+    error, accepted = outcome(
+        workdir, payload(estimate=-0.1273, ci_low=-0.12730000001, ci_high=-0.12729999999)
+    )
+    assert not accepted and "is degenerate" in (error or "")

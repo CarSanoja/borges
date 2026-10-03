@@ -17,6 +17,7 @@ from borges.analysis.models import (
 )
 from borges.garden import executor as executor_module
 from borges.garden import executor_errors as executor_errors_module
+from borges.garden import executor_output as executor_output_module
 from borges.garden import verify as verify_module
 from borges.garden.executor import GardenExecutor
 from borges.garden.models import Garden
@@ -173,6 +174,7 @@ def install_fake_harness(monkeypatch: pytest.MonkeyPatch) -> None:
 
     monkeypatch.setattr(executor_module, "harness", FakeHarness)
     monkeypatch.setattr(executor_errors_module, "harness", FakeHarness)
+    monkeypatch.setattr(executor_output_module, "harness", FakeHarness)
     monkeypatch.setattr(verify_module, "harness", FakeHarness)
 
 

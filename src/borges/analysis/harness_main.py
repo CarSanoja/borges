@@ -49,7 +49,7 @@ def __borges_main():
                 span + " is inverted: ci_low must be smaller than ci_high"
                 + ("" if inside else " and it does not contain the estimate " + _num(est))
             )
-        if low == high:
+        if high - low <= max(1e-6 * abs(est), 1e-9):
             raise ValueError(
                 span + " is degenerate"
                 + ("" if inside else " and does not contain the estimate " + _num(est))

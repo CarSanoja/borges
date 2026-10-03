@@ -2,19 +2,18 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
-from borges.analysis.result_scale import convert
+from borges.garden.executor_checks import screen_result
 from borges.garden.executor_errors import failure_detail
+from borges.garden.executor_ids import universe_id
+from borges.garden.executor_output import read_step_output
 from borges.garden.models import Universe, UniverseKind
-from borges.garden.plausibility import implausible_message, is_implausible
 from borges.garden.prefix_cache import Prefix, PrefixCache, PrefixNode
-from borges.garden.reversal import find_reversal
 from borges.runs.events import CheckpointCreatedData
 from borges.sandbox.backend import BranchBackend, Checkpoint
 from borges.telemetry.scopes import option_span
@@ -22,11 +21,7 @@ from borges.telemetry.scopes import option_span
 EmitFn = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 STEP_TIMEOUT_S = 120.0
-
-
-def universe_id(choices: dict[str, str]) -> str:
-    canonical = json.dumps(sorted(choices.items()), separators=(",", ":"))
-    return "u_" + hashlib.sha1(canonical.encode()).hexdigest()[:10]
+__all__ = ["GardenExecutor", "universe_id"]
 
 
 class GardenExecutor:
@@ -108,16 +103,12 @@ class GardenExecutor:
             return PrefixNode(
                 None, error=f"{step_id}/{option_id}: {detail}", cacheable=deterministic
             )
-        try:
-            traces, result = harness.parse_output(run.stdout)
-        except Exception as exc:
-            return PrefixNode(None, error=f"{step_id}/{option_id}: unparseable output: {exc}")
-        if result is not None:
-            result, problem = convert(result, self.plan.result_scale)
-            if problem is not None:
-                return PrefixNode(None, error=f"{step_id}/{option_id}: {problem}")
+        mine, result, problem = read_step_output(
+            run.stdout, step_id, option_id, self.plan.result_scale
+        )
+        if problem is not None:
+            return PrefixNode(None, error=problem)
         await self._emit_checkpoint(run.checkpoint, step_id, option_id, index + 1, run.duration_s)
-        mine = [t for t in traces if t.step_id == step_id and t.option_id == option_id]
         if not mine:
             return PrefixNode(None, error=f"{step_id}/{option_id}: step produced no trace")
         return PrefixNode(run.checkpoint, traces=mine, result=result)
@@ -176,27 +167,21 @@ class GardenExecutor:
             except Exception as exc:
                 checkpoints, traces, result, error = [], [], None, f"{type(exc).__name__}: {exc}"
             universe = universe.model_copy(update={"checkpoints": checkpoints, "traces": traces})
-            if (
-                result is not None
-                and kind != "baseline"
-                and self.baseline_result is not None
-                and is_implausible(self.baseline_result, result)
-            ):
-                error = implausible_message(self.baseline_result, result)
-                result = None
-            if result is not None and kind != "baseline" and self.baseline_checkpoints:
+            if result is not None:
                 assert self.root is not None
-                reason = await find_reversal(
+                problem = await screen_result(
                     self.backend,
                     self.plan,
                     self.root.id,
+                    kind,
+                    self.baseline_result,
                     self.baseline_checkpoints,
                     checkpoints,
                     full,
+                    result,
                 )
-                if reason is not None:
-                    error = reason
-                    result = None
+                if problem is not None:
+                    error, result = problem, None
             if result is None:
                 universe.status = "failed"
                 universe.error = error
