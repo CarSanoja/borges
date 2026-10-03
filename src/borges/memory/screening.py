@@ -11,7 +11,7 @@ from borges.memory.kinds import MemoryKind
 TEXT_FIELDS: dict[MemoryKind, tuple[str, ...]] = {
     MemoryKind.VERDICT: ("reason", "source", "text"),
     MemoryKind.CODE: ("code",),
-    MemoryKind.ADVERSARY: ("label", "spec", "reason"),
+    MemoryKind.ADVERSARY: ("label", "spec", "reason", "why"),
 }
 
 

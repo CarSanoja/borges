@@ -41,6 +41,7 @@ def open_memory_db(path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(path, timeout=30, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA secure_delete=ON")
     conn.execute("PRAGMA busy_timeout=30000")
     for kind in MemoryKind:
         conn.executescript(TABLE.format(table=kind.table))

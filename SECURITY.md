@@ -220,7 +220,9 @@ closed. `src/borges/identity/` holds the pieces.
   to `caller://<name>` with its scopes plus those public ones. A key that is revoked, expired or
   unknown gets 401 (it is never silently downgraded to anonymous). Named-only scopes:
   `uploads:write`, `runs:create:live:upload`, `registry:publish`, `registry:approve`,
-  `audit:read`, `admin`.
+  `audit:read`, `admin`. Key names that are built-in callers or memory tenants (`anonymous`,
+  `legacy-live-token`, `public-demo`, `named-public-demo`) cannot be issued and never
+  authenticate, so no key can act as the anonymous caller or write to the shared tenant.
 - **Key store.** `BORGES_HOME/identity/keys.jsonl`, append-only and hash-chained (`prev_hash`,
   `hash`), verified on every read, with a signed checkpoint file beside it
   (`identity/keys.anchor.jsonl`, see Store integrity). Only a per-key salt and the HMAC-SHA256 of
@@ -315,12 +317,19 @@ Threat model.
 | Replace the file by a self-consistent chain | detected while the anchor file is intact | detected |
 | Rewrite chain and anchor consistently (recompute hashes) | not detected | detected |
 | Delete the anchor file | not detected; the next append starts a new one | detected |
-| Roll back chain and anchor together to an older consistent pair | not detected | not detected |
+| Roll back chain and anchor together to an older consistent pair | key store: detected when the global audit chain recorded a later key event (running servers also refuse any shorter chain at once); registry: detected only in a running server | key store: same; registry: same |
 | Delete both files | indistinguishable from a new install | indistinguishable from a new install |
 
 An attacker who holds the store key and has write access is out of scope: they can forge a
-valid chain and anchor. Rolling back both files to an earlier state is not detectable from the
-machine alone; copy the anchor file off the host to detect it. Deleting the key store leaves
+valid chain and anchor. Every key creation and revocation is also appended to the global audit
+chain (`identity.key.created` / `identity.key.revoked`, with key id and record number); a key
+store that lacks a key the audit chain created, or shows as live a key it revoked, fails
+verification (`store_broken`, `borges keys verify`), so rolling back `keys.jsonl` and its anchor
+together is caught unless the audit chain is rolled back with them. To start a key store over
+on purpose, move the audit chain aside too. A running process also keeps the longest chain it
+has read and refuses a store with fewer records or another record at that position, so an
+in-place rollback never works against a live server. Rolling back every file, audit chain
+included, is not detectable from the machine alone; copy the anchor files off the host. Deleting the key store leaves
 only anonymous access, and deleting the registry re-imports the tracked seed, so neither
 widens access. Adding a key to a store written without one, or removing it, makes the store
 fail verification (the reason says so); move the old files aside to start a fresh store.
@@ -462,6 +471,10 @@ written by models and read back into prompts later, so:
 | Anonymous visitors fill or poison the shared memory | `public-demo` is written only by runs of curated cases with no edited question, rule or notes; anonymous callers cannot write notes or erase; each kind has a row and byte cap with LRU eviction and a TTL |
 | Memory changes a result | It never skips a model call whose answer is not already identical; a scripted test runs `checkout_ab` with and without memory and compares universes, flip and estimates. Resumed runs do not read memory |
 | Erasure is not possible or not provable | `DELETE /api/memory` and `borges memory forget` remove the rows and append a `memory.forget` audit record; `memory.read` and `memory.write` records carry tenant, principal, kind and counts, never payloads |
+| Deleted rows linger in the file | The memory database runs with `secure_delete` and every forget checkpoints and truncates the WAL, so a forgotten, evicted or expired row leaves no plaintext in the `.db`, `-wal` or `-shm` files (named tenants are encrypted from the start); a test reads the raw files |
+| Poison is stopped but nobody can tell | Every screening decision on a memory read or write is a `memory.screened` audit record with tenant, kind, stage and action, never the text; a note refused at the API is recorded too |
+| A run page reveals a tenant's data | The `memory.used` event of a keyed tenant carries no dataset fingerprint; anonymous `GET /api/memory` describes only the shared `public-demo` tenant (curated cases, no uploaded data) |
+| A wrong or rotated `BORGES_MEMORY_KEY` | Rows that do not open are ignored, counted as dropped and logged as a warning; they are never read as plain text |
 
 Limits: the key is a single operator secret (no rotation); the public tenant is shared by design and
 unencrypted without a key; a memory is only as good as the judge or coder that produced it, and a

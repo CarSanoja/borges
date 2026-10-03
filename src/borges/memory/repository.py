@@ -187,6 +187,7 @@ class MemoryRepository:
                 )
             removed[kind.value] = cursor.rowcount
         self.conn.commit()
+        self.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         return removed
 
     def close(self) -> None:

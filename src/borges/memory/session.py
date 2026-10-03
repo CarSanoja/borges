@@ -64,6 +64,18 @@ class MemorySession:
         self.family_fp = family_fingerprint(profile)
         return self.dataset_fp
 
+    def _screen(
+        self, kind: MemoryKind, payload: dict[str, Any], field: str, stage: str
+    ) -> dict[str, Any] | None:
+        before = len(self.armor.decisions)
+        screened = screen_payload(kind, payload, self.armor, field)
+        found = self.armor.decisions[before:]
+        if found:
+            audit.record_screened(
+                self.settings, self.principal, self.tenant, kind.value, stage, found
+            )
+        return screened
+
     def _load(self, kind: MemoryKind) -> list[MemoryEntry]:
         family = self.family_fp if kind in FAMILY_KINDS else None
         try:
@@ -79,13 +91,21 @@ class MemorySession:
                 self.dropped += 1
                 continue
             field = f"memory:{kind.value}:{entry.signature[:8]}"
-            screened = screen_payload(kind, entry.payload, self.armor, field)
+            screened = self._screen(kind, entry.payload, field, "read")
             if screened is None:
                 self.dropped += 1
                 continue
             entry.payload = screened
             usable.append(entry)
         self.dropped += loaded.unreadable
+        if loaded.unreadable:
+            log.warning(
+                "memory: %d %s row(s) of tenant %s cannot be read with the configured "
+                "BORGES_MEMORY_KEY (wrong or rotated key); they are ignored",
+                loaded.unreadable,
+                kind.value,
+                self.tenant,
+            )
         audit.record_read(
             self.settings,
             self.principal,
@@ -139,7 +159,7 @@ class MemorySession:
         use = self._agent_use(kind)
         if policy_for(kind).agent_id is not None and use is None:
             return False
-        screened = screen_payload(kind, payload, self.armor, f"memory:write:{kind.value}")
+        screened = self._screen(kind, payload, f"memory:write:{kind.value}", "write")
         if screened is None:
             return False
         self._staged[(kind, signature)] = MemoryEntry(
@@ -184,7 +204,7 @@ class MemorySession:
         return {
             "mode": self.mode.label,
             "encrypted": self.mode.encrypted,
-            "dataset": self.dataset_fp[:12],
+            "dataset": self.dataset_fp[:12] if self.mode.label == "public-demo" else "",
             "reused": dict(self._reused),
             "stored": dict(self._stored),
             "sources": [{"run_id": r, "count": n} for r, n in sorted(self._sources.items())],

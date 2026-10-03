@@ -8,9 +8,12 @@ from typing import Any, Literal
 from borges.config import Settings
 from borges.identity import api_key
 from borges.identity.chain import ChainBroken, ChainedJsonl, ChainStatus
-from borges.identity.principal import Principal, caller_principal
+from borges.identity.key_witness import CREATED_KIND, REVOKED_KIND, KeyWitness
+from borges.identity.principal import RESERVED_KEY_NAMES, Principal, caller_principal
 from borges.identity.scopes import PUBLIC_SCOPES, parse_scopes
 from borges.identity.store_key import store_key
+from borges.telemetry.audit_log import AuditLog
+from borges.telemetry.run_telemetry import global_audit_log
 
 KEYS_RELATIVE = Path("identity") / "keys.jsonl"
 KEYS_DOMAIN = "identity.keys"
@@ -87,8 +90,15 @@ def _fold(events: list[dict[str, Any]]) -> dict[str, KeyRecord]:
 class KeyStore:
     """Append-only, hash-chained store of API keys; only salted secret hashes are kept."""
 
-    def __init__(self, path: Path, key: str | None = None, anchored: bool = True) -> None:
+    def __init__(
+        self,
+        path: Path,
+        key: str | None = None,
+        anchored: bool = True,
+        audit: AuditLog | None = None,
+    ) -> None:
         self.path = Path(path)
+        self._witness = KeyWitness(audit) if audit is not None else None
         self.anchor_path = anchor_path_for(self.path)
         self._chain = ChainedJsonl(
             self.path,
@@ -98,10 +108,21 @@ class KeyStore:
         )
 
     def verify(self) -> ChainStatus:
-        return self._chain.verify()
+        status = self._chain.verify()
+        if not status.ok or self._witness is None:
+            return status
+        try:
+            self.records()
+        except ChainBroken as broken:
+            return replace(status, ok=False, broken_line=broken.line, reason=broken.reason)
+        return status
 
     def records(self) -> dict[str, KeyRecord]:
-        return _fold(self._chain.read())
+        events = self._chain.read()
+        keys = _fold(events)
+        if self._witness is not None:
+            self._witness.check(self.path, keys, len(events))
+        return keys
 
     def listing(self) -> list[KeyRecord]:
         return sorted(self.records().values(), key=lambda r: r.created_at)
@@ -117,7 +138,10 @@ class KeyStore:
             raise KeyStoreError(
                 "key names use lowercase letters, digits, dots, dashes and underscores"
             )
+        if name in RESERVED_KEY_NAMES:
+            raise KeyStoreError(f"'{name}' is reserved for built-in callers and tenants")
         granted = parse_scopes(scopes) if isinstance(scopes, str) else scopes
+        self.records()
         key_id, secret, salt = api_key.new_key_id(), api_key.new_secret(), api_key.new_salt()
         issued = now if now is not None else time.time()
         record = self._chain.append(
@@ -132,6 +156,9 @@ class KeyStore:
             }
         )
         created = _fold([record])[key_id]
+        if self._witness is not None:
+            reason = f"key {key_id} created for {name}"
+            self._witness.record(CREATED_KIND, created, reason, record["seq"])
         return created, api_key.format_token(key_id, secret)
 
     def revoke(self, key_id: str) -> KeyRecord:
@@ -140,8 +167,11 @@ class KeyStore:
             raise KeyStoreError(f"unknown key '{key_id}'")
         if current.revoked_at is not None:
             raise KeyStoreError(f"key '{key_id}' is already revoked")
-        self._chain.append({"event": REVOKED, "key_id": key_id})
-        return self.records()[key_id]
+        record = self._chain.append({"event": REVOKED, "key_id": key_id})
+        revoked = self.records()[key_id]
+        if self._witness is not None:
+            self._witness.record(REVOKED_KIND, revoked, f"key {key_id} revoked", record["seq"])
+        return revoked
 
     def authenticate(
         self, token: str, now: float | None = None
@@ -155,7 +185,7 @@ class KeyStore:
         except ChainBroken:
             return None, "store_broken"
         record = records.get(key_id)
-        if record is None:
+        if record is None or record.name in RESERVED_KEY_NAMES:
             return None, "unknown_key"
         if not api_key.secret_matches(record.salt, record.secret_hash, secret):
             return None, "bad_secret"
@@ -166,4 +196,4 @@ class KeyStore:
 
 
 def open_keystore(settings: Settings) -> KeyStore:
-    return KeyStore(keys_path(settings), store_key(settings))
+    return KeyStore(keys_path(settings), store_key(settings), audit=global_audit_log(settings))

@@ -73,9 +73,12 @@ def add_note(
         raise ValueError(f"a note names one column of at most {MAX_COLUMN_CHARS} characters")
     if not text or len(text) > MAX_NOTE_CHARS:
         raise ValueError(f"a note has 1 to {MAX_NOTE_CHARS} characters")
-    payload = screen_payload(
-        MemoryKind.NOTE, {"column": column, "text": text}, ArmorReport(), "note"
-    )
+    report = ArmorReport()
+    payload = screen_payload(MemoryKind.NOTE, {"column": column, "text": text}, report, "note")
+    if report:
+        audit.record_screened(
+            settings, actor, tenant, MemoryKind.NOTE.value, "write", report.decisions
+        )
     if payload is None or payload["text"] != text:
         raise ValueError("the note looks like an instruction to a model or holds personal data")
     repo = open_repository(settings)

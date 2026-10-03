@@ -11,7 +11,6 @@ from borges.identity.api_key import parse_duration
 from borges.identity.chain import ChainBroken
 from borges.identity.keystore import KeyRecord, KeyStoreError, open_keystore
 from borges.identity.scopes import UnknownScope
-from borges.telemetry.run_telemetry import global_audit_log
 
 keys_app = typer.Typer(
     name="keys", help="Create, list and revoke named API keys.", no_args_is_help=True
@@ -38,16 +37,6 @@ def _row(record: KeyRecord, now: float) -> str:
     )
 
 
-def _audit(kind: str, record: KeyRecord, reason: str) -> None:
-    global_audit_log(get_settings()).append(
-        kind,
-        principal="operator",
-        decision="allow",
-        reason=reason,
-        data={"key_id": record.key_id, "name": record.name, "scopes": sorted(record.scopes)},
-    )
-
-
 def _fail(message: str, code: int = 1) -> typer.Exit:
     typer.echo(message, err=True)
     return typer.Exit(code)
@@ -67,7 +56,6 @@ def create(
         raise _fail(str(error), 2) from None
     except ChainBroken as broken:
         raise _fail(str(broken)) from None
-    _audit("identity.key.created", record, f"key {record.key_id} created for {record.name}")
     typer.echo(f"key_id {record.key_id}")
     typer.echo(f"principal {record.principal_id}")
     typer.echo(f"scopes {','.join(sorted(record.scopes))}")
@@ -101,7 +89,6 @@ def revoke(
         raise _fail(str(error), 2) from None
     except ChainBroken as broken:
         raise _fail(str(broken)) from None
-    _audit("identity.key.revoked", record, f"key {record.key_id} revoked")
     typer.echo(f"revoked {record.key_id} ({record.name})")
 
 

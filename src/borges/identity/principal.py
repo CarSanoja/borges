@@ -12,6 +12,11 @@ ANONYMOUS_ID = f"{CALLER_PREFIX}anonymous"
 LEGACY_ID = f"{CALLER_PREFIX}legacy-live-token"
 
 
+RESERVED_KEY_NAMES = frozenset(
+    {"anonymous", "legacy-live-token", "public-demo", "named-public-demo"}
+)
+
+
 def caller_principal(name: str) -> str:
     return f"{CALLER_PREFIX}{name}"
 

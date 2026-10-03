@@ -15,6 +15,7 @@ from borges.identity.chain_links import (
     link_hash,
     split_torn,
 )
+from borges.identity.high_water import HighWater
 from borges.identity.store_key import derive_key
 from borges.telemetry.audit_record import GENESIS_HASH
 from borges.telemetry.hashing import canonical_json, sha256_json
@@ -40,6 +41,7 @@ class ChainedJsonl:
         self._chain_key = derive_key(key, domain, "chain") if key else None
         self._anchor_key = derive_key(key, domain, "anchor") if key else None
         self._cache: tuple[Any, list[dict[str, Any]], ChainStatus] | None = None
+        self._high_water = HighWater()
 
     def _stamp(self) -> tuple[Any, Any] | None:
         try:
@@ -120,11 +122,13 @@ class ChainedJsonl:
         stamp = self._stamp()
         if stamp is None:
             self._check_anchor([])
+            self._high_water.check(self.path, [])
             return []
         if self._cache is not None and self._cache[0] == stamp:
             return self._cache[1]
         events, status = self._load(split_torn(self.path.read_text(encoding="utf-8"))[0])
         self._check_anchor(events)
+        self._high_water.check(self.path, events)
         self._cache = (stamp, events, status)
         return events
 
@@ -160,6 +164,7 @@ class ChainedJsonl:
             complete, torn = split_torn(raw)
             events, status = self._load(complete, pending_ok=True)
             self._check_anchor(events)
+            self._high_water.check(self.path, events)
             if torn:
                 with self.path.with_name(self.path.name + ".torn").open("a", encoding="utf-8") as q:
                     q.write(torn + "\n")

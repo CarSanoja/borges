@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from borges.armor.report import ArmorDecision
 from borges.config import Settings
 from borges.runtime import audit
 
 READ = "memory.read"
 WRITE = "memory.write"
 FORGET = "memory.forget"
+SCREENED = "memory.screened"
 SHORT = 12
 
 
@@ -61,3 +63,29 @@ def record_forget(
             "by_kind": removed,
         },
     )
+
+
+def record_screened(
+    settings: Settings,
+    principal: str | None,
+    tenant: str,
+    kind: str,
+    stage: str,
+    decisions: list[ArmorDecision],
+) -> None:
+    for decision in decisions:
+        audit.record(
+            settings,
+            SCREENED,
+            principal=principal,
+            decision="deny" if decision.denies else "observe",
+            reason=f"{decision.kind}: {decision.detail}",
+            data={
+                "tenant": tenant,
+                "memory_kind": kind,
+                "stage": stage,
+                "action": decision.action,
+                "field": decision.field,
+                "count": decision.count,
+            },
+        )
