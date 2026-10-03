@@ -538,6 +538,11 @@ near match (similarity) can reuse a verdict for a slightly different option.
 - Claim-time admission re-checks the active-run caps, so a restart or retry cannot exceed them.
 - Resume rewrites the per-run event log (drops in-flight and terminal events). The global audit chain is
   append-only and is not rewritten; resumes, cancels, requeues and schedule changes are audited there.
+- `make demo-resume` runs a scripted case in a scratch home, kills the worker process with SIGKILL
+  after three universes are checkpointed, restarts it and prints the resumed run next to an
+  uninterrupted one: `SAME FLIP after the kill and resume`. A forced dead-letter (a provider that
+  keeps failing) is listed by `GET /api/runs/dead-letter` for admins and recorded as
+  `runtime.dead_letter`; `/api/platform` shows the recent denials of the identity pillar.
 - Limits: leases only detect dead owners by pid on the same host; a multi-host deployment relies on
   lease expiry. Scripted and cached model calls are not repeated on resume; an uncached live call may be.
 

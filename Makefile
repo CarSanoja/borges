@@ -1,7 +1,7 @@
 BORGES = uv run --no-sync borges
 FRONTEND = pnpm -C frontend
 
-.PHONY: install lint test demo-cli demo-red-cards serve dev record-demos live-smoke record-live docker docker-run
+.PHONY: install lint test demo-cli demo-red-cards demo-resume serve dev record-demos live-smoke record-live docker docker-run
 
 install:
 	uv sync --extra contree
@@ -22,6 +22,9 @@ demo-cli:
 
 demo-red-cards:
 	$(BORGES) run --case red_cards --llm scripted
+
+demo-resume:
+	uv run --no-sync python scripts/demo_resume.py
 
 serve: export BORGES_REGISTRY_ENFORCE=true
 serve: export BORGES_STORE_KEY_AUTOGEN=true

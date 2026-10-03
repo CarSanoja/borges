@@ -4,6 +4,7 @@ from typing import Any
 
 from fastapi import Request
 
+from borges.api.platform_audit import recent_denials
 from borges.config import Settings
 from borges.fleet.catalog import build_catalog
 from borges.fleet.locations import SEED_ACTOR, open_store
@@ -135,5 +136,6 @@ def identity(settings: Settings, principal: Principal) -> dict[str, Any]:
                 "records": keystore.records,
             },
             "agent_token_ttl_s": settings.borges_agent_token_ttl_s,
+            "recent_denials": recent_denials(settings),
         },
     }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -43,3 +44,41 @@ def global_chain(settings: Settings) -> dict[str, Any]:
     _CACHE.clear()
     _CACHE[key] = result
     return result
+
+
+TAIL_BYTES = 262_144
+DENIAL_KINDS = ("identity.access", "armor.screen", "policy.run")
+
+
+def recent_denials(settings: Settings, limit: int = 5) -> list[dict[str, Any]]:
+    path = global_audit_path(settings)
+    try:
+        with path.open("rb") as handle:
+            handle.seek(0, 2)
+            size = handle.tell()
+            handle.seek(max(0, size - TAIL_BYTES))
+            tail = handle.read().decode("utf-8", errors="replace")
+    except OSError:
+        return []
+    found: list[dict[str, Any]] = []
+    for line in reversed(tail.splitlines()):
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        if record.get("decision") != "deny" or record.get("kind") not in DENIAL_KINDS:
+            continue
+        data = record.get("data") or {}
+        found.append(
+            {
+                "seq": record.get("seq"),
+                "ts": record.get("ts"),
+                "kind": record.get("kind"),
+                "principal": record.get("principal"),
+                "route": data.get("route"),
+                "reason": record.get("reason"),
+            }
+        )
+        if len(found) >= limit:
+            break
+    return found

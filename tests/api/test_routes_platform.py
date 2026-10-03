@@ -7,6 +7,7 @@ import pytest
 from borges.api.platform_catalog import ORDER, PILLARS
 from borges.armor.corpus_score import armor_score
 from borges.config import REPO_ROOT
+from borges.telemetry.run_telemetry import global_audit_path
 from tests.api.test_routes_runs import Env
 from tests.api.test_routes_runtime import Env as RuntimeEnv
 from tests.armor.corpus_runner import evaluate, load
@@ -124,3 +125,18 @@ async def test_an_attached_runtime_reports_queue_and_resume(
     assert runtime["facts"]["queue_depth"] == 0 and runtime["facts"]["dead_letter_count"] == 0
     assert runtime["facts"]["resume_from_checkpoints"] is True
     assert runtime["facts"]["max_attempts"] == 2
+
+
+async def test_a_named_key_denial_lands_in_the_audit_log_and_shows_on_the_platform(
+    env: Env,
+) -> None:
+    headers = bearer(make_key(env.app.state.settings, "runs:read", "alice"))
+    async with env.client() as client:
+        denied = await client.get("/api/audit", headers=headers)
+        pillars = {p["id"]: p for p in (await client.get("/api/platform")).json()["pillars"]}
+    assert denied.status_code == 403
+    [first, *_] = pillars["identity"]["facts"]["recent_denials"]
+    assert first["principal"] == "caller://alice" and first["route"] == "/api/audit"
+    assert "audit:read" in first["reason"]
+    audit = global_audit_path(env.app.state.settings).read_text()
+    assert "caller://alice" in audit and "deny" in audit
