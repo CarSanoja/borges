@@ -20,7 +20,7 @@ from tests.telemetry.conftest import make_settings
 SRC = REPO_ROOT / "src" / "borges"
 
 CONSTRUCTORS = {
-    "NebiusLLM": {"llm/factory.py"},
+    "NebiusLLM": {"llm/factory.py", "bench/blade_matcher.py"},
     "ScriptedLLM": {"llm/factory.py"},
     "AsyncOpenAI": {"llm/nebius_provider.py"},
     "ContreeBackend": {"sandbox/factory.py"},

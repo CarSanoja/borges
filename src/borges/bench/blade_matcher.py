@@ -115,13 +115,12 @@ class LLMMatcher:
 def make_llm_matcher(
     api_key: str, base_url: str, model_id: str | None, cache_dir: Path
 ) -> LLMMatcher:
-    import openai
+    from borges.llm.nebius_provider import NebiusLLM
 
     model = KNOWN_MODELS.get(model_id or SUPER.id) or ModelSpec(
         id=model_id or SUPER.id,
         input_usd_per_m=SUPER.input_usd_per_m,
         output_usd_per_m=SUPER.output_usd_per_m,
     )
-    return LLMMatcher(
-        openai.AsyncOpenAI(api_key=api_key, base_url=base_url), model, DiskCache(cache_dir)
-    )
+    provider = NebiusLLM(api_key=api_key, base_url=base_url)
+    return LLMMatcher(provider.client, model, DiskCache(cache_dir))

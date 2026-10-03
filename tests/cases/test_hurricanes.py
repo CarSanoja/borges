@@ -25,7 +25,7 @@ CASES_DIR = Path(__file__).resolve().parents[2] / "cases"
 CASE_DIR = CASES_DIR / "hurricanes"
 sys.path.insert(0, str(CASE_DIR))
 
-from validation import DEFAULTS, STEP_ORDER, load_codes, run_universe  # noqa: E402
+from hurricanes_validation import DEFAULTS, STEP_ORDER, load_codes, run_universe  # noqa: E402
 
 HINT_WORDS = re.compile(
     r"outlier|extreme|fragil|robust|katrina|audrey|leverage|critic|spurious|artefact|artifact",
