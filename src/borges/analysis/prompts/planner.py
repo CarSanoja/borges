@@ -55,6 +55,8 @@ one column such as "cnorm_score", never "cnorm_mean" in one option and "cnorm_pc
 The exception is a step that aggregates rows (one row per user or group); its produces then lists \
 every column it keeps that later steps read (the group key, the treatment indicator, outcomes), \
 and every option of that step aggregates to the same unit.
+- Specs describe the analysis, never unit conversions: no option multiplies an estimate or an \
+interval by 100; Borges converts units itself.
 - Never add a step whose only job is dummy or one-hot encoding of categorical columns: the \
 model step encodes them itself with drop_first=True.
 - Covariate sets are options of the model step: each model option names the covariates it \

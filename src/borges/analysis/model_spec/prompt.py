@@ -20,7 +20,8 @@ moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
 list an earlier step stored in ctx["covariates"].
 - offset_log: optional column whose log is the offset (poisson and negbin only).
-- cov_type: "nonrobust", "HC1", "HC3" or "cluster"; with "cluster" set `cluster` to the grouping \
+- cov_type: "nonrobust", "HC0", "HC1", "HC2", "HC3" or "cluster" (the one the option names); \
+with "cluster" set `cluster` to the grouping \
 column.
 - standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin).
 - report: "coefficient", "odds_ratio" (logit only) or "rate_ratio" (poisson and negbin only).

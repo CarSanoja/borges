@@ -17,7 +17,7 @@ def test_defaults_of_a_supported_spec() -> None:
 
 
 @pytest.mark.parametrize(
-    "field", [("family", "gee"), ("cov_type", "HC0"), ("report", "hazard_ratio")]
+    "field", [("family", "gee"), ("cov_type", "HC4"), ("report", "hazard_ratio")]
 )
 def test_invented_values_are_rejected(field: tuple[str, str]) -> None:
     with pytest.raises(ValidationError):

@@ -9,7 +9,7 @@ from borges.armor.findings import Finding, clip
 from borges.armor.normalize import normalize_identifier, variants_of
 from borges.armor.patterns_code import CODE, CODE_STEERING
 from borges.armor.patterns_goal import EXFIL, STEERING
-from borges.armor.patterns_instruction import OVERRIDE, ROLE
+from borges.armor.patterns_instruction import COMPOSED_OVERRIDE, OVERRIDE, ROLE
 from borges.armor.patterns_semantic import SEMANTIC
 
 Patterns = tuple[tuple[str, str], ...]
@@ -30,8 +30,8 @@ class ScreenProfile:
 
 UNTRUSTED_INPUT = ScreenProfile("untrusted_input", (*TEXT_PATTERNS, *SEMANTIC))
 MODEL_OUTPUT = ScreenProfile("model_output", MODEL_OUTPUT_PATTERNS)
-PROMPT_INPUT = ScreenProfile("prompt_input", (*OVERRIDE, *ROLE, *STEERING, *EXFIL))
-CODE_OUTPUT = ScreenProfile("code_output", (*OVERRIDE, *ROLE, *EXFIL, *CODE))
+PROMPT_INPUT = ScreenProfile("prompt_input", (*COMPOSED_OVERRIDE, *ROLE, *STEERING, *EXFIL))
+CODE_OUTPUT = ScreenProfile("code_output", (*COMPOSED_OVERRIDE, *ROLE, *EXFIL, *CODE))
 
 
 @cache

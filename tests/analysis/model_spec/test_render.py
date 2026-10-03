@@ -12,7 +12,7 @@ from tests.analysis.model_spec.data import make_spec, synthetic
 from tests.analysis.model_spec.reference import reference
 
 FRAME = synthetic()
-COV_TYPES = ("nonrobust", "HC1", "HC3", "cluster")
+COV_TYPES = ("nonrobust", "HC0", "HC1", "HC2", "HC3", "cluster")
 REPORTS = {
     "ols": ("coefficient",),
     "logit": ("coefficient", "odds_ratio"),

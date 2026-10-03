@@ -106,3 +106,17 @@ ROLE = (
         r"\b(?:disable|turn\s+off|deactivate|desactiva(?:r)?|apaga(?:r)?)\s+(?:the\s+|your\s+|tus?\s+|el\s+|la\s+)?(?:safety|guardrails?|filters?|armor|checks?|verification|seguridad|filtros?|verificacion|controles)\b",
     ),
 )
+
+STRICT_OVERRIDE_VERBS = (
+    r"(?:ignor(?:e|es|ing|a|ar|en)|disregard(?:s|ing|ed)?|forget|overrid(?:e|es|ing)|overrule|"
+    r"bypass|olvida(?:r)?|desestima(?:r)?|deja de seguir|stop following|do not follow|"
+    r"don'?t follow|no sigas|no apliques|no sigan|ignorez|oubliez|oublie|ne tenez pas compte|"
+    r"ne tiens pas compte|passez outre|contournez|ignoriere|ignorieren|vergiss|vergessen sie|"
+    r"missachte|missachten sie|umgehe|umgehen sie|esqueca|esquecer|desconsidere|desconsidera|"
+    r"ignorare|dimentica|dimenticare|aggira|set aside)"
+)
+
+COMPOSED_OVERRIDE = (
+    ("override.ignore_rules", rf"\b{STRICT_OVERRIDE_VERBS}\b{FILLER}{RULE_NOUNS}\b"),
+    *(entry for entry in OVERRIDE if entry[0] != "override.ignore_rules"),
+)

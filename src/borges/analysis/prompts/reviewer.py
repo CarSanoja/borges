@@ -19,7 +19,10 @@ step's code, such as keeping only rows where a column equals a value, is unfaith
 selection by value belongs to a filter step, and the filter step the model code duplicates \
 would become a silent no-op.
 Units are converted by Borges after the step: do not flag a result for being a proportion \
-rather than percentage points.
+rather than percentage points. The code contract overrides a spec on two points: results are \
+returned on the natural scale of the estimator (never multiplied by 100) and standard errors, \
+intervals and p-values come from the fitted statsmodels result. Code that follows the contract \
+where the spec says otherwise is faithful; never ask for a multiplication by 100.
 2. changes_estimand: does the option change the question rather than the analysis? Examples: \
 swapping the groups, reversing the coding of a variable, measuring a different outcome. A \
 different but legitimate way to measure or clean the same thing does not change the estimand.
