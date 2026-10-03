@@ -33,6 +33,8 @@ ROUTE_TABLE: Final[dict[tuple[str, str], RouteRequirement]] = {
     ("GET", "/api/runs/dead-letter"): s.ADMIN,
     ("GET", "/api/schedules"): s.ADMIN,
     ("POST", "/api/runs/{run_id}/cancel"): RUN_CREATE_SCOPES,
+    ("POST", "/api/runs/{run_id}/share"): RUN_CREATE_SCOPES,
+    ("POST", "/api/armor/check"): OPEN,
     ("GET", "/api/runs/{run_id}"): s.RUNS_READ,
     ("GET", "/api/runs/{run_id}/events"): s.RUNS_READ,
     ("GET", "/api/runs/{run_id}/universes/{universe_id}"): s.RUNS_READ,

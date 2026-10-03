@@ -20,6 +20,9 @@ class Store:
     def exists(self, run_id: str) -> bool:
         return run_id in self.ids
 
+    def meta(self, run_id: str) -> dict[str, Any]:
+        return {"run_id": run_id, "case_id": "demo", "public": True}
+
 
 class Card:
     id = "demo"

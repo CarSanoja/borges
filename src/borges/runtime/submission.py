@@ -4,6 +4,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 from borges.identity.principal import Principal
+from borges.identity.run_access import run_is_public
 from borges.identity.run_quota import RunQuota
 from borges.identity.scopes import ADMIN
 from borges.runs.inputs import resolve_run
@@ -42,7 +43,12 @@ async def submit_run(
         request,
         resolved,
         status="queued",
-        extra={"principal": principal.id, "owner_key": owner_key, "source": source},
+        extra={
+            "principal": principal.id,
+            "owner_key": owner_key,
+            "source": source,
+            "public": run_is_public(resolved.case_id, request.upload_id is not None, principal),
+        },
     )
     job = NewJob(
         run_id=run_id,

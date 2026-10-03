@@ -14,7 +14,11 @@ from borges.api.deps import (
     get_store,
 )
 from borges.api.recorded_detail import recorded_origin, recorded_snapshot
+from borges.api.run_access import authorize_run, run_meta, unknown_run
 from borges.api.sse import sse_response
+from borges.identity.deps import get_principal
+from borges.identity.principal import Principal
+from borges.identity.run_access import can_read_run, can_share_run
 from borges.runs.detail import build_universe_detail
 from borges.runs.export_script import build_script
 from borges.runs.models import RunSnapshot, RunSummary
@@ -27,21 +31,42 @@ router = APIRouter()
 
 Orchestrator = Annotated[Any, Depends(get_orchestrator)]
 Store = Annotated[Any, Depends(get_store)]
+Caller = Annotated[Principal, Depends(get_principal)]
+Registry = Annotated[Any, Depends(get_registry)]
 
 
 @router.get("/runs")
-def list_runs(store: Store) -> list[RunSummary]:
-    return store.list_runs()
+def list_runs(store: Store, principal: Caller) -> list[RunSummary]:
+    visible: list[RunSummary] = []
+    for summary in store.list_runs():
+        meta = run_meta(store, summary.run_id)
+        if meta is not None and can_read_run(meta, principal):
+            visible.append(summary)
+    return visible
 
 
-def _require_run(store: RunStore, run_id: str) -> None:
-    if not store.exists(run_id):
-        raise HTTPException(status_code=404, detail=f"Unknown run '{run_id}'.")
+def _require_run(store: RunStore, principal: Principal, run_id: str) -> None:
+    meta = run_meta(store, run_id)
+    if meta is None or not can_read_run(meta, principal):
+        raise unknown_run(run_id)
+
+
+@router.post("/runs/{run_id}/share")
+def share_run(run_id: str, store: Store, principal: Caller) -> dict[str, Any]:
+    meta = run_meta(store, run_id)
+    if meta is None or not can_read_run(meta, principal):
+        raise unknown_run(run_id)
+    if not can_share_run(meta, principal):
+        raise HTTPException(status_code=403, detail="Only the run's creator can share it.")
+    store.update_meta(run_id, public=True)
+    return {"run_id": run_id, "public": True}
 
 
 @router.get("/runs/{run_id}")
-async def get_run(run_id: str, orchestrator: Orchestrator, store: Store) -> RunSnapshot:
-    _require_run(store, run_id)
+async def get_run(
+    run_id: str, orchestrator: Orchestrator, store: Store, principal: Caller
+) -> RunSnapshot:
+    _require_run(store, principal, run_id)
     return await resolve(orchestrator.snapshot(run_id))
 
 
@@ -49,11 +74,12 @@ async def get_run(run_id: str, orchestrator: Orchestrator, store: Store) -> RunS
 def run_events(
     run_id: str,
     store: Store,
+    principal: Caller,
     bus: Annotated[Any, Depends(get_bus)],
     from_seq: Annotated[int, Query(ge=0)] = 0,
     last_event_id: Annotated[str | None, Header()] = None,
 ):
-    _require_run(store, run_id)
+    _require_run(store, principal, run_id)
     if last_event_id is not None and re.fullmatch(r"[0-9]{1,9}", last_event_id.strip()):
         from_seq = max(from_seq, int(last_event_id))
     return sse_response(bus.subscribe(run_id, from_seq))
@@ -73,8 +99,10 @@ async def get_universe(
     universe_id: str,
     orchestrator: Orchestrator,
     store: Store,
-    registry: Annotated[Any, Depends(get_registry)],
+    registry: Registry,
+    principal: Caller,
 ) -> ReproducibleUniverse:
+    authorize_run(store, registry, principal, run_id)
     try:
         snapshot = await _snapshot_for(run_id, orchestrator, store, registry)
         detail = build_universe_detail(snapshot, universe_id)
@@ -91,8 +119,10 @@ async def get_universe_script(
     universe_id: str,
     orchestrator: Orchestrator,
     store: Store,
-    registry: Annotated[Any, Depends(get_registry)],
+    registry: Registry,
+    principal: Caller,
 ) -> PlainTextResponse:
+    authorize_run(store, registry, principal, run_id)
     try:
         snapshot = await _snapshot_for(run_id, orchestrator, store, registry)
         filename = script_filename(run_id, universe_id)

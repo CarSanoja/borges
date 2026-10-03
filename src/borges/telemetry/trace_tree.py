@@ -94,5 +94,7 @@ def build_trace(run_id: str, run_dir: Path, global_path: Path | None = None) -> 
         spans_by_kind=dict(kinds),
         roots=sorted(children.get(None, []), key=lambda n: n.start_ns),
         unlinked_audit=unlinked,
-        audit_chain=verify_run_chain(run_dir / "audit.jsonl", global_path, run_id),
+        audit_chain=verify_run_chain(run_dir / "audit.jsonl", global_path, run_id).model_copy(
+            update={"path": f"{run_id}/audit.jsonl"}
+        ),
     )

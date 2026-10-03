@@ -43,6 +43,9 @@ class FakeStore:
     def exists(self, run_id: str) -> bool:
         return any(r.run_id == run_id for r in self.runs)
 
+    def meta(self, run_id: str) -> dict[str, Any]:
+        return {"run_id": run_id, "case_id": "demo", "public": True}
+
 
 class FakeRegistry:
     def list(self) -> list:
