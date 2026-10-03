@@ -20,3 +20,8 @@ data/raw/
 /runs/
 /notes/
 /research/
+
+evidence/blade/*/home/
+evidence/blade/*/runs/
+evidence/blade/*/cases/
+evidence/blade/*/matcher-cache/

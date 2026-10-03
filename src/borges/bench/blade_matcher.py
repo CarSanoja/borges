@@ -9,10 +9,11 @@ from pydantic import RootModel
 
 from borges.bench.blade_prompts import SYSTEM, user_message
 from borges.llm.cache import DiskCache, cache_key
-from borges.llm.client import KNOWN_MODELS, SUPER, ModelSpec
+from borges.llm.client import KNOWN_MODELS, SUPER, LLMError, ModelSpec
 from borges.llm.json_output import parse_model
 
 CHUNK = 40
+MAX_TOKENS = 4000
 MATCH_THRESHOLD = 8
 PAIR = re.compile(r"\d+")
 
@@ -35,6 +36,7 @@ class MatcherUsage:
     tokens_in: int = 0
     tokens_out: int = 0
     cost_usd: float = 0.0
+    failed_chunks: int = 0
 
 
 class Matcher(Protocol):
@@ -74,18 +76,19 @@ class LLMMatcher:
     def name(self) -> str:
         return f"llm:{self.model.id}"
 
-    async def _ask(self, messages: list[dict[str, str]]) -> str:
-        key = cache_key(self.model.id, messages, "match", 2000, 0.0)
+    async def _ask(self, messages: list[dict[str, str]]) -> tuple[str, str | None]:
+        key = cache_key(self.model.id, messages, "match-json", MAX_TOKENS, 0.0)
         cached = self.cache.get(key) if self.cache else None
         self.usage.calls += 1
         if cached is not None:
             self.usage.cached_calls += 1
-            return str(cached["text"])
+            return str(cached["text"]), None
         reply = await self.client.chat.completions.create(
             model=self.model.id,
             messages=messages,
-            max_tokens=2000,
+            max_tokens=MAX_TOKENS,
             temperature=0.0,
+            response_format={"type": "json_object"},
             extra_body={"chat_template_kwargs": {"enable_thinking": False}},
         )
         text = reply.choices[0].message.content or ""
@@ -94,9 +97,30 @@ class LLMMatcher:
         self.usage.tokens_in += tokens_in
         self.usage.tokens_out += tokens_out
         self.usage.cost_usd += self.model.cost(tokens_in, tokens_out)
-        if self.cache:
-            self.cache.put(key, {"text": text, "tokens_in": tokens_in, "tokens_out": tokens_out})
-        return text
+        return text, key
+
+    def _remember(self, key: str | None, text: str) -> None:
+        if self.cache and key:
+            self.cache.put(key, {"text": text})
+
+    async def _chunk(
+        self, messages: list[dict[str, str]], n_expert: int, n_agent: int, offset: int
+    ) -> list[MatchPair]:
+        for _ in range(2):
+            text, key = await self._ask(messages)
+            try:
+                pairs = parse_pairs(text, n_expert, n_agent, offset)
+            except LLMError as exc:
+                messages = [
+                    *messages,
+                    {"role": "assistant", "content": text[:6000]},
+                    {"role": "user", "content": f"{exc}. Return only the corrected JSON object."},
+                ]
+                continue
+            self._remember(key, text)
+            return pairs
+        self.usage.failed_chunks += 1
+        return []
 
     async def match(
         self, kind: str, question: str, schema: str, expert: list[str], agent: list[str]
@@ -108,7 +132,7 @@ class LLMMatcher:
                 {"role": "system", "content": SYSTEM},
                 {"role": "user", "content": user_message(kind, question, schema, expert, chunk)},
             ]
-            pairs.extend(parse_pairs(await self._ask(messages), len(expert), len(chunk), start))
+            pairs.extend(await self._chunk(messages, len(expert), len(chunk), start))
         return pairs
 
 

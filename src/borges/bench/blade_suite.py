@@ -125,6 +125,7 @@ async def score(
     matcher: Matcher, dataset: BladeDataset, adapted: AdaptedCase, outcome: ArmResult
 ) -> None:
     before = matcher.usage.cost_usd
+    failed = matcher.usage.failed_chunks
     expert = {k: dataset.items(k) for k in ("cvar", "model", "transform")}
     outcome.metrics = await evaluate(
         matcher,
@@ -134,6 +135,11 @@ async def score(
         [a.items for a in outcome.analyses],
     )
     outcome.matcher_cost_usd = matcher.usage.cost_usd - before
+    if matcher.usage.failed_chunks > failed:
+        outcome.errors.append(
+            f"matcher: {matcher.usage.failed_chunks - failed} chunk(s) returned invalid JSON "
+            "twice and were scored as unmatched"
+        )
 
 
 async def run_benchmark(config: BenchConfig, matcher: Matcher, llm_matcher: bool) -> BenchResult:

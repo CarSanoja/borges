@@ -73,3 +73,20 @@ async def test_lexical_matcher_is_labelled_as_plumbing() -> None:
     assert pairs and pairs[0].similarity >= 8
     assert "not a BLADE score" in matcher.name
     assert json.dumps(matcher.name)
+
+
+async def test_invalid_json_is_retried_once_and_not_cached(tmp_path) -> None:
+    fake, completions = client(["{'A1-B1': 9,", '{"A1-B1": {"similarity": 9}}'])
+    matcher = LLMMatcher(fake, SUPER, DiskCache(tmp_path))
+    pairs = await matcher.match("model", "q", "s", ["linear"], ["ols"])
+    assert [(p.expert, p.agent) for p in pairs] == [(0, 0)]
+    assert len(completions.calls) == 2 and matcher.usage.failed_chunks == 0
+    assert "corrected JSON" in completions.calls[1]["messages"][-1]["content"]
+    assert completions.calls[0]["response_format"] == {"type": "json_object"}
+
+
+async def test_two_invalid_replies_score_the_chunk_as_unmatched() -> None:
+    fake, completions = client(["not json", "still not json"])
+    matcher = LLMMatcher(fake, SUPER)
+    pairs = await matcher.match("model", "q", "s", ["linear"], ["ols"])
+    assert pairs == [] and matcher.usage.failed_chunks == 1 and len(completions.calls) == 2
