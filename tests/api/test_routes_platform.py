@@ -39,6 +39,7 @@ async def test_pillar_facts_come_from_the_running_system(env: Env) -> None:
         pillars = {p["id"]: p for p in (await client.get("/api/platform")).json()["pillars"]}
     registry = pillars["registry"]["facts"]
     assert registry["agents"] > 0 and len(registry["registry_sha"]) == 64
+    assert "seeded_approvals" in registry
     assert pillars["runtime"]["status"] == "off"
     memory = pillars["memory"]["facts"]
     assert memory["enabled"] and memory["encrypted"] and "tenants" not in memory

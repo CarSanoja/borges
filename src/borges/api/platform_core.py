@@ -6,7 +6,7 @@ from fastapi import Request
 
 from borges.config import Settings
 from borges.fleet.catalog import build_catalog
-from borges.fleet.locations import open_store
+from borges.fleet.locations import SEED_ACTOR, open_store
 from borges.identity.keystore import open_keystore
 from borges.identity.principal import Principal
 from borges.identity.scopes import PUBLIC_SCOPES
@@ -16,22 +16,34 @@ from borges.memory.kinds import PUBLIC_TENANT, MemoryKind
 from borges.memory.tenant import resolve_mode
 
 
+def _seeded_approvals(store: Any) -> int:
+    count = 0
+    for record in store.records():
+        if any(step.state == "approved" and step.by == SEED_ACTOR for step in record.history):
+            count += 1
+    return count
+
+
 def registry(settings: Settings) -> dict[str, Any]:
     catalog = build_catalog(settings, [])
     summary = catalog.summary
-    chain = open_store(settings).verify()
+    store = open_store(settings)
+    chain = store.verify()
+    seeded = _seeded_approvals(store)
     approved = summary.by_approval.get("approved", 0)
     blocked = len(summary.blocked)
     status = "ok" if chain.ok and blocked == 0 else "attention"
     return {
         "status": status if chain.ok else "error",
         "summary": f"{summary.total} agents and components, {approved} at an approved version, "
-        f"enforcement {'on' if summary.enforce else 'off'}.",
+        f"enforcement {'on' if summary.enforce else 'off'}; {seeded} approvals are seeded, "
+        "not reviewed by a second person.",
         "facts": {
             "agents": summary.total,
             "approved_versions": approved,
             "by_approval": summary.by_approval,
             "by_lifecycle": summary.by_lifecycle,
+            "seeded_approvals": seeded,
             "unapproved_blocking": blocked,
             "enforce": summary.enforce,
             "four_eyes": settings.borges_registry_four_eyes,

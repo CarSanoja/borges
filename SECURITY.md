@@ -253,6 +253,16 @@ closed. `src/borges/identity/` holds the pieces.
   `Retry-After`, audited as `policy.run_quota`. JSON request bodies above 256 KiB are refused
   with 413 before they are parsed. Behind a reverse proxy on the same host uvicorn reads the
   real client from `X-Forwarded-For`; for another proxy address set `FORWARDED_ALLOW_IPS`.
+- **Run tenancy.** The principal that creates a run is written to the run's `meta.json`
+  together with a `public` flag. A run is public when an anonymous caller started it on a
+  curated case (and for the committed recordings); a run on uploaded data, or started by a named
+  key, is private to its creator and to admins until the creator calls
+  `POST /api/runs/{id}/share`. The list, detail, event stream, universe, script, trace and
+  audit endpoints return 404 (not 403, so existence is not revealed) to anyone else. Runs
+  written before this field existed count as public only when they are curated cases. A test
+  proves principal B gets 404 on principal A's run on all six read routes. The audit endpoint
+  and the trace return the chain path relative to the run (`<run id>/audit.jsonl`); a test scans
+  the JSON of every public endpoint for absolute filesystem paths.
 - **Agent tokens.** Each run mints a short-lived HMAC-SHA256 token per agent over the run id,
   agent principal, capabilities and expiry, with a per-process secret that is never written to
   disk. The orchestrator runs each agent's model calls under `calling_as()` with its token.
@@ -275,7 +285,13 @@ closed. `src/borges/identity/` holds the pieces.
   `BORGES_AUDIT_ANCHOR_EVERY` records and when a run or the server ends. `borges audit verify
   global` checks the chain against the anchors, so truncating the tail is detected. Without the
   key the checkpoints are plain hashes: they catch accidents and unsophisticated edits, not an
-  attacker who rewrites the anchor file too, so copy the anchor file off the machine. A last
+  attacker who rewrites the anchor file too, so copy the anchor file off the machine. The
+  per-run chains (`runs/<id>/audit.jsonl`) carry no key at all: without one they are
+  tamper-evident only against partial edits (a changed middle record, or a tail cut while the
+  global chain holds more records for that run). Someone who rewrites a whole run file and
+  recomputes its hashes is not detected by the run chain alone; the global chain's HMAC anchor
+  is what binds the demo's history, and a key on the same volume only stops file edits by
+  someone who cannot read that volume. A last
   line cut short by a crash is moved to `global.jsonl.torn` and an `audit.torn_line` record
   says so.
 
@@ -286,12 +302,21 @@ Each record carries `prev_hash` and `hash` over its canonical JSON.
 
 - **Keyed mode.** With `BORGES_STORE_KEY` set (falling back to `BORGES_AUDIT_ANCHOR_KEY`) the
   link is HMAC-SHA256 under a key derived from it per store and purpose, and so is the anchor
-  signature. `make serve` and the Docker image set `BORGES_STORE_KEY_AUTOGEN=true`: when no key is
-  configured, `borges serve` creates a random one in `BORGES_HOME/identity/store.key` (mode 0600)
-  and uses it, unless a key store or registry written without a key already exists (then it stays
-  unkeyed and warns, so an upgrade never locks a deployment out). A key kept beside the store only stops an attacker who can write the store files
-  but cannot read that key file; for more, supply the key from your secret store and keep it out
-  of `BORGES_HOME`. Local development and the tests run without a key.
+  signature. `make serve` and the Docker image set `BORGES_STORE_KEY_AUTOGEN=true` and
+  `BORGES_MEMORY=true`; `borges serve` then creates, when unset and not yet on disk, three
+  random keys in `BORGES_HOME/identity/` with mode 0600: `store.key` (key store and registry),
+  `anchor.key` (`BORGES_AUDIT_ANCHOR_KEY`, the signed global audit anchors) and `memory.key`
+  (`BORGES_MEMORY_KEY`, AES-GCM memory bank). A home that already holds a key store or
+  registry written without a key stays unkeyed and warns, and an existing unsigned audit anchor
+  file blocks a new anchor key, so an upgrade never locks a deployment out. Every CLI command
+  (`borges agents verify`, `keys list`, `audit verify`, `run`) loads the same key files through
+  the same code as the server; when anchors are signed and no key can be found the commands
+  print `keyed store, key not available` rather than `BROKEN`.
+  Keys kept in `BORGES_HOME` protect against someone who can edit the files but not read them.
+  They do not protect against someone who can read the volume: that reader has the key beside
+  the data and can forge a valid chain, anchor and ciphertext. For more, supply the keys from
+  your secret store and keep them out of `BORGES_HOME`. Local development and the tests run
+  without keys.
 - **Unkeyed mode.** Without a key the link is plain sha256 and every status output says
   `unkeyed: tamper-evident only against accidental edits`; the server logs a warning at startup.
   Anyone who can write the file can recompute every hash and anchor.
@@ -433,6 +458,17 @@ addresses, and dates of birth in columns whose name says so. It is redacted to
 contain personal data with counts and never values, and the upload screen shows it before the
 run starts. The analysis code in the sandbox still reads the raw columns.
 
+**Screening comes first.** `POST /api/runs` screens the question, the decision rule and any
+column notes in the request right after the scope check and before the live-mode, key, budget
+and registry checks, so an anonymous scripted probe with an injection gets a 400 that names the
+fields and categories (`Armor refused the run: question contains instruction-like text
+(override.previous, steering.p_value)`) and an `armor.screen` audit record, with no API key and
+no model call. `POST /api/armor/check` is a public dry run of the same screen for judges: it
+takes `{"text", "field"}` (`question`, `column_note` or `model_output`, at most 4000
+characters), returns the findings, the PII kinds found, the text as armor would pass it and
+`"stored": false`, writes nothing (no audit of the text either), and has its own limit of 20
+requests with 0.5 per second refill per anonymous client.
+
 **Optional second stage.** With `BORGES_ARMOR_LLM=true` text that is ambiguous (weak
 instruction-like signals but no pattern hit) is classified by the judge's model through the
 gateway, at most 12 texts per run; a failing or capped review fails closed (quarantine). Off by
@@ -478,7 +514,7 @@ written by models and read back into prompts later, so:
 | Threat | Control |
 |---|---|
 | One tenant reads another's memories | Every repository method takes the tenant first and puts it in every statement; a test proves tenant A reads nothing of B. With a key, the AES-GCM key is derived per tenant and the tenant is part of the authenticated data, so a row moved between tenants does not decrypt |
-| Memories stolen from the disk | Payloads are encrypted at rest with `BORGES_MEMORY_KEY`. Without it named tenants are not stored at all; only the `public-demo` tenant (curated cases, no uploaded data) is stored, in clear, and the Memory page says so |
+| Memories stolen from the disk | Payloads are encrypted at rest with `BORGES_MEMORY_KEY` (`make serve` and the Docker image generate one in `BORGES_HOME/identity/memory.key`, mode 0600, so the demo runs encrypted; a key on the same volume does not stop someone who can read the volume). Without it named tenants are not stored at all; only the `public-demo` tenant (curated cases, no uploaded data) is stored, in clear, and the Memory page says so |
 | A poisoned memory steers a later run | Every memory is screened by Armor (instruction-like text, tool poisoning, personal data) before it can reach a prompt and again before it is written; a hit is dropped and listed in the run's armor report. Verdicts and code are keyed to the question, estimand and column notes, and reused code still passes the code guard and the smoke test |
 | An old, bad agent version keeps influencing runs | Each memory records the agent, version and definition hash that wrote it; it is ignored when the registry no longer approves that definition or cannot be read |
 | Anonymous visitors fill or poison the shared memory | `public-demo` is written only by runs of curated cases with no edited question, rule or notes; anonymous callers cannot write notes or erase; each kind has a row and byte cap with LRU eviction and a TTL |
@@ -504,6 +540,30 @@ near match (similarity) can reuse a verdict for a slightly different option.
   append-only and is not rewritten; resumes, cancels, requeues and schedule changes are audited there.
 - Limits: leases only detect dead owners by pid on the same host; a multi-host deployment relies on
   lease expiry. Scripted and cached model calls are not repeated on resume; an uncached live call may be.
+
+## Stand-in versus managed
+
+Borges implements each pillar as a small, inspectable stand-in so the behaviour can be tested
+and reproduced on a laptop. The managed platforms below add operated infrastructure around the
+same ideas. The right-hand column is the place in this code to replace the stand-in; Borges has
+not been run on any of the three platforms, and the managed columns summarise their public
+product descriptions, so check them before relying on a feature.
+
+| Pillar | What Borges ships | What Vertex AI Agent Engine, AWS Bedrock AgentCore and Azure AI Foundry add | Swap point in the code |
+| --- | --- | --- | --- |
+| Registry | Hash-chained, anchored JSONL of agent and component versions with a four-eyes approval flow; enforcement refuses a live run whose prompts or code are not approved. **The demo's approvals are seeded** from the tracked `fleet/registry_seed.jsonl` by `borges agents publish --seed --approve`, not by a second human. | A hosted catalog with managed versioning, IAM-backed publish and approve rights, and organisation-wide discovery. | `fleet/store.py` (`RegistryStore`), `fleet/locations.py`, `fleet/enforcement.py` |
+| Runtime | Durable SQLite job queue with leases, retries, dead-letter, cancel, resume from stage checkpoints and a scheduler, in one process on one host. | Managed serverless agent hosting with autoscaling, session isolation per invocation, long-running executions and regional failover. | `runtime/queue.py` (`JobQueue`), `runtime/runtime.py`, `runtime/worker.py`; the orchestrator only sees `Runtime.submit` |
+| Memory | Encrypted per-tenant memory bank (AES-GCM, tenant in the authenticated data) with Armor screening, erase and audit; one SQLite file. | Managed short- and long-term memory services with service-side encryption keys, retention policies and cross-session retrieval. | `memory/repository.py` (`MemoryRepository`), `memory/db.py`, `memory/seal.py` (key management) |
+| Identity | Scoped identity with per-agent attribution: named API keys (salted HMAC, scopes), an anonymous principal with public scopes, run-level tenancy, short-lived per-agent tokens signed with a per-process secret. Self-attested inside one process; no external identity provider. | Workload and agent identities issued by the cloud identity service, OAuth/OIDC federation to the enterprise directory, delegated credentials for tool calls and centrally revocable tokens. | `identity/authentication.py` (`Authenticator.authenticate` returns a `Principal`: put OIDC verification there), `identity/keystore.py`, `identity/agent_tokens.py`, `identity/route_table.py` |
+| Gateway | One choke point for every model call and sandbox run: per-agent model allow-list, spend and call caps, egress scan, circuit breaker, retries, from `policy/gateway.json`. | A managed gateway or proxy with organisation-wide quotas, private networking, tool and MCP registries and provider routing. | `gateway/core.py` (`Gateway`), `gateway/llm_route.py`, `gateway/sandbox_route.py`, `gateway/policy_load.py` |
+| Armor | Pattern screen with obfuscation decoding, PII redaction, AST code guard, an optional second-stage model review; a measured corpus recomputed at server start. Pattern screens miss novel paraphrases (see the known-misses list). | Managed content-safety and prompt-injection classifiers (for example Model Armor, Bedrock Guardrails, Azure Prompt Shields) that are updated by the vendor and score semantics rather than phrasing. | `armor/injection.py` (profiles), `armor/second_stage.py` and `armor/llm_armor.py` (replace the review model with a managed classifier), `armor/request_screen.py` |
+| Observability | OpenTelemetry spans to `spans.jsonl` per run, optional OTLP export, a hash-chained global audit log with HMAC anchors, a trace view and a per-run audit view. | Hosted trace storage, dashboards, evaluation and alerting, log retention and immutable audit sinks. | `telemetry/exporters.py` (`make_otlp_exporter`, set `OTEL_EXPORTER_OTLP_ENDPOINT`), `telemetry/audit_log.py` (add a remote immutable sink), `telemetry/run_telemetry.py` |
+
+Where the stand-in is weaker than managed, on purpose: identity is a single-process
+self-attestation, the audit chain is one file on one volume (its anchor key lives on that
+volume too), memory and the queue are SQLite on that volume, and the registry approval on the
+public demo is seeded. A deployment that needs more replaces the swap points above; the
+interfaces are the tested seams.
 
 ## Server rules
 

@@ -61,7 +61,10 @@ PILLARS: dict[str, dict[str, Any]] = {
     },
     "identity": {
         "name": "Agent Identity",
-        "brief": "Zero-trust: each call has a principal and scopes; agents use short tokens.",
+        "brief": (
+            "Scoped identity with per-agent attribution: each call has a principal and "
+            "scopes; agents use short tokens."
+        ),
         "code": [
             "src/borges/identity/middleware.py",
             "src/borges/identity/route_table.py",
