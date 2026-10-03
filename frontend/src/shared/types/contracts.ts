@@ -211,6 +211,21 @@ export interface LiveRecordingSummary {
   estimand_change?: string | null;
 }
 
+export interface RecordingStamp {
+  run_id?: string | null;
+  case_id?: string | null;
+  recorded_at?: string | null;
+  commit?: string | null;
+  dirty?: boolean | null;
+  llm?: string | null;
+  backend?: string | null;
+  registry_sha?: string | null;
+  cost_usd?: number | null;
+  n_universes?: number | null;
+  verdict?: string | null;
+  flipped_verdict?: string | null;
+}
+
 export interface ResultBrief {
   estimate: number;
   ci_low: number;
@@ -234,6 +249,7 @@ export interface CaseCard {
   provenance?: string;
   traced_sources?: RecordingSource[];
   live_recording?: LiveRecordingSummary | null;
+  recording_meta?: Partial<Record<RecordingSource, RecordingStamp>>;
 }
 
 export type StageName =

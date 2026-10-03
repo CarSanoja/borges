@@ -46,3 +46,10 @@
   font-size: 0.8rem;
   font-weight: 700;
 }
+
+.recording-stamp {
+  margin: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.78rem;
+  color: var(--ink-muted, inherit);
+}

@@ -61,6 +61,7 @@ export function RunPage({ source, onHome }: Props) {
           caseId={source.caseId}
           source={source.recording}
           live={card?.live_recording}
+          stamp={card?.recording_meta?.live}
           hasScripted={card?.has_recording ?? true}
         />
       )}

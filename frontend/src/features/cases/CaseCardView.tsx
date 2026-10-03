@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createRun } from "../../shared/api/client";
 import type { CaseCard } from "../../shared/types/contracts";
-import { formatCost } from "../recording/recordingText";
+import { formatCost, stampStatement } from "../recording/recordingText";
 import "../recording/recording.css";
 import { describeRule } from "./decisionRuleText";
 import { ProvenanceChip } from "./ProvenanceChip";
@@ -39,6 +39,11 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
       {card.live_recording && (
         <p className="recording-badge" data-testid="live-badge">
           Live run recorded · ${formatCost(card.live_recording.cost_usd)}
+        </p>
+      )}
+      {card.live_recording && card.recording_meta?.live && (
+        <p className="recording-stamp" data-testid="live-stamp">
+          {stampStatement(card.recording_meta.live)}
         </p>
       )}
       {liveOnly && !card.live_recording && <p className="case-live-only">Needs live mode: runs only with a Nemotron key</p>}

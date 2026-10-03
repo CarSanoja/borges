@@ -1,4 +1,4 @@
-import type { LiveRecordingSummary, RecordingSource } from "../../shared/types/contracts";
+import type { LiveRecordingSummary, RecordingSource, RecordingStamp } from "../../shared/types/contracts";
 
 export const SCRIPTED_STATEMENT = "Scripted replay of hand-built fixtures: no model was called";
 
@@ -24,4 +24,12 @@ export function pickSource(requested: RecordingSource | null, live: LiveRecordin
   if (requested === "scripted" && scripted) return "scripted";
   if (live) return "live";
   return "scripted";
+}
+
+export function stampStatement(stamp: RecordingStamp | null | undefined): string | null {
+  if (!stamp) return null;
+  const commit = stamp.commit ? `${stamp.commit}${stamp.dirty ? "+dirty" : ""}` : "an unrecorded commit";
+  const when = stamp.recorded_at ? ` on ${recordedDate(stamp.recorded_at)}` : "";
+  const backend = stamp.backend ? `, ${stamp.backend}` : "";
+  return `recorded live at ${commit}${when}${backend}`;
 }
