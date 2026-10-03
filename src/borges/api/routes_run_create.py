@@ -86,6 +86,10 @@ async def create_run(
             status_code=400,
             detail=f"{HEADER} must be 1 to 128 characters of letters, digits and . _ : -",
         )
+    if request.blind_notes and principal.anonymous:
+        raise HTTPException(
+            status_code=403, detail="Blind-notes runs are for named keys, not anonymous callers."
+        )
     require_scope(principal, scope_for_run(request, settings))
     prescreen_request(request, settings, principal)
     quota: RunQuota = http.app.state.run_quota

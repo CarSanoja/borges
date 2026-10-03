@@ -25,6 +25,8 @@ from borges.llm.client import LLMClient, LLMError, Role
 from borges.sandbox.backend import Checkpoint
 
 CHANGES_ESTIMAND = "the reviewer found that this option changes the estimand: {problem}"
+STILL_UNFAITHFUL = "the repaired code is still unfaithful to its spec on re-review: {problem}"
+NOT_RE_REVIEWED = "the repaired code could not be re-reviewed, so it cannot enter the garden"
 
 
 def _slim_effects(effects: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -53,12 +55,14 @@ def _payload(entry: ReviewEntry) -> dict[str, Any]:
 
 
 def llm_reviewer(llm: LLMClient, plan: AnalysisPlan) -> Reviewer:
-    async def review(step: Step, entries: list[ReviewEntry]) -> ReviewResult | None:
+    async def review(
+        step: Step, entries: list[ReviewEntry], again: bool = False
+    ) -> ReviewResult | None:
         try:
             response = await llm.complete(
                 Role.REVIEWER,
                 build_messages(plan, step, [_payload(e) for e in entries]),
-                key=f"reviewer:{step.id}",
+                key=f"reviewer:{step.id}:again" if again else f"reviewer:{step.id}",
                 schema=ReviewerOutput,
                 max_tokens=1500,
             )
@@ -93,6 +97,36 @@ async def _handle(
     resume = (outcome.attempts, outcome.models, problem)
     return await smoke_option(
         config, repair, parent, step, outcome.option, check, resume=resume, budget=1
+    )
+
+
+async def _re_review(config: SmokeConfig, step: Step, repaired: Outcome) -> Outcome:
+    if repaired.status == "failed" or config.reviewer is None:
+        return repaired
+    entry = ReviewEntry(repaired.option, repaired.effects, repaired.result)
+    result = await config.reviewer(step, [entry], again=True)
+    verdict = next(
+        (v for v in (result.verdicts if result else []) if v.option_id == repaired.option.id),
+        None,
+    )
+    if result is not None and verdict is not None and config.on_review is not None:
+        await config.on_review(
+            step.id,
+            repaired.option.id,
+            verdict.faithful,
+            verdict.changes_estimand,
+            verdict.problem,
+            result.model,
+        )
+    if verdict is not None and verdict.faithful and not verdict.changes_estimand:
+        return repaired
+    error = (
+        NOT_RE_REVIEWED
+        if verdict is None
+        else STILL_UNFAITHFUL.format(problem=verdict.problem or "no reason given")
+    )
+    return Outcome(
+        repaired.option, "failed", repaired.attempts, error, None, repaired.models, errors=[error]
     )
 
 
@@ -131,6 +165,7 @@ async def review_step(
         if verdict.faithful and not verdict.changes_estimand:
             return outcome
         updated = await _handle(config, repair, parent, step, default, outcome, verdict)
+        updated = await _re_review(config, step, updated)
         if summary is not None:
             summary.options_flagged += 1
             summary.options_dropped_by_review += int(updated.status == "failed")
@@ -170,5 +205,6 @@ async def review_extra(
     if verdict.faithful and not verdict.changes_estimand:
         return outcome
     updated = await _handle(config, repair, parent, step, default, outcome, verdict)
+    updated = await _re_review(config, step, updated)
     await notify_changed(config, None, step, outcome, updated)
     return updated

@@ -25,6 +25,7 @@ class ResolvedRun:
     max_universes: int
     fixtures_dir: Path | None
     column_notes: dict[str, str] = field(default_factory=dict)
+    blind_notes: bool = False
     armor: ArmorReport = field(default_factory=ArmorReport)
 
 
@@ -63,6 +64,7 @@ def resolve_run(
                 max_universes=request.max_universes or case.max_universes,
                 fixtures_dir=registry.fixtures_dir(case.id),
                 column_notes=dict(case.column_notes),
+                blind_notes=request.blind_notes,
             )
         )
     if data is None:
@@ -80,5 +82,6 @@ def resolve_run(
             max_universes=request.max_universes or settings.borges_max_universes,
             fixtures_dir=None,
             column_notes=dict(request.column_notes or {}),
+            blind_notes=request.blind_notes,
         )
     )

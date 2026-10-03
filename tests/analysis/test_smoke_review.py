@@ -50,12 +50,15 @@ def verdict(option_id: str, faithful: bool = True, estimand: bool = False, probl
 def setup(
     verdicts: list[ReviewVerdict] | None,
     script: list[tuple[str, dict | None]],
+    again: list[ReviewVerdict] | None = None,
     **extra: str,
 ) -> tuple[FakeLLM, SmokeConfig, Reviews, Recorder]:
     base = {"coder:f1.treat": TREAT, "coder:f1.control": CONTROL, "coder:m1.ols": ESTIMATE}
     responses: dict = {k: CoderOutput(code=v) for k, v in {**base, **extra}.items()}
     if verdicts is not None:
         responses["reviewer:f1"] = ReviewerOutput(verdicts=verdicts)
+    if again is not None:
+        responses["reviewer:f1:again"] = ReviewerOutput(verdicts=again)
     llm = FakeLLM(responses)
     reviews, recorder = Reviews(), Recorder()
     config = SmokeConfig(
@@ -110,6 +113,7 @@ async def test_unfaithful_option_gets_one_repair_with_the_problem() -> None:
     llm, config, _, _ = setup(
         [verdict("treat"), verdict("control", False, False, "it drops every control row")],
         script,
+        again=[verdict("control")],
         **{"coder:f1.control:smoke1": KEEP_ALL_FIXED},
     )
     summary = CodingSummary()
@@ -118,7 +122,45 @@ async def test_unfaithful_option_gets_one_repair_with_the_problem() -> None:
     repair = next(c for c in llm.calls if c.key == "coder:f1.control:smoke1")
     assert "it drops every control row" in repair.messages[1]["content"]
     assert [c.key for c in llm.calls].count("reviewer:f1") == 1
+    assert [c.key for c in llm.calls].count("reviewer:f1:again") == 1
+    again = next(c for c in llm.calls if c.key == "reviewer:f1:again")
+    assert "keep_fixed" in again.messages[1]["content"]
     assert (summary.options_flagged, summary.options_dropped_by_review) == (1, 0)
+
+
+async def test_a_repair_that_is_still_unfaithful_is_dropped_with_the_reason() -> None:
+    script = aligned()
+    script[1] = ("control_variant", HALF)
+    llm, config, reviews, recorder = setup(
+        [verdict("treat"), verdict("control", False, False, "it drops every control row")],
+        script,
+        again=[verdict("control", False, False, "it still drops control rows")],
+        **{"coder:f1.control:smoke1": KEEP_ALL_FIXED},
+    )
+    summary = CodingSummary()
+    coded = await run(llm, config, summary)
+    assert [o.id for o in coded.step("f1").options] == ["treat"]
+    assert (summary.options_flagged, summary.options_dropped_by_review) == (1, 1)
+    last = [e for e in recorder.events if e[1] == "control"][-1]
+    assert last[2] == "failed" and "still unfaithful" in last[4]
+    assert "it still drops control rows" in last[4]
+    assert reviews.events[-1][1:4] == ("control", False, False)
+
+
+async def test_a_repair_that_cannot_be_re_reviewed_is_dropped() -> None:
+    script = aligned()
+    script[1] = ("control_variant", HALF)
+    llm, config, _, recorder = setup(
+        [verdict("treat"), verdict("control", False, False, "drops rows")],
+        script,
+        **{"coder:f1.control:smoke1": KEEP_ALL_FIXED},
+    )
+    summary = CodingSummary()
+    coded = await run(llm, config, summary)
+    assert [o.id for o in coded.step("f1").options] == ["treat"]
+    assert summary.options_dropped_by_review == 1
+    last = [e for e in recorder.events if e[1] == "control"][-1]
+    assert "could not be re-reviewed" in last[4]
 
 
 async def test_unfaithful_option_is_dropped_when_the_repair_fails_smoke() -> None:

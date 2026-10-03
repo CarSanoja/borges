@@ -68,9 +68,9 @@ async def test_full_run_emits_ordered_events(tmp_path: Path, scenario: Scenario)
     assert snapshot.report is not None and snapshot.report.narrative == "story"
     assert snapshot.flip is not None and snapshot.flip.reproduced is True
     assert snapshot.flip.changes[0].step_id == "s2"
-    assert len(snapshot.garden.universes) == 4
+    assert len(snapshot.garden.universes) == 6
     kinds = sorted(u.kind for u in snapshot.garden.universes.values())
-    assert kinds == ["adversary", "baseline", "single", "single"]
+    assert kinds == ["adversary", "baseline", "combination", "combination", "single", "single"]
     assert rig.backend.closed
 
 
@@ -118,7 +118,7 @@ async def test_meta_is_updated_at_the_end(tmp_path: Path, scenario: Scenario) ->
     assert meta["verdict"] == "SHIP"
     assert meta["flipped_verdict"] == "DON'T SHIP"
     assert meta["cost_usd"] == 0.01
-    assert meta["n_universes"] == 3
+    assert meta["n_universes"] == 4
     assert meta["owner_pid"] == os.getpid()
     assert meta["owner_host"] == socket.gethostname()
 

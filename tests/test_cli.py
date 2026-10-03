@@ -94,6 +94,14 @@ def test_run_prints_summary(captured) -> None:
     assert captured[0][0].case_id == "checkout_ab"
 
 
+def test_run_blind_notes_flag_reaches_the_request(captured) -> None:
+    captured.install(_completed())
+    runner.invoke(cli.app, ["run", "--case", "checkout_ab"])
+    runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--blind-notes"])
+    assert captured[0][0].blind_notes is False
+    assert captured[1][0].blind_notes is True
+
+
 def test_scripted_run_never_shows_token_counts(captured) -> None:
     snapshot = _completed().model_copy(update={"llm": "scripted"})
     captured.install(snapshot)

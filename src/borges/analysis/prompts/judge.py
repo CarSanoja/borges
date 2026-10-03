@@ -19,6 +19,13 @@ a z-score of the same scale, the first principal component of two standardised i
 change a standardised estimate: set accepted=false with reason "equivalent to the conventional \
 option".
 
+An option that would reproduce the conventional option's result on these data is a no-op, \
+not an alternative: a filter that removes the rows the conventional filter already removes, \
+the conventional estimator restated under another name or with a cosmetic change, a covariate \
+set identical to the conventional one. Compare the option with the conventional spec shown \
+below; when it adds nothing, set accepted=false with reason "equivalent to the conventional \
+option".
+
 Penalise any option that changes the question or the estimand, leaks the outcome, or looks \
 chosen to produce a result. Set accepted=true only when defensibility is at least 0.6. Give a \
 one or two sentence reason and, when one exists, a short source for the practice.
@@ -35,6 +42,8 @@ def build_messages(
         f"Step: {step.id} ({step.kind}) {step.title}. {step.description}\n"
         f"Conventional option(s) at this step: "
         f"{'; '.join(o.label for o in step.options if o.is_default) or 'none'}\n"
+        f"Conventional spec: "
+        f"{'; '.join(o.spec for o in step.options if o.is_default) or 'none'}\n"
         f"Option under review {option.id}: {option.label}\n"
         f"Rationale: {option.rationale}\nSpec: {option.spec}"
         f"{notes_block}"

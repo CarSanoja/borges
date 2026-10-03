@@ -5,6 +5,14 @@ from typing import TYPE_CHECKING
 
 from borges.analysis.models import AnalysisPlan
 from borges.garden.models import Universe
+from borges.garden.noop import noop_options
+from borges.garden.sampling import (
+    MIN_SAMPLE,
+    SAMPLE_DRAWS,
+    affordable_prefix,
+    draw_grid,
+    sampled_ids,
+)
 from borges.garden.search import combination_flip_choices, minimal_flip
 from borges.llm.client import BudgetExceeded
 from borges.runs.adversary_round import run_adversary_round
@@ -44,15 +52,20 @@ async def run_adversary(
             pipeline.caveats.append(f"The adversary stage failed and was skipped: {exc}")
 
 
+def sample_reserve(runner: UniverseRunner) -> int:
+    return min(SAMPLE_DRAWS, runner.remaining // 2)
+
+
 async def run_combinations(pipeline: Pipeline, plan: AnalysisPlan, runner: UniverseRunner) -> None:
     async with pipeline.stage("combination_flips"):
+        reserve = sample_reserve(runner)
         for size in range(2, len(plan.decision_steps) + 1):
             if pipeline.flip is not None:
                 break
-            if runner.remaining <= 0:
+            if runner.remaining - reserve <= 0:
                 pipeline.search.budget_exhausted = True
                 break
-            limit = min(MAX_COMBINATIONS_PER_LEVEL, runner.remaining)
+            limit = min(MAX_COMBINATIONS_PER_LEVEL, runner.remaining - reserve)
             choices = combination_flip_choices(plan, pipeline.garden, size, limit)
             if not choices:
                 break
@@ -60,3 +73,19 @@ async def run_combinations(pipeline: Pipeline, plan: AnalysisPlan, runner: Unive
             await pipeline.emitter.stage("combination_flips", "started", f"{size} changes")
             await runner.run_many(choices, "combination")
             pipeline.flip = minimal_flip(plan, pipeline.garden)
+
+
+async def run_uniform_sample(
+    pipeline: Pipeline, plan: AnalysisPlan, runner: UniverseRunner
+) -> None:
+    garden = pipeline.garden
+    noops = noop_options(plan, garden)
+    draws = draw_grid(plan, noops)
+    kept, new = affordable_prefix(draws, garden, runner.remaining)
+    if len(kept) < MIN_SAMPLE:
+        return
+    await tolerate_budget(
+        pipeline, runner.run_many(new, "combination"), "The uniform grid sample stopped early"
+    )
+    garden.sample_ids = sampled_ids(garden, kept)
+    pipeline.search.sample_draws = len(kept)

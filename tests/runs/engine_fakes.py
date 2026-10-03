@@ -176,7 +176,9 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
             failed=failed_universes(garden),
         )
 
-    async def narrate(llm: Any, plan: AnalysisPlan, report: Report):
+    async def narrate(
+        llm: Any, plan: AnalysisPlan, report: Report, garden: Any = None, judged: Any = None
+    ):
         if scenario.narrate_error:
             raise scenario.narrate_error
         return "story", ["caveat"]

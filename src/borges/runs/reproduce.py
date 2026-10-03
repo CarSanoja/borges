@@ -61,7 +61,13 @@ async def reproduce_universe(
     recorded = snapshot.garden.universes[universe_id]
     baseline_recorded = snapshot.garden.baseline
     executor = GardenExecutor(
-        backend, plan, data, emit=None, reuse_prefixes=False, step_timeout_s=step_timeout_s
+        backend,
+        plan,
+        data,
+        emit=None,
+        reuse_prefixes=False,
+        step_timeout_s=step_timeout_s,
+        design_check=any(t.design for t in recorded.traces),
     )
     await executor.setup()
     is_baseline = baseline_recorded is None or baseline_recorded.id == universe_id
@@ -92,6 +98,18 @@ def _result_line(universe: Universe) -> str:
     )
 
 
+def _design_warning(universe: Universe) -> str | None:
+    for trace in universe.traces:
+        design = trace.design
+        if design and design.get("deficient"):
+            return (
+                f"WARNING: the model's design matrix is rank-deficient (rank {design.get('rank')} "
+                f"of {design.get('columns')} columns); the recording predates the design check "
+                "and its confidence interval is not trustworthy"
+            )
+    return None
+
+
 def reproduction_lines(case_id: str, plan: AnalysisPlan, rep: Reproduction) -> list[str]:
     changed = ", ".join(f"{s}={rep.recorded.choices[s]}" for s in rep.recorded.changed)
     lines = [
@@ -108,6 +126,9 @@ def reproduction_lines(case_id: str, plan: AnalysisPlan, rep: Reproduction) -> l
         if rep.baseline_rerun is not None and rep.baseline_rerun.verdict != rep.rerun.verdict:
             flip = f"; flip {rep.baseline_rerun.verdict} -> {rep.rerun.verdict} reproduced"
         lines.append(f"MATCH: estimate, CI, p-value, n and verdict equal the recording{flip}")
+        warning = _design_warning(rep.rerun)
+        if warning:
+            lines.append(warning)
     else:
         lines.append("MISMATCH with the recording:")
         lines.extend(f"  {item}" for item in rep.mismatches)

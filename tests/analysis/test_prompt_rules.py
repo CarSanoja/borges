@@ -203,3 +203,26 @@ def test_coder_returns_estimates_on_the_natural_scale() -> None:
 def test_coder_forbids_row_selection_by_value_in_a_model_step() -> None:
     assert "A model step never selects rows by value" in CODER_SYSTEM
     assert "The only rows a model may drop are incomplete ones" in CODER_SYSTEM
+
+
+def test_planner_requires_an_adjustment_step_and_two_model_families_for_associations() -> None:
+    text = " ".join(PLANNER_SYSTEM.split())
+    assert "regression-style association" in text
+    assert "adjustment step and a model step with real alternatives" in text
+    assert 'writes the chosen column names to ctx["covariates"] and never drops columns' in text
+    assert "at least two options from different model families" in text
+    assert "drops one level (drop_first=True)" in text
+
+
+def test_planner_forbids_options_that_reproduce_the_default() -> None:
+    text = " ".join(PLANNER_SYSTEM.split())
+    assert "Every option must change the analysis" in text
+    assert "reproduces the default on these data" in text
+
+
+def test_judge_rejects_no_op_alternatives_against_the_conventional_spec() -> None:
+    from borges.analysis.prompts.judge import SYSTEM as JUDGE_SYSTEM
+
+    text = " ".join(JUDGE_SYSTEM.split())
+    assert "would reproduce the conventional option's result on these data is a no-op" in text
+    assert 'accepted=false with reason "equivalent to the conventional option"' in text

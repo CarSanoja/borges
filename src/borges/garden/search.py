@@ -1,35 +1,29 @@
 from __future__ import annotations
 
-from typing import Literal
+from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator
+from borges.garden.executor_ids import universe_id
+from borges.garden.flips import (
+    UNKNOWN_DEFENSIBILITY,
+    beyond_threshold,
+    changes_for,
+    flip_kind,
+    ranked_flips,
+)
+from borges.garden.models import Flip, Garden, Universe
+from borges.garden.noop import noop_options, noop_pairs
 
-from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator, DecisionRule
-from borges.garden.executor import universe_id
-from borges.garden.models import Change, Flip, Garden, Universe
-
-UNKNOWN_DEFENSIBILITY = 0.9
 Z_95 = 1.96
 
-
-def changes_for(plan: AnalysisPlan, choices: dict[str, str]) -> list[Change]:
-    changes: list[Change] = []
-    for step in plan.steps:
-        chosen = choices.get(step.id, step.default.id)
-        if chosen == step.default.id:
-            continue
-        option = step.option(chosen)
-        changes.append(
-            Change(
-                step_id=step.id,
-                step_title=step.title,
-                from_option=step.default.id,
-                to_option=option.id,
-                to_label=option.label,
-                rationale=option.rationale,
-                source=option.source,
-                defensibility=option.defensibility,
-            )
-        )
-    return changes
+__all__ = [
+    "UNKNOWN_DEFENSIBILITY",
+    "beyond_threshold",
+    "changes_for",
+    "combination_flip_choices",
+    "contaminated_flip",
+    "flip_kind",
+    "minimal_flip",
+    "single_flip_choices",
+]
 
 
 def single_flip_choices(plan: AnalysisPlan) -> list[dict[str, str]]:
@@ -67,12 +61,17 @@ def combination_flip_choices(
     if baseline is None or baseline.result is None or limit <= 0 or size < 2:
         return []
     finished = [u for u in garden.finished() if u.kind != "verification"]
+    skipped = noop_pairs(noop_options(plan, garden))
     singles = [
         (_movement(plan, baseline, u), u.changed[0], u.choices[u.changed[0]])
         for u in finished
-        if len(u.changed) == 1
+        if len(u.changed) == 1 and (u.changed[0], u.choices[u.changed[0]]) not in skipped
     ]
-    parents = [u for u in finished if len(u.changed) == size - 1]
+    parents = [
+        u
+        for u in finished
+        if len(u.changed) == size - 1 and not any((s, u.choices[s]) in skipped for s in u.changed)
+    ]
     best: dict[str, tuple[float, dict[str, str]]] = {}
     for parent in parents:
         parent_move = _movement(plan, baseline, parent)
@@ -90,49 +89,9 @@ def combination_flip_choices(
     return [choices for _, choices in ranked[:limit]]
 
 
-def beyond_threshold(rule: DecisionRule, result: AnalysisResult) -> bool:
-    if rule.comparator is Comparator.GT:
-        return result.estimate > rule.threshold
-    return result.estimate < rule.threshold
-
-
-def flip_kind(
-    rule: DecisionRule, baseline: AnalysisResult, flipped: AnalysisResult
-) -> Literal["direction", "significance"]:
-    if beyond_threshold(rule, baseline) != beyond_threshold(rule, flipped):
-        return "direction"
-    return "significance"
-
-
 def minimal_flip(plan: AnalysisPlan, garden: Garden) -> Flip | None:
-    baseline = garden.baseline
-    if baseline is None or baseline.result is None or baseline.verdict is None:
-        return None
-    candidates: list[tuple[tuple[int, float, float], Universe, list[Change]]] = []
-    for universe in garden.finished():
-        if universe.flipped is not True or universe.verdict is None or universe.result is None:
-            continue
-        changes = changes_for(plan, universe.choices)
-        defensibility = (
-            min(
-                (UNKNOWN_DEFENSIBILITY if c.defensibility is None else c.defensibility)
-                for c in changes
-            )
-            if changes
-            else UNKNOWN_DEFENSIBILITY
-        )
-        move = abs(universe.result.estimate - baseline.result.estimate)
-        candidates.append(((len(changes), -defensibility, -move), universe, changes))
-    if not candidates:
-        return None
-    _, best, changes = min(candidates, key=lambda item: item[0])
-    assert best.result is not None and best.verdict is not None
-    return Flip(
-        universe_id=best.id,
-        changes=changes,
-        baseline_result=baseline.result,
-        flipped_result=best.result,
-        baseline_verdict=baseline.verdict,
-        flipped_verdict=best.verdict,
-        kind=flip_kind(plan.decision_rule, baseline.result, best.result),
-    )
+    return next((f for f in ranked_flips(plan, garden) if not f.contaminated), None)
+
+
+def contaminated_flip(plan: AnalysisPlan, garden: Garden) -> Flip | None:
+    return next((f for f in ranked_flips(plan, garden) if f.contaminated), None)

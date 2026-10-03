@@ -9,7 +9,7 @@ from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
 from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.analysis.planner import plan_analysis
-from borges.analysis.profile import profile_dataframe
+from borges.analysis.profile import blind_profile, profile_dataframe
 from borges.analysis.scale_check import scale_check
 from borges.analysis.smoke_review import llm_reviewer
 from borges.armor.report import ArmorReport
@@ -40,6 +40,11 @@ from borges.runtime.stage_checkpoints import CODED_KEY, PLAN_KEY, coded_payload,
 from borges.runtime.universe_checkpoint import RestoredUniverses
 from borges.sandbox.backend import BranchBackend
 from borges.telemetry import hooks
+
+BLIND_CAVEAT = (
+    "Blind-notes run: the column notes and value descriptions were hidden from every agent, so "
+    "what the agents proposed came from the data alone."
+)
 
 
 class Pipeline:
@@ -115,6 +120,9 @@ class Pipeline:
                 column_notes=resolved.column_notes,
             )
             profile = recall_profile(self, profile)
+            if resolved.blind_notes:
+                profile = blind_profile(profile)
+                self.caveats.append(BLIND_CAVEAT)
             self.armor_stage.record(resolved.armor)
             profile = await self.armor_stage.profile(profile)
         async with self.stage("planning"):

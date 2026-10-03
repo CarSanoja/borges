@@ -41,7 +41,9 @@ async def verify_stage(pipeline: Pipeline, plan: AnalysisPlan) -> None:
 async def narrate_stage(pipeline: Pipeline, plan: AnalysisPlan, report: Report) -> None:
     async with pipeline.stage("narrating"):
         try:
-            narrative, caveats = await narrate(pipeline.llm, plan, report)
+            narrative, caveats = await narrate(
+                pipeline.llm, plan, report, pipeline.garden, pipeline.judged
+            )
             report.narrative = narrative
             report.caveats = [*report.caveats, *caveats]
         except Exception as exc:

@@ -5,7 +5,12 @@ from typing import TYPE_CHECKING
 from borges.analysis.models import AnalysisPlan
 from borges.garden.executor import GardenExecutor
 from borges.garden.search import minimal_flip, single_flip_choices
-from borges.runs.pipeline_stages import run_adversary, run_combinations, tolerate_budget
+from borges.runs.pipeline_stages import (
+    run_adversary,
+    run_combinations,
+    run_uniform_sample,
+    tolerate_budget,
+)
 from borges.runs.runner import UniverseRunner
 from borges.runtime.alias_backend import AliasBackend
 from borges.runtime.restore_search import restore_search
@@ -69,4 +74,5 @@ async def search_garden(pipeline: Pipeline, plan: AnalysisPlan) -> None:
         )
     elif pipeline.flip is None and len(plan.decision_steps) > 1:
         pipeline.search.budget_exhausted = True
+    await run_uniform_sample(pipeline, plan, runner)
     pipeline.search.universes_used = len(pipeline.garden.universes)

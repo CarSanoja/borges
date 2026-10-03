@@ -47,6 +47,9 @@ class Flip(BaseModel):
     reproduced: bool | None = None
     reproduce_command: str | None = None
     kind: Literal["direction", "significance"] | None = None
+    estimand_change: str | None = None
+    contaminated: bool = False
+    contamination_reason: str | None = None
 
 
 class DecisionInfluence(BaseModel):
@@ -58,12 +61,30 @@ class DecisionInfluence(BaseModel):
     n_alternatives: int
 
 
+class NoopOption(BaseModel):
+    step_id: str
+    option_id: str
+    label: str
+    reason: str
+
+
+class EstimandChange(BaseModel):
+    step_id: str
+    option_id: str
+    label: str
+    detail: str
+
+
+RobustnessBasis = Literal["design_weighted", "distinct_results", "none"]
+
+
 class SearchSummary(BaseModel):
     levels_explored: int = 0
     max_combinations_per_level: int = 0
     universe_budget: int = 0
     universes_used: int = 0
     budget_exhausted: bool = False
+    sample_draws: int = 0
 
 
 class Report(BaseModel):
@@ -75,6 +96,17 @@ class Report(BaseModel):
     robustness: float
     n_universes: int
     n_flipped: int
+    n_distinct_results: int = 0
+    robustness_basis: RobustnessBasis = "distinct_results"
+    robustness_beam: float | None = None
+    robustness_design: float | None = None
+    robustness_design_note: str | None = None
+    robustness_rating: float | None = None
+    robustness_rating_reason: str | None = None
+    noop_options: list[NoopOption] = Field(default_factory=list)
+    estimand_changes: list[EstimandChange] = Field(default_factory=list)
+    contaminated_flip: Flip | None = None
+    narrator_input_tokens: int | None = None
     narrative: str = ""
     caveats: list[str] = Field(default_factory=list)
     n_failed: int = 0
@@ -87,6 +119,7 @@ class Report(BaseModel):
 class Garden(BaseModel):
     baseline_id: str | None = None
     universes: dict[str, Universe] = Field(default_factory=dict)
+    sample_ids: list[str] = Field(default_factory=list)
 
     def add(self, universe: Universe) -> None:
         self.universes[universe.id] = universe

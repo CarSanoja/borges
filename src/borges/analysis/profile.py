@@ -80,3 +80,10 @@ def profile_dataframe(
         columns=columns,
         sample_rows=_sample_rows(df, sample),
     )
+
+
+def blind_profile(profile: DatasetProfile) -> DatasetProfile:
+    """The profile as the agents see it in blind mode: no column notes or value descriptions."""
+    return profile.model_copy(
+        update={"columns": [c.model_copy(update={"note": None}) for c in profile.columns]}
+    )

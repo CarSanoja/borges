@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.estimand import estimand_changes
+from borges.garden.flips import ranked_flips
 from borges.garden.models import DecisionInfluence, Flip, Garden, Report
+from borges.garden.noop import noop_options
+from borges.garden.report_notes import figure_caveats
 from borges.garden.reversal import REVERSED_REASON
+from borges.garden.robustness import robustness_figures
 
 
 def decision_influence(plan: AnalysisPlan, garden: Garden) -> list[DecisionInfluence]:
@@ -63,16 +68,33 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         raise ValueError("cannot build a report without a finished baseline universe")
     finished = garden.finished()
     failed = failed_universes(garden)
+    noops = noop_options(plan, garden)
+    figures = robustness_figures(plan, garden, noops)
+    estimands = estimand_changes(plan, garden)
+    contaminated = next((f for f in ranked_flips(plan, garden) if f.contaminated), None)
     return Report(
         question=plan.question,
         original_verdict=baseline.verdict,
         original_result=baseline.result,
         minimal_flip=flip,
         influences=decision_influence(plan, garden),
-        robustness=robustness(garden),
+        robustness=figures.headline,
         n_universes=len(finished),
         n_flipped=sum(1 for u in finished if u.flipped is True),
+        n_distinct_results=figures.n_distinct,
+        robustness_basis=figures.basis,
+        robustness_beam=figures.beam,
+        robustness_design=figures.design,
+        robustness_design_note=figures.design_note,
+        robustness_rating=figures.rating,
+        robustness_rating_reason=figures.rating_reason,
+        noop_options=noops,
+        estimand_changes=estimands,
+        contaminated_flip=contaminated,
         n_failed=len(failed),
         failed=failed,
-        caveats=reversal_caveats(garden),
+        caveats=[
+            *reversal_caveats(garden),
+            *figure_caveats(len(finished), figures, noops, flip, contaminated),
+        ],
     )

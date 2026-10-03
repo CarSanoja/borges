@@ -118,6 +118,8 @@ class StepTrace(BaseModel):
     rows_before: int
     rows_after: int
     note: str = ""
+    fingerprint: str | None = None
+    design: dict[str, object] | None = None
 
 
 class Judgement(BaseModel):

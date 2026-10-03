@@ -56,7 +56,13 @@ async def test_build_report_assembles_counts() -> None:
     assert report.original_verdict == "SHIP"
     assert report.minimal_flip == flip
     assert report.n_universes == 5 and report.n_flipped == 2
-    assert report.robustness == pytest.approx(3 / 5)
+    assert report.robustness_beam == pytest.approx(3 / 5)
+    assert report.robustness_design == pytest.approx((1.0 + 0.5 + 2 / 3) / 3)
+    assert report.robustness == report.robustness_design
+    assert report.robustness_basis == "design_weighted"
+    assert report.n_distinct_results == 5
+    assert report.robustness_rating is None
+    assert report.robustness_rating_reason == "n=5, too few to rate"
     assert report.narrative == ""
     assert [i.step_id for i in report.influences] == ["s3", "s2", "s1"]
 
@@ -76,7 +82,7 @@ async def test_build_report_lists_failed_universes_and_excludes_them_from_robust
     assert report.failed[0].startswith("s2/y: ")
     assert "\n" not in report.failed[0]
     assert report.n_universes == len(garden.finished())
-    assert report.robustness == pytest.approx(
+    assert report.robustness_beam == pytest.approx(
         sum(1 for u in garden.finished() if u.verdict == garden.baseline.verdict)
         / len(garden.finished())
     )

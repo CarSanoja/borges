@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisResult, CodingSummary
-from borges.garden.models import Flip, SearchSummary
+from borges.garden.models import Flip, Report, SearchSummary
 from borges.llm.local_models import LOCAL_LABEL
 from borges.runs.models import RunSnapshot, UniverseDetail
 
@@ -32,10 +32,31 @@ def flip_lines(flip: Flip) -> list[str]:
         lines.append(f"      why: {change.rationale}")
         if change.source:
             lines.append(f"      source: {change.source}")
+    if flip.estimand_change:
+        lines.append(f"  estimand change: this flip {flip.estimand_change}")
     lines.append(f"  flipped result: {result_line(flip.flipped_result)}")
     reproduced = {None: "not checked", True: "yes", False: "no"}[flip.reproduced]
     lines.append(f"  reproduced: {reproduced}")
     return lines
+
+
+BASIS_LABELS = {
+    "design_weighted": "design-weighted",
+    "distinct_results": "share of distinct results",
+    "none": "no universes",
+}
+
+
+def robustness_line(report: Report) -> str:
+    distinct = report.n_distinct_results or report.n_universes
+    line = (
+        f"Robustness: {report.robustness:.0%} ({BASIS_LABELS[report.robustness_basis]}); "
+        f"{report.n_universes} universes explored, {distinct} distinct results, "
+        f"{report.n_flipped} flipped"
+    )
+    if report.robustness_rating_reason:
+        line += f"; not rated ({report.robustness_rating_reason})"
+    return line
 
 
 def search_line(search: SearchSummary) -> str:
@@ -45,6 +66,8 @@ def search_line(search: SearchSummary) -> str:
         f"{search.levels_explored} {level} explored, at most "
         f"{search.max_combinations_per_level} combinations per level"
     )
+    if search.sample_draws:
+        line += f"; {search.sample_draws} uniform random draws from the grid"
     return line + (
         "; the budget ran out before the search finished" if search.budget_exhausted else ""
     )
@@ -79,10 +102,7 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
             lines.extend(flip_lines(report.minimal_flip))
         else:
             lines.append("Smallest flip found: none within the search budget")
-        lines.append(
-            f"Robustness: {report.robustness:.0%} of {report.n_universes} universes "
-            f"keep the original verdict ({report.n_flipped} flipped)"
-        )
+        lines.append(robustness_line(report))
         if report.n_failed:
             lines.append(
                 f"  {report.n_universes + report.n_failed} explored, "

@@ -31,7 +31,7 @@ class ReviewResult:
     model: str
 
 
-Reviewer = Callable[[Step, list[ReviewEntry]], Awaitable[ReviewResult | None]]
+Reviewer = Callable[..., Awaitable[ReviewResult | None]]
 
 
 @dataclass

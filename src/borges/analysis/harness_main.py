@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from borges.analysis.harness_design import (
+    DESIGN_CONDITION_LIMIT,
+    DESIGN_MAX_ROWS,
+    DESIGN_SOURCE,
+    FINGERPRINT_SOURCE,
+)
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
@@ -101,6 +107,8 @@ __SPLIT_HALF_CHECK__
 __CHECKS__
 __EFFECTS__
 __HINTS__
+__DESIGN__
+__FINGERPRINT__
     seen = {}
     _np.random.seed(0)
     _random.seed(0)
@@ -134,7 +142,14 @@ __HINTS__
             "note": "",
         }
         if kind == "model":
-            result = _validate(estimate(df, ctx))
+            _install_design_probe()
+            raw_result = estimate(df, ctx)
+            design = _design_payload(list(map(str, df.columns)))
+            if design is not None:
+                trace["design"] = design
+                if __DESIGN_CHECK__ and design["deficient"]:
+                    raise ValueError(_design_error(design))
+            result = _validate(raw_result)
             if __SPLIT_HALF__:
                 _check_split_half(df, ctx, result)
             _emit("BORGES_TRACE ", trace)
@@ -154,6 +169,7 @@ __HINTS__
         with open(state_ctx, "w") as handle:
             _json.dump(ctx, handle)
         trace["rows_after"] = int(len(out))
+        trace["fingerprint"] = _fingerprint(out, ctx)
         if __SPLIT_HALF__:
             try:
                 trace["effects"] = _effects(before, out, ctx_before, ctx)
@@ -188,4 +204,8 @@ MAIN_TEMPLATE = (
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
+    .replace("__DESIGN__", DESIGN_SOURCE.strip("\n"))
+    .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
+    .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
+    .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
 )

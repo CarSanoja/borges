@@ -1,0 +1,127 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from borges.analysis.models import AnalysisPlan
+from borges.garden.models import Garden, NoopOption, RobustnessBasis, Universe
+from borges.garden.noop import has_noop, noop_pairs, single_universe
+from borges.garden.result_key import result_key
+from borges.garden.sampling import MIN_SAMPLE
+
+MIN_DISTINCT_TO_RATE = 10
+
+
+@dataclass(frozen=True)
+class RobustnessFigures:
+    headline: float
+    basis: RobustnessBasis
+    beam: float | None
+    design: float | None
+    design_note: str | None
+    n_distinct: int
+    rating: float | None
+    rating_reason: str | None
+
+
+def counted_universes(garden: Garden, noops: list[NoopOption]) -> list[Universe]:
+    pairs = noop_pairs(noops)
+    return [
+        u
+        for u in garden.finished()
+        if u.kind != "verification" and (u.kind == "baseline" or not has_noop(u, pairs))
+    ]
+
+
+def distinct_universes(pool: list[Universe]) -> list[Universe]:
+    chosen: dict[tuple[float, float, float, int], Universe] = {}
+    for universe in sorted(pool, key=lambda u: (u.kind != "baseline", len(u.changed), u.id)):
+        if universe.result is None:
+            continue
+        chosen.setdefault(result_key(universe.result), universe)
+    return list(chosen.values())
+
+
+def beam_share(garden: Garden, noops: list[NoopOption]) -> tuple[float | None, int]:
+    baseline = garden.baseline
+    distinct = distinct_universes(counted_universes(garden, noops))
+    if baseline is None or not distinct:
+        return None, 0
+    agreeing = sum(1 for u in distinct if u.verdict == baseline.verdict)
+    return agreeing / len(distinct), len(distinct)
+
+
+def sampled_share(garden: Garden, noops: list[NoopOption]) -> tuple[float, int, int] | None:
+    baseline = garden.baseline
+    if baseline is None or baseline.result is None or not garden.sample_ids:
+        return None
+    pairs = noop_pairs(noops)
+    drawn = [garden.universes.get(uid) for uid in garden.sample_ids]
+    pool = [u for u in drawn if u is not None and u.status == "done" and u.result is not None]
+    distinct = distinct_universes([u for u in pool if not has_noop(u, pairs)])
+    if len(distinct) < MIN_SAMPLE:
+        return None
+    agreeing = sum(1 for u in distinct if u.verdict == baseline.verdict)
+    return agreeing / len(distinct), len(distinct), len(garden.sample_ids)
+
+
+def single_decision_share(
+    plan: AnalysisPlan, garden: Garden, noops: list[NoopOption]
+) -> float | None:
+    baseline = garden.baseline
+    if baseline is None or baseline.result is None:
+        return None
+    pairs = noop_pairs(noops)
+    base_key = result_key(baseline.result)
+    shares: list[float] = []
+    for step in plan.decision_steps:
+        outcomes: dict[tuple[float, float, float, int], bool] = {}
+        for option in step.options:
+            if option.id == step.default.id or (step.id, option.id) in pairs:
+                continue
+            single = single_universe(garden, step.id, option.id)
+            if single is None or single.result is None:
+                continue
+            key = result_key(single.result)
+            if key != base_key:
+                outcomes[key] = single.verdict == baseline.verdict
+        if not outcomes:
+            continue
+        shares.append((1 + sum(outcomes.values())) / (1 + len(outcomes)))
+    return sum(shares) / len(shares) if shares else None
+
+
+def design_share(
+    plan: AnalysisPlan, garden: Garden, noops: list[NoopOption]
+) -> tuple[float | None, str | None]:
+    sample = sampled_share(garden, noops)
+    if sample is not None:
+        share, distinct, draws = sample
+        return share, (
+            f"uniform random sample of the grid: {draws} draws (each decision picks each of its "
+            f"options equally), {distinct} distinct results; independent of the beam search"
+        )
+    single = single_decision_share(plan, garden, noops)
+    if single is None:
+        return None, None
+    return single, (
+        "one decision changed at a time: each decision counts equally and each of its options "
+        "equally; interactions between decisions are not covered"
+    )
+
+
+def robustness_figures(
+    plan: AnalysisPlan, garden: Garden, noops: list[NoopOption]
+) -> RobustnessFigures:
+    beam, n_distinct = beam_share(garden, noops)
+    design, design_note = design_share(plan, garden, noops)
+    if design is not None:
+        headline, basis = design, "design_weighted"
+    elif beam is not None:
+        headline, basis = beam, "distinct_results"
+    else:
+        headline, basis = 1.0, "none"
+    if n_distinct >= MIN_DISTINCT_TO_RATE:
+        rating, reason = headline, None
+    else:
+        rating, reason = None, f"n={n_distinct}, too few to rate"
+    return RobustnessFigures(headline, basis, beam, design, design_note, n_distinct, rating, reason)

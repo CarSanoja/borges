@@ -57,6 +57,19 @@ every column it keeps that later steps read (the group key, the treatment indica
 and every option of that step aggregates to the same unit.
 - Covariate sets are options of the model step: each model option names the covariates it \
 adjusts for. Never create a separate step that chooses covariates by dropping columns.
+- When the question is a regression-style association (does X relate to Y, the effect of X on \
+Y, a group difference that other variables could explain), the plan must contain BOTH an \
+adjustment step and a model step with real alternatives. The adjustment step (kind "feature") \
+has options that are alternative covariate sets, for example none, a minimal set and an \
+extended set; each option writes the chosen column names to ctx["covariates"] and never drops \
+columns, and the model step reads that list. The model step has at least two options from \
+different model families (for example OLS against logistic regression or a GLM, or a plain \
+fit against cluster-robust or mixed effects); two options that differ only in covariates or in \
+the covariance estimator are not two model families. Every dummy-coded categorical covariate \
+drops one level (drop_first=True) so the design matrix stays full rank.
+- Every option must change the analysis. Do not offer an option that reproduces the default on \
+these data (a filter that removes nothing because the default already removes it, the default \
+restated under another name, or a rescaling that cannot change a standardised result).
 - Every option keeps the direction and meaning of the estimand. No option may reverse the \
 coding of a variable or swap groups: a "control indicator" is not an alternative to a \
 "treatment indicator" because it only flips the sign of the effect. Alternatives must be \

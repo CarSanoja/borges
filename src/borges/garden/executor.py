@@ -34,6 +34,7 @@ class GardenExecutor:
         concurrency: int = 6,
         reuse_prefixes: bool = True,
         step_timeout_s: float = STEP_TIMEOUT_S,
+        design_check: bool = True,
     ) -> None:
         self.backend = backend
         self.plan = plan
@@ -42,6 +43,7 @@ class GardenExecutor:
         self.concurrency = concurrency
         self.reuse_prefixes = reuse_prefixes
         self.step_timeout_s = step_timeout_s
+        self.design_check = design_check
         self.baseline_verdict: str | None = None
         self.baseline_result: AnalysisResult | None = None
         self.root: Checkpoint | None = None
@@ -89,7 +91,9 @@ class GardenExecutor:
         step = self.plan.step(step_id)
         option = step.option(option_id)
         files = {
-            harness.step_filename(step_id, option_id): harness.render_step(step, option).encode()
+            harness.step_filename(step_id, option_id): harness.render_step(
+                step, option, design_check=self.design_check
+            ).encode()
         }
         command = harness.step_command(step_id, option_id)
         try:

@@ -93,7 +93,8 @@ async def test_unrepairable_single_flip_stays_failed_without_failing_run(
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
     assert snapshot.status == "completed"
     failed = [u for u in snapshot.garden.universes.values() if u.status == "failed"]
-    assert [u.changed for u in failed] == [["s1"]]
+    assert ["s1"] in [u.changed for u in failed]
+    assert all(u.choices["s1"] == "b" for u in failed)
 
 
 async def test_budget_exceeded_fails_the_run_with_message(
@@ -116,7 +117,7 @@ async def test_combination_flips_only_without_a_single_flip(
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
     assert ("combination_flips", "started") in stages(rig, "r_test")
-    assert scenario.combination_calls == [(2, 7)]
+    assert scenario.combination_calls == [(2, 4)]
     assert snapshot.flip is not None and len(snapshot.flip.changes) == 2
     assert any(u.kind == "combination" for u in snapshot.garden.universes.values())
 
