@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import re
-
+from borges.analysis.ids import slug_id
 from borges.analysis.models import (
     AnalysisPlan,
     DatasetProfile,
@@ -17,7 +16,7 @@ from borges.llm.client import LLMClient, LLMError, Role
 
 
 def clean_id(raw: str, fallback: str) -> str:
-    cleaned = re.sub(r"[^a-z0-9_]+", "_", raw.strip().lower()).strip("_")
+    cleaned = slug_id(raw)
     return cleaned or fallback
 
 

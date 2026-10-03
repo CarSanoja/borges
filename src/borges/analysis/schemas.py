@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
+from borges.analysis.ids import slug_id
 from borges.analysis.models import StepKind
 
 
-class PlannedOption(BaseModel):
+class _Slugged(BaseModel):
+    @field_validator("id", "step_id", "option_id", check_fields=False, mode="after")
+    @classmethod
+    def _slug(cls, value: str) -> str:
+        return slug_id(value)
+
+
+class PlannedOption(_Slugged):
     id: str
     label: str
     rationale: str
@@ -14,7 +22,7 @@ class PlannedOption(BaseModel):
     source: str | None = None
 
 
-class PlannedStep(BaseModel):
+class PlannedStep(_Slugged):
     id: str
     title: str
     kind: StepKind
@@ -32,7 +40,7 @@ class CoderOutput(BaseModel):
     code: str
 
 
-class ProposedOption(BaseModel):
+class ProposedOption(_Slugged):
     step_id: str
     id: str
     label: str
@@ -57,7 +65,7 @@ class NarratorOutput(BaseModel):
     caveats: list[str] = Field(default_factory=list)
 
 
-class ReviewVerdict(BaseModel):
+class ReviewVerdict(_Slugged):
     option_id: str
     faithful: bool
     changes_estimand: bool = False

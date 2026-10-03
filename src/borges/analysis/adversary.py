@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.ids import slug_id
 from borges.analysis.models import AnalysisPlan, Option, Proposal
 from borges.analysis.option_signature import same_option
 from borges.analysis.prompts.adversary import build_messages
@@ -31,7 +32,8 @@ async def propose_options(
             break
         if item.step_id not in seen_ids:
             continue
-        option_id = item.id if item.id.startswith("adv_") else f"adv_{item.id}"
+        slug = slug_id(item.id) or "option"
+        option_id = slug if slug.startswith("adv_") else f"adv_{slug}"
         option = Option(
             id=option_id,
             label=item.label,
