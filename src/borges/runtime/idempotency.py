@@ -20,8 +20,8 @@ def _digest(*parts: str) -> str:
     return hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
 
 
-def explicit_key(principal_id: str, value: str) -> IdempotencyKey:
-    return IdempotencyKey(_digest("explicit", principal_id, value), False, EXPLICIT_WINDOW_S)
+def explicit_key(owner_key: str, value: str) -> IdempotencyKey:
+    return IdempotencyKey(_digest("explicit", owner_key, value), False, EXPLICIT_WINDOW_S)
 
 
 def derived_key(owner_key: str, request: RunRequest, settings: Settings) -> IdempotencyKey:

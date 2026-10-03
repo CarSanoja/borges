@@ -83,6 +83,9 @@ class Runtime:
         job = self.queue.get(run_id)
         return job is not None and job.state in ACTIVE_STATES
 
+    def working(self) -> set[str]:
+        return {run_id for run_id, task in self.jobs.items() if not task.done()}
+
     def known_run_ids(self) -> set[str]:
         return self.queue.active_run_ids()
 
@@ -92,9 +95,10 @@ class Runtime:
     def idempotency(
         self, principal: Principal, client: str, request: RunRequest, header: str | None
     ) -> IdempotencyKey:
+        owner = RunQuota.owner_key(principal, client)
         if header:
-            return explicit_key(principal.id, header)
-        return derived_key(RunQuota.owner_key(principal, client), request, self.settings)
+            return explicit_key(owner, header)
+        return derived_key(owner, request, self.settings)
 
     def lookup(self, key: IdempotencyKey) -> str | None:
         return self.queue.lookup(key)
@@ -157,6 +161,11 @@ class Runtime:
         if self.jobs.get(run_id) is worker:
             del self.jobs[run_id]
 
+    def _reopen_channels(self) -> None:
+        for run_id in self.queue.active_run_ids():
+            if self.store.exists(run_id) and not self.bus.is_live(run_id):
+                self.bus.reopen(run_id, self.store.events(run_id))
+
     def recover(self) -> int:
         return self.queue.expire_leases_where(owner_is_dead)
 
@@ -196,6 +205,7 @@ class Runtime:
         self._wakeup = asyncio.Event()
         self._changed = asyncio.Event()
         self.recover()
+        self._reopen_channels()
         self._loop_task = asyncio.create_task(self._loop())
 
     async def stop(self) -> None:

@@ -23,7 +23,7 @@ def owner_is_dead(owner: str) -> bool:
 
 
 def reclaim(runtime: Runtime) -> None:
-    requeued, exhausted = runtime.queue.reclaim_expired()
+    requeued, exhausted = runtime.queue.reclaim_expired(skip=runtime.working())
     for run_id in requeued:
         if runtime.store.exists(run_id):
             runtime.store.update_meta(run_id, status="queued")

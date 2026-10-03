@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from borges.identity.principal import ANONYMOUS, Principal
@@ -290,3 +292,20 @@ async def test_recover_expires_the_leases_of_dead_local_processes(tmp_path, monk
 async def test_requeue_of_an_unknown_run_is_none(tmp_path, monkeypatch) -> None:
     fake = make_fake_runtime(tmp_path, monkeypatch)
     assert fake.runtime.requeue("r_nope") is None
+
+
+async def test_a_run_waiting_after_a_restart_is_not_reported_as_interrupted(
+    tmp_path, monkeypatch
+) -> None:
+    fake = make_fake_runtime(tmp_path, monkeypatch, borges_max_active_runs=0)
+    result = await fake.runtime.submit(REQUEST, NAMED, CLIENT)
+    await fake.runtime.stop()
+    fake.rig.bus._channels.clear()
+    assert not fake.rig.bus.is_live(result.run_id)
+    await fake.runtime.start()
+    assert fake.rig.bus.is_live(result.run_id)
+    stream = fake.rig.bus.subscribe(result.run_id)
+    with pytest.raises(TimeoutError):
+        await asyncio.wait_for(anext(stream), 0.3)
+    await stream.aclose()
+    await fake.runtime.stop()

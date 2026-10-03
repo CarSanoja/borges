@@ -106,3 +106,12 @@ async def test_a_different_payload_is_a_new_event(tmp_path: Path) -> None:
     emitter = RunEmitter("r_1", store, bus, replay=[stage_event(1, "done")], last_seq=1)
     await emitter.stage("planning", "done")
     assert [e.seq for e in store.events("r_1")] == [2]
+
+
+async def test_persisted_count_counts_the_events_of_one_type(tmp_path: Path) -> None:
+    emitter, _, _ = make(tmp_path)
+    await emitter.emit("checkpoint.created", {"checkpoint_id": "a"})
+    await emitter.emit("checkpoint.created", {"checkpoint_id": "b"})
+    await emitter.stage("profiling", "done")
+    assert emitter.persisted_count("checkpoint.created") == 2
+    assert emitter.persisted_count("universe.finished") == 0

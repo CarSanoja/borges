@@ -219,3 +219,30 @@ async def test_without_a_context_nothing_is_checkpointed(
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_ctx", RunRequest(case_id="demo"))
     assert snapshot.status == "completed" and snapshot.resumed == 0
+
+
+async def test_a_resumed_run_reports_every_checkpoint_it_has_persisted(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+
+    from borges.llm.client import UsageTotals
+    from borges.runs.bus import EventBus
+    from borges.runs.emitter import RunEmitter
+    from borges.runs.pipeline import Pipeline
+    from borges.runs.store import RunStore
+    from borges.runtime.checkpoints import NullCheckpointStore
+    from borges.runtime.context import RunContext
+
+    store = RunStore(tmp_path)
+    store.create("r_1", {})
+    emitter = RunEmitter("r_1", store, EventBus(store))
+    for name in ("a", "b", "c"):
+        await emitter.emit("checkpoint.created", {"checkpoint_id": name})
+    shell = SimpleNamespace(
+        executor=SimpleNamespace(checkpoints_created=1),
+        llm=SimpleNamespace(totals=UsageTotals()),
+        emitter=emitter,
+        context=RunContext("r_1", NullCheckpointStore(), resume_reason="restart"),
+    )
+    assert Pipeline._usage(shell)[1] == 3  # type: ignore[arg-type]
+    shell.context = RunContext("r_1", NullCheckpointStore())
+    assert Pipeline._usage(shell)[1] == 1  # type: ignore[arg-type]

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 
 from borges.runtime.db import RuntimeDb
 from borges.runtime.jobs import CANCELLED, QUEUED, RUNNING, TERMINAL_STATES, Job
@@ -14,7 +14,7 @@ class JobLifecycle:
         self.db = db
         self.clock = clock
 
-    def reclaim_expired(self) -> tuple[list[str], list[str]]:
+    def reclaim_expired(self, skip: Collection[str] = ()) -> tuple[list[str], list[str]]:
         now = self.clock()
         requeued: list[str] = []
         exhausted: list[str] = []
@@ -24,6 +24,8 @@ class JobLifecycle:
             ).fetchall()
             for row in rows:
                 job = Job.from_row(row)
+                if job.run_id in skip:
+                    continue
                 if job.attempts >= job.max_attempts:
                     exhausted.append(job.run_id)
                     continue

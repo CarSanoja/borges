@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
 
 from borges.api.run_policy import enforce_run_policy
+from borges.config import Settings
+from borges.identity.keystore import open_keystore
 from borges.identity.principal import Principal
 from borges.identity.scopes import PUBLIC_SCOPES
 from borges.runs.models import RunRequest
@@ -24,7 +27,17 @@ def schedule_principal(schedule: Schedule) -> Principal:
     return Principal(id=schedule.principal, kind="key", scopes=PUBLIC_SCOPES)
 
 
+def key_withdrawn(settings: Settings, principal_id: str) -> bool:
+    now = time.time()
+    held = [r for r in open_keystore(settings).records().values() if r.principal_id == principal_id]
+    return bool(held) and not any(r.status(now) == "active" for r in held)
+
+
 async def submit_due(runtime: Runtime, schedule: Schedule) -> str | None:
+    if key_withdrawn(runtime.settings, schedule.principal):
+        log.warning("schedule %s skipped: its key is revoked or expired", schedule.id)
+        runtime.schedules.advance(schedule, None)
+        return None
     request = RunRequest(case_id=schedule.case_id, llm=schedule.llm)  # type: ignore[arg-type]
     try:
         request = enforce_run_policy(request, runtime.settings, runtime.orchestrator)

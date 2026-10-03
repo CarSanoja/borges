@@ -81,3 +81,16 @@ def test_schedule_principal_is_a_named_caller() -> None:
     schedule = Schedule("sch_1", "demo", None, 60.0, "caller://nightly", 0.0, True, 0.0, None, None)
     principal = schedule_principal(schedule)
     assert principal.id == "caller://nightly" and principal.anonymous is False
+
+
+async def test_a_schedule_of_a_revoked_key_does_not_run(tmp_path, monkeypatch) -> None:
+    from borges.identity.keystore import open_keystore
+
+    fake = make_fake_runtime(tmp_path, monkeypatch)
+    store = open_keystore(fake.runtime.settings)
+    record, _ = store.create("nightly", "runs:create:scripted", None)
+    fake.runtime.schedules.add("demo", 3600.0, "caller://nightly", "scripted", 0.0)
+    store.revoke(record.key_id)
+    assert await run_due(fake.runtime) == []
+    assert fake.rig.store.list_runs() == []
+    assert fake.runtime.schedules.due() == []

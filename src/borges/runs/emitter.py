@@ -45,6 +45,9 @@ class RunEmitter:
         self.usage_probe: UsageProbe | None = None
         self._pending: Counter[str] = Counter(replay_key(e.type, e.data) for e in replay or [])
 
+    def persisted_count(self, event_type: str) -> int:
+        return sum(1 for e in self.store.events(self.run_id) if e.type == event_type)
+
     def has_pending(self, event_type: str, data: dict[str, Any]) -> bool:
         return self._pending[replay_key(event_type, redact_deep(data))] > 0
 
