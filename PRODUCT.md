@@ -134,10 +134,12 @@ What exists, verified against the primary sources (September and October 2026):
    from a shared state.
    Borges's adversary reads the real row counts and estimates at a step, argues against the
    conclusion with code, and an independent judge scores how defensible each proposal is
-   before it enters the garden. Designed and tested with scripted models, then run live: on
-   2 October 2026 Nemotron found the planted internal-traffic artefact in the checkout case
-   unprompted and proposed the listwise-deletion fork that makes the bank case's flip. That is
-   five recordings, one per case, not a measure of how reliably it proposes good forks.
+   before it enters the garden. Designed and tested with scripted models, then run live once
+   per case on 2 October 2026. The r6 jury showed that two of those live flips do not stand as
+   findings: the checkout flip re-includes rows that the case's own column notes mark invalid
+   (a contaminated analysis, not an unprompted discovery), and the bank flip comes from a
+   collinear design matrix and a changed estimand. Five recordings, one per case, are not a
+   measure of how reliably the adversary proposes good forks.
 2. **The smallest defensible flip found.** It searches one change, then two, then three
    (at most 10 combinations per level) and re-executes the winner from scratch, so the output
    is a specific decision that turns yours around, not only a distribution. It is the
@@ -264,7 +266,10 @@ often a model gets these right.
   - Super 120B plans, argues as the adversary, judges defensibility, repairs failed code and
     reviews every option's code against its spec;
   - Nano 30B writes the code for every branch (cheap and massively parallel);
-  - Ultra 550B, with 1M of context, reads the whole garden and writes the report.
+  - Ultra 550B writes the report from a bounded structured summary of the garden (the
+    verdicts, the flip, the influences and the caveats), not from every universe: the
+    narrator call is about 1.2k tokens in on the recorded runs, and `Report.narrator_input_tokens`
+    records the estimate for each run. Its 1M-token context window is not used.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
   checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
   and contract-tested with a fake SDK. It ran against the real service on 2 October 2026:

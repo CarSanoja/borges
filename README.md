@@ -21,13 +21,20 @@ smallest flip it found.**
 > uv run borges reproduce --case checkout_ab --source live --universe u_3a4a8a35a5
 > ```
 >
-> The first is an offline scripted replay and ends with `Universes: 15, checkpoints: 67, LLM
-> calls: 24 scripted (0 cached)` and `cost: $0.0000 (scripted replay, no model called)`: the
-> data, the code and every statistic are real, no model wrote the plan. The second
-> re-executes a universe from the live Nemotron recording of the checkout case and prints
-> `MATCH` when the result equals the recording. All five cases were recorded live on 2
-> October 2026 for $0.0145 to $0.0326 each; the web app plays those recordings by default.
-> The status table below says what is and is not live.
+> The first is an offline scripted replay: the data, the code and every statistic are real, no
+> model wrote the plan. The last two lines of its output are exactly (a test runs the
+> command and compares them with this block):
+>
+> ```text
+> Universes: 27, checkpoints: 118, LLM calls: 38 scripted (0 cached)
+> Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)
+> ```
+>
+> The second re-executes a universe from the live Nemotron recording of the checkout case and
+> prints `MATCH` when the result equals the recording. All five cases were recorded live on 2
+> October 2026 for $0.0145 to $0.0326 each, before several analysis fixes; the web app plays
+> those recordings by default, and re-recording them at the current commit is pending (see
+> "Pending live numbers"). The status table below says what is and is not live.
 >
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
 > agree, and, with a calibration study (`evidence/calibration.md`), how much to trust a flip.
@@ -50,26 +57,6 @@ Built for the [Nebius x NVIDIA Global AI Hackathon](https://nebiusglobalaihackat
 on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step runs as a
 branch of a sandbox: a local subprocess backend by default (no VM isolation), or Nebius
 Token Factory Sandboxes (ConTree, VM-isolated) with `BORGES_BACKEND=contree`.
-
-## Enterprise fleet
-
-Borges is also run as an agent fleet with the seven controls an enterprise buyer asks for. The
-live page `/platform` (and `GET /api/platform`, public, no secrets) reads each pillar's status
-from the running server and names the command that proves it.
-
-| Pillar | What Borges does | Proof |
-|---|---|---|
-| Agent Registry | Every model agent and deterministic component is a versioned record with a definition sha, a prompt sha and a policy sha, published to a hash-chained store and approved before a live run may use it (`BORGES_REGISTRY_ENFORCE`, four-eyes optional) | `uv run borges agents list`, `uv run borges agents verify`, page `/fleet` |
-| Agent Runtime | Runs go through a durable SQLite queue with leases, retries with backoff, dead-letter, cancel, idempotency keys and resume from checkpoints. Killed after 3 universes, a scripted `checkout_ab` run resumed to the same 7 universes and the same flip | `uv run borges runs dead-letter`, `tests/runtime/test_resume.py` |
-| Memory Bank | Encrypted per-tenant memory (AES-GCM with `BORGES_MEMORY_KEY`) of verdicts, validated code, adversary misses and owner notes: a second `checkout_ab` run makes 0 judge and 0 coder calls instead of 7 and 11 | `uv run borges memory list --tenant public-demo`, page `/memory` |
-| Agent Identity (zero-trust) | Every `/api` call resolves to a principal with scopes; the anonymous demo principal holds only the public scopes; named API keys are salted hashes in a hash-chained, anchored store; each agent call carries a short-lived signed token | `curl localhost:8000/api/me`, `uv run borges keys list` |
-| Agent Gateway | One chokepoint for model and sandbox calls: token verify, capability, egress class, armor-in, budget, route with fallback chain, armor-out, audit and span. `policy/gateway.json` sets the models, calls and cost per agent | `curl localhost:8000/api/policy`, `tests/gateway/test_no_bypass.py` |
-| Model Armor | Screens for prompt injection, tool poisoning and personal data on run creation, uploads, model input and output. On our own corpus (two suites, written by us, not an independent benchmark) it flags 93 of 93 attacks and 0 of 92 benign texts | `uv run pytest tests/armor/test_corpus.py tests/armor/test_corpus_redteam.py -s` |
-| Agent Observability | OpenTelemetry spans per run (JSONL always, OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set), a reasoning-chain trace page per run, and a global audit log chained by hash, with anchors that are HMAC-signed once a key is set | `uv run borges audit verify global`, page `/run/<id>/trace` |
-
-How the request travels, and which store each pillar owns, is drawn in
-[ARCHITECTURE.md](ARCHITECTURE.md#6d-request-path-and-stores). The threat model and the limits of
-each control are in [SECURITY.md](SECURITY.md).
 
 ## Status: what has and has not run
 
@@ -94,16 +81,38 @@ the same event says `scripted`.
 
 | Case | Calls | Tokens in / out | Cost | Original verdict | Smallest flip found |
 |---|---|---|---|---|---|
-| checkout_ab | 24 | 38,219 / 6,055 | $0.0145 | DON'T SHIP: lift -0.13 pp [-0.79, +0.53] | Keep internal and bot-like sessions: +0.84 pp, SHIP (direction) |
-| red_cards | 32 | 57,433 / 7,318 | $0.0183 | BIAS DETECTED: OR 1.34 [1.14, 1.58] | none in 9 universes |
+| checkout_ab | 24 | 38,219 / 6,055 | $0.0145 | DON'T SHIP: lift -0.13 pp [-0.79, +0.53] | Keep all sessions: +0.84 pp, SHIP (direction). A contaminated analysis flip: it re-includes the rows the column notes mark invalid (see below) |
+| red_cards | 32 | 57,433 / 7,318 | $0.0183 | BIAS DETECTED: OR 1.34 [1.14, 1.58] | none in 9 universes, of which only 4 distinct results (one model option, no covariates; 3 universes repeat an earlier result) |
 | marp_religiosity | 22 | 66,078 / 5,201 | $0.0191 | POSITIVE ASSOCIATION: beta 0.090 [0.073, 0.107] | none in 24 universes |
 | marp_norms | 31 | 94,401 / 6,465 | $0.0266 | DEPENDS ON NORMS: interaction 0.036 [0.019, 0.052] | none in 32 universes |
-| bank_marketing_calls | 41 | 86,266 / 13,975 | $0.0326 | CAP THE CALLS: OR 0.878 per call [0.863, 0.892] | Listwise deletion plus robust SE: OR 0.88 [0.61, 1.27], p 0.50 (significance only) |
+| bank_marketing_calls | 41 | 86,266 / 13,975 | $0.0326 | CAP THE CALLS: OR 0.878 per call [0.863, 0.892] | Listwise deletion plus robust SE: OR 0.88 [0.61, 1.27], p 0.50 (significance only). Disputed, see below |
 
-Run ids, universe counts and the reproduce results are in `evidence/live-runs.md`. In the
-checkout case nobody scripted the plan: Nemotron found the planted internal-traffic artefact
-on its own. The live red-cards OR matches the default analysis the case cites. A single live
-run per case is one sample of a model: it is not a measure of how often Nemotron finds a flip.
+Run ids, universe counts and the reproduce results are in `evidence/live-runs.md`. A single
+live run per case is one sample of a model: it is not a measure of how often Nemotron finds a
+flip. Read these results with the r6 jury findings in mind:
+
+- **The checkout flip is contaminated, not discovered.** The column notes of the case say
+  that `is_internal` marks sessions of internal staff or test users, "who are not genuine
+  customers", and that very short sessions are bot-like. The recorded plan defaulted to
+  excluding both, and the flip re-includes them. The notes handed the model the answer, so
+  this is not an unprompted discovery of the planted artefact. The analysis now flags a flip
+  that re-includes rows the plan's own notes mark invalid as a "contaminated analysis" flip.
+  The notes-stripped replication is pending (see "Pending live numbers").
+- **The bank flip is not a finding.** The jury re-executed the option: month dummies plus an
+  intercept are collinear (rank 12 of 13), which inflates the standard error, the point
+  estimate barely moves (0.878 to 0.881), and the option also changes the estimand (a
+  univariate baseline against about 40 covariates). With a full-rank design the jury got
+  OR [0.836, 0.929] and no flip. The harness now checks design rank and labels
+  covariate-adding options as estimand changes; the recording predates that and is to be
+  re-recorded.
+- **The red-cards live run is narrow.** One model option, no covariates, no clustering, and
+  3 of 9 universes repeat an earlier result, so "100% robust" there is over a space that
+  leaves out the dimensions that mattered. The live red-cards OR matches the default analysis
+  the case cites.
+- **On the same case the live and the scripted replays tell different stories** (the
+  scripted checkout replay excludes internal accounts and flips to DON'T SHIP; the live run
+  starts from DON'T SHIP and flips to SHIP). The scripted replay is hand-built fixtures; the
+  live recording is a model run. Both are labelled in the web app.
 
 ### What the live runs taught us
 
@@ -180,7 +189,7 @@ in `evidence/live-runs.md`.
 | Smallest flip found | 1 change: exclude internal test accounts | 3 changes together: the second rater only, referees with 22+ dyads, full covariates |
 | Flipped result | **DON'T SHIP**: −0.14 pp, [−0.50, 0.21], p = 0.43 | **NO CLEAR EVIDENCE**: OR 1.20, [1.00, 1.46], p = 0.055 |
 | Reproduced from scratch | yes | yes |
-| Explored | 7 universes, 22 sandbox checkpoints | 30 universes, 58 sandbox checkpoints |
+| Explored | universes and checkpoints: see the last lines printed by `make demo-cli` | same, `make demo-red-cards` |
 
 **The checkout data is synthetic and the answer is planted.** `cases/checkout_ab/generate.py`
 sets a true effect of -0.2 pp (`TRUE_EFFECT = -0.0020`), adds a +0.4 pp novelty bump to the
@@ -189,8 +198,8 @@ conversion, assigned to treatment with probability 0.80). The plan is hand-writt
 mechanics, not discovery. The red-cards flip is a p-value crossing: the odds ratio goes from
 1.34 to 1.20 and stays above 1, with p moving from 0.0006 to 0.055. The evidence weakens; the
 effect does not reverse. The search favours flips, so this is the nearest crossing Borges
-found, not a typical analysis. The robustness share (87% of 30 universes agree) is the fairer
-headline. On the red-cards data no single or paired defensible change reverses the finding;
+found, not a typical analysis. The robustness line the CLI prints (share of paths that agree, with the number of
+universes and a rating only when there are enough of them) is the fairer headline. On the red-cards data no single or paired defensible change reverses the finding;
 it takes three together. The only single change that would flip it, keeping low-bias referees
 only, is rejected by the judge as an indefensible change of population.
 
@@ -237,6 +246,44 @@ flip, pooled OLS (p = 0.056, estimate still positive). These recordings are scri
 replays of a hand-built option space seeded from the teams' published choices; the adversary
 proposes nothing there.
 
+## How much to trust a flip
+
+`evidence/calibration.md` (offline, scripted, 504 synthetic checkout datasets of about 30,000
+sessions, the real pipeline, fixed menu of 5 steps x 2 options plus one scripted adversary
+option, seeds `20261002 + cell_index * 1,000,000 + i`, Wilson 95% intervals; nothing live):
+
+| Situation | Flip reported | Direction flip |
+|---|---|---|
+| Large true effect (0.010 absolute lift), no artefact, n = 80 | 13/80 = 16% [10, 26] | 0/80 [0, 5] |
+| Null effect, default analysis wrongly says SHIP, n = 80 | 71/80 = 89% [80, 94] | 0/80 [0, 5] |
+| Null effect with the planted artefact, n = 80 | 78/80 = 98% [91, 99]; via internal traffic 76/80 = 95% [88, 98] | 35/80 = 44% [33, 55] |
+| True effect at 80% power with the artefact, n = 80 | via internal traffic 55/80 = 69% [58, 78] | 0/80 [0, 5] |
+
+The uncomfortable conclusion: on clean data with a large true effect the search reports a
+significance-only flip 16% of the time, and in 272 clean datasets it never reported a
+direction flip (95% upper bound about 1.4%). A flip label must say which kind it is. A
+significance flip is weak evidence (it is expected from noise near the threshold); a direction
+flip is specific. The red-cards flip (OR 1.34 to 1.20) is of the weak kind. No flip does not
+prove no artefact: detection falls as the true effect grows (95%, 69%, 21%). The rates apply to
+this fixed menu, not to arbitrary datasets.
+
+Against a fixed full grid (what a hand-written multiverse or specr would run over the same
+seeded options), `evidence/grid_vs_search.md`: the grid ran 72, 32, 768 and 1,536 universes on
+red cards, checkout, MARP religiosity and MARP norms (27, 12, 204 and 424 s offline) and found
+the same smallest flip as Borges in all four cases, or none in either. Borges used 30, 7, 40 and
+15 universes. The objections a statistician would raise, with answers, are in `PRODUCT.md`.
+
+## Pending live numbers
+
+These need the owner's key and are not claimed anywhere above: re-recording all five cases
+and the hurricanes case live at the current commit (each recording will carry its commit hash
+and its spans and audit chain), the checkout run with the column notes stripped over at
+least 5 seeds (below), the bank case with a full-rank design, and the live BLADE benchmark.
+
+| Checkout, notes stripped | Seeds | Runs proposing the exclusion of internal and bot rows | Flip rate |
+|---|---|---|---|
+| PENDING (lead, live key) | PENDING | PENDING | PENDING |
+
 ## Quickstart
 
 Requirements: Python 3.13 with [uv](https://docs.astral.sh/uv/), Node 22+ with pnpm.
@@ -251,7 +298,7 @@ make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
 The web app plays the live recording of each of the five cases by default, with a toggle to the
-scripted replay for the four cases that have one (the bank case is live-only). It also has a "Run it now" button (scripted models,
+scripted replay for the four cases that have one (the bank case is live-only). It also has a "Replay offline (scripted)" button (hand-built fixtures, no model called,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
 live on Nemotron" (the button says why when it is disabled). The landing page has a "bring your own data" card: it is
 enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
@@ -409,6 +456,26 @@ judge-model second stage for ambiguous text. Details and limits are in `SECURITY
 Details: [ARCHITECTURE.md](ARCHITECTURE.md). Product definition and the end-to-end
 definition of done: [PRODUCT.md](PRODUCT.md).
 
+## Enterprise fleet
+
+Borges is also run as an agent fleet with the seven controls an enterprise buyer asks for. The
+live page `/platform` (and `GET /api/platform`, public, no secrets) reads each pillar's status
+from the running server and names the command that proves it.
+
+| Pillar | What Borges does | Proof |
+|---|---|---|
+| Agent Registry | Every model agent and deterministic component is a versioned record with a definition sha, a prompt sha and a policy sha, published to a hash-chained store and approved before a live run may use it (`BORGES_REGISTRY_ENFORCE`, four-eyes optional) | `uv run borges agents list`, `uv run borges agents verify`, page `/fleet` |
+| Agent Runtime | Runs go through a durable SQLite queue with leases, retries with backoff, dead-letter, cancel, idempotency keys and resume from checkpoints. Killed after 3 universes, a scripted `checkout_ab` run resumed to the same 7 universes and the same flip | `uv run borges runs dead-letter`, `tests/runtime/test_resume.py` |
+| Memory Bank | Encrypted per-tenant memory (AES-GCM with `BORGES_MEMORY_KEY`) of verdicts, validated code, adversary misses and owner notes: a second `checkout_ab` run makes 0 judge and 0 coder calls instead of 7 and 11 | `uv run borges memory list --tenant public-demo`, page `/memory` |
+| Agent Identity (zero-trust) | Every `/api` call resolves to a principal with scopes; the anonymous demo principal holds only the public scopes; named API keys are salted hashes in a hash-chained, anchored store; each agent call carries a short-lived signed token | `curl localhost:8000/api/me`, `uv run borges keys list` |
+| Agent Gateway | One chokepoint for model and sandbox calls: token verify, capability, egress class, armor-in, budget, route with fallback chain, armor-out, audit and span. `policy/gateway.json` sets the models, calls and cost per agent | `curl localhost:8000/api/policy`, `tests/gateway/test_no_bypass.py` |
+| Model Armor | Screens for prompt injection, tool poisoning and personal data on run creation, uploads, model input and output. On our own corpus (two suites, written by us, not an independent benchmark) it flags 93 of 93 attacks and 0 of 92 benign texts | `uv run pytest tests/armor/test_corpus.py tests/armor/test_corpus_redteam.py -s` |
+| Agent Observability | OpenTelemetry spans per run (JSONL always, OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set), a reasoning-chain trace page per run, and a global audit log chained by hash, with anchors that are HMAC-signed once a key is set | `uv run borges audit verify global`, page `/run/<id>/trace` |
+
+How the request travels, and which store each pillar owns, is drawn in
+[ARCHITECTURE.md](ARCHITECTURE.md#6d-request-path-and-stores). The threat model and the limits of
+each control are in [SECURITY.md](SECURITY.md).
+
 ## Runtime
 
 Runs go through a durable queue and survive restarts. Environment: `BORGES_JOB_LEASE_S` (30),
@@ -444,33 +511,6 @@ embedded in every step (no process creation, no network, writes only inside the 
 reads limited to an allowlist that denies `.env`, `/proc/*/environ` and the user's home), and VM
 isolation on ConTree. The local backend is not an isolation boundary, and uploads are refused on
 it unless `make dev` allows them. Full model and its limits: [SECURITY.md](SECURITY.md).
-
-## How much to trust a flip
-
-`evidence/calibration.md` (offline, scripted, 504 synthetic checkout datasets of about 30,000
-sessions, the real pipeline, fixed menu of 5 steps x 2 options plus one scripted adversary
-option, seeds `20261002 + cell_index * 1,000,000 + i`, Wilson 95% intervals; nothing live):
-
-| Situation | Flip reported | Direction flip |
-|---|---|---|
-| Large true effect (0.010 absolute lift), no artefact, n = 80 | 13/80 = 16% [10, 26] | 0/80 [0, 5] |
-| Null effect, default analysis wrongly says SHIP, n = 80 | 71/80 = 89% [80, 94] | 0/80 [0, 5] |
-| Null effect with the planted artefact, n = 80 | 78/80 = 98% [91, 99]; via internal traffic 76/80 = 95% [88, 98] | 35/80 = 44% [33, 55] |
-| True effect at 80% power with the artefact, n = 80 | via internal traffic 55/80 = 69% [58, 78] | 0/80 [0, 5] |
-
-The uncomfortable conclusion: on clean data with a large true effect the search reports a
-significance-only flip 16% of the time, and in 272 clean datasets it never reported a
-direction flip (95% upper bound about 1.4%). A flip label must say which kind it is. A
-significance flip is weak evidence (it is expected from noise near the threshold); a direction
-flip is specific. The red-cards flip (OR 1.34 to 1.20) is of the weak kind. No flip does not
-prove no artefact: detection falls as the true effect grows (95%, 69%, 21%). The rates apply to
-this fixed menu, not to arbitrary datasets.
-
-Against a fixed full grid (what a hand-written multiverse or specr would run over the same
-seeded options), `evidence/grid_vs_search.md`: the grid ran 72, 32, 768 and 1,536 universes on
-red cards, checkout, MARP religiosity and MARP norms (27, 12, 204 and 424 s offline) and found
-the same smallest flip as Borges in all four cases, or none in either. Borges used 30, 7, 40 and
-15 universes. The objections a statistician would raise, with answers, are in `PRODUCT.md`.
 
 ## Related work
 
