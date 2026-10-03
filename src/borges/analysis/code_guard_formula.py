@@ -16,6 +16,11 @@ TOKEN = re.compile(
     r"|(?P<op>\*\*|[+\-*/:|(),=.]))"
 )
 INERT_LABELS = frozenset({"Pr(>|z|)", "Pr(>|t|)"})
+LEVEL_LABEL = re.compile(r"\[(?:T\.)?[A-Za-z0-9_ .+\-]*\]")
+INDEXED_TERM = (
+    "a formula may not index a term; write C(x) in the formula "
+    "and read the level coefficient as params['C(x)[T.level]']"
+)
 BINARY_OPERATORS = frozenset({"+", "-", "*", "/", ":", "**", "|"})
 
 
@@ -149,6 +154,10 @@ def formula_error(text: str) -> str | None:
         return "formula-like strings may not contain quotes"
     if text.lstrip().startswith("("):
         return "formula-like strings may not start with a parenthesis"
+    if "[" in text:
+        if "~" in text:
+            return INDEXED_TERM
+        text = LEVEL_LABEL.sub("", text)
     try:
         for side in text.split("~"):
             parser = _Parser(_tokenize(side))
