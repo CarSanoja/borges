@@ -33,7 +33,8 @@ The five recordings above used the local subprocess backend. On 2 October 2026, 
 |---|---|
 | `tests/sandbox/test_contree_live.py` | passed in 41.8 s |
 | checkout_ab, scripted, `BORGES_BACKEND=contree` (r_20261002T155240_392c19) | 7 universes, 22 real ConTree checkpoints, the same flip as the local backend (SHIP to DON'T SHIP) |
-| marp_religiosity, live on Nemotron plus ConTree (r_20261002T155440_0aa541) | completed, 16 universes, 31 checkpoints, no flip, $0.0069 recorded |
+| marp_religiosity, live on Nemotron plus ConTree (r_20261002T155440_0aa541) | completed, 16 universes, 31 checkpoints, no flip, $0.0069 recorded (25 of 30 calls came from the model cache) |
+| marp_religiosity, live on Nemotron plus ConTree with an empty model cache (r_20261003T190856_374165, 3 October) | completed, 16 universes, 31 ConTree checkpoints, no flip; 23 model calls, 0 from cache (planner, judge x4, repairer x4, reviewer x4 and adversary on Super; coder x8 on Nano; narrator on Ultra), 69,603 / 5,169 tokens, $0.0196; one OpenTelemetry span per call and `borges audit verify` OK on 152 audit records |
 
 These runs are not committed recordings: the web app still plays the local-backend recordings. They show the VM backend executes the same steps and reaches the same result, not that its output was compared universe by universe.
 
