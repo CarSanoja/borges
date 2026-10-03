@@ -60,6 +60,8 @@ class PricedLLM:
         max_tokens: int = 2048,
         temperature: float = 0.2,
     ) -> LLMResponse:
+        if key.endswith(":spec"):
+            raise LLMError(f"no scripted response for {key}")
         spec = DEFAULT_ROLE_MODELS[role]
         self.calls.append((role, key, messages[1]["content"]))
         cost = spec.cost(TOKENS_IN, TOKENS_OUT)

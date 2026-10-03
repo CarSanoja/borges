@@ -8,6 +8,7 @@ from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
+from borges.analysis.model_spec.request import request_template, template_family
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
 from borges.analysis.schemas import CoderOutput
@@ -54,6 +55,10 @@ async def generate_checked(
     models: list[str] | None = None,
 ) -> tuple[str | None, int, str | None]:
     notes: list[str] = []
+    if step.kind == "model":
+        templated = await request_template(llm, plan, step, option, models)
+        if templated is not None:
+            return templated.code, 1, templated.note
     code = await _request_code(llm, plan, step, option, models=models, notes=notes)
     violations = check_code(code, step.kind, option_intent(option))
     if not violations:
@@ -117,6 +122,9 @@ async def code_plan(
                     code, attempts, error = None, 1, str(exc)
                 span.set_attribute("borges.option.ok", code is not None)
                 span.set_attribute("borges.option.attempts", attempts)
+                family = template_family(error)
+                if family is not None:
+                    span.set_attribute("borges.option.template", family)
         if on_coded is not None:
             await on_coded(step.id, option.id, code is not None, attempts, error, models)
         return code, attempts, error

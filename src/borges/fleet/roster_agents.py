@@ -55,7 +55,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.CODER,
         CoderOutput,
         (PROFILE, *LLM_CAPS),
-        ("analysis/prompts/coder*.py", "analysis/coder*.py"),
+        ("analysis/prompts/coder*.py", "analysis/coder*.py", "analysis/model_spec/*.py"),
     ),
     _agent(
         "repairer",
