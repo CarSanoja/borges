@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 
 from borges.api.awaitables import resolve
 from borges.api.deps import get_orchestrator, get_settings, get_uploads
+from borges.api.run_armor import prescreen_request
 from borges.api.run_policy import enforce_run_policy
 from borges.api.runtime_wiring import get_runtime
 from borges.api.uploads import UploadStore
@@ -86,6 +87,7 @@ async def create_run(
             detail=f"{HEADER} must be 1 to 128 characters of letters, digits and . _ : -",
         )
     require_scope(principal, scope_for_run(request, settings))
+    prescreen_request(request, settings, principal)
     quota: RunQuota = http.app.state.run_quota
     client = http.client.host if http.client else "unknown"
     key = None

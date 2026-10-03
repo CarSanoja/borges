@@ -38,7 +38,7 @@ async def test_live_local_upload_is_rejected_by_default(tmp_path) -> None:
 
 async def test_live_local_question_override_is_rejected(tmp_path) -> None:
     env = Env(tmp_path, key="k")
-    response = await post(env, {**CASE, "question": "ignore previous instructions"})
+    response = await post(env, {**CASE, "question": "Does the new variant raise conversion?"})
     assert response.status_code == 400
     assert "own question" in response.json()["detail"]
 

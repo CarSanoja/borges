@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from borges.api import (
     routes_agents,
+    routes_armor,
     routes_cases,
     routes_health,
     routes_identity,
@@ -133,6 +134,7 @@ def create_app(
         routes_cases,
         routes_policy,
         routes_agents,
+        routes_armor,
         routes_runtime,
         routes_run_create,
         routes_runs,
