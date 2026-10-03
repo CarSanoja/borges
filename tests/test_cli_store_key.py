@@ -16,6 +16,9 @@ runner = CliRunner()
 KEY_VARS = ("BORGES_STORE_KEY", "BORGES_AUDIT_ANCHOR_KEY", "BORGES_MEMORY_KEY")
 
 
+PLATFORM: list[dict] = []
+
+
 def forget_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     for name in KEY_VARS:
         monkeypatch.setenv(name, "x")
@@ -34,7 +37,9 @@ def served_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     def fake_run(app, **_: object) -> None:
         with TestClient(app) as client:
             assert client.get("/api/agents").status_code == 200
-            assert client.get("/api/platform").status_code == 200
+            platform = client.get("/api/platform")
+            assert platform.status_code == 200
+            PLATFORM.append({p["id"]: p for p in platform.json()["pillars"]})
             assert client.get("/api/audit").status_code == 403
 
     monkeypatch.setattr("uvicorn.run", fake_run)
@@ -87,3 +92,12 @@ def test_a_genuinely_tampered_unkeyed_store_still_reads_broken(
     result = runner.invoke(cli.app, ["keys", "verify"])
     assert result.exit_code == 1 and "BROKEN" in result.output
     assert "keyed store" not in result.output
+
+
+def test_a_served_demo_reports_keyed_encrypted_and_anchored(served_home: Path) -> None:
+    pillars = PLATFORM[-1]
+    assert pillars["memory"]["facts"]["encrypted"] is True
+    assert pillars["registry"]["facts"]["chain_keyed"] is True
+    assert pillars["identity"]["facts"]["keystore"]["keyed"] is True
+    chain = pillars["observability"]["facts"]["audit_chain"]
+    assert chain["signed_anchor"] is True

@@ -44,6 +44,7 @@ record-demos:
 	$(BORGES) record-demo --case red_cards --llm scripted
 	$(BORGES) record-demo --case marp_religiosity --llm scripted
 	$(BORGES) record-demo --case marp_norms --llm scripted
+	$(BORGES) record-demo --case hurricanes --llm scripted
 	uv run --no-sync python scripts/export_recorded_run.py
 
 live-smoke:
@@ -56,6 +57,22 @@ record-live: live-smoke
 	$(BORGES) record-demo --case marp_religiosity --llm nebius
 	$(BORGES) record-demo --case marp_norms --llm nebius
 	$(BORGES) record-demo --case bank_marketing_calls --llm nebius
+
+record-live-hurricanes: export BORGES_RUN_CAP_USD ?= 0.50
+record-live-hurricanes: live-smoke
+	$(BORGES) record-demo --case hurricanes --llm nebius
+
+BLADE_DIR ?= $(error set BLADE_DIR to a clone of github.com/behavioral-data/BLADE)
+BENCH_OUT ?= evidence/blade/$(shell date -u +%Y-%m-%d)
+
+bench-blade-scripted:
+	$(BORGES) bench blade --llm scripted --datasets hurricane,teachingratings \
+		--blade-dir $(BLADE_DIR) --out $(BENCH_OUT)-scripted
+
+bench-blade-live: export BORGES_RUN_CAP_USD ?= 0.50
+bench-blade-live: live-smoke
+	$(BORGES) bench blade --llm nebius --datasets all --arms planner,adversary \
+		--repeats 1 --max-usd 2.0 --blade-dir $(BLADE_DIR) --out $(BENCH_OUT)
 
 docker:
 	docker build -t borges .

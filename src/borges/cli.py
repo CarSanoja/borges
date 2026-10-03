@@ -6,6 +6,7 @@ from typing import Annotated
 import typer
 
 from borges import cli_runtime
+from borges.bench.cli import bench_app
 from borges.cli_audit import audit_app
 from borges.cli_render import summary_lines, universe_lines
 from borges.config import Settings, get_settings
@@ -43,6 +44,7 @@ def load_keys() -> None:
 
 
 app.add_typer(audit_app, name="audit")
+app.add_typer(bench_app, name="bench")
 app.add_typer(agents_app, name="agents")
 app.add_typer(keys_app, name="keys")
 app.add_typer(memory_app, name="memory")
