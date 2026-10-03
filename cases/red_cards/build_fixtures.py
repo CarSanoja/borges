@@ -12,6 +12,7 @@ from summary import summarize
 from validation import fixture_path
 
 from borges.analysis.models import DecisionRule
+from borges.analysis.narrative_flip import insert_sentence
 from borges.analysis.schemas import CoderOutput, NarratorOutput
 from borges.cases.judge_fixtures import planner_judge_outputs
 from borges.cases.models import CaseSpec, ReferenceEstimate
@@ -25,6 +26,12 @@ RULE = DecisionRule(
     alpha=0.05,
     positive_label="BIAS DETECTED",
     negative_label="NO CLEAR EVIDENCE",
+)
+FLIP_SENTENCE = (
+    'The minimal flip changes Measure skin tone from "Mean of both raters" to "Rater 2 only" '
+    'and Choose which dyads to keep from "Rated players only" to '
+    '"Rated players, referees with 22+ dyads" and Adjust for context from "No covariates" '
+    'to "Physique plus league country".'
 )
 REFERENCE_LABEL = "29 human research teams (Silberzahn et al., 2018)"
 
@@ -80,6 +87,7 @@ def narrate(info: dict[str, Any]) -> tuple[NarratorOutput, str]:
         f"the verdict, keeping low-bias referees only ({fmt(rejected)}, p = "
         f"{rejected.p_value:.3f}), was rejected as an indefensible change of population."
     )
+    narrative = insert_sentence(narrative, FLIP_SENTENCE)
     caveats = [
         "Odds ratios compare the lightest with the darkest tone on a 0 to 1 scale and rest on "
         "player-referee dyads, not on individual refereeing decisions.",

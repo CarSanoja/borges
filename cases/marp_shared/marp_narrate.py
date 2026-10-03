@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisResult
+from borges.analysis.narrative_flip import flip_sentence, insert_sentence
 from borges.analysis.schemas import NarratorOutput
 from borges.runs.models import RunSnapshot
 
@@ -85,6 +86,9 @@ def narrate(snapshot: RunSnapshot, rq: int, teams: dict[str, float]) -> Narrator
             + _flip_clause(snapshot, rq)
         )
     narrative = " ".join([opening, middle, team_sentence(teams)])
+    sentence = flip_sentence(snapshot.plan, report) if snapshot.plan is not None else None
+    if sentence is not None:
+        narrative = insert_sentence(narrative, sentence)
     caveats = [
         "The share of universes that agree is a property of the explored set, which is built "
         "from the choices the teams documented and searched for flips; it is not a population "

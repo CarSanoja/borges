@@ -9,6 +9,7 @@ from plan_content import adversary_proposals, planner_output
 from planner_judgements import VERDICTS
 
 from borges.analysis.models import AnalysisResult, DecisionRule
+from borges.analysis.narrative_flip import insert_sentence
 from borges.analysis.schemas import (
     AdversaryOutput,
     CoderOutput,
@@ -18,6 +19,11 @@ from borges.analysis.schemas import (
 from borges.cases.judge_fixtures import planner_judge_outputs
 from borges.cases.models import CaseSpec
 from borges.llm.scripted_provider import SCRIPTED_MODEL
+
+FLIP_SENTENCE = (
+    'The minimal flip changes Internal traffic from "Keep all sessions" to '
+    '"Exclude internal accounts".'
+)
 
 HERE = Path(__file__).parent
 FIXTURES = HERE / "fixtures"
@@ -114,6 +120,7 @@ def narrator_output(frame: pd.DataFrame) -> NarratorOutput:
         f"largest, {runner_up:.2f} pp, "
         "leaves the verdict unchanged."
     )
+    narrative = insert_sentence(narrative, FLIP_SENTENCE)
     caveats = [
         "Influence is measured by switching one decision at a time from the defaults; it is a "
         "statement about this analysis, not a causal claim about the world.",
