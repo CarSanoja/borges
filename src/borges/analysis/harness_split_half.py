@@ -19,7 +19,8 @@ SPLIT_HALF_SOURCE = """
             for part in halves:
                 try:
                     half_ctx = _json.loads(_json.dumps(ctx))
-                    half = estimate(df.iloc[part].reset_index(drop=True), half_ctx)
+                    frame = df.iloc[part].reset_index(drop=True)
+                    half = _normalise_result(estimate(frame, half_ctx))
                     value = float(half["estimate"])
                 except BaseException:
                     return

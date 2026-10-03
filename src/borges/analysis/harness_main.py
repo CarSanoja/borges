@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
+from borges.analysis.harness_normalise import NORMALISE_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 
 _TEMPLATE = """
@@ -74,9 +75,10 @@ def __borges_main():
                 + " return rows in the DataFrame and keep only column names or numbers in ctx"
             )
 
+__NORMALISE__
+
     def _validate(payload):
-        if not isinstance(payload, dict):
-            raise ValueError("estimate() must return a dict")
+        payload = _normalise_result(payload)
         keys = __RESULT_KEYS__
         out = {key: _finite(payload, key) for key in keys}
         if not 0.0 <= out["p_value"] <= 1.0:
@@ -181,7 +183,8 @@ __HINTS__
 __borges_main()
 """
 MAIN_TEMPLATE = (
-    _TEMPLATE.replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
+    _TEMPLATE.replace("__NORMALISE__", NORMALISE_SOURCE.strip("\n"))
+    .replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
