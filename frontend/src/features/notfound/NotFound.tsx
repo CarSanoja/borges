@@ -9,7 +9,7 @@ interface Props {
 
 export function NotFound({ title, message }: Props) {
   const { cases } = useCases();
-  const recorded = cases.filter((card) => card.has_recording);
+  const recorded = cases.filter((card) => card.has_recording || card.live_recording);
   return (
     <main className="not-found" data-testid="not-found">
       <p className="eyebrow">Error 404</p>

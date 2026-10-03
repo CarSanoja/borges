@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import "./hero.css";
 import type { Health, LiveRecordingSummary } from "../../shared/types/contracts";
 import { HeroGarden } from "./HeroGarden";
@@ -17,9 +18,10 @@ interface Props {
   health: Health | null;
   healthLoaded: boolean;
   liveRecording?: LiveRecordingSummary | null;
+  headline?: ReactNode;
 }
 
-export function Hero({ onWatchDemo, health, healthLoaded, liveRecording }: Props) {
+export function Hero({ onWatchDemo, health, healthLoaded, liveRecording, headline }: Props) {
   return (
     <header className="landing-hero">
       <div className="landing-copy">
@@ -36,6 +38,7 @@ export function Hero({ onWatchDemo, health, healthLoaded, liveRecording }: Props
             </a>
           )}
         </div>
+        {headline}
         {healthLoaded && <HeroMode health={health} liveRecording={liveRecording} />}
         <p className="landing-sub">29 research teams. Same data. Opposite answers.</p>
       </div>

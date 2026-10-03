@@ -71,6 +71,7 @@ export function factRows(pillar: Pillar): Row[] {
         ["agents", text(facts.agents)],
         ["approved", text(facts.approved_versions)],
         ["registry sha", sha(facts.registry_sha)],
+        ...(typeof facts.seeded_approvals === "number" ? ([["seeded approvals", String(facts.seeded_approvals)]] as Row[]) : []),
       ];
     case "runtime":
       return runtimeRows(facts);
@@ -81,6 +82,7 @@ export function factRows(pillar: Pillar): Row[] {
         ["you", text(facts.principal)],
         ["scopes", count(facts.scopes)],
         ["anonymous scopes", count(facts.anonymous_scopes)],
+        ...(Array.isArray(facts.recent_denials) ? ([["recent denials", String(facts.recent_denials.length)]] as Row[]) : []),
       ];
     case "gateway":
       return [

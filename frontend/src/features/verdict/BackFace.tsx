@@ -29,6 +29,17 @@ export function BackFace({ flip, hidden, rule, search, explored }: Props) {
           <strong>{kind.title}.</strong> {kind.text}
         </p>
       )}
+      {flip.contaminated === true && (
+        <p className="vc-warning" role="note" data-testid="flip-contaminated">
+          Contaminated analysis flip: this change re-includes rows that the plan's own column notes mark invalid
+          {flip.contamination_reason ? ` (${flip.contamination_reason})` : ""}.
+        </p>
+      )}
+      {flip.estimand_change && (
+        <p className="vc-warning" role="note" data-testid="flip-estimand">
+          This option changes the estimand: {flip.estimand_change}
+        </p>
+      )}
       <p className="vc-lead">{lead}</p>
       <ul className={`vc-changes${many ? " vc-changes--many" : ""}`}>
         {flip.changes.map((change) => (

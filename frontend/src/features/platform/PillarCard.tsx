@@ -1,5 +1,6 @@
 import { AppLink } from "../../shared/router";
 import { factRows, isInternalPage, statusLabel } from "./platformFormat";
+import { corpusNote, provenanceBadges } from "./platformProvenance";
 import type { Pillar } from "./platformTypes";
 
 export function PillarCard({ pillar }: { pillar: Pillar }) {
@@ -13,6 +14,14 @@ export function PillarCard({ pillar }: { pillar: Pillar }) {
       </div>
       <p className="platform-card__brief">{pillar.brief}</p>
       <p className="platform-card__summary">{pillar.summary}</p>
+      <ul className="platform-badges" aria-label={`${pillar.name} data sources`}>
+        {provenanceBadges(pillar).map((entry) => (
+          <li key={entry.key} className="chip platform-badge" data-kind={entry.kind} title={entry.detail}>
+            {entry.label}
+            {entry.kind === "measured" && entry.detail && <span className="platform-badge__detail">{entry.detail}</span>}
+          </li>
+        ))}
+      </ul>
       <dl className="platform-facts">
         {factRows(pillar).map(([label, value]) => (
           <div key={label}>
@@ -21,6 +30,11 @@ export function PillarCard({ pillar }: { pillar: Pillar }) {
           </div>
         ))}
       </dl>
+      {corpusNote(pillar) && (
+        <p className="platform-corpus-note" data-testid="corpus-note">
+          {corpusNote(pillar)}
+        </p>
+      )}
       <p className="platform-verify">
         <span className="platform-verify__label">How to verify</span>
         <code>{pillar.verify}</code>

@@ -42,14 +42,14 @@ describe("Landing", () => {
 
   it("links the fleet from the main navigation", async () => {
     renderLanding();
-    await screen.findByText("Mocked checkout");
+    await screen.findByRole("heading", { name: "Mocked checkout" });
     const nav = screen.getByRole("navigation", { name: "Main" });
     expect(within(nav).getByRole("link", { name: "Fleet" })).toHaveAttribute("href", "/fleet");
   });
 
   it("renders cases and hides live runs without a key", async () => {
     renderLanding();
-    expect(await screen.findByText("Mocked checkout")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Mocked checkout" })).toBeInTheDocument();
     expect(screen.getByText("Every conclusion is one path through a garden.")).toBeInTheDocument();
     await screen.findByRole("status", { name: "Live mode" });
     expect(screen.queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
@@ -60,11 +60,11 @@ describe("Landing", () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(true));
     vi.mocked(client.createRun).mockResolvedValue({ run_id: "r1" } as RunSummary);
     const handlers = renderLanding();
-    await screen.findByText("Mocked checkout");
+    await screen.findByRole("heading", { name: "Mocked checkout" });
     await waitFor(() =>
       expect(screen.getAllByRole("button", { name: /Run live on Nemotron/ })[0]).toBeEnabled(),
     );
-    const [runNow] = screen.getAllByRole("button", { name: "Run it now" });
+    const [runNow] = screen.getAllByRole("button", { name: /Replay offline/ });
     await userEvent.click(runNow as HTMLElement);
     expect(client.createRun).toHaveBeenCalledWith({ case_id: "checkout_ab", llm: "scripted" });
     await waitFor(() => expect(handlers.onOpenRun).toHaveBeenCalledWith("r1"));
@@ -73,7 +73,7 @@ describe("Landing", () => {
   it("gives one line with the reason when the budget is spent", async () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false, { live_unavailable_reason: "budget_spent" }));
     renderLanding();
-    await screen.findByText("Mocked checkout");
+    await screen.findByRole("heading", { name: "Mocked checkout" });
     const note = await screen.findByRole("status", { name: "Live mode" });
     expect(note).toHaveTextContent("the live budget for this demo is used up");
     expect(screen.queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
@@ -82,7 +82,7 @@ describe("Landing", () => {
   it("gives one line with the reason when there is no key", async () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false, { live_unavailable_reason: "no_key" }));
     renderLanding();
-    await screen.findByText("Mocked checkout");
+    await screen.findByRole("heading", { name: "Mocked checkout" });
     expect(await screen.findByRole("status", { name: "Live mode" })).toHaveTextContent("the server has no NEBIUS_API_KEY");
     expect(screen.getAllByRole("status", { name: "Live mode" })).toHaveLength(1);
   });
@@ -96,7 +96,7 @@ describe("Landing", () => {
     const card = heading.closest("article") as HTMLElement;
     expect(within(card).getByText(/Needs live mode/)).toBeInTheDocument();
     expect(within(card).queryByRole("button", { name: /Run live on Nemotron/ })).toBeNull();
-    expect(within(card).queryByRole("button", { name: "Run it now" })).toBeNull();
+    expect(within(card).queryByRole("button", { name: /Replay offline/ })).toBeNull();
     await userEvent.click(within(card).getByRole("button", { name: "See how it runs live" }));
     expect(handlers.onOpenReplay).toHaveBeenCalledWith("bank");
     const note = await screen.findByRole("status", { name: "Live mode" });
@@ -141,7 +141,7 @@ describe("Landing order", () => {
     vi.mocked(client.getCases).mockResolvedValue([liveOnly, { ...checkout, title: "Runnable one" }]);
     vi.mocked(client.getHealth).mockResolvedValue(health(false));
     renderLanding();
-    await screen.findByText("Runnable one");
+    await screen.findByRole("heading", { name: "Runnable one" });
     const titles = screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent);
     expect(titles).toEqual(["Runnable one", "Live only card"]);
     expect(screen.getByText(/Needs live mode/)).toBeInTheDocument();

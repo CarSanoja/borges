@@ -34,6 +34,15 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
     () => makeLayout(width, rows.length, points.length, refs.length > 0, yDomain(points, threshold, refs)),
     [width, rows.length, points, refs, threshold],
   );
+  const markers = useMemo(
+    () =>
+      points.map((point, i) => ({
+        x: columnX(layout, i),
+        yTop: Math.min(layout.y(point.high), layout.y(point.low), layout.y(point.estimate)),
+        yBottom: Math.max(layout.y(point.high), layout.y(point.low), layout.y(point.estimate)),
+      })),
+    [points, layout],
+  );
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const stopId = [focusedId, selectedUniverseId].find((id) => id && points.some((p) => p.id === id)) ?? points[0]?.id ?? null;
   const onKeyDown = (event: KeyboardEvent<SVGSVGElement>) => {
@@ -75,7 +84,7 @@ export function SpecCurve({ snapshot, reference, referenceLabel, selectedUnivers
           <p className="sc-empty">Finished universes appear here, sorted by estimate.</p>
         ) : (
           <svg width={width} height={layout.height} role="group" aria-label="Estimates by universe" onKeyDown={onKeyDown}>
-            <CurveAxes layout={layout} threshold={threshold} yLabel={yLabel} />
+            <CurveAxes layout={layout} threshold={threshold} yLabel={yLabel} markers={markers} />
             <DecisionMatrix layout={layout} rows={rows} />
             {refs.length > 0 && <ReferenceLane layout={layout} reference={refs} label={referenceLabel ?? "Reference"} />}
             {points.map((point, i) => (

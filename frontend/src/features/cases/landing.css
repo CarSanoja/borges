@@ -1,7 +1,7 @@
 .landing {
   max-width: 1360px;
   margin: 0 auto;
-  padding: var(--space-7) var(--gutter) var(--space-5);
+  padding: var(--space-5) var(--gutter) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
@@ -296,4 +296,10 @@
 .pii-note {
   margin: 0;
   color: var(--paper-300);
+}
+
+.case-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }

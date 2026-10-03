@@ -11,6 +11,7 @@ import { AgentsUsed } from "./AgentsUsed";
 import { RunCaveats } from "./RunCaveats";
 import { RunMemory } from "./RunMemory";
 import { RunHeader } from "./RunHeader";
+import { hasTrace } from "./hasTrace";
 import { useCaseCard } from "./useCaseCard";
 import { NotFound } from "../notfound/NotFound";
 import { CASE_GONE_MESSAGE, isNotFound, useRun, type RunSource } from "./useRun";
@@ -28,6 +29,7 @@ export function RunPage({ source, onHome }: Props) {
   const card = useCaseCard(source.kind === "replay" ? source.caseId : snapshot.case_id);
   const [selected, setSelected] = useState<string | null>(null);
   const runId = source.kind === "mock" ? null : snapshot.run_id;
+  const traceRunId = hasTrace(source, card, runId) ? runId : null;
 
   if (isNotFound(snapshot)) {
     const isCase = snapshot.error === CASE_GONE_MESSAGE;
@@ -53,7 +55,7 @@ export function RunPage({ source, onHome }: Props) {
       <a className="skip-link" href="#verdict" onClick={skipToVerdict}>
         Skip to verdict
       </a>
-      <RunHeader snapshot={snapshot} onHome={onHome} traceRunId={runId} />
+      <RunHeader snapshot={snapshot} onHome={onHome} traceRunId={traceRunId} provenance={card?.provenance} />
       {source.kind === "replay" && source.recording && (
         <RecordingBanner
           caseId={source.caseId}

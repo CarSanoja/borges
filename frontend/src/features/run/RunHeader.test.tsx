@@ -36,3 +36,15 @@ describe("RunHeader trace link", () => {
     expect(screen.queryByRole("link", { name: "Trace" })).toBeNull();
   });
 });
+
+describe("RunHeader provenance", () => {
+  it("shows the data provenance chip in the replay header", () => {
+    render(<RunHeader snapshot={snapshot} onHome={() => undefined} provenance="Real data, CC0" />);
+    expect(screen.getByTestId("provenance-chip")).toHaveTextContent("Real data, CC0");
+  });
+
+  it("shows no chip when the case declares none", () => {
+    render(<RunHeader snapshot={snapshot} onHome={() => undefined} />);
+    expect(screen.queryByTestId("provenance-chip")).toBeNull();
+  });
+});

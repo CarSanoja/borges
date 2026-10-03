@@ -31,6 +31,7 @@ def test_fallback_cards_match_the_curated_cases() -> None:
         assert _string_field(block, "title") == card.title
         assert _string_field(block, "question") == card.question
         assert _string_field(block, "positive_label") == card.decision_rule.positive_label
+        assert _string_field(block, "provenance") == card.provenance
         assert _string_field(block, "negative_label") == card.decision_rule.negative_label
         assert re.search(rf"\bn_rows: {card.n_rows},", block), card.id
         assert ("live_only: true" in block) == card.live_only, card.id

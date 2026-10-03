@@ -112,6 +112,9 @@ export interface Flip {
   reproduced: boolean | null;
   reproduce_command: string | null;
   kind?: "direction" | "significance" | null;
+  estimand_change?: string | null;
+  contaminated?: boolean;
+  contamination_reason?: string | null;
 }
 
 export interface DecisionInfluence {
@@ -162,6 +165,10 @@ export interface Report {
   robustness: number;
   n_universes: number;
   n_flipped: number;
+  n_distinct_results?: number;
+  robustness_rating?: number | null;
+  robustness_rating_reason?: string | null;
+  robustness_basis?: "design_weighted" | "distinct_results" | "none";
   narrative: string;
   caveats: string[];
   n_failed?: number;
@@ -197,6 +204,19 @@ export interface LiveRecordingSummary {
   flipped_verdict: string | null;
   flip_kind: "direction" | "significance" | null;
   universes: number;
+  baseline?: ResultBrief | null;
+  flipped?: ResultBrief | null;
+  flip_changes?: string[];
+  contaminated?: boolean;
+  estimand_change?: string | null;
+}
+
+export interface ResultBrief {
+  estimate: number;
+  ci_low: number;
+  ci_high: number;
+  p_value: number;
+  n: number;
 }
 
 export interface CaseCard {
@@ -211,6 +231,8 @@ export interface CaseCard {
   reference: ReferenceEstimate[];
   story: string;
   live_only?: boolean;
+  provenance?: string;
+  traced_sources?: RecordingSource[];
   live_recording?: LiveRecordingSummary | null;
 }
 

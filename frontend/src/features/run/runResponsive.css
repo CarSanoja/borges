@@ -1,9 +1,3 @@
-@media (max-width: 1500px) {
-  .run-footer .tm-stage:not([data-state="active"]) .tm-stage__label {
-    display: none;
-  }
-}
-
 @media (max-width: 1400px) {
   .run-page {
     --run-header: 96px;

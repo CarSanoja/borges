@@ -3,6 +3,8 @@ import { backendLabel } from "../run/runLabels";
 import { AppLink, FLEET_PATH, MEMORY_PATH, PLATFORM_PATH } from "../../shared/router";
 import { CaseCardView } from "./CaseCardView";
 import { Hero } from "./Hero";
+import { HeadlineResult } from "./HeadlineResult";
+import { pickHeadline } from "./headline";
 import { LiveNote } from "./LiveNote";
 import { UploadCard } from "./UploadCard";
 import { useCases } from "./useCases";
@@ -27,8 +29,9 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
   const { cases: allCases, liveAvailable, health, healthLoaded } = useCases();
   const cases = [...allCases].sort((a, b) => Number(a.live_only === true) - Number(b.live_only === true));
   const liveOnlyCases = allCases.filter((card) => card.live_only);
-  const liveDemo = cases.find((card) => card.live_recording);
-  const demo = liveDemo ?? cases.find((card) => card.has_recording);
+  const headline = pickHeadline(cases);
+  const liveDemo = headline && !headline.mechanics ? headline.card : undefined;
+  const demo = headline?.card;
   const watchDemo = () => (demo ? onOpenReplay(demo.id) : onOpenMock());
   return (
     <main className="landing">
@@ -48,7 +51,9 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
         health={health}
         healthLoaded={healthLoaded}
         liveRecording={liveDemo?.live_recording}
+        headline={headline ? <HeadlineResult headline={headline} onOpen={onOpenReplay} /> : null}
       />
+      {healthLoaded && <UploadCard health={health} onOpenRun={onOpenRun} />}
       {healthLoaded && !liveAvailable && <LiveNote health={health} liveOnlyCases={liveOnlyCases} />}
       <section className="landing-cases" aria-label="Cases">
         {cases.map((card) => (
@@ -61,7 +66,6 @@ export function Landing({ onOpenRun, onOpenReplay, onOpenMock }: Props) {
           />
         ))}
       </section>
-      {healthLoaded && <UploadCard health={health} onOpenRun={onOpenRun} />}
       <p className="landing-mock">
         <button type="button" className="link-btn" onClick={onOpenMock}>
           Open the demo run

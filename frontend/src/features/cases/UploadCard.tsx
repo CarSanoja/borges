@@ -65,11 +65,15 @@ export function UploadCard({ health, onOpenRun }: Props) {
   return (
     <section className="upload-card" id="bring-your-own-data" aria-labelledby="upload-title">
       <p className="eyebrow">Your data</p>
-      <h2 id="upload-title" className="case-title">Bring your own data</h2>
+      <h2 id="upload-title" className="case-title">
+        Bring your own data{available ? "" : ": off on this server"}
+      </h2>
       <p className="upload-lead">Upload a CSV or parquet file, say what you want to know and how you will decide. Borges runs the same live analysis on it.</p>
       {!available && (
         <div className="upload-unavailable" role="status">
-          <p>{reason}</p>
+          <p data-testid="upload-reason">
+            <strong>Why it is off:</strong> {reason}
+          </p>
           <p>{INSTEAD}</p>
         </div>
       )}

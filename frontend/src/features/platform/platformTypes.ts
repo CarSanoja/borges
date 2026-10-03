@@ -5,6 +5,19 @@ export interface PillarLink {
   path: string;
 }
 
+export interface FactProvenance {
+  kind: "live" | "measured";
+  source?: string;
+  date?: string;
+  value?: string;
+  computed_at?: number | null;
+}
+
+export interface PillarProvenance {
+  default: FactProvenance;
+  overrides: Record<string, FactProvenance>;
+}
+
 export interface Pillar {
   id: string;
   name: string;
@@ -16,8 +29,10 @@ export interface Pillar {
   tests: string[];
   verify: string;
   links: PillarLink[];
+  provenance?: PillarProvenance;
 }
 
 export interface PlatformStatus {
   pillars: Pillar[];
+  generated_at?: number;
 }

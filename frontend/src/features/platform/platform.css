@@ -142,3 +142,41 @@
   padding: var(--space-1) 0;
   overflow-wrap: anywhere;
 }
+
+.platform-badges {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.platform-badge {
+  white-space: normal;
+  flex-wrap: wrap;
+  font-size: var(--text-xs);
+}
+
+.platform-badge[data-kind="live"] {
+  border-color: var(--verdigris);
+  color: var(--verdigris);
+}
+
+.platform-badge[data-kind="measured"] {
+  border-color: var(--gold-soft);
+  color: var(--gold);
+}
+
+.platform-badge__detail {
+  color: var(--paper-300);
+}
+
+.platform-corpus-note {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 2px solid var(--gold);
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}

@@ -172,3 +172,8 @@
 .vc-robust__note--warn {
   font-weight: 600;
 }
+
+.vc-robust__value--unrated {
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}

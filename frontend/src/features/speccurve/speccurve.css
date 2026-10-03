@@ -74,7 +74,7 @@
 .sc-threshold-label,
 .sc-reference__label {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   fill: var(--paper-500);
 }
 

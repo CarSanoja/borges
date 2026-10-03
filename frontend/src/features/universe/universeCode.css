@@ -4,7 +4,10 @@
   background: var(--ink-950);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  overflow-x: auto;
+  overflow-x: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 4;
   font-size: var(--text-xs);
   line-height: 1.6;
 }

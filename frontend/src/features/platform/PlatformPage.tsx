@@ -18,7 +18,7 @@ export function PlatformPage() {
         </div>
       </header>
       <p className="platform-lede">
-        Seven pillars, each read live from this server. Every card names the command that proves it.
+        Seven pillars. Each badge says whether a number is read live from this server or is a fixed measurement with its date. Every card names the command that proves it.
       </p>
       {state.status === "loading" && <p className="trace-note" role="status">Reading the platform</p>}
       {state.status === "error" && <p className="run-error" role="alert">{state.message}</p>}

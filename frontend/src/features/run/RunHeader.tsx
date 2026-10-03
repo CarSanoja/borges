@@ -1,14 +1,16 @@
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { AppLink, tracePath } from "../../shared/router";
+import { ProvenanceChip } from "../cases/ProvenanceChip";
 import { describeRule, modeLabel, resumedLabel, statusLabel } from "./runLabels";
 
 interface Props {
   snapshot: RunSnapshot;
   onHome: () => void;
   traceRunId?: string | null;
+  provenance?: string | null;
 }
 
-export function RunHeader({ snapshot, onHome, traceRunId = null }: Props) {
+export function RunHeader({ snapshot, onHome, traceRunId = null, provenance = null }: Props) {
   const rule = snapshot.decision_rule;
   const mode = modeLabel(snapshot);
   const resumed = resumedLabel(snapshot);
@@ -23,6 +25,7 @@ export function RunHeader({ snapshot, onHome, traceRunId = null }: Props) {
       </div>
       <div className="run-header__meta">
         {mode && <span className="chip chip--mode">{mode}</span>}
+        <ProvenanceChip provenance={provenance} />
         {traceRunId && (
           <AppLink to={tracePath(traceRunId)} className="chip chip--link">
             Trace

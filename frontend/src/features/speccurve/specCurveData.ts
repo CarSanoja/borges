@@ -60,7 +60,11 @@ export function buildPoints(snapshot: RunSnapshot): CurvePoint[] {
 }
 
 export function buildRows(snapshot: RunSnapshot, points: readonly CurvePoint[]): MatrixRow[] {
-  if (snapshot.plan) return snapshot.plan.steps.map((s) => ({ stepId: s.id, title: s.title }));
+  if (snapshot.plan) {
+    const steps = snapshot.plan.steps.map((s) => ({ stepId: s.id, title: s.title }));
+    if (snapshot.status !== "completed" || points.length === 0) return steps;
+    return steps.filter((row) => points.some((p) => p.alternatives.has(row.stepId)));
+  }
   const ids = new Set(points.flatMap((p) => [...p.alternatives]));
   return [...ids].map((stepId) => ({ stepId, title: stepId }));
 }

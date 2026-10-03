@@ -3,6 +3,7 @@ import type { CaseCard } from "../../shared/types/contracts";
 export const FALLBACK_CASES: CaseCard[] = [
   {
     id: "checkout_ab",
+    provenance: "Synthetic data, effect planted",
     title: "New checkout A/B test",
     subtitle: "Ship or don't ship? One defensible filter decides.",
     question: "Does the new checkout increase the conversion rate?",
@@ -22,6 +23,7 @@ export const FALLBACK_CASES: CaseCard[] = [
   },
   {
     id: "red_cards",
+    provenance: "Real data, CC0",
     title: "Red cards and skin tone",
     subtitle: "29 research teams. Same data. Opposite answers.",
     question: "Are soccer referees more likely to give red cards to dark-skin-toned players than to light-skin-toned players?",
@@ -41,6 +43,7 @@ export const FALLBACK_CASES: CaseCard[] = [
   },
   {
     id: "marp_norms",
+    provenance: "Real data, CC BY 4.0",
     title: "Religion, well-being and cultural norms",
     subtitle: "105 research teams. Same data. 68 found an effect, 37 did not.",
     question: "Does the relation between religiosity and well-being depend on perceived cultural norms of religion?",
@@ -60,6 +63,7 @@ export const FALLBACK_CASES: CaseCard[] = [
   },
   {
     id: "marp_religiosity",
+    provenance: "Real data, CC BY 4.0",
     title: "Religion and well-being",
     subtitle: "110 research teams. Same data. All 110 found a positive effect.",
     question: "Do religious people self-report greater well-being?",
@@ -78,7 +82,28 @@ export const FALLBACK_CASES: CaseCard[] = [
     story: "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. The default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 40 universes.",
   },
   {
+    id: "hurricanes",
+    provenance: "Real data, ODC-By 1.0",
+    title: "Hurricane names and deaths",
+    subtitle: "A famous finding, and the analysis that made it",
+    question: "Do hurricanes with more feminine names cause more deaths?",
+    decision_rule: {
+      metric: "additional deaths from a hurricane with a feminine rather than a masculine name",
+      comparator: "gt",
+      threshold: 0,
+      alpha: 0.05,
+      positive_label: "FEMININE NAMES DEADLIER",
+      negative_label: "NO CLEAR EVIDENCE",
+    },
+    n_rows: 94,
+    has_recording: true,
+    reference_label: "Simonsohn, Simmons and Nelson (2020) specification curve, 1,728 specifications",
+    reference: [],
+    story: "A famous paper reported that hurricanes with feminine names kill more people. Re-run with the original choices, the effect is +4.1 additional deaths (95% CI -3.0 to 11.2), p = 0.257: no clear evidence. 3 one-decision changes get a significant effect, and the published specification curve finds the same pattern: 37 of 1,728 reasonable analyses are significant.",
+  },
+  {
     id: "bank_marketing_calls",
+    provenance: "Real data, CC BY 4.0",
     title: "Bank telemarketing: cap the calls?",
     subtitle: "Real campaign data, nothing planted. Does every extra call hurt?",
     question: "Does each additional contact call to the same customer in a campaign reduce the chance that the customer subscribes to a term deposit?",

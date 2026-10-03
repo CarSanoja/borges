@@ -4,6 +4,7 @@ import type { CaseCard } from "../../shared/types/contracts";
 import { formatCost } from "../recording/recordingText";
 import "../recording/recording.css";
 import { describeRule } from "./decisionRuleText";
+import { ProvenanceChip } from "./ProvenanceChip";
 
 interface Props {
   card: CaseCard;
@@ -31,6 +32,9 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
 
   return (
     <article className="case-card">
+      <div className="case-tags">
+        <ProvenanceChip provenance={card.provenance} />
+      </div>
       <p className="eyebrow">{card.subtitle}</p>
       {card.live_recording && (
         <p className="recording-badge" data-testid="live-badge">
@@ -63,7 +67,8 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
         )}
         {!liveOnly && (
           <button type="button" className="btn" disabled={busy !== null} onClick={() => start("scripted")}>
-            Run it now
+            Replay offline (scripted)
+            <span className="btn-note">no model is called</span>
           </button>
         )}
         {liveAvailable && (
