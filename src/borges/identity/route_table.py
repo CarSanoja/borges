@@ -18,6 +18,7 @@ RUN_CREATE_SCOPES: Final = (
 ROUTE_TABLE: Final[dict[tuple[str, str], RouteRequirement]] = {
     ("GET", "/api/health"): OPEN,
     ("GET", "/api/me"): OPEN,
+    ("GET", "/api/platform"): OPEN,
     ("GET", "/api/cases"): s.CASES_READ,
     ("GET", "/api/cases/{case_id}"): s.CASES_READ,
     ("GET", "/api/cases/{case_id}/recording"): s.RECORDINGS_READ,

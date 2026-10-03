@@ -4,6 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from borges.analysis.code_guard import check_code
+from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
@@ -54,13 +55,13 @@ async def generate_checked(
 ) -> tuple[str | None, int, str | None]:
     notes: list[str] = []
     code = await _request_code(llm, plan, step, option, models=models, notes=notes)
-    violations = check_code(code, step.kind)
+    violations = check_code(code, step.kind, option_intent(option))
     if not violations:
         return code, 1, notes[0] if notes else None
     error = "\n".join(violations)
     draft = option.model_copy(update={"code": code})
     code = await _request_code(llm, plan, step, draft, error, models=models, notes=notes)
-    violations = check_code(code, step.kind)
+    violations = check_code(code, step.kind, option_intent(option))
     if not violations:
         return code, 2, notes[0] if notes else None
     return None, 2, "\n".join(violations)
@@ -81,7 +82,7 @@ async def _smoke_repair(
     code = await _request_code(
         llm, plan, step, option, error, suffix=f":smoke{attempt}", models=models
     )
-    violations = check_code(code, step.kind)
+    violations = check_code(code, step.kind, option_intent(option))
     return code, ("\n".join(violations) if violations else None), models[0]
 
 
@@ -178,7 +179,7 @@ async def repair_option(
     llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option, error: str
 ) -> Option:
     code = await _request_code(llm, plan, step, option, error)
-    violations = check_code(code, step.kind)
+    violations = check_code(code, step.kind, option_intent(option))
     if violations:
         raise LLMError(
             f"repaired code for {step.id}.{option.id} violates the guard: " + "; ".join(violations)

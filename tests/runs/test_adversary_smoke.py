@@ -49,7 +49,7 @@ class Runner:
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind: [])
+    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
 
 
 def script(adversary: dict | None) -> list[tuple[str, dict | None]]:

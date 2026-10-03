@@ -19,8 +19,11 @@ Three layers, from weakest to strongest:
    dict. It runs inside the step process, the same code on the local backend and on ConTree. A
    denied event raises `PermissionError: runtime policy denied <event>`, with no host path in
    the message.
-3. **VM isolation (ConTree).** The same policy runs inside the VM. That path has never run
-   live.
+3. **VM isolation (ConTree).** The same policy runs inside the VM. ConTree has run against the real
+   service (`tests/sandbox/test_contree_live.py` passed in 41.8 s on 2 Oct 2026, and a scripted
+   `checkout_ab` run on ConTree made 22 real checkpoints with the same flip as the local backend, so every
+   step ran under the prelude). The exploit tests in `tests/sandbox/test_runtime_policy*.py` were not
+   re-run inside the VM.
 
 ## Why the hook cannot be reached by name
 
@@ -198,7 +201,8 @@ code cannot set either.
 - Audit hooks are defense in depth under the guard: an unaudited primitive in a new CPython
   release would be a gap. See "Routes known to be open" for the measured ones.
 - Proven on the local backend and on the Linux image with a mounted source tree (no image
-  rebuild). ConTree remote sandboxes were not exercised: they get the same prelude, and their
+  rebuild). ConTree remote sandboxes ran the legitimate steps of two runs under the same prelude (22 and 31
+  real checkpoints, 2 Oct 2026) but the exploit tests were not run inside them; their
   Python prefixes (`/usr/local` or `/usr`) are covered by `sys.prefix` and the system roots.
 
 So: the local backend is for trusted-ish generated code behind the policy and the guard, and

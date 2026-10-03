@@ -1,0 +1,7 @@
+{
+  "suites": [
+    {"name": "attacks", "attacks": 62, "detected": 62, "benign": 73, "false_positives": 0},
+    {"name": "redteam", "attacks": 31, "detected": 31, "benign": 19, "false_positives": 0}
+  ],
+  "techniques": ["homoglyph", "zero-width", "base64", "split", "hex", "rot13", "reversed"]
+}

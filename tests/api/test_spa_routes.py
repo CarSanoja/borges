@@ -29,7 +29,16 @@ def client(tmp_path):
 
 @pytest.mark.parametrize(
     "path",
-    ["/", "/replay/red_cards", "/run/r_20261002T033827_17e789", "/run/r_20261002T033827_17e789/"],
+    [
+        "/",
+        "/fleet",
+        "/memory",
+        "/platform",
+        "/replay/red_cards",
+        "/run/r_20261002T033827_17e789",
+        "/run/r_20261002T033827_17e789/",
+        "/run/r_20261002T033827_17e789/trace",
+    ],
 )
 async def test_known_client_routes_return_200_with_the_app(client, path) -> None:
     async with client:
@@ -49,6 +58,8 @@ async def test_known_client_routes_return_200_with_the_app(client, path) -> None
         "/admin/x",
         "/run/r_nope",
         "/run/abc/",
+        "/run/r_nope/trace",
+        "/platform/x",
         "/replay/nope",
         "/replay/..%2Fetc",
     ],

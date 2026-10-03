@@ -51,6 +51,26 @@ on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step
 branch of a sandbox: a local subprocess backend by default (no VM isolation), or Nebius
 Token Factory Sandboxes (ConTree, VM-isolated) with `BORGES_BACKEND=contree`.
 
+## Enterprise fleet
+
+Borges is also run as an agent fleet with the seven controls an enterprise buyer asks for. The
+live page `/platform` (and `GET /api/platform`, public, no secrets) reads each pillar's status
+from the running server and names the command that proves it.
+
+| Pillar | What Borges does | Proof |
+|---|---|---|
+| Agent Registry | Every model agent and deterministic component is a versioned record with a definition sha, a prompt sha and a policy sha, published to a hash-chained store and approved before a live run may use it (`BORGES_REGISTRY_ENFORCE`, four-eyes optional) | `uv run borges agents list`, `uv run borges agents verify`, page `/fleet` |
+| Agent Runtime | Runs go through a durable SQLite queue with leases, retries with backoff, dead-letter, cancel, idempotency keys and resume from checkpoints. Killed after 3 universes, a scripted `checkout_ab` run resumed to the same 7 universes and the same flip | `uv run borges runs dead-letter`, `tests/runtime/test_resume.py` |
+| Memory Bank | Encrypted per-tenant memory (AES-GCM with `BORGES_MEMORY_KEY`) of verdicts, validated code, adversary misses and owner notes: a second `checkout_ab` run makes 0 judge and 0 coder calls instead of 7 and 11 | `uv run borges memory list --tenant public-demo`, page `/memory` |
+| Agent Identity (zero-trust) | Every `/api` call resolves to a principal with scopes; the anonymous demo principal holds only the public scopes; named API keys are salted hashes in a hash-chained, anchored store; each agent call carries a short-lived signed token | `curl localhost:8000/api/me`, `uv run borges keys list` |
+| Agent Gateway | One chokepoint for model and sandbox calls: token verify, capability, egress class, armor-in, budget, route with fallback chain, armor-out, audit and span. `policy/gateway.json` sets the models, calls and cost per agent | `curl localhost:8000/api/policy`, `tests/gateway/test_no_bypass.py` |
+| Model Armor | Screens for prompt injection, tool poisoning and personal data on run creation, uploads, model input and output. On our own corpus (two suites, written by us, not an independent benchmark) it flags 93 of 93 attacks and 0 of 92 benign texts | `uv run pytest tests/armor/test_corpus.py tests/armor/test_corpus_redteam.py -s` |
+| Agent Observability | OpenTelemetry spans per run (JSONL always, OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set), a reasoning-chain trace page per run, and a global audit log chained by hash, with anchors that are HMAC-signed once a key is set | `uv run borges audit verify global`, page `/run/<id>/trace` |
+
+How the request travels, and which store each pillar owns, is drawn in
+[ARCHITECTURE.md](ARCHITECTURE.md#6d-request-path-and-stores). The threat model and the limits of
+each control are in [SECURITY.md](SECURITY.md).
+
 ## Status: what has and has not run
 
 Be clear about this before reading further. The source of truth for every live number is
@@ -62,7 +82,7 @@ Be clear about this before reading further. The source of truth for every live n
 | What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
 | What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed a recorded live universe from scratch for all five cases and matched |
-| ConTree sandboxes | Implemented against `contree-sdk` and contract-tested with a fake SDK. The live test is skipped without credentials. **Still never run against the real service**: every live run above used the local subprocess backend |
+| ConTree sandboxes | **Ran against the real service on 2 October 2026.** `tests/sandbox/test_contree_live.py` passed in 41.8 s; a scripted `checkout_ab` run on ConTree (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as the local backend; a live `marp_religiosity` run on Nemotron plus ConTree (`r_20261002T155440_0aa541`) completed 16 universes with 31 checkpoints. The five recordings above used the local subprocess backend |
 | Hosted public demo | **None yet**: no public URL, no video |
 | Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
 
@@ -291,9 +311,9 @@ can be replayed exactly at no cost.
 Set `NEBIUS_API_KEY` (the same Token Factory key; `CONTREE_API_KEY` overrides it) and
 `NEBIUS_PROJECT_ID` (from tokenfactory.nebius.com/project/api-keys), then pass
 `--backend contree` (or set `BORGES_BACKEND=contree` on a server). The endpoint defaults to
-`https://api.tokenfactory.nebius.com/sandboxes/`; `CONTREE_BASE_URL` overrides it. The ConTree backend is contract-tested, and a live
-test runs only when credentials are present; it has never run against the real service (the
-live Nemotron runs used the local backend), and there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
+`https://api.tokenfactory.nebius.com/sandboxes/`; `CONTREE_BASE_URL` overrides it. The ConTree backend is contract-tested with a fake SDK, and the live test
+(`tests/sandbox/test_contree_live.py`) runs only when credentials are present; it passed against the
+real service on 2 October 2026 (see the status table), and there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
 once; after that, every analysis step is a non-disposable `image.run` on its parent image,
 so each checkpoint is a real sandbox image you can branch from again.
 
@@ -328,7 +348,7 @@ there, and without it the live budget resets on every redeploy. Run history is n
 
 Every `/api` request resolves to a principal. With no credentials that is `caller://anonymous`,
 which holds exactly the public-demo scopes (`cases:read`, `runs:read`, `runs:create:scripted`,
-`runs:create:live:curated`, `recordings:read`): hackathon judges browse, watch recordings and
+`runs:create:live:curated`, `recordings:read`, `memory:read`): hackathon judges browse, watch recordings and
 start scripted or curated live runs with no login. Everything else needs a named API key
 (`Authorization: Bearer bk_...`); the web app has a field in its header to paste one, kept in
 `sessionStorage`.

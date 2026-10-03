@@ -123,7 +123,7 @@ def data_bytes() -> bytes:
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind: [])
+    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
 
 
 class Recorder:

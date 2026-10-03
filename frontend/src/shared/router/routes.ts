@@ -4,6 +4,7 @@ export type Route =
   | { name: "landing" }
   | { name: "fleet" }
   | { name: "memory" }
+  | { name: "platform" }
   | { name: "run"; runId: string }
   | { name: "trace"; runId: string }
   | { name: "replay"; caseId: string; source: RecordingSource | null }
@@ -24,6 +25,7 @@ export function parseLocation(pathname: string, search: string): Location {
   const [head, id] = parts;
   if (parts.length === 1 && head === "fleet") return { route: { name: "fleet" }, mock };
   if (parts.length === 1 && head === "memory") return { route: { name: "memory" }, mock };
+  if (parts.length === 1 && head === "platform") return { route: { name: "platform" }, mock };
   if (parts.length === 3 && id && parts[2] === "trace" && head === "run") {
     return { route: { name: "trace", runId: id }, mock };
   }
@@ -36,6 +38,7 @@ export function parseLocation(pathname: string, search: string): Location {
 
 export const FLEET_PATH = "/fleet";
 export const MEMORY_PATH = "/memory";
+export const PLATFORM_PATH = "/platform";
 
 export function runPath(runId: string): string {
   return `/run/${encodeURIComponent(runId)}`;

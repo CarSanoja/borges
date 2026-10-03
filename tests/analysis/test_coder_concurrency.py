@@ -11,7 +11,7 @@ GOOD = "def apply(df, ctx):\n    return df"
 
 
 def guard(bad: set[str]):
-    def check(code: str, kind: str) -> list[str]:
+    def check(code: str, kind: str, intent: str = "") -> list[str]:
         return [f"bad: {code}"] if code in bad else []
 
     return check

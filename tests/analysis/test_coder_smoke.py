@@ -36,7 +36,7 @@ real_check = coder.check_code
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind: [])
+    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
 
 
 def dataset(rows: int = 300) -> bytes:

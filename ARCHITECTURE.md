@@ -86,7 +86,9 @@ it as `PatsyError`); the message carries no host path. Tracebacks shift by one l
 - Evidence: `tests/sandbox/test_runtime_policy*.py` (127 collected test cases, three real exploits through
   the harness and `LocalBackend.run` without the guard); the four curated cases reproduce the
   recorded universes, checkpoints and flips under the policy. Proven on the local backend
-  only: under ConTree the same prelude is embedded, but that path has never run live.
+  only: under ConTree the same prelude is embedded, and ConTree has since run against the real service
+  (`tests/sandbox/test_contree_live.py` passed in 41.8 s on 2 October 2026), but the policy tests themselves run on the
+  local backend.
 
 **Harness.** `harness.render_step(step, option)` produces a self-contained script. It
 loads `state/df.parquet` (or the root `data.parquet` on the first step) and `state/ctx.json`,
@@ -136,7 +138,7 @@ world.
 
 **Live cost, measured on 2 October 2026** (`evidence/live-runs.md`): a complete live run of one
 case cost $0.0145 to $0.0326 (22 to 41 calls, 38k to 86k input tokens). The development day
-made 27 live runs, 18 completed, $0.31 recorded and $0.37 in the spend ledger with the smoke
+made 45 live runs, 31 completed, $0.65 recorded and $0.76 in the spend ledger with the smoke
 checks. The scripted runs report 0 tokens and $0. Money controls:
 - a content-addressed disk cache (`.borges/llm-cache/`), so repeated development runs are free;
 - a persistent spend ledger (`.borges/spend.json`) with a hard cap (`BORGES_SPEND_CAP_USD`),
@@ -239,6 +241,47 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
 - **Not used.** Resumed runs, runs of a tenant without storage, a memory from the same run, a memory whose
   agent version is no longer approved, and anything Armor drops.
 
+## 6d. Request path and stores
+
+Every request is identified before it is routed, every run goes through the queue, and every model
+or sandbox call goes through the gateway. The seven enterprise pillars are the labelled parts.
+`GET /api/platform` and the `/platform` page report the live state of each one.
+
+```mermaid
+flowchart LR
+    caller["Anonymous or keyed caller"] --> identity["Identity middleware<br/>principal, scopes, rate limit"]
+    identity --> routes["API routes<br/>scope table, run quota"]
+    routes --> queue["Runtime queue<br/>lease, retry, resume"]
+    queue --> orch["Orchestrator<br/>planner, coder, adversary, judge, reviewer, narrator"]
+    orch --> gw
+
+    subgraph gw["Agent Gateway"]
+        direction LR
+        tok["Token verify"] --> cap["Capability"] --> egr["Egress class"]
+        egr --> ain["Armor in"] --> bud["Budget"] --> rt["Route and fallback"]
+        rt --> aout["Armor out"] --> aud["Audit and span"]
+    end
+
+    rt --> tf["Token Factory<br/>Nemotron"]
+    rt --> ct["ConTree or local sandbox"]
+
+    identity -.-> keys[("Key store<br/>HMAC chain, anchor")]
+    routes -.-> reg[("Registry<br/>versions, approval")]
+    queue -.-> qdb[("Queue DB<br/>jobs, checkpoints, dead-letter")]
+    orch -.-> mem[("Memory bank<br/>encrypted per tenant")]
+    aud -.-> chains[("Audit chains<br/>global and per run, anchors")]
+    aud -.-> otel["OpenTelemetry<br/>JSONL spans, optional OTLP"]
+```
+
+| Stage | Code | What it decides |
+|---|---|---|
+| Identity middleware | `identity/middleware.py`, `route_table.py` | Resolves `Authorization` to a principal; an undeclared route is denied; rate limits and failed-key throttling |
+| Runtime queue | `runtime/` | Idempotency, caps at claim time, lease and heartbeat, resume, dead-letter |
+| Gateway | `gateway/core.py`, `llm_route.py`, `sandbox_route.py` | Agent token and capability, egress class, budgets, route and fallback chain, audit |
+| Armor | `armor/` | Screens run inputs, uploads, model input and model output |
+| Registry | `fleet/` | Which agent versions are approved to run live |
+| Stores | `BORGES_HOME/` | `identity/keys.jsonl`, `fleet/registry.jsonl`, the queue and memory SQLite files and the global audit log; each chained store has an anchor file |
+
 ## 7. Run modes
 
 - `llm=scripted`: deterministic hand-built responses from `cases/<id>/fixtures/`, labelled
@@ -254,8 +297,10 @@ Payloads (`data`), always JSON from `model_dump(mode="json")`:
   allowed roots stay readable, and native code is not audited). Used for development, CI and
   scripted demos on a private or disposable machine.
 - `backend=contree`: Nebius Token Factory Sandboxes. Each step is `image.run(...,
-  disposable=False)` on the parent image. VM isolation; contract-tested with a fake SDK, and
-  the live test skips without credentials and has never run.
+  disposable=False)` on the parent image. VM isolation; contract-tested with a fake SDK, and run against the
+  real service on 2 October 2026: the live test passed in 41.8 s, a scripted `checkout_ab` run
+  (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as the local backend, and a
+  live `marp_religiosity` run on Nemotron plus ConTree (`r_20261002T155440_0aa541`) completed 16 universes.
 - `replay`: re-stream a recorded run, with no models and no sandboxes.
 
 The run header shows the mode of each run (`Scripted replay` or `Live on Nemotron`, plus the

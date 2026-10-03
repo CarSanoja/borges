@@ -15,6 +15,7 @@ import type {
   UniverseDetail,
 } from "../types/contracts";
 
+import type { PlatformStatus } from "../../features/platform/platformTypes";
 import { authHeaders } from "./apiKey";
 
 const BASE = "/api";
@@ -62,6 +63,10 @@ export function getHealth(): Promise<Health> {
 
 export function getMe(): Promise<Me> {
   return request<Me>("/me");
+}
+
+export function getPlatform(): Promise<PlatformStatus> {
+  return request<PlatformStatus>("/platform");
 }
 
 export function getMemory(): Promise<MemorySummary> {

@@ -3,6 +3,7 @@ import { RunPage } from "./features/run/RunPage";
 import { ReplayRoute } from "./features/run/ReplayRoute";
 import { NotFound } from "./features/notfound/NotFound";
 import { FleetPage } from "./features/fleet/FleetPage";
+import { PlatformPage } from "./features/platform/PlatformPage";
 import { MemoryPage } from "./features/memory/MemoryPage";
 import { TracePage } from "./features/trace/TracePage";
 import { IdentityBar } from "./features/identity/IdentityBar";
@@ -27,6 +28,8 @@ function Routes() {
   if (route.name === "fleet") return <FleetPage />;
 
   if (route.name === "memory") return <MemoryPage />;
+
+  if (route.name === "platform") return <PlatformPage />;
 
   if (route.name === "trace") {
     return <TracePage key={`trace:${route.runId}`} runId={route.runId} />;

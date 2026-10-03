@@ -10,8 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from borges.cases.registry import CaseRegistry
 from borges.runs.store import RunStore
 
-CLIENT_ROUTE = re.compile(r"^(?:|replay/[^/]+|run/[^/]+)/?$")
-ID_ROUTE = re.compile(r"^(run|replay)/([^/]+)/?$")
+CLIENT_ROUTE = re.compile(r"^(?:|fleet|memory|platform|replay/[^/]+|run/[^/]+(?:/trace)?)/?$")
+ID_ROUTE = re.compile(r"^(run|replay)/([^/]+?)(?:/trace)?/?$")
 
 
 def is_client_route(path: str) -> bool:

@@ -16,6 +16,11 @@ describe("parseLocation", () => {
     expect(parseLocation("/", "")).toEqual({ route: { name: "landing" }, mock: false });
   });
 
+  it("matches the platform route", () => {
+    expect(parseLocation("/platform", "").route).toEqual({ name: "platform" });
+    expect(parseLocation("/platform/x", "").route.name).toBe("not_found");
+  });
+
   it("matches run and replay routes", () => {
     expect(parseLocation("/run/abc123", "").route).toEqual({ name: "run", runId: "abc123" });
     expect(parseLocation("/replay/checkout_ab", "").route).toEqual({ name: "replay", caseId: "checkout_ab", source: null });

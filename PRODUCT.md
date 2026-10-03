@@ -267,16 +267,21 @@ often a model gets these right.
   - Ultra 550B, with 1M of context, reads the whole garden and writes the report.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
   checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
-  and contract-tested with a fake SDK; the only live check is a test that skips without
-  credentials, and it has never run against the real service. The live Nemotron runs used
-  the local backend.
+  and contract-tested with a fake SDK. It ran against the real service on 2 October 2026:
+  `tests/sandbox/test_contree_live.py` passed in 41.8 s, a scripted `checkout_ab` run
+  (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as
+  the local backend, and a live `marp_religiosity` run on Nemotron plus ConTree
+  (`r_20261002T155440_0aa541`) completed 16 universes. The five live recordings used the
+  local backend.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
 - **Status:** all five cases ran live on Nemotron through Token Factory on 2 October 2026
-  (144 calls, $0.0145 to $0.0326 per case; `evidence/live-runs.md`), and each recorded
+  (150 calls, $0.0145 to $0.0326 per case; `evidence/live-runs.md`), and each recorded
   universe re-executes with `borges reproduce --source live`. The scripted replays remain as
-  the offline path, hand-built and labelled as such. Still missing: ConTree against the real
-  service, a public URL, and any outside user.
+  the offline path, hand-built and labelled as such. Still missing: a public URL, and any outside user.
+- **Enterprise fleet:** the same server reports seven controls (agent registry, runtime queue, memory bank,
+  identity, gateway, armor, observability) at `GET /api/platform` and on the `/platform` page, each with the
+  command that verifies it. The README maps them to the enterprise brief.
 - **Tavily (optional):** grounds an alternative's justification in methodological sources.
 
 ## Goal of the hackathon build (definition of done)
@@ -312,7 +317,8 @@ Borges is finished when all of these hold, on a clean clone:
 6. `docker build` produces one image that serves API and UI. It defaults to the local
    backend and the scripted model.
 7. The ConTree backend is implemented against `contree-sdk` and contract-tested. A live smoke
-   test runs when sandbox credentials are present.
+   test runs when sandbox credentials are present, and it passed against the real service on
+   2 October 2026.
 
 ## Uploads
 

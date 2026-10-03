@@ -19,6 +19,7 @@ from borges.analysis.code_guard_rules import (
     FORBIDDEN_NAMES,
     IO_PREFIXES,
 )
+from borges.analysis.code_guard_statsmodels import statsmodels_violations
 from borges.analysis.models import StepKind
 from borges.gateway.code_evidence import record_guarded
 from borges.telemetry import hooks
@@ -142,7 +143,7 @@ def _is_docstring(node: ast.stmt) -> bool:
     )
 
 
-def _check_code(code: str, kind: StepKind) -> list[str]:
+def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
@@ -172,11 +173,12 @@ def _check_code(code: str, kind: StepKind) -> list[str]:
     violations.extend(_body_violations(func))
     if kind == "model":
         violations.extend(row_filter_violations(func))
+        violations.extend(statsmodels_violations(func, intent))
     return violations
 
 
-def check_code(code: str, kind: StepKind) -> list[str]:
-    violations = _check_code(code, kind)
+def check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
+    violations = _check_code(code, kind, intent)
     if not violations:
         record_guarded(code)
     if violations:

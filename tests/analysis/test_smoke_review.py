@@ -30,7 +30,7 @@ HALF = effects("treated", UP, rows=(100, 50), dropped={"variant": {"control": 50
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind: [])
+    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
 
 
 class Reviews:
