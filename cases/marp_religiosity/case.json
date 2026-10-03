@@ -788,7 +788,7 @@
       "significant": true
     }
   ],
-  "story": "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. The default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 40 universes.",
+  "story": "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. The default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 38 universes.",
   "column_notes": {
     "country": "country of the respondent (24 countries); one of the 24 countries of the MARP survey",
     "rel_1": "religiosity questionnaire item 1 of 9; the nine rel_* items form the religiosity scale",

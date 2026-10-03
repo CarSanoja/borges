@@ -24,7 +24,7 @@ def test_span_tree_has_the_expected_shape(scripted_run: ScriptedRun) -> None:
     spans = read_spans(scripted_run.run_dir / "spans.jsonl")
     by_id = {s["span_id"]: s for s in spans}
     kinds = Counter(s["kind"] for s in spans)
-    assert kinds["run"] == 1 and kinds["universe"] == 7 and kinds["model_call"] >= 20
+    assert kinds["run"] == 1 and kinds["universe"] == 15 and kinds["model_call"] >= 20
     assert kinds["stage"] == 8
     assert kinds["option.code"] == kinds["option.smoke"] == 10
     assert kinds["sandbox_exec"] > 0 and kinds["step"] > 0
@@ -37,7 +37,7 @@ def test_span_tree_has_the_expected_shape(scripted_run: ScriptedRun) -> None:
     assert root["parent_span_id"] is None
     expected = {
         "stage": {"run"},
-        "universe": {"stage"},
+        "universe": {"stage", "run"},
         "option.code": {"stage"},
         "option.smoke": {"stage"},
         "model_call": {"stage", "option.code", "option.smoke"},

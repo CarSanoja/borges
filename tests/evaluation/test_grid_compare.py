@@ -11,7 +11,7 @@ CASES = Path(__file__).resolve().parents[2] / "cases"
 def test_recording_summary_reads_the_committed_checkout_run() -> None:
     events = load_events(CASES / "checkout_ab" / "recorded" / "events.jsonl")
     summary = recording_summary(events, seeded_plan(events))
-    assert summary["universes_used"] == 7
+    assert summary["universes_used"] == 15
     assert summary["flip_found"] and summary["flip_n_changes"] == 1
     assert summary["flip_changes"] == ["internal_traffic=exclude_internal"]
     assert summary["flip_in_seeded_space"] is True

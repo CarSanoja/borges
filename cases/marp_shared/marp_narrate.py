@@ -73,7 +73,7 @@ def narrate(snapshot: RunSnapshot, rq: int, teams: dict[str, float]) -> Narrator
     if report.minimal_flip is None:
         middle = (
             f"No flip was found: all {report.n_universes} universes keep the verdict "
-            f"(robustness {report.robustness:.0%}); the estimate runs from "
+            f"(design-weighted robustness {report.robustness:.0%}); the estimate runs from "
             f"{nums['estimate_min']:.3f} to {nums['estimate_max']:.3f}, the lowest interval "
             f"bound is {nums['ci_low_min']:.3f} and the largest p-value is "
             f"{fmt_p(nums['p_max'])}."
@@ -81,7 +81,7 @@ def narrate(snapshot: RunSnapshot, rq: int, teams: dict[str, float]) -> Narrator
     else:
         middle = (
             f"{report.n_flipped} of {report.n_universes} universes change the verdict "
-            f"(robustness {report.robustness:.0%}); the estimate runs from "
+            f"(design-weighted robustness {report.robustness:.0%}); the estimate runs from "
             f"{nums['estimate_min']:.3f} to {nums['estimate_max']:.3f}. "
             + _flip_clause(snapshot, rq)
         )
@@ -90,9 +90,9 @@ def narrate(snapshot: RunSnapshot, rq: int, teams: dict[str, float]) -> Narrator
     if sentence is not None:
         narrative = insert_sentence(narrative, sentence)
     caveats = [
-        "The share of universes that agree is a property of the explored set, which is built "
-        "from the choices the teams documented and searched for flips; it is not a population "
-        "estimate.",
+        "The robustness figure comes from a uniform random sample of the option grid, which is "
+        "built from the choices the teams documented; the share among all explored universes "
+        "leans toward flips because the search chases them. Neither is a population estimate.",
         "Standardised coefficients describe an association in a convenience sample of 24 "
         "countries; they do not show that religion causes well-being.",
     ]

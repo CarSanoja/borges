@@ -16,7 +16,7 @@ def test_tree_links_audit_records_by_span_id(scripted_run: ScriptedRun) -> None:
     response = build_trace(scripted_run.run_id, scripted_run.run_dir)
     assert response.reason is None and response.span_count == len(list(walk(response.roots)))
     assert len(response.roots) == 1 and response.roots[0].kind == "run"
-    assert response.spans_by_kind["universe"] == 7
+    assert response.spans_by_kind["universe"] == 15
     linked = [n for n in walk(response.roots) if n.audit]
     assert {a["kind"] for n in linked for a in n.audit} >= {"model.call", "sandbox.exec"}
     assert all(a["span_id"] == n.span_id for n in linked for a in n.audit)

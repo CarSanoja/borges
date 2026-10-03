@@ -92,8 +92,10 @@ def test_recorded_religiosity_run_finds_no_flip():
     report = snapshot.report
     assert snapshot.llm == "scripted" and snapshot.usage.cost_usd == 0
     assert report.minimal_flip is None and snapshot.flip is None
-    assert report.robustness == 1.0 and report.n_flipped == 0 and report.n_failed == 0
-    assert report.n_universes == 40
+    assert report.robustness == 1.0 and report.n_flipped == 0
+    assert report.n_universes == 38 and report.n_failed == 2
+    assert len(snapshot.garden.universes) == 40
+    assert all("rank-deficient" in line for line in report.failed)
     results = [u.result for u in snapshot.garden.universes.values() if u.result]
     assert all(r.ci_low > 0 and r.p_value < 0.05 for r in results)
 
@@ -105,7 +107,9 @@ def test_recorded_norms_run_finds_the_verified_single_flip():
     assert [(c.step_id, c.to_option) for c in flip.changes] == [("model", "ols_pooled")]
     assert flip.flipped_result.estimate > 0 and flip.flipped_result.p_value > 0.05
     assert flip.baseline_verdict == "DEPENDS ON NORMS"
-    assert 0.5 < snapshot.report.robustness < 1.0 and snapshot.report.n_failed == 0
+    report = snapshot.report
+    assert 0.5 < report.robustness_beam < 1.0 and report.robustness_basis == "design_weighted"
+    assert report.n_failed == 2 and all("rank-deficient" in line for line in report.failed)
 
 
 @pytest.mark.parametrize("rq", [1, 2])
