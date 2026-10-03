@@ -11,7 +11,11 @@ from borges.cli_render import summary_lines, universe_lines
 from borges.config import Settings, get_settings
 from borges.fleet.cli import agents_app
 from borges.fleet.enforcement import RegistryBlocked
+from borges.identity.chain_links import ChainBroken
 from borges.identity.cli import keys_app
+from borges.identity.key_material import ensure_keys
+from borges.identity.key_notice import broken_message
+from borges.identity.store_key import store_key
 from borges.memory.cli import memory_app
 from borges.runs.detail import build_universe_detail
 from borges.runs.models import RunRequest, RunSnapshot
@@ -19,7 +23,25 @@ from borges.runs.orchestrator import new_run_id
 from borges.runs.reproduce import reproduction_lines
 from borges.runtime.cli import runs_app, schedule_app
 
-app = typer.Typer(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
+
+class BorgesApp(typer.Typer):
+    def __call__(self, *args: object, **kwargs: object) -> object:
+        try:
+            return super().__call__(*args, **kwargs)
+        except ChainBroken as broken:
+            held = store_key(get_settings())
+            typer.echo(broken_message(broken.path, str(broken), held), err=True)
+            raise SystemExit(1) from None
+
+
+app = BorgesApp(name="borges", help="Walk the garden of forking analyses.", no_args_is_help=True)
+
+
+@app.callback()
+def load_keys() -> None:
+    ensure_keys(get_settings())
+
+
 app.add_typer(audit_app, name="audit")
 app.add_typer(agents_app, name="agents")
 app.add_typer(keys_app, name="keys")
@@ -65,6 +87,9 @@ def run(
     max_universes: Annotated[int | None, typer.Option(min=1, max=200)] = None,
     record: Annotated[bool, typer.Option(help="Record model responses as fixtures")] = False,
     json_output: Annotated[bool, typer.Option("--json", help="Print the RunSnapshot")] = False,
+    blind_notes: Annotated[
+        bool, typer.Option("--blind-notes", help="Hide column notes and value descriptions")
+    ] = False,
 ) -> None:
     """Execute a case in-process and print the outcome."""
     llm_mode = _validated(llm, ("scripted", "nebius", "local"), "--llm")
@@ -74,6 +99,7 @@ def run(
         llm=llm_mode,
         backend=backend_mode,
         max_universes=max_universes,
+        blind_notes=blind_notes,
     )
     snapshot = _run(get_settings(), request, record and llm_mode in ("nebius", "local"))
     if json_output:
@@ -96,10 +122,7 @@ def serve(
     from borges.telemetry.json_logging import configure_logging
 
     configure_logging()
-    from borges.config import get_settings
-    from borges.identity.store_key import ensure_store_key
-
-    ensure_store_key(get_settings())
+    ensure_keys(get_settings())
     if reload:
         uvicorn.run(
             "borges.api.app:create_app",

@@ -5,6 +5,7 @@ from typing import Annotated
 import typer
 
 from borges.config import get_settings
+from borges.identity.key_notice import keyed_message, keyed_without_key
 from borges.runs.store import RunStore
 from borges.telemetry.audit_crosscheck import verify_run_chain
 from borges.telemetry.audit_global_verify import verify_global
@@ -39,6 +40,9 @@ def verify(
         anchored = f" anchored={report.anchored}" if report.anchored is not None else ""
         typer.echo(f"OK {report.records} records head={report.head_hash}{anchored} {path}")
         return
+    if target == "global" and keyed_without_key(path, settings.borges_audit_anchor_key):
+        typer.echo(keyed_message(path))
+        raise typer.Exit(1)
     typer.echo(
         f"BROKEN at seq {report.broken_seq} (line {report.broken_line}): {report.reason}; "
         f"{report.records} records verified before it; {path}"

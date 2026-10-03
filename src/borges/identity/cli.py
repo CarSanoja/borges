@@ -9,8 +9,10 @@ import typer
 from borges.config import get_settings
 from borges.identity.api_key import parse_duration
 from borges.identity.chain import ChainBroken
+from borges.identity.key_notice import keyed_message, keyed_without_key
 from borges.identity.keystore import KeyRecord, KeyStoreError, open_keystore
 from borges.identity.scopes import UnknownScope
+from borges.identity.store_key import store_key
 
 keys_app = typer.Typer(
     name="keys", help="Create, list and revoke named API keys.", no_args_is_help=True
@@ -102,6 +104,9 @@ def verify() -> None:
             f"OK {status.records} records head={status.head_hash} {store.path} ({status.notice})"
         )
         return
+    if keyed_without_key(store.path, store_key(get_settings())):
+        typer.echo(keyed_message(store.path))
+        raise typer.Exit(1)
     typer.echo(
         f"BROKEN at line {status.broken_line}: {status.reason}; {store.path} ({status.notice})"
     )

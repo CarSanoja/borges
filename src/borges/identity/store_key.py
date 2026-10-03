@@ -28,19 +28,34 @@ def notice_for(keyed: bool) -> str:
     return KEYED_NOTICE if keyed else UNKEYED_NOTICE
 
 
+def write_key_file(path: Path) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        handle.write(secrets.token_hex(32))
+    return path.read_text(encoding="utf-8").strip()
+
+
+def read_key_file(path: Path) -> str | None:
+    try:
+        value = path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return value or None
+
+
 def ensure_store_key(settings: Settings) -> str | None:
     existing = store_key(settings)
-    if existing or not settings.borges_store_key_autogen:
+    if existing:
         return existing
     home = Path(settings.borges_home)
     path = home / KEY_FILE_RELATIVE
-    if not path.is_file():
+    key = read_key_file(path)
+    if key is None:
+        if not settings.borges_store_key_autogen:
+            return None
         if any((home / name).is_file() for name in EXISTING_STORES):
             return None
-        path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(secrets.token_hex(32))
-    key = path.read_text(encoding="utf-8").strip()
+        key = write_key_file(path)
     os.environ[STORE_KEY_ENV] = key
     return key

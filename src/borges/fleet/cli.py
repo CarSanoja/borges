@@ -13,7 +13,9 @@ from borges.fleet.locations import SEED_ACTOR, home_store, open_store, seed_stor
 from borges.fleet.models import Approval
 from borges.fleet.store import RegistryStore, RegistryTampered, TransitionError
 from borges.identity.cli_actor import ActorError, resolve_actor
+from borges.identity.key_notice import broken_message, keyed_message, keyed_without_key
 from borges.identity.scopes import REGISTRY_APPROVE, REGISTRY_PUBLISH
+from borges.identity.store_key import store_key
 
 agents_app = typer.Typer(
     name="agents", help="Publish, version and approve the agent registry.", no_args_is_help=True
@@ -37,7 +39,8 @@ def _guarded(command: Callable[..., None]) -> Callable[..., None]:
         try:
             command(*args, **kwargs)
         except RegistryTampered as broken:
-            typer.echo(str(broken), err=True)
+            held = store_key(get_settings())
+            typer.echo(broken_message(broken.path, str(broken), held), err=True)
             raise typer.Exit(1) from None
         except (ActorError, FourEyesViolation) as denied:
             typer.echo(str(denied), err=True)
@@ -163,5 +166,8 @@ def verify(seed: SeedOption = False) -> None:
             f"OK {status.records} records head={status.head_hash}{legacy} {path} ({status.notice})"
         )
         return
+    if not seed and keyed_without_key(path, store_key(get_settings())):
+        typer.echo(keyed_message(path))
+        raise typer.Exit(1)
     typer.echo(f"BROKEN at line {status.broken_line}: {status.reason}; {path} ({status.notice})")
     raise typer.Exit(1)
