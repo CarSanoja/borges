@@ -5,6 +5,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends
 
 from borges.api.deps import get_registry, get_settings, get_store
+from borges.api.recorded_detail import recorded_dir
 from borges.api.run_access import authorize_run
 from borges.config import Settings
 from borges.identity.deps import get_principal
@@ -33,7 +34,10 @@ def get_trace(
 ) -> TraceResponse:
     meta = authorize_run(store, registry, principal, run_id)
     if meta is None:
-        return TraceResponse(run_id=run_id, reason=NO_SPANS_REASON)
+        folder = recorded_dir(registry, run_id)
+        if folder is None:
+            return TraceResponse(run_id=run_id, reason=NO_SPANS_REASON)
+        return build_trace(run_id, folder, None)
     return build_trace(run_id, settings.borges_runs_dir / run_id, global_audit_path(settings))
 
 
@@ -47,11 +51,18 @@ def get_audit(
 ) -> dict[str, Any]:
     meta = authorize_run(store, registry, principal, run_id)
     if meta is None:
-        chain = ChainReport(path="", exists=False, ok=True)
-        return {"run_id": run_id, "chain": chain, "records": [], "reason": NO_SPANS_REASON}
-    path = settings.borges_runs_dir / run_id / AUDIT_FILE
+        folder = recorded_dir(registry, run_id)
+        if folder is None or not (folder / AUDIT_FILE).is_file():
+            chain = ChainReport(path="", exists=False, ok=True)
+            return {"run_id": run_id, "chain": chain, "records": [], "reason": NO_SPANS_REASON}
+        path, global_path = folder / AUDIT_FILE, None
+    else:
+        path, global_path = (
+            settings.borges_runs_dir / run_id / AUDIT_FILE,
+            global_audit_path(settings),
+        )
     records = [r.model_dump(mode="json") for r in read_records(path)]
-    chain = verify_run_chain(path, global_audit_path(settings), run_id)
+    chain = verify_run_chain(path, global_path, run_id)
     return {
         "run_id": run_id,
         "chain": chain.model_copy(update={"path": f"{run_id}/{AUDIT_FILE}"}),

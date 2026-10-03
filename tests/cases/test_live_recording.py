@@ -53,3 +53,17 @@ def test_unknown_source_is_rejected(tmp_path: Path) -> None:
     registry = CaseRegistry(make_cases_dir(tmp_path))
     with pytest.raises(ValueError):
         registry.recording("checkout_ab", "other")
+
+
+def test_live_summary_carries_the_headline_numbers(tmp_path: Path) -> None:
+    live = CaseRegistry(make_cases_dir(tmp_path)).card("checkout_ab").live_recording
+    assert live is not None and live.baseline is not None and live.flipped is not None
+    assert live.baseline.n > 0 and live.flipped.n > 0
+    assert live.baseline.estimate != live.flipped.estimate
+    assert live.flip_changes and all(isinstance(label, str) for label in live.flip_changes)
+    assert live.contaminated is False
+
+
+def test_card_carries_the_provenance_label(tmp_path: Path) -> None:
+    card = CaseRegistry(make_cases_dir(tmp_path)).card("checkout_ab")
+    assert card.provenance == "Synthetic data, effect planted"

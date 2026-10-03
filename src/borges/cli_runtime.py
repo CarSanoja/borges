@@ -8,6 +8,7 @@ from borges.config import Settings
 from borges.runs.models import RunRequest, RunSnapshot
 
 LIVE_LLMS = ("nebius", "local")
+TRACE_FILES = ("spans.jsonl", "audit.jsonl")
 
 
 def list_cases(settings: Settings) -> list:
@@ -50,6 +51,12 @@ def copy_recording(settings: Settings, run_id: str, case_id: str, llm: str = "sc
     target = settings.borges_cases_dir / case_id / folder / "events.jsonl"
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, target)
+    for name in TRACE_FILES:
+        sibling = source.parent / name
+        if sibling.is_file():
+            shutil.copyfile(sibling, target.parent / name)
+        else:
+            (target.parent / name).unlink(missing_ok=True)
     return target
 
 

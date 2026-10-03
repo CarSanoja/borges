@@ -13,6 +13,7 @@
   },
   "dataset_file": "data.parquet",
   "dataset_name": "hurricane_names_deaths",
+  "provenance": "Real data, ODC-By 1.0",
   "max_universes": 48,
   "reference_label": "Simonsohn, Simmons and Nelson (2020) specification curve, 1,728 specifications",
   "reference": [

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from borges.runs.models import RunSnapshot
@@ -18,6 +19,14 @@ def recorded_origin(registry: Any, run_id: str) -> tuple[str, str] | None:
             if events and events[0].run_id == run_id:
                 return card.id, source
     return None
+
+
+def recorded_dir(registry: Any, run_id: str) -> Path | None:
+    origin = recorded_origin(registry, run_id)
+    locate = getattr(registry, "recording_dir", None)
+    if origin is None or locate is None:
+        return None
+    return locate(*origin)
 
 
 def recorded_snapshot(registry: Any, run_id: str) -> RunSnapshot:

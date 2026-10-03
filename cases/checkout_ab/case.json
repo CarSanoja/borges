@@ -13,6 +13,7 @@
   },
   "dataset_file": "data.parquet",
   "dataset_name": "checkout_sessions",
+  "provenance": "Synthetic data, effect planted",
   "max_universes": 40,
   "reference_label": null,
   "reference": [],

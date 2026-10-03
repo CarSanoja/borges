@@ -50,6 +50,13 @@ class CaseRegistry:
         folder = LIVE_FOLDER if source == "live" else "recorded"
         return self._dir(case_id) / folder / "events.jsonl"
 
+    def recording_dir(self, case_id: str, source: RecordingSource = "scripted") -> Path:
+        return self._recording_path(case_id, source).parent
+
+    def has_spans(self, case_id: str, source: RecordingSource = "scripted") -> bool:
+        spans = self.recording_dir(case_id, source) / "spans.jsonl"
+        return spans.is_file() and spans.stat().st_size > 0
+
     def recording(self, case_id: str, source: RecordingSource = "scripted") -> list[Event] | None:
         if source not in ("scripted", "live"):
             raise ValueError(f"unknown recording source '{source}'")
@@ -65,8 +72,14 @@ class CaseRegistry:
         n_rows = pq.ParquetFile(dataset).metadata.num_rows
         fields = spec.model_dump(include=set(CaseCard.model_fields) - {"n_rows", "has_recording"})
         live = self.recording(case_id, "live")
+        traced = [
+            source
+            for source, present in (("live", bool(live)), ("scripted", True))
+            if present and self.has_spans(case_id, source)
+        ]
         return CaseCard(
             **fields,
+            traced_sources=traced,
             n_rows=n_rows,
             has_recording=self._recording_path(case_id).is_file(),
             live_recording=summarize_live(live) if live else None,

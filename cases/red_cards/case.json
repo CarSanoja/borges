@@ -13,6 +13,7 @@
   },
   "dataset_file": "data.parquet",
   "dataset_name": "crowdstorming_dyads",
+  "provenance": "Real data, CC0",
   "max_universes": 48,
   "reference_label": "29 human research teams (Silberzahn et al., 2018)",
   "reference": [

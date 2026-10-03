@@ -29,7 +29,16 @@ class CaseSpec(BaseModel):
     story: str = ""
     live_only: bool = False
     owner: str = "borges-core"
+    provenance: str = ""
     column_notes: dict[str, str] = Field(default_factory=dict)
+
+
+class ResultBrief(BaseModel):
+    estimate: float
+    ci_low: float
+    ci_high: float
+    p_value: float
+    n: int
 
 
 class LiveRecordingSummary(BaseModel):
@@ -43,6 +52,11 @@ class LiveRecordingSummary(BaseModel):
     flipped_verdict: str | None = None
     flip_kind: Literal["direction", "significance"] | None = None
     universes: int
+    baseline: ResultBrief | None = None
+    flipped: ResultBrief | None = None
+    flip_changes: list[str] = Field(default_factory=list)
+    contaminated: bool = False
+    estimand_change: str | None = None
 
 
 class CaseCard(BaseModel):
@@ -57,4 +71,6 @@ class CaseCard(BaseModel):
     reference: list[ReferenceEstimate] = Field(default_factory=list)
     story: str = ""
     live_only: bool = False
+    provenance: str = ""
+    traced_sources: list[str] = Field(default_factory=list)
     live_recording: LiveRecordingSummary | None = None
