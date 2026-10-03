@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from borges.analysis.models import DecisionRule
+from borges.cases.recording_stamp import RecordingStamp
 
 
 class ReferenceEstimate(BaseModel):
@@ -74,3 +75,4 @@ class CaseCard(BaseModel):
     provenance: str = ""
     traced_sources: list[str] = Field(default_factory=list)
     live_recording: LiveRecordingSummary | None = None
+    recording_meta: dict[str, RecordingStamp] = Field(default_factory=dict)

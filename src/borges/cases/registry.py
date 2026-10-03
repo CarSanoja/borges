@@ -7,6 +7,7 @@ import pyarrow.parquet as pq
 
 from borges.cases.live_summary import LIVE_FOLDER, RecordingSource, summarize_live
 from borges.cases.models import CaseCard, CaseSpec
+from borges.cases.recording_stamp import RecordingStamp, read_stamp
 from borges.runs.events import Event
 
 LIVE_ONLY_MESSAGE = (
@@ -77,8 +78,14 @@ class CaseRegistry:
             for source, present in (("live", bool(live)), ("scripted", True))
             if present and self.has_spans(case_id, source)
         ]
+        stamps: dict[str, RecordingStamp] = {}
+        for source in ("scripted", "live"):
+            stamp = read_stamp(self.recording_dir(case_id, source))
+            if stamp is not None:
+                stamps[source] = stamp
         return CaseCard(
             **fields,
+            recording_meta=stamps,
             traced_sources=traced,
             n_rows=n_rows,
             has_recording=self._recording_path(case_id).is_file(),

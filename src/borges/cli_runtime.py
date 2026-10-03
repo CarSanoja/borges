@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 from borges.cases.live_summary import LIVE_FOLDER
+from borges.cases.recording_stamp import stamp_copy
 from borges.config import Settings
 from borges.runs.models import RunRequest, RunSnapshot
 
@@ -57,6 +58,7 @@ def copy_recording(settings: Settings, run_id: str, case_id: str, llm: str = "sc
             shutil.copyfile(sibling, target.parent / name)
         else:
             (target.parent / name).unlink(missing_ok=True)
+    stamp_copy(source.parent, run_id, case_id, target.parent)
     return target
 
 
