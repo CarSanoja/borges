@@ -77,8 +77,17 @@ def _order_model_last(planned: list[PlannedStep]) -> list[PlannedStep]:
     model_steps = [s for s in planned if s.kind == "model"]
     if not model_steps:
         raise LLMError("planner returned no step of kind 'model'")
-    final = model_steps[-1]
-    return [s for s in planned if s is not final] + [final]
+    final = model_steps[0]
+    if len(model_steps) > 1:
+        seen = {o.id for o in final.options}
+        extra = []
+        for step in model_steps[1:]:
+            for option in step.options:
+                if option.id not in seen:
+                    seen.add(option.id)
+                    extra.append(option.model_copy(update={"is_default": False}))
+        final = final.model_copy(update={"options": [*final.options, *extra]})
+    return [s for s in planned if s.kind != "model"] + [final]
 
 
 async def _ask(llm: LLMClient, messages: list[dict[str, str]], key: str) -> PlannerOutput:

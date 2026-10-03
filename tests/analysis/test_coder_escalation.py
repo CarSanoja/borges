@@ -155,7 +155,13 @@ def test_first_attempt_uses_coder_role_and_prompt_states_the_contract() -> None:
 
 
 async def test_repair_failure_still_raises_when_super_also_violates() -> None:
-    llm = PricedLLM({"coder:m1.ols": SKLEARN, "coder:m1.ols:repair": SKLEARN})
+    llm = PricedLLM(
+        {
+            "coder:m1.ols": SKLEARN,
+            "coder:m1.ols:repair": SKLEARN,
+            "coder:m1.ols:guard_recode": SKLEARN,
+        }
+    )
     try:
         await code_plan(llm, plan_with_welch_only())
     except LLMError as exc:

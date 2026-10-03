@@ -183,13 +183,14 @@ async def test_code_option_rejects_code_that_violates_the_guard(
         {
             "coder:m1.welch": CoderOutput(code="BAD"),
             "coder:m1.welch:repair": CoderOutput(code="WORSE"),
+            "coder:m1.welch:guard_recode": CoderOutput(code="WORSE"),
         }
     )
     plan = make_plan()
     step = plan.step("m1")
     with pytest.raises(LLMError, match="violates the guard"):
         await code_option(llm, plan, step, step.option("welch"))
-    assert llm.keys() == ["coder:m1.welch", "coder:m1.welch:repair"]
+    assert llm.keys() == ["coder:m1.welch", "coder:m1.welch:repair", "coder:m1.welch:guard_recode"]
 
 
 async def test_code_option_repairs_guard_violation_once(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -203,3 +204,23 @@ async def test_code_option_repairs_guard_violation_once(monkeypatch: pytest.Monk
     plan = make_plan()
     step = plan.step("m1")
     assert await code_option(llm, plan, step, step.option("welch")) == "OK"
+
+
+async def test_a_fresh_recode_follows_a_failed_guard_repair(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from borges.analysis import coder_recode
+
+    monkeypatch.setattr(coder, "check_code", guard({"BAD", "WORSE"}))
+    monkeypatch.setattr(coder_recode, "check_code", guard({"BAD", "WORSE"}))
+    llm = FakeLLM(
+        {
+            "coder:m1.welch": CoderOutput(code="BAD"),
+            "coder:m1.welch:repair": CoderOutput(code="WORSE"),
+            "coder:m1.welch:guard_recode": CoderOutput(code="OK"),
+        }
+    )
+    plan = make_plan()
+    step = plan.step("m1")
+    code, attempts, _ = await coder.generate_checked(llm, plan, step, step.option("welch"))
+    assert attempts == 3 and code is not None

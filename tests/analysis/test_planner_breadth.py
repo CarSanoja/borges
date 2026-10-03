@@ -225,3 +225,29 @@ async def test_missing_produces_triggers_one_reask_with_feedback() -> None:
     feedback = llm.calls[1].messages[-1]["content"]
     assert "produces" in feedback and "scale" in feedback
     assert [s.produces for s in plan.steps] == [[], ["scale_col"], []]
+
+
+def two_models() -> PlannerOutput:
+    return PlannerOutput(
+        estimand="E",
+        steps=[
+            pstep("trim", "filter", [popt("a", True), popt("b")]),
+            pstep("scale", "transform", [popt("a", True), popt("b")]),
+            pstep("poisson", "model", [popt("glm", True), popt("negbin")]),
+            pstep("binary", "model", [popt("logit", True), popt("logit_robust")]),
+        ],
+    )
+
+
+def test_two_model_steps_are_a_shortfall() -> None:
+    problems = plan_shortfalls(two_models().steps, make_profile())
+    assert any("Only one step may have kind 'model'" in p for p in problems)
+
+
+async def test_model_steps_left_after_the_reask_are_merged_into_one_final_step() -> None:
+    llm = FakeLLM({"planner": two_models(), "planner:retry": two_models()})
+    plan = await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))
+    models = [s for s in plan.steps if s.kind == "model"]
+    assert len(models) == 1 and plan.steps[-1] is models[0]
+    assert [o.id for o in models[0].options] == ["glm", "negbin", "logit", "logit_robust"]
+    assert [o.is_default for o in models[0].options] == [True, False, False, False]

@@ -22,6 +22,12 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
             '(kind "model") that estimates the effect and returns estimate, ci_low, '
             "ci_high and p_value."
         )
+    models = [s.id for s in steps if s.kind == "model"]
+    if len(models) > 1:
+        problems.append(
+            "Only one step may have kind 'model'; merge these into one final model step whose "
+            f"options are the alternative model families: {', '.join(models)}."
+        )
     single = [s.id for s in steps if len(s.options) < 2]
     if single:
         problems.append(

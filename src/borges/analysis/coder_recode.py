@@ -10,12 +10,17 @@ from borges.llm.client import LLMClient, Role
 
 
 async def fresh_recode(
-    llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option, errors: list[str]
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    step: Step,
+    option: Option,
+    errors: list[str],
+    suffix: str = ":recode",
 ) -> tuple[str, str | None, str]:
     response = await llm.complete(
         Role.REPAIRER,
         build_messages(plan, step, option, errors[-1] if errors else None, errors),
-        key=f"coder:{step.id}.{option.id}:recode",
+        key=f"coder:{step.id}.{option.id}{suffix}",
         schema=CoderOutput,
         max_tokens=1500,
     )

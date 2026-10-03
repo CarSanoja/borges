@@ -64,7 +64,16 @@ async def generate_checked(
     violations = check_code(code, step.kind, option_intent(option))
     if not violations:
         return code, 2, notes[0] if notes else None
-    return None, 2, "\n".join(violations)
+    errors = [error, "\n".join(violations)]
+    try:
+        code, problem, model = await fresh_recode(llm, plan, step, option, errors, ":guard_recode")
+    except LLMError:
+        return None, 2, errors[-1]
+    if models is not None:
+        models.append(model)
+    if problem is None:
+        return code, 3, notes[0] if notes else None
+    return None, 3, problem
 
 
 async def code_option(llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option) -> str:
