@@ -8,7 +8,7 @@ from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
-from borges.analysis.model_spec.request import request_template, template_family
+from borges.analysis.model_spec.request import join_notes, request_template, template_family
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
 from borges.analysis.schemas import CoderOutput
@@ -55,20 +55,21 @@ async def generate_checked(
     models: list[str] | None = None,
 ) -> tuple[str | None, int, str | None]:
     notes: list[str] = []
+    skips: list[str] = []
     if step.kind == "model":
-        templated = await request_template(llm, plan, step, option, models)
+        templated = await request_template(llm, plan, step, option, models, skips)
         if templated is not None:
             return templated.code, 1, templated.note
     code = await _request_code(llm, plan, step, option, models=models, notes=notes)
     violations = check_code(code, step.kind, option_intent(option))
     if not violations:
-        return code, 1, notes[0] if notes else None
+        return code, 1, join_notes(skips, notes)
     error = "\n".join(violations)
     draft = option.model_copy(update={"code": code})
     code = await _request_code(llm, plan, step, draft, error, models=models, notes=notes)
     violations = check_code(code, step.kind, option_intent(option))
     if not violations:
-        return code, 2, notes[0] if notes else None
+        return code, 2, join_notes(skips, notes)
     errors = [error, "\n".join(violations)]
     try:
         code, problem, model = await fresh_recode(llm, plan, step, option, errors, ":guard_recode")
@@ -77,7 +78,7 @@ async def generate_checked(
     if models is not None:
         models.append(model)
     if problem is None:
-        return code, 3, notes[0] if notes else None
+        return code, 3, join_notes(skips, notes)
     return None, 3, problem
 
 

@@ -86,8 +86,28 @@ async def test_template_family_reads_the_note() -> None:
 async def test_unsupported_or_invalid_spec_falls_back_to_free_code(spec: dict) -> None:
     llm = llm_with(spec)
     code, attempts, note = await code_welch(llm)
-    assert code == FREE and attempts == 1 and note is None
+    assert code == FREE and attempts == 1
+    assert note is not None and note.startswith("template skipped: ")
+    assert template_family(note) is None
     assert llm.keys() == [KEY, FREE_KEY]
+
+
+async def test_unsupported_note_carries_the_reason() -> None:
+    llm = llm_with({"supported": False, "reason": "needs a mixed model"})
+    _, _, note = await code_welch(llm)
+    assert note is not None and "needs a mixed model" in note
+
+
+async def test_invalid_spec_note_names_the_problem() -> None:
+    llm = llm_with({**GOOD_SPEC, "exposure": "ghost"})
+    _, _, note = await code_welch(llm)
+    assert note is not None and "ghost" in note
+
+
+async def test_unparsable_spec_note_is_recorded() -> None:
+    llm = llm_with({**GOOD_SPEC, "family": "gee"})
+    _, _, note = await code_welch(llm)
+    assert note is not None and "did not parse" in note
 
 
 async def test_missing_spec_falls_back_to_free_code() -> None:
@@ -108,7 +128,8 @@ async def test_guard_failing_template_falls_back(monkeypatch: pytest.MonkeyPatch
     monkeypatch.setattr(coder, "check_code", check_code)
     llm = llm_with(GOOD_SPEC)
     code, _, note = await code_welch(llm)
-    assert code == FREE and note is None and len(seen) == 1
+    assert code == FREE and len(seen) == 1
+    assert note is not None and "failed the guard: denied" in note
 
 
 async def test_guard_is_called_with_the_option_intent(monkeypatch: pytest.MonkeyPatch) -> None:
