@@ -1,0 +1,59 @@
+{
+  "id": "hurricanes",
+  "title": "Hurricane names and deaths",
+  "subtitle": "A famous finding, and the analysis that made it",
+  "question": "Do hurricanes with more feminine names cause more deaths?",
+  "decision_rule": {
+    "metric": "additional deaths from a hurricane with a feminine rather than a masculine name",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "FEMININE NAMES DEADLIER",
+    "negative_label": "NO CLEAR EVIDENCE"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "hurricane_names_deaths",
+  "max_universes": 48,
+  "reference_label": "Simonsohn, Simmons and Nelson (2020) specification curve, 1,728 specifications",
+  "reference": [
+    {
+      "label": "Specification curve median across 1,728 specifications (Table 2, p. 6)",
+      "estimate": 1.56,
+      "ci_low": null,
+      "ci_high": null,
+      "significant": false
+    },
+    {
+      "label": "Specification curve lowest point estimate (p. 4)",
+      "estimate": -1.0,
+      "ci_low": null,
+      "ci_high": null,
+      "significant": null
+    },
+    {
+      "label": "Specification curve highest point estimate (p. 4)",
+      "estimate": 12.0,
+      "ci_low": null,
+      "ci_high": null,
+      "significant": null
+    }
+  ],
+  "story": "A famous paper reported that hurricanes with feminine names kill more people. Re-run with the original choices, the effect is +4.1 additional deaths (95% CI -3.0 to 11.2), p = 0.257: no clear evidence. 3 one-decision changes get a significant effect, and the published specification curve finds the same pattern: 37 of 1,728 reasonable analyses are significant.",
+  "live_only": false,
+  "owner": "borges-core",
+  "column_notes": {
+    "year": "Year the hurricane made landfall in the United States.",
+    "name": "Name given to the hurricane.",
+    "masfem": "Mean rating of the name on a masculine (1) to feminine (11) scale by nine coders.",
+    "min": "Minimum central pressure at landfall in millibars.",
+    "gender_mf": "1 if the name is a female name, 0 if a male name.",
+    "category": "Saffir-Simpson category at landfall, 1 to 5.",
+    "alldeaths": "Total number of deaths attributed to the hurricane.",
+    "ndam": "Property damage in millions of dollars normalised to 2013 values.",
+    "elapsedyrs": "Years between the hurricane and 2013.",
+    "source": "Source of the death counts.",
+    "masfem_mturk": "Mean rating of the name on the same 1 to 11 scale by 32 online raters.",
+    "wind": "Maximum sustained wind speed at landfall in miles per hour.",
+    "ndam15": "Property damage in millions of dollars normalised to 2015 values."
+  }
+}

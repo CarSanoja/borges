@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.3, \"accepted\": false, \"reason\": \"Restricting to one naming regime discards more than half the storms and changes what the contrast between feminine and masculine names means.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.3,
+    "accepted": false,
+    "reason": "Restricting to one naming regime discards more than half the storms and changes what the contrast between feminine and masculine names means.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.7, \"accepted\": true, \"reason\": \"The 2013 normalisation is the measure the original paper used; two storms lack it.\", \"source\": \"Jung et al. (2014), PNAS 111(24)\"}",
+  "parsed": {
+    "defensibility": 0.7,
+    "accepted": true,
+    "reason": "The 2013 normalisation is the measure the original paper used; two storms lack it.",
+    "source": "Jung et al. (2014), PNAS 111(24)"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

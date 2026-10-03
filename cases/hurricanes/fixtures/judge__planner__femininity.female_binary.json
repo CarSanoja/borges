@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.8, \"accepted\": true, \"reason\": \"The binary indicator is the plain reading of 'feminine name' and uses the same names.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.8,
+    "accepted": true,
+    "reason": "The binary indicator is the plain reading of 'feminine name' and uses the same names.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

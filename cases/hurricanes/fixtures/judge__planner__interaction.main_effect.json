@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.8, \"accepted\": true, \"reason\": \"A main effect is the most direct test of the claim as worded.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.8,
+    "accepted": true,
+    "reason": "A main effect is the most direct test of the claim as worded.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

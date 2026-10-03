@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.7, \"accepted\": true, \"reason\": \"A log-linear model is a common alternative for skewed counts, with a retransformation caveat for the effect in deaths.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}",
+  "parsed": {
+    "defensibility": 0.7,
+    "accepted": true,
+    "reason": "A log-linear model is a common alternative for skewed counts, with a retransformation caveat for the effect in deaths.",
+    "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

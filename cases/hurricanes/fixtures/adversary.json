@@ -1,0 +1,26 @@
+{
+  "model": "scripted",
+  "text": "{\"proposals\": [{\"step_id\": \"storms\", \"id\": \"adv_drop_top3_damages\", \"label\": \"Also drop the three most damaging storms\", \"rationale\": \"A handful of very costly storms can pull a fit with damage terms; trimming high-leverage points is a standard robustness check.\", \"spec\": \"Drop the two deadliest storms, then the three highest ndam15 rows.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}, {\"step_id\": \"storms\", \"id\": \"adv_pre_1979_only\", \"label\": \"Only storms before 1979\", \"rationale\": \"Before 1979 every storm had a female name, so it isolates one regime.\", \"spec\": \"Drop the two deadliest storms, keep years < 1979.\", \"source\": null}]}",
+  "parsed": {
+    "proposals": [
+      {
+        "step_id": "storms",
+        "id": "adv_drop_top3_damages",
+        "label": "Also drop the three most damaging storms",
+        "rationale": "A handful of very costly storms can pull a fit with damage terms; trimming high-leverage points is a standard robustness check.",
+        "spec": "Drop the two deadliest storms, then the three highest ndam15 rows.",
+        "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+      },
+      {
+        "step_id": "storms",
+        "id": "adv_pre_1979_only",
+        "label": "Only storms before 1979",
+        "rationale": "Before 1979 every storm had a female name, so it isolates one regime.",
+        "spec": "Drop the two deadliest storms, keep years < 1979.",
+        "source": null
+      }
+    ]
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

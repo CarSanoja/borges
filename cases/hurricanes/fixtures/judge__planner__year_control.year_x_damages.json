@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.78, \"accepted\": true, \"reason\": \"Deaths per unit of damage plausibly changed over six decades of warnings.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}",
+  "parsed": {
+    "defensibility": 0.78,
+    "accepted": true,
+    "reason": "Deaths per unit of damage plausibly changed over six decades of warnings.",
+    "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

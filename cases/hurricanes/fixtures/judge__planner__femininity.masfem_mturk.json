@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.78, \"accepted\": true, \"reason\": \"An independent panel scored the same names on the same scale, so it is a measurement alternative.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.78,
+    "accepted": true,
+    "reason": "An independent panel scored the same names on the same scale, so it is a measurement alternative.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

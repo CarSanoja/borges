@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.7, \"accepted\": true, \"reason\": \"Trimming the highest-leverage storms is a recognised robustness check that keeps the population and the estimand, and the original critics raised it.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}",
+  "parsed": {
+    "defensibility": 0.7,
+    "accepted": true,
+    "reason": "Trimming the highest-leverage storms is a recognised robustness check that keeps the population and the estimand, and the original critics raised it.",
+    "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

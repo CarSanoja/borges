@@ -1,0 +1,9 @@
+{
+  "model": "scripted",
+  "text": "{\"code\": \"import numpy as np\\nimport pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    out[\\\"dam_x\\\"] = out[\\\"ndam15\\\"].astype(float)\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import numpy as np\nimport pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    out[\"dam_x\"] = out[\"ndam15\"].astype(float)\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

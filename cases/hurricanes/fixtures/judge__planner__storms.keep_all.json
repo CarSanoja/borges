@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.8, \"accepted\": true, \"reason\": \"Keeping every storm needs no justification for discarding data, though the two deadliest storms dominate any count model.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.8,
+    "accepted": true,
+    "reason": "Keeping every storm needs no justification for discarding data, though the two deadliest storms dominate any count model.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

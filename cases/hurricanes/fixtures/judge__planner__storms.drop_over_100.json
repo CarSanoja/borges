@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.7, \"accepted\": true, \"reason\": \"Excluding storms above 100 deaths was proposed by critics of the original paper and changes the population to ordinary storms.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}",
+  "parsed": {
+    "defensibility": 0.7,
+    "accepted": true,
+    "reason": "Excluding storms above 100 deaths was proposed by critics of the original paper and changes the population to ordinary storms.",
+    "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,242 @@
+{
+  "model": "scripted",
+  "text": "{\"estimand\": \"Additional deaths from a hurricane with a feminine rather than a masculine name, estimated as the difference in predicted deaths between the two name groups with the other predictors held at their sample means.\", \"steps\": [{\"id\": \"storms\", \"title\": \"Choose which storms to analyse\", \"kind\": \"filter\", \"description\": \"Two storms account for most deaths; analysts differ on keeping them.\", \"options\": [{\"id\": \"drop_top2\", \"label\": \"Drop the two deadliest storms\", \"rationale\": \"The original analysis set aside the two extreme-death storms.\", \"spec\": \"Remove the two rows with the highest alldeaths.\", \"is_default\": true, \"source\": \"Jung et al. (2014), PNAS 111(24)\"}, {\"id\": \"keep_all\", \"label\": \"Keep every storm\", \"rationale\": \"Nothing in the question calls for discarding data.\", \"spec\": \"Use all 94 storms.\", \"is_default\": false, \"source\": null}, {\"id\": \"drop_top1\", \"label\": \"Drop only the deadliest storm\", \"rationale\": \"A milder trim that removes the single most extreme observation.\", \"spec\": \"Remove the one row with the highest alldeaths.\", \"is_default\": false, \"source\": null}, {\"id\": \"drop_over_100\", \"label\": \"Drop storms with more than 100 deaths\", \"rationale\": \"Critics of the original paper argued that very deadly storms should go.\", \"spec\": \"Keep only storms with alldeaths <= 100.\", \"is_default\": false, \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}], \"produces\": []}, {\"id\": \"femininity\", \"title\": \"Measure name femininity\", \"kind\": \"feature\", \"description\": \"The data hold a coder rating, a second rating and a binary flag.\", \"options\": [{\"id\": \"masfem\", \"label\": \"Coder rating (1 to 11)\", \"rationale\": \"A graded rating keeps the information in the names.\", \"spec\": \"fem = masfem.\", \"is_default\": true, \"source\": \"Jung et al. (2014), PNAS 111(24)\"}, {\"id\": \"female_binary\", \"label\": \"Female versus male name\", \"rationale\": \"The binary reading is the plain meaning of the claim.\", \"spec\": \"fem = gender_mf (1 female, 0 male).\", \"is_default\": false, \"source\": null}, {\"id\": \"masfem_mturk\", \"label\": \"Online-panel rating (1 to 11)\", \"rationale\": \"A second, independent set of raters scored the same names.\", \"spec\": \"fem = masfem_mturk.\", \"is_default\": false, \"source\": null}], \"produces\": []}, {\"id\": \"damages\", \"title\": \"Measure property damage\", \"kind\": \"feature\", \"description\": \"Damage is heavily right-skewed and exists in two inflation bases.\", \"options\": [{\"id\": \"linear_2015\", \"label\": \"Damage in 2015 dollars\", \"rationale\": \"Complete for every storm and on the scale analysts usually report.\", \"spec\": \"dam = ndam15.\", \"is_default\": true, \"source\": null}, {\"id\": \"log_2015\", \"label\": \"Log of damage in 2015 dollars\", \"rationale\": \"A log scale tames the skew in damage.\", \"spec\": \"dam = ln(ndam15).\", \"is_default\": false, \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}, {\"id\": \"linear_2013\", \"label\": \"Damage in 2013 dollars\", \"rationale\": \"The measure used in the original paper.\", \"spec\": \"dam = ndam; storms with missing ndam drop out.\", \"is_default\": false, \"source\": \"Jung et al. (2014), PNAS 111(24)\"}], \"produces\": []}, {\"id\": \"strength\", \"title\": \"Measure storm strength\", \"kind\": \"feature\", \"description\": \"Three landfall measures describe the intensity of a storm.\", \"options\": [{\"id\": \"pressure\", \"label\": \"Minimum pressure\", \"rationale\": \"Pressure at landfall is a direct physical measure of intensity.\", \"spec\": \"str = -min, so that a higher value means a stronger storm.\", \"is_default\": true, \"source\": \"Jung et al. (2014), PNAS 111(24)\"}, {\"id\": \"wind\", \"label\": \"Maximum wind speed\", \"rationale\": \"Wind speed is the other common intensity measure.\", \"spec\": \"str = wind.\", \"is_default\": false, \"source\": null}, {\"id\": \"category\", \"label\": \"Saffir-Simpson category\", \"rationale\": \"A standard five-level scale for storm strength.\", \"spec\": \"str = category.\", \"is_default\": false, \"source\": null}], \"produces\": []}, {\"id\": \"interaction\", \"title\": \"Choose the functional form for femininity\", \"kind\": \"feature\", \"description\": \"Femininity can act on deaths alone or through damage and strength.\", \"options\": [{\"id\": \"full\", \"label\": \"Interact with damage and strength\", \"rationale\": \"Femininity may matter more for damaging, intense storms.\", \"spec\": \"Include fem*dam, fem*str, fem*dam*str and dam*str.\", \"is_default\": true, \"source\": \"Jung et al. (2014), PNAS 111(24)\"}, {\"id\": \"damages_only\", \"label\": \"Interact with damage only\", \"rationale\": \"A simpler interaction with the damage measure alone.\", \"spec\": \"Include fem*dam.\", \"is_default\": false, \"source\": null}, {\"id\": \"main_effect\", \"label\": \"Main effect only\", \"rationale\": \"The most direct reading of the claim, with no interaction.\", \"spec\": \"No interaction terms.\", \"is_default\": false, \"source\": null}], \"produces\": []}, {\"id\": \"year_control\", \"title\": \"Control for the era of the storm\", \"kind\": \"feature\", \"description\": \"Reporting and preparedness changed over six decades.\", \"options\": [{\"id\": \"none\", \"label\": \"No time control\", \"rationale\": \"The original analysis did not adjust for the year.\", \"spec\": \"No year terms.\", \"is_default\": true, \"source\": null}, {\"id\": \"year_x_damages\", \"label\": \"Year and year by damage\", \"rationale\": \"Allows deaths per unit of damage to drift over time.\", \"spec\": \"Add year and year*dam.\", \"is_default\": false, \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}, {\"id\": \"post1979_x_damages\", \"label\": \"Post-1979 indicator and its interaction with damage\", \"rationale\": \"Names alternated between sexes from 1979, so era is entangled with name.\", \"spec\": \"Add post1979 and post1979*dam.\", \"is_default\": false, \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}], \"produces\": []}, {\"id\": \"model\", \"title\": \"Fit the model\", \"kind\": \"model\", \"description\": \"Deaths are counts with a heavy right tail.\", \"options\": [{\"id\": \"negbin\", \"label\": \"Negative binomial regression\", \"rationale\": \"Overdispersed counts call for a negative binomial model.\", \"spec\": \"NB2 log-link GLM, dispersion by maximum likelihood.\", \"is_default\": true, \"source\": \"Jung et al. (2014), PNAS 111(24)\"}, {\"id\": \"ols_log1p\", \"label\": \"Linear model on log(deaths + 1)\", \"rationale\": \"A common alternative that is easy to inspect.\", \"spec\": \"OLS of ln(alldeaths + 1); effects back-transformed to deaths.\", \"is_default\": false, \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}], \"produces\": []}]}",
+  "parsed": {
+    "estimand": "Additional deaths from a hurricane with a feminine rather than a masculine name, estimated as the difference in predicted deaths between the two name groups with the other predictors held at their sample means.",
+    "steps": [
+      {
+        "id": "storms",
+        "title": "Choose which storms to analyse",
+        "kind": "filter",
+        "description": "Two storms account for most deaths; analysts differ on keeping them.",
+        "options": [
+          {
+            "id": "drop_top2",
+            "label": "Drop the two deadliest storms",
+            "rationale": "The original analysis set aside the two extreme-death storms.",
+            "spec": "Remove the two rows with the highest alldeaths.",
+            "is_default": true,
+            "source": "Jung et al. (2014), PNAS 111(24)"
+          },
+          {
+            "id": "keep_all",
+            "label": "Keep every storm",
+            "rationale": "Nothing in the question calls for discarding data.",
+            "spec": "Use all 94 storms.",
+            "is_default": false,
+            "source": null
+          },
+          {
+            "id": "drop_top1",
+            "label": "Drop only the deadliest storm",
+            "rationale": "A milder trim that removes the single most extreme observation.",
+            "spec": "Remove the one row with the highest alldeaths.",
+            "is_default": false,
+            "source": null
+          },
+          {
+            "id": "drop_over_100",
+            "label": "Drop storms with more than 100 deaths",
+            "rationale": "Critics of the original paper argued that very deadly storms should go.",
+            "spec": "Keep only storms with alldeaths <= 100.",
+            "is_default": false,
+            "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+          }
+        ],
+        "produces": []
+      },
+      {
+        "id": "femininity",
+        "title": "Measure name femininity",
+        "kind": "feature",
+        "description": "The data hold a coder rating, a second rating and a binary flag.",
+        "options": [
+          {
+            "id": "masfem",
+            "label": "Coder rating (1 to 11)",
+            "rationale": "A graded rating keeps the information in the names.",
+            "spec": "fem = masfem.",
+            "is_default": true,
+            "source": "Jung et al. (2014), PNAS 111(24)"
+          },
+          {
+            "id": "female_binary",
+            "label": "Female versus male name",
+            "rationale": "The binary reading is the plain meaning of the claim.",
+            "spec": "fem = gender_mf (1 female, 0 male).",
+            "is_default": false,
+            "source": null
+          },
+          {
+            "id": "masfem_mturk",
+            "label": "Online-panel rating (1 to 11)",
+            "rationale": "A second, independent set of raters scored the same names.",
+            "spec": "fem = masfem_mturk.",
+            "is_default": false,
+            "source": null
+          }
+        ],
+        "produces": []
+      },
+      {
+        "id": "damages",
+        "title": "Measure property damage",
+        "kind": "feature",
+        "description": "Damage is heavily right-skewed and exists in two inflation bases.",
+        "options": [
+          {
+            "id": "linear_2015",
+            "label": "Damage in 2015 dollars",
+            "rationale": "Complete for every storm and on the scale analysts usually report.",
+            "spec": "dam = ndam15.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "log_2015",
+            "label": "Log of damage in 2015 dollars",
+            "rationale": "A log scale tames the skew in damage.",
+            "spec": "dam = ln(ndam15).",
+            "is_default": false,
+            "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+          },
+          {
+            "id": "linear_2013",
+            "label": "Damage in 2013 dollars",
+            "rationale": "The measure used in the original paper.",
+            "spec": "dam = ndam; storms with missing ndam drop out.",
+            "is_default": false,
+            "source": "Jung et al. (2014), PNAS 111(24)"
+          }
+        ],
+        "produces": []
+      },
+      {
+        "id": "strength",
+        "title": "Measure storm strength",
+        "kind": "feature",
+        "description": "Three landfall measures describe the intensity of a storm.",
+        "options": [
+          {
+            "id": "pressure",
+            "label": "Minimum pressure",
+            "rationale": "Pressure at landfall is a direct physical measure of intensity.",
+            "spec": "str = -min, so that a higher value means a stronger storm.",
+            "is_default": true,
+            "source": "Jung et al. (2014), PNAS 111(24)"
+          },
+          {
+            "id": "wind",
+            "label": "Maximum wind speed",
+            "rationale": "Wind speed is the other common intensity measure.",
+            "spec": "str = wind.",
+            "is_default": false,
+            "source": null
+          },
+          {
+            "id": "category",
+            "label": "Saffir-Simpson category",
+            "rationale": "A standard five-level scale for storm strength.",
+            "spec": "str = category.",
+            "is_default": false,
+            "source": null
+          }
+        ],
+        "produces": []
+      },
+      {
+        "id": "interaction",
+        "title": "Choose the functional form for femininity",
+        "kind": "feature",
+        "description": "Femininity can act on deaths alone or through damage and strength.",
+        "options": [
+          {
+            "id": "full",
+            "label": "Interact with damage and strength",
+            "rationale": "Femininity may matter more for damaging, intense storms.",
+            "spec": "Include fem*dam, fem*str, fem*dam*str and dam*str.",
+            "is_default": true,
+            "source": "Jung et al. (2014), PNAS 111(24)"
+          },
+          {
+            "id": "damages_only",
+            "label": "Interact with damage only",
+            "rationale": "A simpler interaction with the damage measure alone.",
+            "spec": "Include fem*dam.",
+            "is_default": false,
+            "source": null
+          },
+          {
+            "id": "main_effect",
+            "label": "Main effect only",
+            "rationale": "The most direct reading of the claim, with no interaction.",
+            "spec": "No interaction terms.",
+            "is_default": false,
+            "source": null
+          }
+        ],
+        "produces": []
+      },
+      {
+        "id": "year_control",
+        "title": "Control for the era of the storm",
+        "kind": "feature",
+        "description": "Reporting and preparedness changed over six decades.",
+        "options": [
+          {
+            "id": "none",
+            "label": "No time control",
+            "rationale": "The original analysis did not adjust for the year.",
+            "spec": "No year terms.",
+            "is_default": true,
+            "source": null
+          },
+          {
+            "id": "year_x_damages",
+            "label": "Year and year by damage",
+            "rationale": "Allows deaths per unit of damage to drift over time.",
+            "spec": "Add year and year*dam.",
+            "is_default": false,
+            "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+          },
+          {
+            "id": "post1979_x_damages",
+            "label": "Post-1979 indicator and its interaction with damage",
+            "rationale": "Names alternated between sexes from 1979, so era is entangled with name.",
+            "spec": "Add post1979 and post1979*dam.",
+            "is_default": false,
+            "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+          }
+        ],
+        "produces": []
+      },
+      {
+        "id": "model",
+        "title": "Fit the model",
+        "kind": "model",
+        "description": "Deaths are counts with a heavy right tail.",
+        "options": [
+          {
+            "id": "negbin",
+            "label": "Negative binomial regression",
+            "rationale": "Overdispersed counts call for a negative binomial model.",
+            "spec": "NB2 log-link GLM, dispersion by maximum likelihood.",
+            "is_default": true,
+            "source": "Jung et al. (2014), PNAS 111(24)"
+          },
+          {
+            "id": "ols_log1p",
+            "label": "Linear model on log(deaths + 1)",
+            "rationale": "A common alternative that is easy to inspect.",
+            "spec": "OLS of ln(alldeaths + 1); effects back-transformed to deaths.",
+            "is_default": false,
+            "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+          }
+        ],
+        "produces": []
+      }
+    ]
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

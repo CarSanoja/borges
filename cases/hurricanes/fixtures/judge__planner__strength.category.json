@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.78, \"accepted\": true, \"reason\": \"The Saffir-Simpson category is a coarse but standard measure.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.78,
+    "accepted": true,
+    "reason": "The Saffir-Simpson category is a coarse but standard measure.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

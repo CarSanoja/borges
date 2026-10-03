@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.82, \"accepted\": true, \"reason\": \"Wind speed is a standard measure of intensity at landfall.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.82,
+    "accepted": true,
+    "reason": "Wind speed is a standard measure of intensity at landfall.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

@@ -1,0 +1,15 @@
+{
+  "year": "Year the hurricane made landfall in the United States.",
+  "name": "Name given to the hurricane.",
+  "masfem": "Mean rating of the name on a masculine (1) to feminine (11) scale by nine coders.",
+  "min": "Minimum central pressure at landfall in millibars.",
+  "gender_mf": "1 if the name is a female name, 0 if a male name.",
+  "category": "Saffir-Simpson category at landfall, 1 to 5.",
+  "alldeaths": "Total number of deaths attributed to the hurricane.",
+  "ndam": "Property damage in millions of dollars normalised to 2013 values.",
+  "elapsedyrs": "Years between the hurricane and 2013.",
+  "source": "Source of the death counts.",
+  "masfem_mturk": "Mean rating of the name on the same 1 to 11 scale by 32 online raters.",
+  "wind": "Maximum sustained wind speed at landfall in miles per hour.",
+  "ndam15": "Property damage in millions of dollars normalised to 2015 values."
+}

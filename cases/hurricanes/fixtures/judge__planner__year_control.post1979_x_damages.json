@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.72, \"accepted\": true, \"reason\": \"A regime indicator for the naming change is a transparent era control.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}",
+  "parsed": {
+    "defensibility": 0.72,
+    "accepted": true,
+    "reason": "A regime indicator for the naming change is a transparent era control.",
+    "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

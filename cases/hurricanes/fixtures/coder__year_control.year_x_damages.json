@@ -1,0 +1,9 @@
+{
+  "model": "scripted",
+  "text": "{\"code\": \"import numpy as np\\nimport pandas as pd\\n\\n\\ndef apply(df, ctx):\\n    out = df.copy()\\n    out[\\\"yr_x\\\"] = out[\\\"year\\\"].astype(float)\\n    ctx[\\\"year_term\\\"] = True\\n    return out\\n\"}",
+  "parsed": {
+    "code": "import numpy as np\nimport pandas as pd\n\n\ndef apply(df, ctx):\n    out = df.copy()\n    out[\"yr_x\"] = out[\"year\"].astype(float)\n    ctx[\"year_term\"] = True\n    return out\n"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

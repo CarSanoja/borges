@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.75, \"accepted\": true, \"reason\": \"A simpler interaction than the original; it keeps the idea that femininity acts through damage.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.75,
+    "accepted": true,
+    "reason": "A simpler interaction than the original; it keeps the idea that femininity acts through damage.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

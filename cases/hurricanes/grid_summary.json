@@ -1,0 +1,14 @@
+{
+  "specifications": 1944,
+  "significant_predicted_direction": 59,
+  "share_significant": 0.030349794238683128,
+  "median_estimate": 1.2525405181962528,
+  "min_estimate": -2.0937388785847064,
+  "max_estimate": 10.324950509188362,
+  "share_positive": 0.8503086419753086,
+  "reference_simonsohn_2020": {
+    "specifications": 1728,
+    "significant_predicted_direction": 37,
+    "median_estimate": 1.56
+  }
+}

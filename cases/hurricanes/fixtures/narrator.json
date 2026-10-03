@@ -1,0 +1,14 @@
+{
+  "model": "scripted",
+  "text": "{\"narrative\": \"With the default choices, modelled on the original paper, a hurricane with a feminine name is predicted to cause +4.1 additional deaths (95% CI -3.0 to 11.2), p = 0.257, n = 92 storms, so the verdict is NO CLEAR EVIDENCE. The minimal flip changes Choose which storms to analyse from \\\"Drop the two deadliest storms\\\" to \\\"Keep every storm\\\". 3 of the 14 single-decision changes reach FEMININE NAMES DEADLIER: keep every storm; drop only the deadliest storm; damage in 2013 dollars. That flip was re-executed from a fresh sandbox and reproduced exactly. The published specification curve over 1,728 specifications finds only 37 significant effects in the predicted direction (2.1%), with a median of 1.56 additional deaths, so the finding lives in a small corner of the analysis space.\", \"caveats\": [\"The effect is a difference in predicted deaths at sample means, not a causal estimate for any one storm.\", \"Ninety-four storms is a small sample and two of them dominate the death counts.\", \"Scripted run: the plan was written by hand from the published specification menu, not proposed by a model.\"]}",
+  "parsed": {
+    "narrative": "With the default choices, modelled on the original paper, a hurricane with a feminine name is predicted to cause +4.1 additional deaths (95% CI -3.0 to 11.2), p = 0.257, n = 92 storms, so the verdict is NO CLEAR EVIDENCE. The minimal flip changes Choose which storms to analyse from \"Drop the two deadliest storms\" to \"Keep every storm\". 3 of the 14 single-decision changes reach FEMININE NAMES DEADLIER: keep every storm; drop only the deadliest storm; damage in 2013 dollars. That flip was re-executed from a fresh sandbox and reproduced exactly. The published specification curve over 1,728 specifications finds only 37 significant effects in the predicted direction (2.1%), with a median of 1.56 additional deaths, so the finding lives in a small corner of the analysis space.",
+    "caveats": [
+      "The effect is a difference in predicted deaths at sample means, not a causal estimate for any one storm.",
+      "Ninety-four storms is a small sample and two of them dominate the death counts.",
+      "Scripted run: the plan was written by hand from the published specification menu, not proposed by a model."
+    ]
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

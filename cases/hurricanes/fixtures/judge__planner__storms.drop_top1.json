@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.65, \"accepted\": true, \"reason\": \"A milder trim than the original; it still rests on an arbitrary cut-off.\", \"source\": null}",
+  "parsed": {
+    "defensibility": 0.65,
+    "accepted": true,
+    "reason": "A milder trim than the original; it still rests on an arbitrary cut-off.",
+    "source": null
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}

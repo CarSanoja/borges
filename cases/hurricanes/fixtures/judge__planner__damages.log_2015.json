@@ -1,0 +1,12 @@
+{
+  "model": "scripted",
+  "text": "{\"defensibility\": 0.85, \"accepted\": true, \"reason\": \"Damage is heavily right-skewed and a log scale is a standard way to model it.\", \"source\": \"Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4\"}",
+  "parsed": {
+    "defensibility": 0.85,
+    "accepted": true,
+    "reason": "Damage is heavily right-skewed and a log scale is a standard way to model it.",
+    "source": "Simonsohn, Simmons and Nelson (2020), Nature Human Behaviour 4"
+  },
+  "tokens_in": 0,
+  "tokens_out": 0
+}
