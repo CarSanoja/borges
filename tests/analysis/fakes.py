@@ -29,6 +29,7 @@ class Call:
 class FakeLLM:
     responses: dict[str, BaseModel | dict[str, Any]]
     calls: list[Call] = field(default_factory=list)
+    declined_specs: list[str] = field(default_factory=list)
     totals: UsageTotals = field(default_factory=UsageTotals)
 
     async def complete(
@@ -41,6 +42,9 @@ class FakeLLM:
         max_tokens: int = 2048,
         temperature: float = 0.2,
     ) -> LLMResponse:
+        if key.endswith(":spec") and key not in self.responses:
+            self.declined_specs.append(key)
+            raise LLMError(f"no scripted response for {key}")
         self.calls.append(Call(role, messages, key, schema, max_tokens))
         if key not in self.responses:
             raise LLMError(f"no scripted response for {key}")

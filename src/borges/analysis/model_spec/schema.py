@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+Family = Literal["ols", "logit", "poisson", "negbin"]
+CovType = Literal["nonrobust", "HC1", "HC3", "cluster"]
+Report = Literal["coefficient", "odds_ratio", "rate_ratio"]
+
+INTERACTION_COLUMN = "exposure_by_moderator"
+RESERVED_COLUMNS = frozenset({INTERACTION_COLUMN, "const"})
+
+
+class ModelSpecOutput(BaseModel):
+    supported: bool
+    reason: str = ""
+    family: Family | None = None
+    outcome: str | None = None
+    exposure: str | None = None
+    moderator: str | None = None
+    covariates: list[str] = Field(default_factory=list)
+    covariates_from_ctx: bool = False
+    offset_log: str | None = None
+    cov_type: CovType = "nonrobust"
+    cluster: str | None = None
+    standardize: list[str] = Field(default_factory=list)
+    report: Report = "coefficient"
