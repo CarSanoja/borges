@@ -90,3 +90,28 @@ async def test_two_invalid_replies_score_the_chunk_as_unmatched() -> None:
     matcher = LLMMatcher(fake, SUPER)
     pairs = await matcher.match("model", "q", "s", ["linear"], ["ols"])
     assert pairs == [] and matcher.usage.failed_chunks == 1 and len(completions.calls) == 2
+
+
+async def test_an_empty_answer_gets_one_second_look_and_its_pairs_are_used() -> None:
+    fake, completions = client(["{}", '{"A1-B1": {"similarity": 9}}'])
+    matcher = LLMMatcher(fake, SUPER)
+    pairs = await matcher.match("model", "q", "s", ["linear regression"], ["ols with hc1"])
+    assert [(p.expert, p.agent) for p in pairs] == [(0, 0)]
+    assert len(completions.calls) == 2
+    assert completions.calls[1]["messages"][-1]["content"].startswith("That answer matched nothing")
+
+
+async def test_two_empty_answers_stay_empty_and_are_cached(tmp_path) -> None:
+    fake, completions = client(["{}", "{}"])
+    matcher = LLMMatcher(fake, SUPER, DiskCache(tmp_path))
+    assert await matcher.match("model", "q", "s", ["a"], ["b"]) == []
+    assert await matcher.match("model", "q", "s", ["a"], ["b"]) == []
+    assert len(completions.calls) == 2
+
+
+def test_prompts_carry_a_worked_example_and_numbered_json_lists_for_every_kind() -> None:
+    for kind in ("cvar", "model", "transform"):
+        message = user_message(kind, "Does X cause Y?", "col: desc", ["alpha"], ["beta"])
+        assert "<Example>" in message and "A1-B" in message
+        assert '"1": "alpha"' in message and '"1": "beta"' in message
+        assert message.rindex("List A") < message.index("alpha") < message.rindex("List B")

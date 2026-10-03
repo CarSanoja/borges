@@ -141,7 +141,7 @@ def analyze_universe(
         return None
     transform, model = compose_code(chosen)
     transforms = [f"{s.title}: {o.label}. {o.spec}" for s, o in chosen if s.kind != "model"]
-    models = [f"{o.label}. {o.spec}" for s, o in chosen if s.kind == "model"]
+    models = [o.label.strip() or o.spec for s, o in chosen if s.kind == "model"]
     items: dict[Kind, list[str]] = {
         "cvar": [
             *(f"IV: {c.description}." for c in cvars.ivs),

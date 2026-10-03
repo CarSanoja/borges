@@ -73,8 +73,14 @@ and adapts its matching prompts (`blade_prompts.py`, attribution there; Apache-2
 
 - Conceptual variables: BLADE's prompt and scale; a pair counts as a match at similarity 8 or
   more, exactly as in BLADE's `calc_metrics`.
-- Models: BLADE's prompt, any pair returned is a match; coverage is capped by the number of
+- Models: BLADE's prompt and worked example, any pair returned is a match; the agent side is the
+  option label only (BLADE's agent side is a model name); coverage is capped by the number of
   runs as in BLADE.
+- Lists are numbered JSON objects, list A is the expert, list B the agent; pair keys are read by
+  letter ("A3-B1", "B1-A3" and "1-A3B1" all mean expert 3, agent 1). An empty answer gets one
+  second look; a reply that cannot be read is retried once and then scored as unmatched.
+- `borges bench blade-rescore --out <folder>` re-scores a finished run from its saved runs and
+  cached replies. A reply not in the cache is `missing`, never 0%.
 - Coverage is the share of expert decisions matched by any explored universe; hit rate is the
   mean over universes of the share of its decisions that match an expert decision; F1 is their
   harmonic mean. Reported for conceptual variables, models and transforms.

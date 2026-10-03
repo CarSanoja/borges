@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
@@ -65,17 +64,12 @@ CLONE = Path(os.environ.get("BORGES_BLADE_DIR", "/nonexistent"))
     not (REAL / "summary.json").is_file() or not CLONE.is_dir(),
     reason="needs the 2026-10-03 evidence folder and a BLADE clone",
 )
-async def test_tonights_run_rescores_offline_to_the_published_cvar_numbers() -> None:
+async def test_tonights_run_rebuilds_and_reports_replies_for_new_prompts_as_missing() -> None:
     from borges.bench.blade_rescore import rescore
 
     cached = CachedMatcher(None, SUPER, DiskCache(REAL / "matcher-cache"))
     result = await rescore(REAL, cached, CLONE, ["soccer"])
     row = next(a for a in result.arms if a.arm == "adversary")
-    published = next(
-        r
-        for r in json.loads((REAL / "summary.json").read_text())["rows"]
-        if r["dataset"] == "soccer" and r["arm"] == "adversary"
-    )
-    assert round(row.metrics["cvar"]["coverage"], 4) == round(
-        published["metrics"]["cvar"]["coverage"], 4
-    )
+    assert len(row.analyses) == 22
+    assert all("missing" in row.metrics[k] for k in ("cvar", "model", "transform"))
+    assert "soccer/planner" in result.skipped

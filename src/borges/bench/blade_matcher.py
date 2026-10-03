@@ -12,6 +12,11 @@ from borges.llm.client import KNOWN_MODELS, SUPER, LLMError, ModelSpec
 CHUNK = 40
 MAX_TOKENS = 4000
 MATCH_THRESHOLD = 8
+SECOND_LOOK = (
+    "That answer matched nothing. Check again, item by item: for each item of list A, decide "
+    "whether some item of list B meets the matching criteria, and return every pair you find. "
+    "Return {} only if there is truly no such pair."
+)
 
 
 class MissingReply(RuntimeError):
@@ -90,9 +95,27 @@ class LLMMatcher:
                 ]
                 continue
             self._remember(key, text)
-            return pairs
+            if pairs:
+                return pairs
+            return await self._second_look(messages, text, n_expert, n_agent, offset)
         self.usage.failed_chunks += 1
         return []
+
+    async def _second_look(
+        self, messages: list[dict[str, str]], first: str, n_expert: int, n_agent: int, offset: int
+    ) -> list[MatchPair]:
+        again = [
+            *messages,
+            {"role": "assistant", "content": first[:6000]},
+            {"role": "user", "content": SECOND_LOOK},
+        ]
+        text, key = await self._ask(again)
+        try:
+            pairs = parse_pairs(text, n_expert, n_agent, offset)
+        except LLMError:
+            return []
+        self._remember(key, text)
+        return pairs
 
     async def match(
         self, kind: str, question: str, schema: str, expert: list[str], agent: list[str]
