@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import Annotated, Any
 
@@ -8,6 +9,7 @@ from fastapi import APIRouter, Depends, Request
 from borges.api import platform_core, platform_guard
 from borges.api.deps import get_settings
 from borges.api.platform_catalog import ORDER, PILLARS
+from borges.api.platform_provenance import provenance
 from borges.config import Settings
 from borges.identity.deps import get_principal
 from borges.identity.principal import Principal
@@ -36,5 +38,9 @@ def platform(request: Request, settings: SettingsDep, principal: PrincipalDep) -
         "armor": lambda: platform_guard.armor(settings),
         "observability": lambda: platform_guard.observability(settings),
     }
-    pillars = [{"id": key, **PILLARS[key], **_guarded(readers[key])} for key in ORDER]
-    return {"pillars": pillars}
+    pillars = []
+    for key in ORDER:
+        pillar = {"id": key, **PILLARS[key], **_guarded(readers[key])}
+        pillar["provenance"] = provenance(key, pillar.get("facts") or {})
+        pillars.append(pillar)
+    return {"pillars": pillars, "generated_at": time.time()}

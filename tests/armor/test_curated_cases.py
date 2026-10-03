@@ -22,8 +22,15 @@ def spec(case_id: str) -> dict:
     return json.loads((CASES / case_id / "case.json").read_text())
 
 
-def test_there_are_five_curated_cases() -> None:
-    assert len(CASE_IDS) == 5
+def test_the_five_original_cases_are_still_curated() -> None:
+    original = {
+        "bank_marketing_calls",
+        "checkout_ab",
+        "marp_norms",
+        "marp_religiosity",
+        "red_cards",
+    }
+    assert original <= set(CASE_IDS)
 
 
 @pytest.mark.parametrize("case_id", CASE_IDS)

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
 
 from borges.api.platform_catalog import ORDER, PILLARS
-from borges.api.platform_guard import SCORE_FILE
+from borges.armor.corpus_score import armor_score
 from borges.config import REPO_ROOT
 from tests.api.test_routes_runs import Env
 from tests.api.test_routes_runtime import Env as RuntimeEnv
@@ -82,24 +81,35 @@ def test_every_listed_code_and_test_path_exists() -> None:
             assert (REPO_ROOT / relative).exists(), f"{key}: {relative}"
 
 
-def test_the_published_armor_score_matches_the_corpus() -> None:
-    suites = json.loads(SCORE_FILE.read_text(encoding="utf-8"))["suites"]
-    measured = []
-    for name, attacks, benign in (
-        ("attacks", "attacks.json", "benign.json"),
-        ("redteam", "attacks_redteam.json", "benign_redteam.json"),
-    ):
-        score = evaluate(attacks, benign)
-        measured.append(
-            {
-                "name": name,
-                "attacks": len(load(attacks)),
-                "detected": score.true_positives,
-                "benign": score.benign_total,
-                "false_positives": len(score.false_positives),
-            }
-        )
-    assert suites == measured
+async def test_the_armor_score_is_computed_from_the_corpus_and_marked_live(env: Env) -> None:
+    async with env.client() as client:
+        body = (await client.get("/api/platform")).json()
+    armor = next(p for p in body["pillars"] if p["id"] == "armor")
+    corpus = armor["facts"]["corpus"]
+    suites = {
+        "attacks": evaluate("attacks.json", "benign.json"),
+        "redteam": evaluate("attacks_redteam.json", "benign_redteam.json"),
+    }
+    assert corpus["attacks"] == len(load("attacks.json")) + len(load("attacks_redteam.json"))
+    assert corpus["detected"] == sum(s.true_positives for s in suites.values())
+    assert corpus["benign"] == sum(s.benign_total for s in suites.values())
+    assert corpus["false_positives"] == sum(len(s.false_positives) for s in suites.values())
+    provenance = armor["provenance"]
+    assert provenance["default"]["kind"] == "live"
+    assert provenance["overrides"]["facts.corpus"]["kind"] == "live"
+    measured = provenance["overrides"]["facts.measured.jury_heldout_before_semantic_family"]
+    assert measured["kind"] == "measured" and measured["date"] and measured["source"]
+    for pillar in body["pillars"]:
+        assert pillar["provenance"]["default"]["kind"] == "live"
+
+
+def test_the_score_is_computed_once_and_cached() -> None:
+    assert armor_score() is armor_score()
+    assert armor_score(refresh=True) is armor_score()
+
+
+def test_no_hand_edited_score_file_remains() -> None:
+    assert not (REPO_ROOT / "src" / "borges" / "api" / "platform_armor_score.json").exists()
 
 
 async def test_an_attached_runtime_reports_queue_and_resume(

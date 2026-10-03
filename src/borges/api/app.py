@@ -28,6 +28,7 @@ from borges.api.runtime_wiring import attach_runtime
 from borges.api.spa import mount_frontend
 from borges.api.startup import reconcile, warn_unkeyed
 from borges.api.uploads import UploadStore
+from borges.armor.corpus_score import armor_score
 from borges.config import Settings, get_settings
 from borges.gateway.errors import PolicyError
 from borges.identity.authentication import Authenticator
@@ -71,6 +72,7 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         _build_missing(app)
         warn_unkeyed(resolved)
+        await asyncio.to_thread(armor_score)
         runtime = attach_runtime(app)
         await asyncio.to_thread(
             reconcile, resolved, app.state.store, app.state.orchestrator, runtime

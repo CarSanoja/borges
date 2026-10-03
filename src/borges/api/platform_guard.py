@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
 from typing import Any
 
 from borges.api.platform_audit import global_chain
+from borges.armor.corpus_score import armor_score
 from borges.armor.injection import CODE_OUTPUT, MODEL_OUTPUT, PROMPT_INPUT, UNTRUSTED_INPUT
 from borges.armor.pii_patterns import KINDS
 from borges.config import Settings
 from borges.gateway.errors import PolicyError
 from borges.gateway.policy_load import policy_for
-
-SCORE_FILE = Path(__file__).with_name("platform_armor_score.json")
 
 
 def gateway(settings: Settings) -> dict[str, Any]:
@@ -46,29 +43,30 @@ def gateway(settings: Settings) -> dict[str, Any]:
 
 
 def corpus_score() -> dict[str, Any]:
-    data = json.loads(SCORE_FILE.read_text(encoding="utf-8"))
-    suites = data["suites"]
-    attacks = sum(s["attacks"] for s in suites)
-    detected = sum(s["detected"] for s in suites)
-    benign = sum(s["benign"] for s in suites)
-    false_positives = sum(s["false_positives"] for s in suites)
+    score = armor_score()
     return {
-        "attacks": attacks,
-        "detected": detected,
-        "detection_rate": detected / attacks if attacks else 0.0,
-        "benign": benign,
-        "false_positives": false_positives,
-        "obfuscations": data["techniques"],
+        "attacks": score["attacks"],
+        "detected": score["detected"],
+        "detection_rate": score["detected"] / score["attacks"] if score["attacks"] else 0.0,
+        "benign": score["benign"],
+        "false_positives": score["false_positives"],
+        "obfuscations": score["obfuscations"],
+        "suites": score["suites"],
+        "held_out": score["held_out"],
+        "computed_at": score["computed_at"],
+        "source": score["source"],
     }
 
 
 def armor(settings: Settings) -> dict[str, Any]:
     score = corpus_score()
+    held = score["held_out"]
     screens = [p.name for p in (UNTRUSTED_INPUT, MODEL_OUTPUT, PROMPT_INPUT, CODE_OUTPUT)]
     return {
         "status": "ok",
         "summary": f"{score['detected']} of {score['attacks']} corpus attacks detected, "
-        f"{score['false_positives']} false alarms on {score['benign']} benign texts.",
+        f"{score['false_positives']} false alarms on {score['benign']} benign texts; "
+        f"{held['caught']} of {held['paraphrases']} held-out paraphrases caught.",
         "facts": {
             "screens": screens,
             "pii_kinds": list(KINDS),
