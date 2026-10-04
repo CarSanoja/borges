@@ -12,7 +12,7 @@ from borges.analysis.code_guard_introspection import (
     name_violations as introspection_name_violations,
 )
 from borges.analysis.code_guard_introspection import subscript_violations
-from borges.analysis.code_guard_nan import nan_threshold_violations
+from borges.analysis.code_guard_nan import component_sign_violations, nan_threshold_violations
 from borges.analysis.code_guard_rows import row_filter_violations
 from borges.analysis.code_guard_rules import (
     ALLOWED_IMPORTS,
@@ -175,7 +175,7 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
     violations.extend(_signature_violations(func, func.name))
     violations.extend(_body_violations(func))
     if kind != "model":
-        return violations + nan_threshold_violations(func)
+        return violations + nan_threshold_violations(func) + component_sign_violations(func)
     violations.extend(row_filter_violations(func))
     violations.extend(statsmodels_violations(func, intent))
     return violations + estimator_violations(func, intent) + fallback_violations(func)

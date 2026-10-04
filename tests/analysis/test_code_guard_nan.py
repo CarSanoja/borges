@@ -43,3 +43,26 @@ def test_a_model_step_may_take_percentiles_of_its_own_draws() -> None:
         + "    return {'estimate': 2.0, 'ci_low': low, 'ci_high': high, 'p_value': 0.5, 'n': 3}\n"
     )
     assert check_code(code, "model") == []
+
+
+SVD = (
+    "    items = df[['cnorm_1', 'cnorm_2']]\n"
+    "    centred = items - items.mean()\n"
+    "    _, _, vt = np.linalg.svd(centred, full_matrices=False)\n"
+    "    score = centred @ vt[0]\n"
+)
+
+
+def test_an_unoriented_component_is_refused() -> None:
+    code = apply(SVD + "    df['cultural_norms'] = score\n")
+    violations = check_code(code, "transform")
+    assert len(violations) == 1 and "sign of a principal component" in violations[0]
+
+
+def test_a_component_oriented_by_the_data_passes() -> None:
+    orient = (
+        "    if np.corrcoef(score, items.mean(axis=1))[0, 1] < 0:\n"
+        "        score = -score\n"
+        "    df['cultural_norms'] = score\n"
+    )
+    assert check_code(apply(SVD + orient), "transform") == []

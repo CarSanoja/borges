@@ -26,3 +26,32 @@ def nan_threshold_violations(tree: ast.AST) -> list[str]:
             f"(df[col].median(), df[col].quantile(q)), or np.{safe}"
         )
     return violations
+
+
+DECOMPOSITIONS = frozenset(
+    {"PCA", "TruncatedSVD", "FactorAnalysis", "svd", "svds", "eig", "eigh", "eigs"}
+)
+ORIENTING = frozenset({"corrcoef", "corr", "corrwith", "sign", "copysign"})
+
+
+def _called(tree: ast.AST) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            func = node.func
+            names.add(func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", ""))
+    return names
+
+
+def component_sign_violations(tree: ast.AST) -> list[str]:
+    """The sign of a principal component or factor is arbitrary: it can differ between a sample
+    and the full data, so a data step that builds one must orient it by the data."""
+    called = _called(tree)
+    if not called & DECOMPOSITIONS or called & ORIENTING:
+        return []
+    return [
+        "the sign of a principal component or factor score is arbitrary and can differ between a "
+        "sample and the full data: orient it by the data, so that higher scores mean higher item "
+        "values, for example `if np.corrcoef(score, items.mean(axis=1))[0, 1] < 0: score = "
+        "-score`"
+    ]

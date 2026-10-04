@@ -17,8 +17,9 @@ REVERSED_BELOW = -0.3
 
 REVERSED_TEMPLATE = (
     "column '{name}' is reversed relative to the default option (correlation {r:.2f} on the "
-    "same rows): keep the same direction as the default (for a PCA or factor score multiply by "
-    "-1; never swap groups or reverse a coding)"
+    "same rows): keep the same direction as the default (for a PCA or factor score flip the "
+    "sign when it correlates negatively with the mean of its items, decided by the data and "
+    "never by a fixed -1; never swap groups or reverse a coding)"
 )
 
 
