@@ -47,7 +47,9 @@ Use exact column names from the list of available columns. Categorical covariate
 dummy-encoded automatically. Set supported to false for anything else: mixed or multilevel \
 models, GEE, t-tests, difference in proportions, bootstrap, nonparametric tests, weights, \
 splines, outcome transformations, fixed effects written as dummies of a column you cannot list, \
-or a model that reads ctx values other than the covariate list.
+or a model that reads ctx values other than the covariate list. Never refuse for any other \
+reason: translate the exposure the option names even if you would choose another (a validator \
+checks it against the estimand), and any available column, numeric or text, can be the cluster.
 
 Return only JSON matching the requested schema."""
 
