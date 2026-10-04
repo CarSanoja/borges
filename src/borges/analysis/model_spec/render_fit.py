@@ -54,6 +54,7 @@ def _margeff_lines(spec: ModelSpecOutput) -> list[str]:
         '        "ci_high": float(row["Cont. Int. Hi."]),',
         '        "p_value": float(row["Pr(>|z|)"]),',
         '        "n": int(len(data)),',
+        '        "note": note,',
         '        "extra": {"std_err": float(row["Std. Err."])},',
         "    }",
     ]
@@ -79,6 +80,7 @@ def result_lines(spec: ModelSpecOutput) -> list[str]:
             '        "ci_high": high,',
             '        "p_value": p_value,',
             '        "n": int(len(data)),',
+            '        "note": note,',
             "    }",
         ]
     return [
@@ -89,6 +91,7 @@ def result_lines(spec: ModelSpecOutput) -> list[str]:
         '        "ci_high": float(np.exp(high)),',
         '        "p_value": p_value,',
         '        "n": int(len(data)),',
+        '        "note": note,',
         '        "extra": {"coefficient": value},',
         "    }",
     ]

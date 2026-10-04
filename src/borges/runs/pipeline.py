@@ -15,6 +15,7 @@ from borges.analysis.smoke_review import llm_reviewer
 from borges.armor.report import ArmorReport
 from borges.config import Settings
 from borges.fleet.models import RunAgents
+from borges.garden.aliased import aliased_caveats
 from borges.garden.executor import GardenExecutor
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary
@@ -179,6 +180,7 @@ class Pipeline:
         self.report.search = self.search
         self.report.coding = self.coding if self.coding.options else None
         self.caveats.extend(report_caveats(self.report, self.flip, plan.decision_rule.threshold))
+        self.caveats.extend(aliased_caveats(self.garden))
         self.report.caveats = merge_caveats(self.caveats, self.report.caveats)
         await narrate_stage(self, plan, self.report)
         return self.report

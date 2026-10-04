@@ -46,6 +46,28 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
     return lines
 
 
+ALIAS_TOLERANCE = 1e-7
+ALIAS_NOTE = "aliased covariates dropped: "
+ALIAS_LINES = [
+    "    protected = ['const', *map(str, core.columns)]",
+    "    basis = np.zeros((len(exog), 0))",
+    "    aliased = []",
+    "    for column in list(exog.columns):",
+    "        vector = exog[column].to_numpy(dtype=float)",
+    "        size = float(np.linalg.norm(vector))",
+    "        residual = vector / size if size else vector",
+    "        for _ in range(2):",
+    "            residual = residual - basis @ (basis.T @ residual)",
+    "        size = float(np.linalg.norm(residual))",
+    f"        if size >= {ALIAS_TOLERANCE!r}:",
+    "            basis = np.column_stack([basis, residual / size])",
+    "        elif str(column) not in protected:",
+    "            aliased.append(str(column))",
+    "    exog = exog.drop(columns=aliased)",
+    f"    note = {ALIAS_NOTE!r} + ', '.join(aliased) if aliased else ''",
+]
+
+
 def exog_lines(spec: ModelSpecOutput) -> list[str]:
     if spec.moderator is None:
         core = f"    core = data[[{spec.exposure!r}]].astype(float)"
@@ -64,5 +86,6 @@ def exog_lines(spec: ModelSpecOutput) -> list[str]:
         "        dummies = pd.get_dummies(data[other].astype(str), drop_first=True, dtype=float)",
         "        parts.append(dummies)",
         "    exog = sm.add_constant(pd.concat(parts, axis=1), has_constant='add')",
+        *ALIAS_LINES,
         f"    endog = data[{spec.outcome!r}].astype(float)",
     ]

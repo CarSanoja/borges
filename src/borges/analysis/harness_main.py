@@ -145,6 +145,8 @@ __FINGERPRINT__
         if kind == "model":
             _install_design_probe()
             raw_result = estimate(df, ctx)
+            if isinstance(raw_result, dict) and isinstance(raw_result.get("note"), str):
+                trace["note"] = raw_result["note"][:500]
             design = _design_payload(list(map(str, df.columns)))
             if design is not None:
                 trace["design"] = design

@@ -231,3 +231,16 @@ def test_error_from_inside_a_library_carries_no_host_paths(workdir: Path) -> Non
     for marker in ("/Users/", "/home/", ".venv", str(Path(sys.prefix))):
         assert marker not in message
     assert "site-packages/pandas" in message
+
+
+def test_a_model_note_reaches_the_trace(workdir: Path) -> None:
+    code = (
+        "def estimate(df, ctx):\n"
+        "    return {'estimate': 1.0, 'ci_low': 0.5, 'ci_high': 1.5, 'p_value': 0.1, 'n': 10,"
+        " 'note': 'aliased covariates dropped: z'}\n"
+    )
+    step, option = make_step("s1", "model", code)
+    proc = run(workdir, step, option)
+    traces, result = parse_output(proc.stdout)
+    assert proc.returncode == 0 and result is not None
+    assert traces[0].note == "aliased covariates dropped: z"
