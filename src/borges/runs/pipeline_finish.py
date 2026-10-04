@@ -6,6 +6,7 @@ from borges.analysis.models import AnalysisPlan
 from borges.analysis.narrator import narrate
 from borges.garden.models import Report
 from borges.garden.verify import verify_flip
+from borges.runs.pipeline_caveats import merge_caveats
 
 if TYPE_CHECKING:
     from borges.runs.pipeline import Pipeline
@@ -45,8 +46,8 @@ async def narrate_stage(pipeline: Pipeline, plan: AnalysisPlan, report: Report) 
                 pipeline.llm, plan, report, pipeline.garden, pipeline.judged
             )
             report.narrative = narrative
-            report.caveats = [*report.caveats, *caveats]
+            report.caveats = merge_caveats(report.caveats, caveats)
         except Exception as exc:
-            report.caveats = [*report.caveats, f"Narrative unavailable: {exc}"]
+            report.caveats = merge_caveats(report.caveats, [f"Narrative unavailable: {exc}"])
         report.agents = pipeline.agents
         await pipeline.emitter.emit("report.ready", {"report": report.model_dump(mode="json")})

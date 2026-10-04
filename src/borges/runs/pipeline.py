@@ -25,7 +25,7 @@ from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
 from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.pipeline_callbacks import coding_callbacks, replan_callback
-from borges.runs.pipeline_caveats import report_caveats
+from borges.runs.pipeline_caveats import merge_caveats, report_caveats
 from borges.runs.pipeline_data import load_dataframe
 from borges.runs.pipeline_finish import narrate_stage, verify_stage
 from borges.runs.pipeline_memory import finish_memory, prefill_code, recall_profile
@@ -179,6 +179,6 @@ class Pipeline:
         self.report.search = self.search
         self.report.coding = self.coding if self.coding.options else None
         self.caveats.extend(report_caveats(self.report, self.flip, plan.decision_rule.threshold))
-        self.report.caveats = [*self.caveats, *self.report.caveats]
+        self.report.caveats = merge_caveats(self.caveats, self.report.caveats)
         await narrate_stage(self, plan, self.report)
         return self.report

@@ -24,6 +24,21 @@ def mirror_caveat(flip: Flip | None, threshold: float) -> str | None:
     )
 
 
+def _key(text: str) -> str:
+    return " ".join(text.lower().split()).rstrip(".")
+
+
+def merge_caveats(*groups: list[str]) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+    for caveat in (c for group in groups for c in group):
+        key = _key(caveat)
+        if key not in seen:
+            seen.add(key)
+            merged.append(caveat)
+    return merged
+
+
 UNTESTED = (
     "Only the default analysis ran: no alternative option survived judging and coding, so this "
     "run did not test whether the decision is robust."
