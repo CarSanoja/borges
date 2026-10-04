@@ -119,3 +119,38 @@ async def test_working_alternatives_cost_no_probe_repair(tmp_path: Path) -> None
     used = llm.keys()
     assert not [k for k in used if ":smoke" in k]
     assert cfg.state.notes == []
+
+
+async def test_a_repair_that_collides_with_a_sibling_is_recoded_before_it_is_kept(
+    tmp_path: Path,
+) -> None:
+    llm = FakeLLM(
+        scripted(
+            **{
+                "coder:c1.with_group:smoke1": NO_COVARIATES,
+                "coder:c1.with_group:collision": NAMES_OUTCOME,
+            }
+        )
+    )
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, three_step_plan(), smoke=cfg)
+    assert coded.step("c1").option("with_group").code == NAMES_OUTCOME
+    assert llm.keys().count("coder:c1.with_group:collision") == 1
+    assert cfg.state.notes == []
+
+
+async def test_a_singular_probe_error_is_not_blamed_on_the_upstream_option(
+    tmp_path: Path,
+) -> None:
+    singular = MODEL.replace(
+        "    cols =",
+        "    if 'group' in ctx.get('covariates', []):\n"
+        "        raise ValueError('Singular matrix')\n"
+        "    cols =",
+    )
+    llm = FakeLLM(scripted(**{"coder:m1.ols": singular}))
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, three_step_plan(), smoke=cfg)
+    assert [o.id for o in coded.step("c1").options] == ["none", "with_group"]
+    used = llm.keys()
+    assert not [k for k in used if ":smoke" in k]

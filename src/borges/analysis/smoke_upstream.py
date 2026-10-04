@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 
 from borges.analysis.models import CodingSummary, Step
+from borges.analysis.smoke_collision import resolve_extra
 from borges.analysis.smoke_core import smoke_option
-from borges.analysis.smoke_larger import smoke_rows
+from borges.analysis.smoke_larger import is_singular_error, smoke_rows
 from borges.analysis.smoke_review import _re_review
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
@@ -34,8 +36,13 @@ def _short(error: str) -> str:
 
 async def _probe(config: SmokeConfig, repair: Repair, model: Step, outcome: Outcome) -> str | None:
     default = config.state.defaults[model.id]
-    tried = await smoke_option(config, repair, outcome.checkpoint, model, default.option, budget=0)
-    return tried.error if tried.status == "failed" else None
+    isolated = replace(config, larger=None)
+    tried = await smoke_option(
+        isolated, repair, outcome.checkpoint, model, default.option, budget=0
+    )
+    if tried.status != "failed" or is_singular_error(tried.error):
+        return None
+    return tried.error or "unknown error"
 
 
 async def _repaired(
@@ -54,6 +61,8 @@ async def _repaired(
     if tried.status == "failed":
         return None
     tried = await _re_review(config, previous, tried)
+    if tried.status != "failed":
+        tried = await resolve_extra(config, repair, parent, previous, tried)
     if tried.status == "failed" or await _probe(config, repair, model, tried) is not None:
         return None
     return Outcome(
