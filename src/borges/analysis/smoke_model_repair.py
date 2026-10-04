@@ -68,49 +68,6 @@ async def _repaired_model(
     )
 
 
-async def _handle_model(
-    config: SmokeConfig,
-    repair: Repair,
-    model: Step,
-    outcome: Outcome,
-    failures: list[Fault],
-    summary: CodingSummary | None,
-) -> None:
-    item, upstream, error = failures[0]
-    label = item.outcome.option.label
-    fresh = await _repaired_model(config, repair, model, outcome, failures)
-    outcomes = config.state.outcomes[model.id]
-    option_id = outcome.option.id
-    if fresh is not None:
-        model.options = [fresh.option if o.id == option_id else o for o in model.options]
-        config.state.outcomes[model.id] = [
-            fresh if o.option.id == option_id else o for o in outcomes
-        ]
-        if summary is not None:
-            summary.repaired_after_smoke += 1
-        if config.on_smoke is not None:
-            await config.on_smoke(
-                model.id,
-                option_id,
-                "repaired",
-                fresh.attempts,
-                MODEL_CAUGHT_NOTE.format(upstream=label, error=_short(error)),
-                fresh.models,
-                *smoke_rows(fresh),
-            )
-        return
-    model.options = [o for o in model.options if o.id != option_id]
-    config.state.outcomes[model.id] = [o for o in outcomes if o.option.id != option_id]
-    note = MODEL_DROPPED_NOTE.format(
-        label=outcome.option.label, upstream=label, title=upstream.title, error=_short(error)
-    )
-    config.state.notes.append(note)
-    if summary is not None:
-        summary.failed += 1
-    if config.on_smoke is not None:
-        await config.on_smoke(model.id, option_id, "failed", outcome.attempts, note, outcome.models)
-
-
 async def handle_model(
     config: SmokeConfig,
     repair: Repair,

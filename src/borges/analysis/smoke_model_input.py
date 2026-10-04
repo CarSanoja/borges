@@ -34,17 +34,17 @@ def _alternatives(config: SmokeConfig, step: Step) -> list[Outcome]:
 async def model_inputs(
     config: SmokeConfig, repair: Repair, steps: list[Step], index: int
 ) -> list[ModelInput]:
-    found: list[ModelInput] = []
+    picked: list[tuple[int, Outcome]] = []
     for k in range(index - 1, -1, -1):
-        room = MAX_INPUTS - len(found)
-        if room <= 0:
-            break
         if steps[k].id not in config.state.parents:
             continue
-        candidates = _alternatives(config, steps[k])[:room]
-        starts = [o.checkpoint for o in candidates]
-        built = await asyncio.gather(
-            *(model_input(config, repair, steps[k + 1 : index], c) for c in starts if c)
+        room = MAX_INPUTS - len(picked)
+        picked += [(k, o) for o in _alternatives(config, steps[k])[:room]]
+    built = await asyncio.gather(
+        *(
+            model_input(config, repair, steps[k + 1 : index], o.checkpoint)
+            for k, o in picked
+            if o.checkpoint
         )
-        found += [ModelInput(k, o, c) for o, c in zip(candidates, built, strict=True) if c]
-    return found
+    )
+    return [ModelInput(k, o, c) for (k, o), c in zip(picked, built, strict=True) if c]

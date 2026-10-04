@@ -158,3 +158,67 @@ async def test_at_most_six_inputs_are_probed(
     cfg = config(tmp_path, Recorder())
     await code_plan(llm, plan(False, alternatives=9), smoke=cfg)
     assert len(calls) == 12
+
+
+async def test_a_plan_with_only_the_model_step_is_untouched(tmp_path: Path) -> None:
+    model = plan(False).step("m1")
+    only = make_plan().model_copy(update={"steps": [model]})
+    llm = FakeLLM(
+        {"coder:m1.ols": CoderOutput(code=MODEL), "coder:m1.cluster": CoderOutput(code=OTHER)}
+    )
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, only, smoke=cfg)
+    assert [o.id for o in coded.step("m1").options] == ["ols", "cluster"]
+    used = llm.keys()
+    assert not [k for k in used if ":smoke" in k]
+
+
+async def test_a_single_option_model_runs_only_the_default_under_each_input(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[str] = []
+    real = smoke_model_probe.probe_option
+
+    async def counting(config, repair, model, option, checkpoint):
+        calls.append(option.id)
+        return await real(config, repair, model, option, checkpoint)
+
+    monkeypatch.setattr(smoke_model_probe, "probe_option", counting)
+    single = plan(False)
+    single.step("m1").options = [make_option("ols", True)]
+    scripts = scripted(NAMES_OUTCOME, OTHER)
+    del scripts["coder:m1.cluster"]
+    cfg = config(tmp_path, Recorder())
+    await code_plan(FakeLLM(scripts), single, smoke=cfg)
+    assert calls == ["ols"]
+
+
+async def test_the_chain_inputs_of_every_earlier_step_run_in_parallel(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import asyncio
+
+    from borges.analysis import smoke_model_input
+
+    live = 0
+    peak = 0
+    real = smoke_model_input.model_input
+
+    async def watched(*args, **kwargs):
+        nonlocal live, peak
+        live += 1
+        peak = max(peak, live)
+        await asyncio.sleep(0.05)
+        try:
+            return await real(*args, **kwargs)
+        finally:
+            live -= 1
+
+    monkeypatch.setattr(smoke_model_input, "model_input", watched)
+    wide = plan(False, alternatives=3)
+    wide.step("a1").options.append(make_option("agg2"))
+    extra = {"coder:a1.agg2": AGGREGATE + "\n# 2"}
+    llm = FakeLLM(scripted(NAMES_OUTCOME, OTHER, alternatives=3, **extra))
+    cfg = config(tmp_path, Recorder())
+    await code_plan(llm, wide, smoke=cfg)
+    assert peak == 4
