@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from borges.analysis.models import AnalysisPlan
+from borges.analysis.narrative_repeats import restates_any
 from borges.analysis.narrator import narrate
 from borges.garden.models import Report
 from borges.garden.verify import verify_flip
@@ -46,7 +47,8 @@ async def narrate_stage(pipeline: Pipeline, plan: AnalysisPlan, report: Report) 
                 pipeline.llm, plan, report, pipeline.garden, pipeline.judged
             )
             report.narrative = narrative
-            report.caveats = merge_caveats(report.caveats, caveats)
+            fresh = [c for c in caveats if not restates_any(c, report.caveats)]
+            report.caveats = merge_caveats(report.caveats, fresh)
         except Exception as exc:
             report.caveats = merge_caveats(report.caveats, [f"Narrative unavailable: {exc}"])
         report.agents = pipeline.agents
