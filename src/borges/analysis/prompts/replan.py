@@ -3,6 +3,8 @@ from __future__ import annotations
 import ast
 import re
 
+from borges.analysis.code_guard_ctx import varying_ctx_keys
+from borges.analysis.code_guard_produces import unused_products
 from borges.analysis.models import AnalysisPlan, ColumnProfile, Step
 from borges.analysis.prompts import compact_json, messages
 from borges.analysis.prompts.coder import _available_columns
@@ -72,6 +74,22 @@ def _columns_seen(plan: AnalysisPlan, step: Step, observed: list[str]) -> list[d
     return [known.get(name, {"name": name}) for name in observed]
 
 
+def _reads(plan: AnalysisPlan, step: Step) -> str:
+    if step.kind != "model":
+        return ""
+    lines = [
+        f"Every option must read ctx['{key}'], set differently by the earlier step '{title}', "
+        "and use it as that step intends.\n"
+        for key, title in sorted(varying_ctx_keys(plan, step).items())
+    ]
+    lines += [
+        f"Every option must use {', '.join(names)}, built by the earlier step '{title}', instead "
+        "of rebuilding it.\n"
+        for title, (names, _) in sorted(unused_products(plan, step).items())
+    ]
+    return "".join(lines)
+
+
 def build_replan_messages(
     plan: AnalysisPlan, step: Step, failures: list[tuple[str, str, str, str]]
 ) -> list[dict[str, str]]:
@@ -93,6 +111,7 @@ def build_replan_messages(
         f"Step {step.id} ({step.kind}): {step.title}. {step.description}\n"
         f"The step produces: {produces}\n"
         f"{columns}"
+        f"{_reads(plan, step)}"
         f"Failed options and their last errors: {compact_json(failed)}"
     )
     return messages(SYSTEM, user)

@@ -32,3 +32,35 @@ def test_without_an_observed_list_the_plan_columns_are_used() -> None:
     plan = make_plan()
     user = build_replan_messages(plan, plan.steps[-1], [("o1", "l", "s", "boom")])[-1]
     assert "Columns available when this step runs" in user["content"]
+
+
+def test_a_model_replan_is_told_which_ctx_keys_and_products_it_must_read() -> None:
+    from borges.analysis.models import Option, Step
+
+    def option(oid: str, spec: str) -> Option:
+        return Option(id=oid, label=oid, rationale="r", spec=spec, is_default=oid.endswith("0"))
+
+    covariates = Step(
+        id="cov",
+        title="Covariate set",
+        kind="feature",
+        description="d",
+        options=[option("c0", "ctx['covariates'] = []"), option("c1", "ctx['covariates'] = ['a']")],
+    )
+    score = Step(
+        id="sc",
+        title="Score",
+        kind="transform",
+        description="d",
+        produces=["score"],
+        options=[option("s0", "mean of items"), option("s1", "first component")],
+    )
+    model = Step(
+        id="m", title="Model", kind="model", description="d", options=[option("m0", "OLS")]
+    )
+    plan = make_plan().model_copy(update={"steps": [covariates, score, model]})
+    user = build_replan_messages(plan, model, [("m0", "l", "s", "boom")])[-1]["content"]
+    assert (
+        "must read ctx['covariates'], set differently by the earlier step 'Covariate set'" in user
+    )
+    assert "must use score, built by the earlier step 'Score'" in user
