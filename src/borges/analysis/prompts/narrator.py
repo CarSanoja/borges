@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
+from borges.analysis.narrative_robustness import robustness_sentence
 from borges.analysis.prompts import compact_json, messages
 from borges.garden.models import Report
 
@@ -48,6 +49,12 @@ def build_messages(
         user += (
             f"\nInclude this sentence verbatim in the summary, as its second sentence: "
             f"{flip_sentence}\nName no other option of that step as part of the flip."
+        )
+    robust = robustness_sentence(report)
+    if robust is not None:
+        user += (
+            f"\nInclude this sentence verbatim where you state robustness: {robust} A share in the "
+            "report's robustness fields is the share that AGREES with the original verdict."
         )
     if problems:
         user += "\nYour previous summary was rejected: " + "; ".join(problems) + "."

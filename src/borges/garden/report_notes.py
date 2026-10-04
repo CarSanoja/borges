@@ -36,10 +36,10 @@ def figure_caveats(
     notes.extend(flip_attribution_notes(flip, duplicates))
     if figures.basis == "design_weighted" and figures.beam is not None:
         notes.append(
-            f"Robustness headline is design-weighted ({figures.design:.0%}): "
-            f"{figures.design_note}. The share among the explored universes is "
-            f"{figures.beam:.0%}, but the beam search samples the universes that are closest to "
-            "flipping, so that figure leans toward flips."
+            f"Robustness headline: {figures.design:.0%} of the analysis grid agrees with the "
+            f"original verdict ({figures.design_note}). Among the universes the search explored, "
+            f"{figures.beam:.0%} agree, but the beam search samples the universes that are "
+            "closest to flipping, so that share leans toward flips."
         )
     if flip is not None and flip.estimand_change:
         notes.append(f"The minimal flip {flip.estimand_change}.")

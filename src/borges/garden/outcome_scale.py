@@ -6,7 +6,11 @@ from typing import Any
 
 from borges.garden.models import Garden, Universe
 
-LOG_WORDS = re.compile(r"\blog(?!it|istic|ic)|logarithm|percent|%", re.IGNORECASE)
+CHANGE = r"(?:more|less|fewer|higher|lower|increase|decrease|change|rise|drop)"
+LOG_WORDS = re.compile(
+    rf"\blog(?!it|istic|ic)|logarithm|(?:%|\bpercent(?:age)?)\s*(?:point\s+)?{CHANGE}",
+    re.IGNORECASE,
+)
 
 
 def log_outcome(universe: Universe) -> dict[str, Any] | None:

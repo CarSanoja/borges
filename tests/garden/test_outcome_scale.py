@@ -36,3 +36,5 @@ def test_log_words_are_recognised() -> None:
     assert mentions_log_scale("about 3% more deaths per unit")
     assert not mentions_log_scale("0.03 additional deaths")
     assert not mentions_log_scale("the logistic and logit models agree")
+    assert mentions_log_scale("a 3 percent increase in deaths")
+    assert not mentions_log_scale("95% CI from -0.05 to 0.11; 80% of the grid agrees")

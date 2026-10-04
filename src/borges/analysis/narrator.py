@@ -11,6 +11,11 @@ from borges.analysis.narrative_flip import (
     problems,
 )
 from borges.analysis.narrative_repeats import drop_repeated_sentences
+from borges.analysis.narrative_robustness import (
+    drop_inverted_sentences,
+    robustness_problems,
+    robustness_sentence,
+)
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
 from borges.analysis.prompts.narrator import build_messages
 from borges.analysis.schemas import NarratorOutput
@@ -65,7 +70,7 @@ async def _ask(
 
 
 def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | None) -> list[str]:
-    found = problems(plan, report, narrative)
+    found = [*problems(plan, report, narrative), *robustness_problems(report, narrative)]
     if scale is not None and not mentions_log_scale(narrative):
         found.append(f"it reads the estimate as additional units of the outcome, but {scale}")
     return found
@@ -95,9 +100,12 @@ async def narrate(
         second = drop_repeated_sentences(retry.narrative.strip())
         if not _issues(plan, report, second, scale) and NUMBER.search(second):
             return second, list(retry.caveats)
-    kept = drop_wrong_sentences(plan, report, narrative)
+    kept = drop_inverted_sentences(report, drop_wrong_sentences(plan, report, narrative))
     if sentence is not None and not has_sentence(kept, sentence):
         kept = insert_sentence(kept, sentence)
+    robust = robustness_sentence(report)
+    if robust is not None and not has_sentence(kept, robust):
+        kept = f"{kept} {robust}"
     if scale is not None and not mentions_log_scale(kept):
         kept = insert_sentence(kept, scale)
     return kept, list(out.caveats)
