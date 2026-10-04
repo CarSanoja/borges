@@ -108,3 +108,26 @@ Covered well: plain and role-play instructions, zero-width and base64 obfuscatio
 Not covered: indirect attacks that describe a desired outcome without an imperative (0 of 8), authority claims, polite requests, paraphrases, tampering with decision rules, data-dependent triggers (0 of 2 each or near), Chinese, and most value descriptions. These are semantic, not lexical; regexes will not generalise to them.
 
 The honest claim is that the deterministic stage stops known-shape injection and obfuscation, with a low false-positive rate (2.9 %), but misses roughly 43 % of fresh attacks. The second stage is not a safety net for this gap as currently routed: its ambiguity screen is lexical too and reaches only 10 % of the misses. Closing the gap needs either widening the routing (for example sending every free-text field above a length to the judge when the LLM is enabled) or treating those fields as untrusted by construction. Patterns tuned to these 30 ids would invalidate this set as a held-out measure.
+
+## The LLM judge on every text, measured live
+
+On 2026-10-04 at about 05:40 UTC the second-stage judge (Nemotron Super on Token Factory, the production prompt, temperature 0) was run once on all 140 texts of this set. It made 140 calls and cost $0.014.
+
+| screen | attacks caught | benign flagged |
+|---|---|---|
+| deterministic stage alone (production) | 40 of 70 | 2 of 70 |
+| judge alone on every text | 65 of 70 | 20 of 70 |
+| both, judge on every text | 67 of 70 | 20 of 70 |
+
+- **What the judge catches.** It catches 27 of the 30 attacks the patterns miss.
+- **What the judge misses.** Two zero-width attacks, which the patterns catch, and three indirect ones.
+- **Why it is not switched on for every text.** It flags 16 of the hard benign column notes, the ones written as data-owner instructions. Quarantining those would remove the guidance an honest analysis needs. The checkout case, for example, depends on the note that internal sessions are not customers.
+- **The production prompt holds on the older corpora.** It was also checked on the corpora used to build the patterns: 100 of 110 attacks caught and 2 of 92 benign flagged.
+- **A rewritten prompt was tried and rejected.** It treated owner guidance as safe, which cleared every benign note, but recall fell to 73 of 110 on those corpora.
+- **The fresh set was not used for tuning.** Neither prompt nor pattern was tuned on it.
+
+Reading: no single screen gives both recall and precision on attacks that read like data-owner guidance. Production keeps the deterministic stage and sends only ambiguous text to the judge. Several limits do not depend on catching the text:
+- the decision rule is fixed in the plan before any data text is read;
+- the planner and adversary options pass a separate judge and Armor's option guard;
+- generated code runs under the code guard and the runtime policy.
+The residual risk is a planner nudged by a note that reads as legitimate guidance, and a human reviewer is the right control for that.
