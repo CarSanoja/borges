@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { createRun, uploadDataset, type UploadResult } from "../../shared/api/client";
 import type { Health } from "../../shared/types/contracts";
+import { UploadCost } from "./UploadCost";
 import { PiiSummary } from "./PiiSummary";
 import { buildRequest, EMPTY_FORM, validateForm, type UploadForm } from "./uploadRequest";
 
@@ -122,6 +123,7 @@ export function UploadCard({ health, onOpenRun }: Props) {
             <button type="submit" className="btn btn-primary">
               Start the analysis
             </button>
+            {health && <UploadCost health={health} />}
           </fieldset>
         </form>
       )}
