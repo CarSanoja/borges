@@ -30,6 +30,7 @@ def workdir(tmp_path: Path) -> Path:
     year = rng.integers(1950, 2013, size=150).astype(float)
     frame = pd.DataFrame({"year": year, "elapsed": 2014.0 - year, "x": rng.normal(size=150)})
     frame["double_x"] = 2.0 * frame["x"]
+    frame["internal"] = 0.0
     frame["y"] = 0.4 * frame["x"] + 0.01 * frame["year"] + rng.normal(size=150)
     frame.to_parquet(tmp_path / "data.parquet")
     return tmp_path
@@ -59,3 +60,15 @@ def test_aliasing_that_involves_the_exposure_still_fails(workdir: Path) -> None:
     done = run_model(workdir, FIT)
     assert done.returncode == 1
     assert "rank-deficient or collinear" in (parse_error(done.stdout) or "")
+
+
+def test_an_all_zero_ctx_covariate_is_dropped_like_lm_does(workdir: Path) -> None:
+    with_ctx(workdir, ["year", "internal"])
+    done = run_model(workdir, FIT)
+    assert done.returncode == 0, done.stdout
+    traces, result = parse_output(done.stdout)
+    assert traces[0].note == ALIAS_NOTE + "internal"
+    frame = pd.read_parquet(workdir / "data.parquet")
+    reference = sm.OLS(frame["y"], sm.add_constant(frame[["year", "x"]])).fit(cov_type="HC3")
+    assert result is not None
+    assert result.estimate == pytest.approx(float(reference.params["x"]), rel=1e-8)

@@ -92,7 +92,6 @@ DESIGN_SOURCE = """
             fitted = x @ _np.linalg.lstsq(x, ones, rcond=None)[0]
             intercept = bool(_np.linalg.norm(fitted - ones) < 1e-6 * _math.sqrt(x.shape[0]))
             aliased, aliased_only = _alias_split(x, names, scaled, rank, frame_columns, allowed)
-            aliased_only = aliased_only and not dead
             terms = sorted(
                 {
                     _term_of(str(n), frame_columns)
@@ -107,9 +106,8 @@ DESIGN_SOURCE = """
                     "rank": rank,
                     "condition": None if not _math.isfinite(cond) else cond,
                     "deficient": bool(
-                        (rank < x.shape[1] and not aliased_only)
-                        or dead
-                        or (cond > __DESIGN_CONDITION_LIMIT__ and not aliased_only)
+                        not aliased_only
+                        and (rank < x.shape[1] or dead or cond > __DESIGN_CONDITION_LIMIT__)
                     ),
                     "aliased": aliased if aliased_only else [],
                     "dead": dead,
