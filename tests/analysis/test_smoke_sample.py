@@ -40,3 +40,22 @@ def test_a_group_sample_keeps_every_session_of_a_sampled_user() -> None:
 def test_without_a_repeating_id_rows_are_sampled() -> None:
     frame = sessions().drop(columns=["user_id"])
     assert len(sample_frame(frame, 300, 7)) == 300
+
+
+def test_a_rare_level_of_a_text_column_is_always_in_the_sample() -> None:
+    frame = sessions().drop(columns=["user_id"])
+    frame["default"] = "no"
+    frame.loc[frame.index[-3:], "default"] = "yes"
+    frame["flag"] = frame["session_id"] == 5
+    sample = sample_frame(frame, 300, 7)
+    assert set(sample["default"]) == {"no", "yes"} and set(sample["flag"]) == {True, False}
+    assert 300 < len(sample) <= 302
+
+
+def test_a_rare_level_brings_its_whole_group() -> None:
+    frame = sessions()
+    frame["plan"] = "free"
+    frame.loc[frame["user_id"] == 1999, "plan"] = "pro"
+    sample = sample_frame(frame, 500, 7)
+    assert "pro" in set(sample["plan"])
+    assert (sample["user_id"] == 1999).sum() == (frame["user_id"] == 1999).sum()
