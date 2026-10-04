@@ -3,6 +3,7 @@ from __future__ import annotations
 from borges.analysis.code_guard import check_code
 from borges.analysis.code_guard_ctx import ctx_read_violations, varying_ctx_keys
 from borges.analysis.code_guard_missing import missing_violations
+from borges.analysis.code_guard_produces import products_read_violations, unused_products
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.code_guard_wide import wide_columns, wide_dummy_violations
 from borges.analysis.models import AnalysisPlan, Option, Step
@@ -17,4 +18,5 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
         *found,
         *wide_dummy_violations(code, wide_columns(plan.dataset)),
         *ctx_read_violations(code, varying_ctx_keys(plan, step), intent),
+        *products_read_violations(code, unused_products(plan, step)),
     ]

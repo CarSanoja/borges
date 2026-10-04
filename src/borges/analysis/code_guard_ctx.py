@@ -12,7 +12,7 @@ UNADJUSTED = re.compile(
 )
 
 
-def _read_pattern(key: str) -> re.Pattern[str]:
+def ctx_read_pattern(key: str) -> re.Pattern[str]:
     return re.compile(rf"""ctx\s*(?:\[\s*|\.get\(\s*)["']{key}["'](?!\s*\]\s*(?:=(?!=)|\+=))""")
 
 
@@ -72,7 +72,7 @@ def varying_ctx_keys(plan: AnalysisPlan, step: Step) -> dict[str, str]:
                 key not in COLUMN_KEYS and not _names_columns(values, columns)
             ):
                 continue
-            reader = _read_pattern(key)
+            reader = ctx_read_pattern(key)
             later = [t for s in earlier[index + 1 :] for t in _text(s)]
             if not any(reader.search(t) for t in later):
                 found.setdefault(key, writer.title)

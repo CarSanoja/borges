@@ -84,7 +84,7 @@ def test_missing_effects_are_not_judged() -> None:
 TREAT = "def apply(df, ctx):\n    treat_variant = 1\n    return df"
 CONTROL = "def apply(df, ctx):\n    control_variant = 1\n    return df"
 CONTROL_FIXED = "def apply(df, ctx):\n    control_fixed = 1\n    return df"
-ESTIMATE = "def estimate(df, ctx):\n    model_marker = 1\n    return {}"
+ESTIMATE = "def estimate(df, ctx):\n    model_marker = 1\n    column = 'treated'\n    return {}"
 
 
 def feature_plan(produces: list[str]) -> AnalysisPlan:

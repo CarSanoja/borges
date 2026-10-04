@@ -26,6 +26,9 @@ NegativeBinomial, cluster-robust or robust covariance). No Bayesian models and n
 APIs unless the failed errors show them working.
 - A model option names its outcome, exposure, covariates and covariance estimator. No option may \
 change the estimand or reverse the direction of a variable.
+- Use the columns earlier steps produced (marked produced_earlier) and the ctx keys they set, \
+never rebuild them from the raw columns: the alternatives of an earlier step only matter if this \
+step reads what they produce.
 - Ids are short snake_case and new: never reuse the id of a failed option.
 - Every option spec must be self-contained and never say 'same as' another option: the coder \
 sees only the option it codes, so restate the full spec.
