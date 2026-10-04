@@ -22,7 +22,7 @@ def load() -> ModuleType:
 
 
 def run(status: str, flip_to: str | None = None, origin: str = "planner") -> dict[str, Any]:
-    changes = [{"to_option": "o1"}] if flip_to else []
+    changes = [{"to_option": "o1", "step_title": "Filter sessions"}] if flip_to else []
     return {
         "status": status,
         "run_id": f"r_{status}_{flip_to}",
@@ -55,6 +55,6 @@ def test_the_report_counts_completions_flips_and_failures(tmp_path: Path) -> Non
     text = module.render(module.load_batch(tmp_path), "abc1234", "2026-10-04")
     assert "**Runs completed: 2 of 4**" in text
     assert "| case_a | 2/4 | SHIP ×2 | 1/2 | 50%" in text
-    assert "| 1 | 20 (2) | $0.020 |" in text
+    assert "| 1 | Filter sessions ×1 | 20 (2) | $0.020 |" in text
     assert "options repaired after the smoke stage: 4" in text
     assert "LLMError: boom" in text and "unreadable JSON" in text

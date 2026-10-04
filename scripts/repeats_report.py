@@ -42,6 +42,9 @@ def load_run(path: Path) -> dict[str, Any]:
         "run": run.get("run_id"),
         "verdict": report.get("original_verdict"),
         "flip": bool(changes),
+        "flip_steps": " + ".join(
+            sorted(c.get("step_title") or c.get("step_id") or "?" for c in changes)
+        ),
         "adversary": any(origin.get(c.get("to_option")) == "adversary" for c in changes),
         "universes": report.get("n_universes") or 0,
         "failed": report.get("n_failed") or 0,
@@ -68,9 +71,11 @@ def _case_row(label: str, runs: list[dict[str, Any]]) -> str:
     costs = [r["cost"] for r in done if r["cost"] is not None]
     mean = sum(costs) / len(costs) if costs else 0.0
     rate = len(flips) / len(done) if done else 0.0
+    steps = "; ".join(f"{t} ×{n}" for t, n in Counter(r["flip_steps"] for r in flips).most_common())
     return (
         f"| {label} | {len(done)}/{len(runs)} | {verdicts} | {len(flips)}/{len(done)} | "
         f"{rate:.0%} ({low:.2f}–{high:.2f}) | {sum(r['adversary'] for r in flips)} | "
+        f"{steps or '—'} | "
         f"{sum(r['universes'] for r in done)} ({sum(r['failed'] for r in done)}) | ${mean:.3f} |"
     )
 
@@ -93,12 +98,14 @@ def render(rows: dict[str, list[dict[str, Any]]], commit: str, date: str) -> str
         f"{high:.2f}). Cost of the completed runs: ${cost:.2f}.",
         "",
         "| case | completed | verdicts | flip found | flip rate (95% CI) | adversary flips "
-        "| universes (failed) | cost per run |",
-        "|---|---|---|---|---|---|---|---|",
+        "| decision that flips | universes (failed) | cost per run |",
+        "|---|---|---|---|---|---|---|---|---|",
         *(_case_row(label, batch) for label, batch in sorted(rows.items())),
         "",
         "A flip is a defensible change of analysis choices that reverses the verdict; the flip "
-        "rate is how often a run finds one.",
+        "rate is how often a run finds one. The planner picks the original analysis anew in every "
+        "run, so the original verdict can differ between runs; the decision that flips it is the "
+        "finding to compare.",
         "",
         "## Self-corrections",
         "",
