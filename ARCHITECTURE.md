@@ -130,16 +130,16 @@ world.
 | Role | Model (Token Factory id) | Calls per run |
 |---|---|---|
 | planner | `nvidia/nemotron-3-super-120b-a12b` | 1 |
-| coder | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` | 1 per option (+1 repair max) |
+| coder | `nvidia/Nemotron-3_5-Lightning` (Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks) | 1 per option (+1 repair max) |
 | adversary | `nvidia/nemotron-3-super-120b-a12b` | 1 |
 | judge | `nvidia/nemotron-3-super-120b-a12b` | 1 per adversary option |
 | reviewer | `nvidia/nemotron-3-super-120b-a12b` | 1 per option, adversary options included |
 | narrator | `nvidia/Nemotron-3-Ultra-550b-a55b` | 1 |
 
-**Live cost, measured on 2 October 2026** (`evidence/live-runs.md`): a complete live run of one
-case cost $0.0145 to $0.0326 (22 to 41 calls, 38k to 86k input tokens). The development day
-made 45 live runs, 31 completed, $0.65 recorded and $0.76 in the spend ledger with the smoke
-checks. The scripted runs report 0 tokens and $0. Money controls:
+**Live cost, measured on 4 October 2026** (`evidence/live-runs.md`): a complete live run of one
+case cost $0.0225 to $0.0408 (23 to 40 calls, 59k to 132k input tokens). On 2 October the
+development day made 45 live runs, 31 completed, $0.65 recorded and $0.76 in the spend ledger
+with the smoke checks. The scripted runs report 0 tokens and $0. Money controls:
 - a content-addressed disk cache (`.borges/llm-cache/`), so repeated development runs are free;
 - a persistent spend ledger (`.borges/spend.json`) with a hard cap (`BORGES_SPEND_CAP_USD`),
   which raises before any call that would exceed it;
@@ -287,7 +287,7 @@ flowchart LR
 - `llm=scripted`: deterministic hand-built responses from `cases/<id>/fixtures/`, labelled
   `scripted`, 0 tokens, $0. Used by tests, CI and the offline demo.
 - `llm=nebius`: live Nemotron through Token Factory, with cache and spend cap. Ran live for
-  all five cases on 2 October 2026. `make live-smoke` checks the ids and one call per role;
+  all six cases on 4 October 2026. `make live-smoke` checks the ids and one call per role;
   `make record-live` records the cases under `BORGES_RUN_CAP_USD` into
   `cases/<id>/recorded-live/` and never overwrites `recorded/`. `borges reproduce --source
   live` re-executes a universe of those recordings.

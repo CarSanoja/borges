@@ -135,11 +135,12 @@ What exists, verified against the primary sources (September and October 2026):
    Borges's adversary reads the real row counts and estimates at a step, argues against the
    conclusion with code, and an independent judge scores how defensible each proposal is
    before it enters the garden. Designed and tested with scripted models, then run live once
-   per case on 2 October 2026. The r6 jury showed that two of those live flips do not stand as
-   findings: the checkout flip re-includes rows that the case's own column notes mark invalid
-   (a contaminated analysis, not an unprompted discovery), and the bank flip comes from a
-   collinear design matrix and a changed estimand. Five recordings, one per case, are not a
-   measure of how reliably the adversary proposes good forks.
+   per case; the six recordings of 4 October 2026 are the current ones. The r6 jury showed that two
+   of the 2 October live flips did not stand as findings. In the 4 October recordings the
+   checkout flip is not marked contaminated (the run starts from keeping all sessions and the
+   flip excludes internal ones), though the column notes still hint at it, and the bank run
+   found no flip. Six recordings, one per case, are not a measure of how reliably the adversary
+   proposes good forks.
 2. **The smallest defensible flip found.** It searches one change, then two, then three
    (at most 10 combinations per level) and re-executes the winner from scratch, so the output
    is a specific decision that turns yours around, not only a distribution. It is the
@@ -157,8 +158,8 @@ options in a plan, executed from shared checkpoints, an adversary proposes new o
 the conclusion, and each universe can be re-executed with `borges reproduce`. They are
 similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
 sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
-5,000 real model runs and a published study, while Borges has five live recordings (one per
-case, $0.0145 to $0.0326 each). We have not run their pipeline: it needs a live LLM API plus
+5,000 real model runs and a published study, while Borges has six live recordings (one per
+case, $0.0225 to $0.0408 each). We have not run their pipeline: it needs a live LLM API plus
 Docker and an Inspect set-up that we did not build. The
 measurable part, a fixed full grid over the same seeded options, was run offline (see
 "What a statistician would object to" and `evidence/grid_vs_search.md`); a head-to-head
@@ -177,14 +178,14 @@ against their agents on the same dataset still does not exist.
   teams' (red cards: 1.20 to 1.36 against 0.89 to 2.93).
 - Persona sampling covers choices an LLM analyst would make unprompted, including ones that
   no planner listed; Borges's coverage is limited by its planner and adversary.
-- Mature tools are used and checked by researchers today; Borges has five live recordings
+- Mature tools are used and checked by researchers today; Borges has six live recordings
   and no external users yet.
 
 ## What a statistician would object to
 
 Written as a skeptical reviewer would put it, each with Borges's honest answer. Items 1 to 6
 were answered with offline, scripted studies. Items 7 to 10 were raised by the live Nemotron
-runs of 2 October 2026 (`evidence/live-runs.md`); each came from a real failure and each has
+runs of 2 to 4 October 2026 (`evidence/live-runs.md`); each came from a real failure and each has
 a check that now catches it. One live recording per case is still not an estimate of how
 often a model gets these right.
 
@@ -276,12 +277,12 @@ often a model gets these right.
   `tests/sandbox/test_contree_live.py` passed in 41.8 s, a scripted `checkout_ab` run
   (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as
   the local backend, and a live `marp_religiosity` run on Nemotron plus ConTree
-  (`r_20261002T155440_0aa541`) completed 16 universes. The five live recordings used the
-  local backend.
+  (`r_20261002T155440_0aa541`) completed 16 universes. The six live recordings of 4 October
+  ran on ConTree.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
-- **Status:** all five cases ran live on Nemotron through Token Factory on 2 October 2026
-  (150 calls, $0.0145 to $0.0326 per case; `evidence/live-runs.md`), and each recorded
+- **Status:** six cases ran live on Nemotron through Token Factory on 4 October 2026
+  (196 calls, $0.0225 to $0.0408 per case; `evidence/live-runs.md`), and each recorded
   universe re-executes with `borges reproduce --source live`. The scripted replays remain as
   the offline path, hand-built and labelled as such. Still missing: a public URL, and any outside user.
 - **Enterprise fleet:** the same server reports seven controls (agent registry, runtime queue, memory bank,
@@ -312,7 +313,7 @@ Borges is finished when all of these hold, on a clean clone:
    - see the verdict card flip;
    - step into the flipping universe;
    - read the spec curve and the decision influence.
-   The web app plays the live Nemotron recordings by default (met on 2 October 2026, five
+   The web app plays the live Nemotron recordings by default (met on 4 October 2026, six
    cases). Scripted demo runs replay offline and cost nothing; they are hand-built, not live
    model runs, and are labelled as scripted replays. Live Nemotron runs stop when the spend
    cap is used up. Not yet met: there is no hosted demo.
