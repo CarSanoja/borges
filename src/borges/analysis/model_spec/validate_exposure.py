@@ -39,7 +39,7 @@ def exposure_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> 
     if not is_text(column):
         if level is not None:
             return [f"exposure '{name}' is numeric, so exposure_level must not be set"]
-        if spec.report == "marginal_effect":
+        if spec.report == "marginal_effect" and spec.family == "logit":
             return _binary_problems(name, column)
         return []
     if column.n_unique > MAX_LISTED_LEVELS:

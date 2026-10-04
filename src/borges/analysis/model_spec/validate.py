@@ -14,11 +14,16 @@ from borges.analysis.model_spec.validate_exposure import (
 from borges.analysis.model_spec.validate_standardized import standardized_problems
 from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.result_scale import detect_scale, is_proportion_rule
-from borges.analysis.scale_check import is_ratio_rule
+from borges.analysis.scale_check import is_difference_rule, is_ratio_rule
 
 COUNT_FAMILIES = ("poisson", "quasipoisson", "negbin")
 MAX_FIXED_EFFECT_LEVELS = 50
-MARGINAL_REPORTS = {"logit": "marginal_effect"}
+MARGINAL_REPORTS = {
+    "logit": "marginal_effect",
+    "poisson": "marginal_effect",
+    "quasipoisson": "marginal_effect",
+    "negbin": "marginal_effect",
+}
 RATIO_REPORTS = {
     "logit": "odds_ratio",
     "poisson": "rate_ratio",
@@ -170,6 +175,11 @@ def _scale_problems(spec: ModelSpecOutput, rule: DecisionRule | None) -> list[st
         spec.family == "ols" or spec.report in ("coefficient", "marginal_effect")
     ):
         return ["the decision rule compares a ratio with 1.0, so report a ratio"]
+    if spec.family in COUNT_FAMILIES and spec.report == "rate_ratio" and is_difference_rule(rule):
+        return [
+            "the decision rule compares a difference with 0, which a rate ratio does not report; "
+            "use report marginal_effect for additional events per unit of the exposure"
+        ]
     if spec.family == "logit" and spec.report != "marginal_effect" and is_proportion_rule(rule):
         return [
             "the decision rule is a difference in proportions, which a logit coefficient or odds "

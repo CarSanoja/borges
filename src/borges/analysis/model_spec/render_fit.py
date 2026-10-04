@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.model_spec.render_count_margins import count_margin_lines
 from borges.analysis.model_spec.render_design import design_term
 from borges.analysis.model_spec.schema import GEE_FAMILIES, GROUPED, ModelSpecOutput
 
@@ -77,7 +78,7 @@ def _margeff_lines(spec: ModelSpecOutput) -> list[str]:
 
 def result_lines(spec: ModelSpecOutput) -> list[str]:
     if spec.report == "marginal_effect":
-        return _margeff_lines(spec)
+        return _margeff_lines(spec) if spec.family == "logit" else count_margin_lines(spec)
     ratio = spec.report != "coefficient"
     lines = [
         f"    term = {design_term(spec)!r}",

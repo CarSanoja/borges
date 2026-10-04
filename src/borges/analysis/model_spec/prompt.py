@@ -41,8 +41,11 @@ coefficient or a ratio).
 when the decision rule asks for a standardised coefficient, z-score the outcome, the exposure \
 and any moderator.
 - report: "coefficient", "odds_ratio" (logit only), "rate_ratio" (count families only) or \
-"marginal_effect" (logit only, no moderator): the average marginal effect of the exposure on the \
-probability scale, the right report when the decision rule is a difference in proportions.
+"marginal_effect" (no moderator): for logit, the average marginal effect of a 0/1 exposure on the \
+probability scale, the right report when the decision rule is a difference in proportions; for \
+the count families, the average number of additional events per unit of a numeric exposure, the \
+right report when the decision rule asks for additional counts (deaths, cards, calls) rather than \
+a ratio. Never compute additional counts from exp(intercept).
 
 Use exact column names from the list of available columns. Categorical covariates are \
 dummy-encoded automatically. Set supported to false for anything else: mixed or multilevel \
