@@ -81,3 +81,18 @@ async def test_ids_already_taken_are_renamed() -> None:
 async def test_a_planner_failure_adds_nothing() -> None:
     plan = wide_plan({"a": 1, "m": 1})
     assert await propose_refill(FakeLLM({}), plan, plan.step("a"), []) == []
+
+
+async def test_a_refill_that_builds_its_result_under_another_name_is_left_out() -> None:
+    plan = wide_plan({"a": 1, "m": 1})
+    step = plan.step("a")
+    default = step.options[0].model_copy(update={"spec": "Create 'log_y' = log1p(outcome)."})
+    step = step.model_copy(update={"options": [default], "produces": ["log_y"]})
+    plan = plan.model_copy(update={"steps": [step, plan.step("m")]})
+    out = planned(
+        ("sqrt", "Create new column 'sqrt_y' = np.sqrt(outcome).", False),
+        ("asinh", "Create 'log_y' = np.arcsinh(outcome).", False),
+    )
+    llm = FakeLLM({"planner:refill:a": out})
+    options = await propose_refill(llm, plan, step, [(make_option("a1"), "no")])
+    assert [o.id for o in options] == ["asinh"]

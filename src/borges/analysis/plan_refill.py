@@ -5,6 +5,7 @@ from pydantic import ValidationError
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.option_references import expand_option
 from borges.analysis.planner import clean_id, unique_id
+from borges.analysis.planner_products import other_names
 from borges.analysis.planner_validation import MIN_BRANCHING_STEPS
 from borges.analysis.prompts.refill import build_refill_messages
 from borges.analysis.schemas import ReplanOutput
@@ -45,7 +46,12 @@ async def propose_refill(
         return []
     seen = {_signature(o.spec) for o in step.options} | {_signature(o.spec) for o, _ in rejected}
     taken = {o.id for o in step.options} | {o.id for o, _ in rejected}
-    fresh = [item for item in planned.options if _signature(item.spec) not in seen]
+    columns = {c.name for c in plan.dataset.columns}
+    fresh = [
+        item
+        for item in planned.options
+        if _signature(item.spec) not in seen and not other_names(step, item.spec, columns)
+    ]
     options = [
         Option(
             id=unique_id(clean_id(item.id, "option"), taken),

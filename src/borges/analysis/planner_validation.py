@@ -4,6 +4,7 @@ import re
 
 from borges.analysis.covariate_ids import listed_identifiers
 from borges.analysis.models import DatasetProfile
+from borges.analysis.planner_products import renamed_products, renamed_shortfall
 from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
 
@@ -70,6 +71,9 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
             "column names or ctx keys that every option of the step creates, under the same "
             f"name and meaning: {', '.join(missing)}."
         )
+    renamed = renamed_shortfall(renamed_products(steps, profile), steps)
+    if renamed is not None:
+        problems.append(renamed)
     listed = sorted(
         {name for s in steps for o in s.options for name in listed_identifiers(o.spec, profile)}
     )
