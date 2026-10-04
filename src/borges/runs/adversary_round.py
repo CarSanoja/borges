@@ -33,7 +33,7 @@ async def _smoke(
     ) -> tuple[str, str | None, str]:
         return await _smoke_repair(llm, plan, target, candidate, error, attempt)
 
-    outcome = await smoke_extra_option(smoke, repair, step, option)
+    outcome = await smoke_extra_option(smoke, repair, step, option, plan.steps)
     if outcome is None:
         return False, option
     if outcome.status != "failed":
