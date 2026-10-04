@@ -65,8 +65,11 @@ model step encodes them itself with drop_first=True.
 many) are never dummy fixed effects: a design with that many dummy columns is rank-deficient and \
 cannot be fitted. Cluster the standard errors on them or aggregate to that unit instead. The \
 profile gives n_unique for every column; check it before naming a categorical covariate.
-- Covariate sets are options of the model step: each model option names the covariates it \
-adjusts for. Never create a separate step that chooses covariates by dropping columns.
+- Never create a separate step that chooses covariates by dropping columns. When the plan has \
+an adjustment step (below), it is the only place covariates are chosen: no model option names a \
+covariate set of its own or says it uses no adjustment, every model option reads \
+ctx["covariates"], and a label such as "OLS adjusted for platform" duplicates that step. Without \
+an adjustment step, each model option names the covariates it adjusts for.
 - When the question is a regression-style association (does X relate to Y, the effect of X on \
 Y, a group difference that other variables could explain), the plan must contain BOTH an \
 adjustment step and a model step with real alternatives. The adjustment step (kind "feature") \

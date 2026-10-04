@@ -176,8 +176,10 @@ def test_planner_requires_alternatives_that_fit_the_data_as_described() -> None:
     )
 
 
-def test_planner_makes_covariate_sets_options_of_the_model_step() -> None:
-    assert "Covariate sets are options of the model step" in PLANNER_SYSTEM
+def test_planner_leaves_covariate_sets_to_the_adjustment_step() -> None:
+    text = " ".join(PLANNER_SYSTEM.split())
+    assert "it is the only place covariates are chosen" in text
+    assert "no model option names a covariate set of its own" in text
     assert "Never create a separate step that chooses covariates by dropping columns" in (
         PLANNER_SYSTEM
     )
