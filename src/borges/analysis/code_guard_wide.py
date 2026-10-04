@@ -6,12 +6,18 @@ import re
 from borges.analysis.models import DatasetProfile
 
 WIDE_LEVELS = 50
+CELL_LIMIT = 50_000_000
 
 
 def wide_columns(profile: DatasetProfile | None) -> dict[str, int]:
     if profile is None:
         return {}
-    return {c.name: c.n_unique for c in profile.columns if c.n_unique > WIDE_LEVELS}
+    rows = max(profile.n_rows, 1)
+    return {
+        c.name: c.n_unique
+        for c in profile.columns
+        if c.n_unique > WIDE_LEVELS and c.n_unique * rows > CELL_LIMIT
+    }
 
 
 def _names_in(node: ast.AST) -> set[str]:
@@ -43,9 +49,9 @@ def wide_dummy_violations(code: str, wide: dict[str, int]) -> list[str]:
         return []
     return [
         f"'{name}' has {levels} distinct values: dummy-coding it (C({name}) or get_dummies) "
-        f"builds {levels} columns, which does not fit in the sandbox and adds {levels} nuisance "
-        f"parameters; cluster the standard errors on it (cov_type='cluster', groups from "
-        f"'{name}') or leave it out"
+        f"builds a design with {levels} extra columns for every row, more than the sandbox memory "
+        f"holds; cluster the standard errors on it (cov_type='cluster', groups from '{name}') "
+        "or leave it out"
         for name, levels in sorted(wide.items())
         if _dummy_coded(tree, name)
     ]

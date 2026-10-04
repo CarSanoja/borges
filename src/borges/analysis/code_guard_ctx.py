@@ -49,6 +49,12 @@ def _names_columns(values: list[str | None], columns: set[str]) -> bool:
     return bool(flat) and all(c in columns for c in flat)
 
 
+def _varies(key: str, values: list[str | None]) -> bool:
+    written = [v for v in values if v is not None] if key not in COLUMN_KEYS else values
+    parsed = {repr(_names(v)) if _names(v) is not None else v for v in written}
+    return len(parsed) > 1
+
+
 def _columns(plan: AnalysisPlan) -> set[str]:
     created = {c for s in plan.steps for t in _text(s) for c in CREATED.findall(t)}
     return {c.name for c in plan.dataset.columns} | created
@@ -62,9 +68,9 @@ def varying_ctx_keys(plan: AnalysisPlan, step: Step) -> dict[str, str]:
         writes = [_writes(text) for text in _text(writer)]
         for key in set().union(*writes):
             values = [w.get(key) for w in writes]
-            if len(set(values)) < 2:
-                continue
-            if key not in COLUMN_KEYS and not _names_columns(values, columns):
+            if not _varies(key, values) or (
+                key not in COLUMN_KEYS and not _names_columns(values, columns)
+            ):
                 continue
             reader = _read_pattern(key)
             later = [t for s in earlier[index + 1 :] for t in _text(s)]

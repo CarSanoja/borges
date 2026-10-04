@@ -84,3 +84,12 @@ def test_a_key_whose_values_name_columns_counts() -> None:
     current.dataset.columns[0].name = "treatment"
     current.dataset.columns[1].name = "score"
     assert varying_ctx_keys(current, MODEL) == {"x_col": "Exposure"}
+
+
+def test_the_same_value_in_other_quotes_or_written_by_one_option_does_not_vary() -> None:
+    single, double = "ctx['col'] = 'cnorms_z'", 'ctx["col"] = "cnorms_z"'
+    same = step("n", "Norms", "transform", single, double)
+    one = step("r", "Religiosity", "transform", "df['r'] = 1", "ctx['rel'] = 'r'")
+    current = plan(same, one, MODEL)
+    current.dataset.columns[0].name = "cnorms_z"
+    assert varying_ctx_keys(current, MODEL) == {}

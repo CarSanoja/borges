@@ -31,5 +31,7 @@ def test_wide_columns_come_from_the_profile() -> None:
         ColumnProfile(name="refNum", dtype="int64", n_missing=0, n_unique=3147, summary={}),
         ColumnProfile(name="league", dtype="str", n_missing=0, n_unique=4, summary={}),
     ]
-    profile = DatasetProfile(name="d", n_rows=10, columns=columns)
-    assert wide_columns(profile) == {"refNum": 3147}
+    assert wide_columns(DatasetProfile(name="d", n_rows=146028, columns=columns)) == {
+        "refNum": 3147
+    }
+    assert wide_columns(DatasetProfile(name="d", n_rows=10000, columns=columns)) == {}
