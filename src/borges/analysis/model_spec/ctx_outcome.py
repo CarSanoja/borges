@@ -39,14 +39,18 @@ def outcome_instruction(names: list[str]) -> str:
     )
 
 
+def _with_outcome(spec: ModelSpecOutput, name: str, names: list[str]) -> ModelSpecOutput:
+    others = {spec.outcome, *names} - {name}
+    standardize = list(dict.fromkeys(name if c in others else c for c in spec.standardize))
+    return spec.model_copy(update={"outcome": name, "standardize": standardize})
+
+
 def pin_outcome(spec: ModelSpecOutput, names: list[str]) -> ModelSpecOutput:
-    if spec.outcome in names:
-        return spec
-    return spec.model_copy(update={"outcome": names[0]})
+    return _with_outcome(spec, spec.outcome if spec.outcome in names else names[0], names)
 
 
 def candidate_specs(spec: ModelSpecOutput, names: list[str]) -> list[ModelSpecOutput]:
-    return [spec.model_copy(update={"outcome": name}) for name in names]
+    return [_with_outcome(spec, name, names) for name in names]
 
 
 def read_ctx_outcome(code: str, outcome: str) -> str:

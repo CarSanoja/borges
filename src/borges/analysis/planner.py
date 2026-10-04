@@ -12,7 +12,7 @@ from borges.analysis.models import (
     Step,
 )
 from borges.analysis.option_references import normalise_plan
-from borges.analysis.planner_validation import plan_shortfalls
+from borges.analysis.planner_validation import plan_shortfalls, reads_the_result
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.result_scale import detect_scale
 from borges.analysis.schemas import PlannedStep, PlannerOutput
@@ -115,7 +115,8 @@ def _order_model_last(planned: list[PlannedStep]) -> list[PlannedStep]:
                     seen.add(option.id)
                     extra.append(option.model_copy(update={"is_default": False}))
         final = final.model_copy(update={"options": [*final.options, *extra]})
-    return [s for s in planned if s.kind != "model"] + [final]
+    dropped = set(reads_the_result(planned))
+    return [s for s in planned if s.kind != "model" and s.id not in dropped] + [final]
 
 
 async def _ask(llm: LLMClient, messages: list[dict[str, str]], key: str) -> PlannerOutput:

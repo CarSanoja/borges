@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import re
+
 from borges.analysis.covariate_ids import listed_identifiers
 from borges.analysis.models import DatasetProfile
 from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
 
 MIN_BRANCHING_STEPS = 3
+RESULT_NAMES = {"estimate", "ci_low", "ci_high", "p_value"}
+RESULT_TEXT = re.compile(r"\b(?:ci_low|ci_high|p_value)\b|\bmodel(?:'s)? (?:output|results?)\b")
 PRODUCING_KINDS = ("transform", "feature")
 
 
@@ -13,6 +17,17 @@ def _step_text(step: PlannedStep) -> str:
     parts = [step.title, step.description]
     parts.extend(f"{o.label} {o.rationale} {o.spec}" for o in step.options)
     return " ".join(parts).lower()
+
+
+def reads_the_result(steps: list[PlannedStep]) -> list[str]:
+    """Steps placed after the model step that read or format what the model returns."""
+    first = next((i for i, s in enumerate(steps) if s.kind == "model"), len(steps))
+    late = [s for s in steps[first + 1 :] if s.kind != "model"]
+    return [
+        s.id
+        for s in late
+        if RESULT_NAMES & set(s.produces) or RESULT_TEXT.search(_step_text(s)) is not None
+    ]
 
 
 def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[str]:
@@ -28,6 +43,13 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
         problems.append(
             "Only one step may have kind 'model'; merge these into one final model step whose "
             f"options are the alternative model families: {', '.join(models)}."
+        )
+    late = reads_the_result(steps)
+    if late:
+        problems.append(
+            "These steps come after the model step, which is the last step and returns the "
+            "result itself (estimate, ci_low, ci_high, p_value); no step can read or format its "
+            f"output, so remove them: {', '.join(late)}."
         )
     single = [s.id for s in steps if len(s.options) < 2]
     if single:

@@ -83,10 +83,12 @@ def test_a_covariate_aliased_with_the_exposure_is_dropped_instead_of_the_exposur
     assert got["estimate"] == pytest.approx(lean["estimate"], rel=1e-9)
 
 
-def test_a_constant_exposure_is_kept_for_the_design_check_to_refuse() -> None:
+def test_a_constant_exposure_is_refused_and_blamed_on_the_step_that_builds_it() -> None:
     data = aliased_frame().assign(x=1.0)
-    got = run(render_code(make_spec("ols", outcome="y", covariates=["w"])), data)
-    assert got["note"] == ""
+    with pytest.raises(ValueError, match="exposure x has the same value in every row") as raised:
+        run(render_code(make_spec("ols", outcome="y", covariates=["w"])), data)
+    assert "the earlier step that builds it produced a constant" in str(raised.value)
+    assert "numpy median" in str(raised.value)
 
 
 def test_covariates_that_rebuild_the_exposure_are_dropped_together() -> None:

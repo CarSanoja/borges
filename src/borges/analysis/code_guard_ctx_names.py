@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import re
 
+from borges.analysis.code_guard_ctx import COLUMN_KEYS
 from borges.analysis.models import Option, Step
 
 
@@ -28,8 +29,11 @@ def _ctx_writes(tree: ast.AST) -> dict[str, list[ast.expr]]:
 
 
 def ctx_name_violations(code: str, step: Step, option: Option) -> list[str]:
-    """A ctx entry named after a column this step builds must hold that column's name."""
-    names = [n for n in step.produces if _named_in_spec(n, option.spec)]
+    """A ctx entry named after a column this step builds must hold that column's name.
+
+    The keys that hold other columns' names by design (the covariate list, the outcome) and
+    entries that hold a list of names are left alone."""
+    names = [n for n in step.produces if n not in COLUMN_KEYS and _named_in_spec(n, option.spec)]
     if not names:
         return []
     try:
@@ -40,6 +44,8 @@ def ctx_name_violations(code: str, step: Step, option: Option) -> list[str]:
     for name in names:
         values = writes.get(name, [])
         if values and all(isinstance(v, ast.Constant) and v.value == name for v in values):
+            continue
+        if values and all(isinstance(v, ast.List | ast.Tuple) for v in values):
             continue
         held = ast.unparse(values[0]) if values else "nothing"
         problems.append(

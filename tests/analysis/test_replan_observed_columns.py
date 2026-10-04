@@ -63,4 +63,4 @@ def test_a_model_replan_is_told_which_ctx_keys_and_products_it_must_read() -> No
     assert (
         "must read ctx['covariates'], set differently by the earlier step 'Covariate set'" in user
     )
-    assert "must use score, built by the earlier step 'Score'" in user
+    assert "what the earlier step 'Score' builds must read score, never rebuild it" in user

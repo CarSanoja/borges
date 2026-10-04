@@ -83,9 +83,9 @@ def _reads(plan: AnalysisPlan, step: Step) -> str:
         for key, title in sorted(varying_ctx_keys(plan, step).items())
     ]
     lines += [
-        f"Every option must use {', '.join(names)}, built by the earlier step '{title}', instead "
-        "of rebuilding it.\n"
-        for title, (names, _) in sorted(unused_products(plan, step).items())
+        f"An option that needs what the earlier step '{title}' builds must read "
+        f"{', '.join(names)}, never rebuild it from the raw columns.\n"
+        for title, (names, _, _) in sorted(unused_products(plan, step).items())
     ]
     return "".join(lines)
 

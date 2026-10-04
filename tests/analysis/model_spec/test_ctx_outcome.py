@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 from borges.analysis import coder_checks
-from borges.analysis.model_spec.ctx_outcome import ctx_outcome_names
+from borges.analysis.model_spec.ctx_outcome import candidate_specs, ctx_outcome_names, pin_outcome
+from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.models import AnalysisPlan, ColumnProfile, Step
 from tests.analysis.fakes import make_option
 from tests.analysis.model_spec.test_request import GOOD_SPEC, code_welch, llm_with, plan_with_score
@@ -53,3 +54,21 @@ async def test_a_ctx_outcome_is_templated_and_read_at_run_time() -> None:
     first = namespace["estimate"](frame, {"outcome": "outcome"})["estimate"]
     second = namespace["estimate"](frame, {"outcome": "outcome2"})["estimate"]
     assert first == pytest.approx(2.0, abs=0.3) and second == pytest.approx(-1.0, abs=0.3)
+
+
+def test_a_standardised_outcome_follows_the_candidate() -> None:
+    spec = ModelSpecOutput.model_validate(
+        {
+            "supported": True,
+            "family": "ols",
+            "outcome": "wb_overall",
+            "exposure": "religiosity",
+            "standardize": ["wb_overall", "religiosity"],
+        }
+    )
+    names = ["wb_overall", "wb_psych"]
+    lists = [c.standardize for c in candidate_specs(spec, names)]
+    assert lists == [["wb_overall", "religiosity"], ["wb_psych", "religiosity"]]
+    other = spec.model_copy(update={"outcome": "wellbeing", "standardize": ["wellbeing"]})
+    pinned = pin_outcome(other, names)
+    assert pinned.outcome == "wb_overall" and pinned.standardize == ["wb_overall"]

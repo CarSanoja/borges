@@ -58,3 +58,23 @@ def test_a_spec_that_never_names_the_ctx_entry_is_not_checked() -> None:
     s = step()
     option = s.options[0].model_copy(update={"spec": "Add column 'religiosity' as the mean."})
     assert ctx_name_violations(body(""), s, option) == []
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("covariates", "['age', 'gender']"),
+        ("outcome", "'wb_overall_mean'"),
+        ("religiosity", "['rel_1', 'rel_2']"),
+    ],
+)
+def test_a_list_of_names_or_a_key_that_names_other_columns_is_left_alone(
+    key: str, value: str
+) -> None:
+    spec = f"Set ctx['{key}'] = {value}; return no new columns."
+    option = Option(id="o", label="l", rationale="r", spec=spec, is_default=True)
+    feature = Step(
+        id="s", title="t", kind="feature", description="d", produces=[key], options=[option]
+    )
+    code = f"def apply(df, ctx):\n    ctx['{key}'] = {value}\n    return df\n"
+    assert ctx_name_violations(code, feature, option) == []

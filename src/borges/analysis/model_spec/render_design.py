@@ -2,6 +2,14 @@ from __future__ import annotations
 
 from borges.analysis.model_spec.schema import INTERACTION_COLUMN, ModelSpecOutput
 
+INPUT_FAULT = "the earlier step that builds it"
+CONSTANT_EXPOSURE = (
+    " has the same value in every row, so it is collinear with the intercept and its effect "
+    f"cannot be estimated: {INPUT_FAULT} produced a constant. A threshold taken from a numpy "
+    "median, percentile or quantile is NaN when the column has missing values, and no row then "
+    "passes it. The pandas median and quantile methods skip missing values"
+)
+
 
 def design_term(spec: ModelSpecOutput) -> str:
     return INTERACTION_COLUMN if spec.moderator is not None else str(spec.exposure)
@@ -45,10 +53,18 @@ def _indicator_lines(column: str, level: str) -> list[str]:
     ]
 
 
+def _varies_lines(column: str) -> list[str]:
+    return [
+        f"    if len(data) and data[{column!r}].nunique() < 2:",
+        f"        raise ValueError('the exposure ' + {column!r} + {CONSTANT_EXPOSURE!r})",
+    ]
+
+
 def frame_lines(spec: ModelSpecOutput) -> list[str]:
     lines = ["    data = df.dropna(subset=used)"]
     if spec.exposure_level is not None:
         lines += _indicator_lines(str(spec.exposure), spec.exposure_level)
+    lines += _varies_lines(str(spec.exposure))
     if spec.standardize:
         lines += [
             f"    scaled = {spec.standardize!r}",
