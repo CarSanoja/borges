@@ -126,3 +126,16 @@ def test_wls_weights_pass() -> None:
         "    return {}\n"
     )
     assert check_code(code, "model") == []
+
+
+def test_a_link_class_instead_of_an_instance_is_refused() -> None:
+    body = (
+        "import statsmodels.api as sm\n\n\n"
+        "def estimate(df, ctx):\n"
+        "    fam = sm.families.Binomial(link=sm.families.links.Logit{call})\n"
+        "    fit = sm.GLM(df['y'], df[['x']], family=fam).fit()\n"
+        "    return float(fit.params['x'])\n"
+    )
+    found = check_code(body.format(call=""), "model")
+    assert any("link= takes an instance" in v for v in found)
+    assert not any("link=" in v for v in check_code(body.format(call="()"), "model"))

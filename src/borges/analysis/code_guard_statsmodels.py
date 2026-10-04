@@ -108,6 +108,16 @@ def _fit_violations(node: ast.Call) -> list[str]:
     return violations
 
 
+def _link_violations(node: ast.Call) -> list[str]:
+    """statsmodels refuses a link class: Binomial(link=links.Logit) raises TypeError."""
+    return [
+        f"line {node.lineno}: link= takes an instance of a link class, not the class; write "
+        "link=sm.families.links.Logit() (with the parentheses)"
+        for k in node.keywords
+        if k.arg == "link" and isinstance(k.value, ast.Attribute | ast.Name)
+    ]
+
+
 def _sets_covariance(tree: ast.AST) -> bool:
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
@@ -128,6 +138,7 @@ def statsmodels_violations(tree: ast.AST, intent: str = "") -> list[str]:
         if not isinstance(node, ast.Call):
             continue
         name = _call_name(node)
+        violations.extend(_link_violations(node))
         if name in MODEL_CLASSES:
             uses_model = True
             violations.extend(_constructor_violations(node, name))
