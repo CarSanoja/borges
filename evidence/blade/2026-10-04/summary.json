@@ -1,0 +1,2389 @@
+{
+  "generated_at": "2026-10-04T02:58:20Z",
+  "commit": "a5252e334ba319e656a6679df31317db4a7e5dd4",
+  "llm": "nebius",
+  "matcher": "llm:nvidia/nemotron-3-super-120b-a12b",
+  "arms": [
+    "planner",
+    "adversary"
+  ],
+  "repeats": 1,
+  "max_universes": 24,
+  "max_rows": 20000,
+  "estimated_cost_usd": 1.7249999999999999,
+  "total_cost_usd": 0.35817,
+  "aborted": null,
+  "skipped": {},
+  "notes": {
+    "soccer": "sampled 20000 of 146028 rows (seed 20240816) to bound sandbox time"
+  },
+  "method": "Borges explores universes (one analysis path each); every distinct universe is converted to BLADE's submission format (conceptual variables read off the executed code, transform code, model code). Matching follows BLADE: conceptual variables count as matched at similarity 8 or more; coverage is the share of expert decisions matched by any universe (for models the denominator is the smaller of the expert models and the analyses, because one analysis fits one model); hit rate is the mean share of a universe's decisions that match an expert decision. A kind whose matcher reply is unavailable is reported as missing, never as 0%. Transforms are matched semantically by the matcher, not by BLADE's data-value hashes, and BLADE's model-with-variables metric is not computed.",
+  "attribution": "Matching prompts adapted from BLADE (Gu et al. 2024, github.com/behavioral-data/BLADE, blade_bench/eval/llm, Apache-2.0). The variable and model prompts keep BLADE's criteria, its worked example, its numbered-JSON lists and its 5 to 10 similarity scale; BLADE matches transforms by data values instead, so the transform prompt is written for this benchmark in the same shape.",
+  "rows": [
+    {
+      "dataset": "affairs",
+      "arm": "planner",
+      "analyses": 4,
+      "universes_run": 4,
+      "run_cost_usd": 0.01492,
+      "matcher_cost_usd": 0.00326,
+      "run_ids": [
+        "r_20261004T024252_206969"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 9,
+          "n_agent_items": 9,
+          "matched_expert": 7,
+          "coverage": 0.7777777777777778,
+          "hit_rate": 0.7777777777777778,
+          "f1": 0.7777777777777778
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 5,
+          "n_agent_items": 2,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 9,
+          "n_agent_items": 4,
+          "matched_expert": 1,
+          "coverage": 0.1111111111111111,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.16666666666666666
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 7,
+            "similarity": 10
+          }
+        ],
+        "model": [],
+        "transform": [
+          {
+            "expert": 2,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.3148
+    },
+    {
+      "dataset": "affairs",
+      "arm": "adversary",
+      "analyses": 7,
+      "universes_run": 7,
+      "run_cost_usd": 0.01149,
+      "matcher_cost_usd": 0.00043,
+      "run_ids": [
+        "r_20261004T024347_b8ba9e"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 9,
+          "n_agent_items": 9,
+          "matched_expert": 7,
+          "coverage": 0.7777777777777778,
+          "hit_rate": 0.7777777777777778,
+          "f1": 0.7777777777777778
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 5,
+          "n_agent_items": 4,
+          "matched_expert": 2,
+          "coverage": 0.4,
+          "hit_rate": 0.42857142857142855,
+          "f1": 0.4137931034482759
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 9,
+          "n_agent_items": 4,
+          "matched_expert": 1,
+          "coverage": 0.1111111111111111,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.16666666666666666
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 7,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 2,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 2,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 2,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.4527
+    },
+    {
+      "dataset": "amtl",
+      "arm": "planner",
+      "analyses": 2,
+      "universes_run": 2,
+      "run_cost_usd": 0.02453,
+      "matcher_cost_usd": 0.00269,
+      "run_ids": [
+        "r_20261004T024428_39db2b"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 7,
+          "n_agent_items": 6,
+          "matched_expert": 6,
+          "coverage": 0.8571428571428571,
+          "hit_rate": 0.9166666666666667,
+          "f1": 0.8859060402684564
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 1,
+          "matched_expert": 1,
+          "coverage": 0.5,
+          "hit_rate": 1.0,
+          "f1": 0.6666666666666666
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 13,
+          "n_agent_items": 3,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 0,
+            "similarity": 8
+          },
+          {
+            "expert": 5,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 6,
+            "agent": 0,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 8
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.5175
+    },
+    {
+      "dataset": "amtl",
+      "arm": "adversary",
+      "analyses": 5,
+      "universes_run": 5,
+      "run_cost_usd": 0.01387,
+      "matcher_cost_usd": 0.00151,
+      "run_ids": [
+        "r_20261004T024534_035b4a"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 7,
+          "n_agent_items": 6,
+          "matched_expert": 6,
+          "coverage": 0.8571428571428571,
+          "hit_rate": 0.9333333333333333,
+          "f1": 0.8936170212765957
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 2,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 13,
+          "n_agent_items": 4,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 0,
+            "similarity": 8
+          },
+          {
+            "expert": 5,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 6,
+            "agent": 0,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.6312
+    },
+    {
+      "dataset": "boxes",
+      "arm": "planner",
+      "analyses": 3,
+      "universes_run": 3,
+      "run_cost_usd": 0.01329,
+      "matcher_cost_usd": 0.00226,
+      "run_ids": [
+        "r_20261004T024622_3e4cf7"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 5,
+          "n_agent_items": 5,
+          "matched_expert": 4,
+          "coverage": 0.8,
+          "hit_rate": 0.8000000000000002,
+          "f1": 0.8000000000000002
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 4,
+          "n_agent_items": 2,
+          "matched_expert": 2,
+          "coverage": 0.6666666666666666,
+          "hit_rate": 1.0,
+          "f1": 0.8
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 7,
+          "n_agent_items": 4,
+          "matched_expert": 1,
+          "coverage": 0.14285714285714285,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.2
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 9
+          }
+        ],
+        "transform": [
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.6
+    },
+    {
+      "dataset": "boxes",
+      "arm": "adversary",
+      "analyses": 4,
+      "universes_run": 4,
+      "run_cost_usd": 0.00861,
+      "matcher_cost_usd": 0.00062,
+      "run_ids": [
+        "r_20261004T024701_0a14d8"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 5,
+          "n_agent_items": 5,
+          "matched_expert": 4,
+          "coverage": 0.8,
+          "hit_rate": 0.8,
+          "f1": 0.8000000000000002
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 4,
+          "n_agent_items": 3,
+          "matched_expert": 2,
+          "coverage": 0.5,
+          "hit_rate": 0.75,
+          "f1": 0.6
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 7,
+          "n_agent_items": 4,
+          "matched_expert": 1,
+          "coverage": 0.14285714285714285,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.2
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 9
+          }
+        ],
+        "transform": [
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.5333
+    },
+    {
+      "dataset": "caschools",
+      "arm": "planner",
+      "analyses": 9,
+      "universes_run": 9,
+      "run_cost_usd": 0.0207,
+      "matcher_cost_usd": 0.00175,
+      "run_ids": [
+        "r_20261004T024729_84b8df"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 7,
+          "n_agent_items": 10,
+          "matched_expert": 6,
+          "coverage": 0.8571428571428571,
+          "hit_rate": 0.6394179894179894,
+          "f1": 0.7324427384529912
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 1,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 5,
+          "n_agent_items": 6,
+          "matched_expert": 2,
+          "coverage": 0.4,
+          "hit_rate": 0.14814814814814814,
+          "f1": 0.21621621621621623
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 8
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 8
+          },
+          {
+            "expert": 2,
+            "agent": 2,
+            "similarity": 8
+          },
+          {
+            "expert": 3,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 7,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 9,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.6496
+    },
+    {
+      "dataset": "caschools",
+      "arm": "adversary",
+      "analyses": 13,
+      "universes_run": 13,
+      "run_cost_usd": 0.00919,
+      "matcher_cost_usd": 0.0009,
+      "run_ids": [
+        "r_20261004T024823_1efc70"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 7,
+          "n_agent_items": 10,
+          "matched_expert": 6,
+          "coverage": 0.8571428571428571,
+          "hit_rate": 0.655128205128205,
+          "f1": 0.7426426062734648
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 1,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 5,
+          "n_agent_items": 7,
+          "matched_expert": 2,
+          "coverage": 0.4,
+          "hit_rate": 0.15384615384615385,
+          "f1": 0.2222222222222222
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 8
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 8
+          },
+          {
+            "expert": 2,
+            "agent": 2,
+            "similarity": 8
+          },
+          {
+            "expert": 3,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 7,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 9,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.655
+    },
+    {
+      "dataset": "crofoot",
+      "arm": "planner",
+      "analyses": 6,
+      "universes_run": 6,
+      "run_cost_usd": 0.01605,
+      "matcher_cost_usd": 0.00246,
+      "run_ids": [
+        "r_20261004T024852_2655d7"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 8,
+          "n_agent_items": 6,
+          "matched_expert": 4,
+          "coverage": 0.5,
+          "hit_rate": 0.7999999999999999,
+          "f1": 0.6153846153846154
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 2,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 14,
+          "n_agent_items": 6,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 0,
+            "similarity": 8
+          },
+          {
+            "expert": 3,
+            "agent": 5,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 9
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 9
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.5385
+    },
+    {
+      "dataset": "crofoot",
+      "arm": "adversary",
+      "analyses": 6,
+      "universes_run": 6,
+      "run_cost_usd": 0.00654,
+      "matcher_cost_usd": 0.0,
+      "run_ids": [
+        "r_20261004T024940_97becd"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 8,
+          "n_agent_items": 6,
+          "matched_expert": 4,
+          "coverage": 0.5,
+          "hit_rate": 0.7999999999999999,
+          "f1": 0.6153846153846154
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 2,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 14,
+          "n_agent_items": 6,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 0,
+            "similarity": 8
+          },
+          {
+            "expert": 3,
+            "agent": 5,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 9
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 9
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.5385
+    },
+    {
+      "dataset": "fish",
+      "arm": "planner",
+      "analyses": 12,
+      "universes_run": 12,
+      "run_cost_usd": 0.01914,
+      "matcher_cost_usd": 0.00207,
+      "run_ids": [
+        "r_20261004T025001_10739c"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 6,
+          "n_agent_items": 6,
+          "matched_expert": 5,
+          "coverage": 0.8333333333333334,
+          "hit_rate": 0.8166666666666668,
+          "f1": 0.824915824915825
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 5,
+          "n_agent_items": 3,
+          "matched_expert": 2,
+          "coverage": 0.4,
+          "hit_rate": 0.6666666666666666,
+          "f1": 0.5
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 12,
+          "n_agent_items": 5,
+          "matched_expert": 1,
+          "coverage": 0.08333333333333333,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.13333333333333333
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 3,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.4861
+    },
+    {
+      "dataset": "fish",
+      "arm": "adversary",
+      "analyses": 14,
+      "universes_run": 14,
+      "run_cost_usd": 0.00778,
+      "matcher_cost_usd": 0.00097,
+      "run_ids": [
+        "r_20261004T025051_8685c7"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 6,
+          "n_agent_items": 6,
+          "matched_expert": 5,
+          "coverage": 0.8333333333333334,
+          "hit_rate": 0.7988095238095239,
+          "f1": 0.8157062971067348
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 5,
+          "n_agent_items": 3,
+          "matched_expert": 2,
+          "coverage": 0.4,
+          "hit_rate": 0.7142857142857143,
+          "f1": 0.5128205128205129
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 12,
+          "n_agent_items": 7,
+          "matched_expert": 1,
+          "coverage": 0.08333333333333333,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.13333333333333333
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 3,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.4873
+    },
+    {
+      "dataset": "hurricane",
+      "arm": "planner",
+      "analyses": 4,
+      "universes_run": 4,
+      "run_cost_usd": 0.01395,
+      "matcher_cost_usd": 0.00182,
+      "run_ids": [
+        "r_20261004T025121_fdf47c"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 4,
+          "n_agent_items": 5,
+          "matched_expert": 4,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 3,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.3333333333333333,
+          "hit_rate": 0.5,
+          "f1": 0.4
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 6,
+          "n_agent_items": 4,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 2,
+            "similarity": 8
+          },
+          {
+            "expert": 2,
+            "agent": 3,
+            "similarity": 8
+          },
+          {
+            "expert": 3,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4667
+    },
+    {
+      "dataset": "hurricane",
+      "arm": "adversary",
+      "analyses": 16,
+      "universes_run": 16,
+      "run_cost_usd": 0.01143,
+      "matcher_cost_usd": 0.00231,
+      "run_ids": [
+        "r_20261004T025155_fbeb6e"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 4,
+          "n_agent_items": 6,
+          "matched_expert": 4,
+          "coverage": 1.0,
+          "hit_rate": 1.0,
+          "f1": 1.0
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 3,
+          "n_agent_items": 3,
+          "matched_expert": 1,
+          "coverage": 0.3333333333333333,
+          "hit_rate": 0.3125,
+          "f1": 0.3225806451612903
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 6,
+          "n_agent_items": 6,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 2,
+            "similarity": 8
+          },
+          {
+            "expert": 2,
+            "agent": 3,
+            "similarity": 8
+          },
+          {
+            "expert": 2,
+            "agent": 5,
+            "similarity": 8
+          },
+          {
+            "expert": 3,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4409
+    },
+    {
+      "dataset": "mortgage",
+      "arm": "planner",
+      "analyses": 2,
+      "universes_run": 2,
+      "run_cost_usd": 0.01321,
+      "matcher_cost_usd": 0.00232,
+      "run_ids": [
+        "r_20261004T025228_b16379"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 12,
+          "n_agent_items": 10,
+          "matched_expert": 9,
+          "coverage": 0.75,
+          "hit_rate": 0.9,
+          "f1": 0.8181818181818182
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.5,
+          "hit_rate": 0.5,
+          "f1": 0.5
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 22,
+          "n_agent_items": 3,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 3,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 9,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 7,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4394
+    },
+    {
+      "dataset": "mortgage",
+      "arm": "adversary",
+      "analyses": 2,
+      "universes_run": 2,
+      "run_cost_usd": 0.00396,
+      "matcher_cost_usd": 0.0,
+      "run_ids": [
+        "r_20261004T025303_3bf459"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 12,
+          "n_agent_items": 10,
+          "matched_expert": 9,
+          "coverage": 0.75,
+          "hit_rate": 0.9,
+          "f1": 0.8181818181818182
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.5,
+          "hit_rate": 0.5,
+          "f1": 0.5
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 22,
+          "n_agent_items": 3,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 3,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 9,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 7,
+            "similarity": 10
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4394
+    },
+    {
+      "dataset": "panda_nuts",
+      "arm": "planner",
+      "analyses": 12,
+      "universes_run": 12,
+      "run_cost_usd": 0.01389,
+      "matcher_cost_usd": 0.00266,
+      "run_ids": [
+        "r_20261004T025314_86f90a"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 10,
+          "n_agent_items": 6,
+          "matched_expert": 7,
+          "coverage": 0.7,
+          "hit_rate": 1.0,
+          "f1": 0.8235294117647058
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 5,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.2,
+          "hit_rate": 1.0,
+          "f1": 0.33333333333333337
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 11,
+          "n_agent_items": 6,
+          "matched_expert": 1,
+          "coverage": 0.09090909090909091,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.14285714285714288
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 1,
+            "similarity": 8
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 2,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.4332
+    },
+    {
+      "dataset": "panda_nuts",
+      "arm": "adversary",
+      "analyses": 12,
+      "universes_run": 12,
+      "run_cost_usd": 0.0067,
+      "matcher_cost_usd": 0.0,
+      "run_ids": [
+        "r_20261004T025356_be4ffe"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 10,
+          "n_agent_items": 6,
+          "matched_expert": 7,
+          "coverage": 0.7,
+          "hit_rate": 1.0,
+          "f1": 0.8235294117647058
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 5,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.2,
+          "hit_rate": 1.0,
+          "f1": 0.33333333333333337
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 11,
+          "n_agent_items": 6,
+          "matched_expert": 1,
+          "coverage": 0.09090909090909091,
+          "hit_rate": 0.3333333333333333,
+          "f1": 0.14285714285714288
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 4,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 5,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 1,
+            "similarity": 8
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": [
+          {
+            "expert": 2,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.4332
+    },
+    {
+      "dataset": "reading",
+      "arm": "planner",
+      "analyses": 7,
+      "universes_run": 7,
+      "run_cost_usd": 0.02915,
+      "matcher_cost_usd": 0.00313,
+      "run_ids": [
+        "r_20261004T025417_275561"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 18,
+          "n_agent_items": 15,
+          "matched_expert": 16,
+          "coverage": 0.8888888888888888,
+          "hit_rate": 0.8285714285714286,
+          "f1": 0.8576709796672828
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 3,
+          "n_agent_items": 3,
+          "matched_expert": 1,
+          "coverage": 0.3333333333333333,
+          "hit_rate": 0.7142857142857143,
+          "f1": 0.4545454545454545
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 14,
+          "n_agent_items": 5,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 9,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 11,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 7,
+            "similarity": 8
+          },
+          {
+            "expert": 10,
+            "agent": 12,
+            "similarity": 8
+          },
+          {
+            "expert": 11,
+            "agent": 13,
+            "similarity": 10
+          },
+          {
+            "expert": 12,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 13,
+            "agent": 7,
+            "similarity": 8
+          },
+          {
+            "expert": 14,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 16,
+            "agent": 12,
+            "similarity": 8
+          },
+          {
+            "expert": 17,
+            "agent": 7,
+            "similarity": 8
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4374
+    },
+    {
+      "dataset": "reading",
+      "arm": "adversary",
+      "analyses": 16,
+      "universes_run": 16,
+      "run_cost_usd": 0.01081,
+      "matcher_cost_usd": 0.00164,
+      "run_ids": [
+        "r_20261004T025531_51ee01"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 18,
+          "n_agent_items": 15,
+          "matched_expert": 16,
+          "coverage": 0.8888888888888888,
+          "hit_rate": 0.83125,
+          "f1": 0.8591037545417844
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 3,
+          "n_agent_items": 5,
+          "matched_expert": 1,
+          "coverage": 0.3333333333333333,
+          "hit_rate": 0.4375,
+          "f1": 0.37837837837837834
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 14,
+          "n_agent_items": 6,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 9
+          },
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 9,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 5,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 11,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 7,
+            "similarity": 8
+          },
+          {
+            "expert": 10,
+            "agent": 12,
+            "similarity": 8
+          },
+          {
+            "expert": 11,
+            "agent": 13,
+            "similarity": 10
+          },
+          {
+            "expert": 12,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 13,
+            "agent": 7,
+            "similarity": 8
+          },
+          {
+            "expert": 14,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 16,
+            "agent": 12,
+            "similarity": 8
+          },
+          {
+            "expert": 17,
+            "agent": 7,
+            "similarity": 8
+          }
+        ],
+        "model": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 0,
+            "agent": 3,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4125
+    },
+    {
+      "dataset": "soccer",
+      "arm": "planner",
+      "analyses": 8,
+      "universes_run": 8,
+      "run_cost_usd": 0.02115,
+      "matcher_cost_usd": 0.00525,
+      "run_ids": [
+        "r_20261004T025611_6db64b"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 16,
+          "n_agent_items": 9,
+          "matched_expert": 9,
+          "coverage": 0.5625,
+          "hit_rate": 1.0,
+          "f1": 0.72
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 9,
+          "n_agent_items": 2,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 38,
+          "n_agent_items": 5,
+          "matched_expert": 1,
+          "coverage": 0.02631578947368421,
+          "hit_rate": 0.16666666666666666,
+          "f1": 0.045454545454545456
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 7,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 10,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 13,
+            "agent": 5,
+            "similarity": 10
+          }
+        ],
+        "model": [],
+        "transform": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.2552
+    },
+    {
+      "dataset": "soccer",
+      "arm": "adversary",
+      "analyses": 8,
+      "universes_run": 8,
+      "run_cost_usd": 0.0053,
+      "matcher_cost_usd": 0.0,
+      "run_ids": [
+        "r_20261004T025702_276345"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 16,
+          "n_agent_items": 9,
+          "matched_expert": 9,
+          "coverage": 0.5625,
+          "hit_rate": 1.0,
+          "f1": 0.72
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 9,
+          "n_agent_items": 2,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 38,
+          "n_agent_items": 5,
+          "matched_expert": 1,
+          "coverage": 0.02631578947368421,
+          "hit_rate": 0.16666666666666666,
+          "f1": 0.045454545454545456
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 3,
+            "agent": 7,
+            "similarity": 10
+          },
+          {
+            "expert": 6,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 8,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 10,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 13,
+            "agent": 5,
+            "similarity": 10
+          }
+        ],
+        "model": [],
+        "transform": [
+          {
+            "expert": 0,
+            "agent": 1,
+            "similarity": 10
+          }
+        ]
+      },
+      "mean_f1": 0.2552
+    },
+    {
+      "dataset": "teachingratings",
+      "arm": "planner",
+      "analyses": 5,
+      "universes_run": 5,
+      "run_cost_usd": 0.01627,
+      "matcher_cost_usd": 0.00323,
+      "run_ids": [
+        "r_20261004T025718_192cf9"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 18,
+          "n_agent_items": 12,
+          "matched_expert": 12,
+          "coverage": 0.6666666666666666,
+          "hit_rate": 0.9062626262626262,
+          "f1": 0.7682164568884322
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.5,
+          "hit_rate": 1.0,
+          "f1": 0.6666666666666666
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 14,
+          "n_agent_items": 5,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 3,
+            "similarity": 8
+          },
+          {
+            "expert": 6,
+            "agent": 7,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 9,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 11,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 12,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 13,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 14,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 15,
+            "agent": 11,
+            "similarity": 8
+          },
+          {
+            "expert": 16,
+            "agent": 10,
+            "similarity": 8
+          }
+        ],
+        "model": [
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4783
+    },
+    {
+      "dataset": "teachingratings",
+      "arm": "adversary",
+      "analyses": 5,
+      "universes_run": 5,
+      "run_cost_usd": 0.00498,
+      "matcher_cost_usd": 0.0,
+      "run_ids": [
+        "r_20261004T025805_e814f2"
+      ],
+      "errors": [],
+      "metrics": {
+        "cvar": {
+          "kind": "cvar",
+          "n_expert": 18,
+          "n_agent_items": 12,
+          "matched_expert": 12,
+          "coverage": 0.6666666666666666,
+          "hit_rate": 0.9062626262626262,
+          "f1": 0.7682164568884322
+        },
+        "model": {
+          "kind": "model",
+          "n_expert": 2,
+          "n_agent_items": 2,
+          "matched_expert": 1,
+          "coverage": 0.5,
+          "hit_rate": 1.0,
+          "f1": 0.6666666666666666
+        },
+        "transform": {
+          "kind": "transform",
+          "n_expert": 14,
+          "n_agent_items": 5,
+          "matched_expert": 0,
+          "coverage": 0.0,
+          "hit_rate": 0.0,
+          "f1": 0.0
+        }
+      },
+      "pairs": {
+        "cvar": [
+          {
+            "expert": 0,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          },
+          {
+            "expert": 2,
+            "agent": 3,
+            "similarity": 8
+          },
+          {
+            "expert": 6,
+            "agent": 7,
+            "similarity": 10
+          },
+          {
+            "expert": 7,
+            "agent": 9,
+            "similarity": 10
+          },
+          {
+            "expert": 9,
+            "agent": 4,
+            "similarity": 10
+          },
+          {
+            "expert": 11,
+            "agent": 2,
+            "similarity": 10
+          },
+          {
+            "expert": 12,
+            "agent": 6,
+            "similarity": 10
+          },
+          {
+            "expert": 13,
+            "agent": 3,
+            "similarity": 10
+          },
+          {
+            "expert": 14,
+            "agent": 8,
+            "similarity": 10
+          },
+          {
+            "expert": 15,
+            "agent": 11,
+            "similarity": 8
+          },
+          {
+            "expert": 16,
+            "agent": 10,
+            "similarity": 8
+          }
+        ],
+        "model": [
+          {
+            "expert": 1,
+            "agent": 0,
+            "similarity": 10
+          },
+          {
+            "expert": 1,
+            "agent": 1,
+            "similarity": 10
+          }
+        ],
+        "transform": []
+      },
+      "mean_f1": 0.4783
+    }
+  ]
+}
