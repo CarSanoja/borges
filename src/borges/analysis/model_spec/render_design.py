@@ -61,7 +61,11 @@ def _varies_lines(column: str) -> list[str]:
 
 
 def frame_lines(spec: ModelSpecOutput) -> list[str]:
-    lines = ["    data = df.dropna(subset=used)"]
+    lines = [
+        "    data = df.dropna(subset=used)",
+        "    finite = [c for c in used if pd.api.types.is_numeric_dtype(data[c])]",
+        "    data = data[np.isfinite(data[finite].astype(float)).all(axis=1)]",
+    ]
     if spec.exposure_level is not None:
         lines += _indicator_lines(str(spec.exposure), spec.exposure_level)
     lines += _varies_lines(str(spec.exposure))
@@ -127,6 +131,9 @@ def exog_lines(spec: ModelSpecOutput) -> list[str]:
         "        dummies = pd.get_dummies(data[other].astype(str), drop_first=True, dtype=float)",
         "        parts.append(dummies)",
         "    exog = sm.add_constant(pd.concat(parts, axis=1), has_constant='add')",
+        "    labels = pd.Series(exog.columns.map(str))",
+        "    repeats = labels.groupby(labels).cumcount()",
+        "    exog.columns = [f'{c}_repeat{n}' if n else c for c, n in zip(labels, repeats)]",
         *ALIAS_LINES,
         f"    endog = data[{spec.outcome!r}].astype(float)",
     ]

@@ -116,3 +116,39 @@ def test_a_level_that_is_not_a_value_of_the_exposure_fails_loudly() -> None:
     spec = make_spec("ols", outcome="y", exposure="variant", exposure_level="treated")
     with pytest.raises(ValueError, match="exposure level treated is not a value"):
         run(render_code(spec), frame())
+
+
+def test_rows_with_an_infinite_value_in_a_used_column_are_left_out() -> None:
+    import numpy as np
+    import pandas as pd
+
+    from borges.analysis.model_spec.render import render_code
+    from tests.analysis.model_spec.data import make_spec
+
+    rng = np.random.default_rng(3)
+    frame = pd.DataFrame({"x": rng.normal(size=300), "z": rng.normal(size=300)})
+    frame["y"] = 0.5 * frame["x"] + rng.normal(size=300)
+    frame.loc[:9, "z"] = -np.inf
+    namespace: dict = {}
+    exec(render_code(make_spec("ols", outcome="y", exposure="x", covariates=["z"])), namespace)
+    out = namespace["estimate"](frame, {})
+    assert out["n"] == 290 and np.isfinite(out["estimate"])
+
+
+def test_a_dummy_that_repeats_an_upstream_column_name_is_dropped_as_an_alias() -> None:
+    import numpy as np
+    import pandas as pd
+
+    from borges.analysis.model_spec.render import render_code
+    from tests.analysis.model_spec.data import make_spec
+
+    rng = np.random.default_rng(4)
+    job = pd.Series(rng.choice(["a", "b", "missing"], size=400))
+    frame = pd.DataFrame({"x": rng.normal(size=400), "job": job})
+    frame["job_missing"] = (job == "missing").astype(float)
+    frame["y"] = 0.5 * frame["x"] + rng.normal(size=400)
+    spec = make_spec("ols", outcome="y", exposure="x", covariates=["job", "job_missing"])
+    namespace: dict = {}
+    exec(render_code(spec), namespace)
+    out = namespace["estimate"](frame, {})
+    assert np.isfinite(out["estimate"]) and out["n"] == 400
