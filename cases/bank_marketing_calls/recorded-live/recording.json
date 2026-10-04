@@ -1,0 +1,14 @@
+{
+  "run_id": "r_20261004T022158_acad7c",
+  "case_id": "bank_marketing_calls",
+  "recorded_at": "2026-10-04T02:21:58Z",
+  "commit": "36b2f77",
+  "dirty": false,
+  "llm": "nebius",
+  "backend": "contree",
+  "registry_sha": "6b236c9459e13091955a220a6ee8457eed4e1ae559e46dc8955af968f14f437d",
+  "cost_usd": 0.023289359999999995,
+  "n_universes": 7,
+  "verdict": "CAP THE CALLS",
+  "flipped_verdict": null
+}

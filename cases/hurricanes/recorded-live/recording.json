@@ -1,0 +1,14 @@
+{
+  "run_id": "r_20261004T023159_0d9d8d",
+  "case_id": "hurricanes",
+  "recorded_at": "2026-10-04T02:31:59Z",
+  "commit": "36b2f77",
+  "dirty": false,
+  "llm": "nebius",
+  "backend": "contree",
+  "registry_sha": "6b236c9459e13091955a220a6ee8457eed4e1ae559e46dc8955af968f14f437d",
+  "cost_usd": 0.02530338,
+  "n_universes": 17,
+  "verdict": "FEMININE NAMES DEADLIER",
+  "flipped_verdict": "NO CLEAR EVIDENCE"
+}

@@ -36,8 +36,11 @@ The objective set by the owner: complete every run first, then spend as little a
 | 2 | `7d6d73a` | Nano | 12/12 | $0.0287 | 45% / 21% | 69% | 36% |
 | 2 | `7d6d73a` | Lightning | 11/12 | $0.0269 | 72% / 9% | 97% | 65% |
 | 3 | `7d6d73a` + Lightning default | Lightning | 11/12 | $0.0302 | 55% / 19% | 90% | 79% |
+| 4 | `11be5ab` (step re-plan, cardinality rule) | Lightning | 12/12 | $0.0255 | 57% / 23% | 89% | 67% |
+| 5 | `273a4ff` (offset rule, spec retry) | Lightning | 12/12 | $0.0262 | 72% / 9% | 91% | 67% |
 
 Round 2 is the clean comparison: same commit, same hour, same cases, both arms in parallel.
+Rounds 4 and 5 confirm the fixes: 24 of 24 runs completed with Lightning as the coder.
 
 The pooled numbers are less clean, because round 1 ran before the fixes and round 3 ran after.
 
