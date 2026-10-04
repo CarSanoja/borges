@@ -43,6 +43,7 @@ class UniverseRunner:
         self.context = context
         self.restored = restored
         self.root_id = root_id
+        self.running: list[dict[str, str]] = []
 
     @property
     def remaining(self) -> int:
@@ -59,11 +60,33 @@ class UniverseRunner:
                 return step, option
         return None
 
-    async def _repair(self, universe: Universe, kind: UniverseKind) -> dict[str, str] | None:
+    def _in_use(self, step_id: str, option_id: str, mine: dict[str, str]) -> bool:
+        done = any(
+            u.status == "done" and u.choices.get(step_id) == option_id
+            for u in self.garden.universes.values()
+        )
+        others = [c for c in self.running if c is not mine]
+        return done or any(c.get(step_id) == option_id for c in others)
+
+    async def _swap(self, step: Step, option: Option) -> None:
+        index = next(i for i, o in enumerate(step.options) if o.id == option.id)
+        step.options[index] = option
+        coded = OptionCodedData(
+            step_id=step.id, option_id=option.id, ok=option.code is not None, attempts=2
+        )
+        await self.emitter.emit("option.coded", coded.model_dump(mode="json"))
+        await publish_plan(self.emitter, self.plan)
+
+    async def _repair(
+        self, universe: Universe, kind: UniverseKind, mine: dict[str, str]
+    ) -> tuple[dict[str, str], Step, Option] | None:
+        """Repair the option at fault once, unless other universes already ran its code."""
         target = self._repair_target(universe, kind)
         if target is None:
             return None
         step, option = target
+        if self._in_use(step.id, option.id, mine):
+            return None
         try:
             repaired = await repair_option(
                 self.llm, self.plan, step, option, universe.error or "unknown error"
@@ -72,14 +95,10 @@ class UniverseRunner:
             raise
         except Exception:
             return None
-        index = next(i for i, o in enumerate(step.options) if o.id == option.id)
-        step.options[index] = repaired
-        coded = OptionCodedData(
-            step_id=step.id, option_id=repaired.id, ok=repaired.code is not None, attempts=2
-        )
-        await self.emitter.emit("option.coded", coded.model_dump(mode="json"))
-        await publish_plan(self.emitter, self.plan)
-        return {**universe.choices, step.id: repaired.id}
+        if repaired.code == option.code:
+            return None
+        await self._swap(step, repaired)
+        return {**universe.choices, step.id: repaired.id}, step, option
 
     def _restore(self, universe_id: str) -> Universe:
         assert self.restored is not None
@@ -102,11 +121,19 @@ class UniverseRunner:
         full = {**self.plan.default_choices(), **choices}
         if self.restored and universe_id(full) in self.restored.ids:
             return self._restore(universe_id(full))
-        universe = await run_universe_traced(self.executor, choices, kind)
-        if universe.status == "failed":
-            repaired = await self._repair(universe, kind)
-            if repaired is not None:
-                universe = await run_universe_traced(self.executor, repaired, kind)
+        self.running.append(full)
+        try:
+            universe = await run_universe_traced(self.executor, choices, kind)
+            if universe.status == "failed":
+                repaired = await self._repair(universe, kind, full)
+                if repaired is not None:
+                    retried = await run_universe_traced(self.executor, repaired[0], kind)
+                    if retried.status == "failed":
+                        await self._swap(repaired[1], repaired[2])
+                    else:
+                        universe = retried
+        finally:
+            self.running.remove(full)
         self.garden.add(universe)
         if kind == "baseline":
             self.garden.baseline_id = universe.id
