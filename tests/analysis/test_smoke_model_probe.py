@@ -222,3 +222,17 @@ async def test_the_chain_inputs_of_every_earlier_step_run_in_parallel(
     cfg = config(tmp_path, Recorder())
     await code_plan(llm, wide, smoke=cfg)
     assert peak == 4
+
+
+async def test_an_upstream_filter_that_empties_the_sample_is_not_blamed(tmp_path: Path) -> None:
+    empties = "def apply(df, ctx):\n    ctx['covariates'] = []\n    return df.iloc[0:0]"
+    strict = MODEL.replace(
+        "    cols =", "    import numpy as np\n    np.max(df['outcome'].to_numpy())\n    cols ="
+    )
+    llm = FakeLLM(scripted(empties, OTHER, **{"coder:m1.ols": strict}))
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, plan(True), smoke=cfg)
+    assert [o.id for o in coded.step("c1").options] == ["none", "alt0"]
+    assert cfg.state.notes == []
+    used = llm.keys()
+    assert not [k for k in used if ":smoke" in k]

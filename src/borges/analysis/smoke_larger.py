@@ -21,12 +21,21 @@ SINGULAR_PATTERN = re.compile(
     r"singular|collinear|perfect\s*separation|perfectseparation|linalgerror", re.IGNORECASE
 )
 
+EMPTY_PATTERN = re.compile(
+    r"zero-size array|\bempty\b|no (?:rows|observations)|\b0 (?:rows|observations)\b",
+    re.IGNORECASE,
+)
+
 Executed = tuple[Checkpoint | None, str | None, dict[str, Any] | None, dict[str, Any] | None]
 Run = Callable[["SmokeConfig", Checkpoint, Step, Option], Awaitable[Executed]]
 
 
 def is_singular_error(error: str | None) -> bool:
     return bool(error) and SINGULAR_PATTERN.search(error or "") is not None
+
+
+def is_sample_artefact(error: str | None) -> bool:
+    return is_singular_error(error) or EMPTY_PATTERN.search(error or "") is not None
 
 
 def larger_sample(data: bytes, limit: int = LARGE_MAX_ROWS) -> tuple[bytes, int]:

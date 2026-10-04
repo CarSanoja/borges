@@ -8,7 +8,7 @@ from borges.analysis.models import CodingSummary, Option, Step
 from borges.analysis.smoke_chain import model_input
 from borges.analysis.smoke_collision import resolve_extra
 from borges.analysis.smoke_core import smoke_option
-from borges.analysis.smoke_larger import is_singular_error, smoke_rows
+from borges.analysis.smoke_larger import is_sample_artefact, smoke_rows
 from borges.analysis.smoke_review import _re_review
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
@@ -42,7 +42,7 @@ async def probe_option(
 ) -> str | None:
     isolated = replace(config, larger=None)
     tried = await smoke_option(isolated, repair, checkpoint, model, option, budget=0)
-    if tried.status != "failed" or is_singular_error(tried.error):
+    if tried.status != "failed" or is_sample_artefact(tried.error):
         return None
     return tried.error or "unknown error"
 
