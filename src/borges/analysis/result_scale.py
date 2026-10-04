@@ -2,15 +2,23 @@ from __future__ import annotations
 
 import re
 
-from borges.analysis.models import AnalysisResult
+from borges.analysis.models import AnalysisResult, DecisionRule
 
 PERCENTAGE_POINTS = re.compile(r"percentage[\s-]*points?|\bpps?\b", re.IGNORECASE)
+PROPORTION_WORDS = re.compile(
+    r"proportion|probabilit|risk difference|rate difference|absolute (lift|difference|effect)",
+    re.IGNORECASE,
+)
 SCALED_KEYS = ("estimate", "ci_low", "ci_high")
 PERCENT_SCALE = 100.0
 
 
 def detect_scale(metric: str) -> float:
     return PERCENT_SCALE if PERCENTAGE_POINTS.search(metric) else 1.0
+
+
+def is_proportion_rule(rule: DecisionRule) -> bool:
+    return PROPORTION_WORDS.search(rule.metric) is not None and "ratio" not in rule.metric.lower()
 
 
 def scale_error(raw: dict[str, object] | AnalysisResult, scale: float) -> str | None:

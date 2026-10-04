@@ -77,3 +77,29 @@ def test_marginal_effect_is_refused_elsewhere() -> None:
     assert any("moderator" in p for p in problems("logit", moderator="m", **fields))
     assert any("ratio" in p for p in problems("logit", RATIO_RULE, **fields))
     assert any("0/1" in p for p in problems("logit", exposure="wide", report="marginal_effect"))
+
+
+def test_marginal_effect_refuses_a_standardized_exposure() -> None:
+    result = problems("logit", PP_RULE, exposure="x", report="marginal_effect", standardize=["x"])
+    assert any("unscaled" in p for p in result)
+
+
+def test_marginal_effect_needs_a_zero_one_numeric_exposure() -> None:
+    PROFILE.columns.append(column("coded12", "float64", 2, min=1.0, max=2.0))
+    try:
+        result = problems("logit", PP_RULE, exposure="coded12", report="marginal_effect")
+    finally:
+        PROFILE.columns.pop()
+    assert any("0/1" in p for p in result)
+    assert problems("logit", PP_RULE, exposure="x", report="marginal_effect") == []
+
+
+def test_a_proportion_rule_without_percentage_points_still_needs_marginal_effect() -> None:
+    rule = DecisionRule(
+        metric="difference in conversion proportions, treatment minus control",
+        comparator=Comparator.GT,
+        threshold=0.0,
+    )
+    assert any("marginal_effect" in p for p in problems("logit", rule, exposure="x"))
+    assert problems("logit", rule, exposure="x", report="marginal_effect") == []
+    assert problems("ols", rule, exposure="x") == []

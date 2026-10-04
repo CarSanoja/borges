@@ -7,7 +7,7 @@ from borges.analysis.model_spec.validate_exposure import (
     profile_of,
 )
 from borges.analysis.models import DatasetProfile, DecisionRule
-from borges.analysis.result_scale import detect_scale
+from borges.analysis.result_scale import detect_scale, is_proportion_rule
 from borges.analysis.scale_check import is_ratio_rule
 
 COUNT_FAMILIES = ("poisson", "negbin")
@@ -155,6 +155,11 @@ def _scale_problems(spec: ModelSpecOutput, rule: DecisionRule | None) -> list[st
         spec.family == "ols" or spec.report in ("coefficient", "marginal_effect")
     ):
         return ["the decision rule compares a ratio with 1.0, so report a ratio"]
+    if spec.family == "logit" and spec.report != "marginal_effect" and is_proportion_rule(rule):
+        return [
+            "the decision rule is a difference in proportions, which a logit coefficient or odds "
+            "ratio does not report; use report marginal_effect"
+        ]
     return []
 
 

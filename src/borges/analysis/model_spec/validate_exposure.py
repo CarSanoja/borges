@@ -21,16 +21,25 @@ def column_levels(column: ColumnProfile) -> list[str]:
     return [v.rsplit(": ", 1)[0] for v in values]
 
 
+def _binary_problems(name: str | None, column: ColumnProfile) -> list[str]:
+    low, high = column.summary.get("min"), column.summary.get("max")
+    if column.n_unique > 2 or (low is not None and high is not None and (low, high) != (0, 1)):
+        return [f"marginal_effect needs a 0/1 exposure; '{name}' has {column.n_unique} values"]
+    return []
+
+
 def exposure_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
-    column = profile_of(profile, spec.exposure) if spec.exposure is not None else None
+    name, level = spec.exposure, spec.exposure_level
+    if spec.report == "marginal_effect" and name in spec.standardize:
+        return [f"marginal_effect needs the exposure '{name}' unscaled: remove it from standardize"]
+    column = profile_of(profile, name) if name is not None else None
     if column is None:
         return []
-    name, level = spec.exposure, spec.exposure_level
     if not is_text(column):
         if level is not None:
             return [f"exposure '{name}' is numeric, so exposure_level must not be set"]
-        if spec.report == "marginal_effect" and column.n_unique > 2:
-            return [f"marginal_effect needs a 0/1 exposure; '{name}' has {column.n_unique} values"]
+        if spec.report == "marginal_effect":
+            return _binary_problems(name, column)
         return []
     if column.n_unique != 2:
         return [f"exposure '{name}' is text with {column.n_unique} levels: only two are allowed"]
