@@ -29,3 +29,15 @@ def test_an_outcome_chosen_in_prose_is_a_key_the_model_must_read() -> None:
         "Use the pre-existing wb_psych_mean column. Write 'wb_psych_mean' to ctx['outcome'].",
     )
     assert varying_ctx_keys(plan(outcome, MODEL), MODEL) == {"outcome": "Select well-being outcome"}
+
+
+def test_a_cluster_column_or_none_chosen_by_an_earlier_step_must_be_read() -> None:
+    adjust = step(
+        "adj",
+        "Adjust",
+        "feature",
+        "ctx['covariates'] = []\nctx['cluster_col'] = None",
+        "ctx['covariates'] = []\nctx['cluster_col'] = 'group'",
+    )
+    found = varying_ctx_keys(plan(adjust, MODEL), MODEL)
+    assert found == {"cluster_col": "Adjust"}

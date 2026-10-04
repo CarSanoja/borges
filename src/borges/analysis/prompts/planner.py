@@ -72,7 +72,9 @@ Y, a group difference that other variables could explain), the plan must contain
 adjustment step and a model step with real alternatives. The adjustment step (kind "feature") \
 has options that are alternative covariate sets, for example none, a minimal set and an \
 extended set; each option writes the chosen column names to ctx["covariates"] and never drops \
-columns, and the model step reads that list. The model step has at least two options from \
+columns, and the model step reads that list. The adjustment step writes only ctx["covariates"]: \
+the covariance estimator and any cluster column are chosen by the model step's options, never \
+stored in ctx by an earlier step. The model step has at least two options from \
 different model families (for example OLS against logistic regression or a GLM, or a plain \
 fit against cluster-robust or mixed effects); two options that differ only in covariates or in \
 the covariance estimator are not two model families. Every dummy-coded categorical covariate \

@@ -46,6 +46,8 @@ def _names(value: str | None) -> list[str] | None:
         parsed = ast.literal_eval(value.rstrip(")").strip())
     except (ValueError, SyntaxError, MemoryError, RecursionError):
         return None
+    if parsed is None:
+        return []
     items = [parsed] if isinstance(parsed, str) else parsed
     if not isinstance(items, list | tuple) or not all(isinstance(i, str) for i in items):
         return None
