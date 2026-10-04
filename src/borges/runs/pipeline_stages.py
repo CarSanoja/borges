@@ -4,8 +4,8 @@ from collections.abc import Awaitable
 from typing import TYPE_CHECKING
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.duplicates import excluded_options
 from borges.garden.models import Universe
-from borges.garden.noop import noop_options
 from borges.garden.sampling import (
     MIN_SAMPLE,
     SAMPLE_DRAWS,
@@ -79,7 +79,7 @@ async def run_uniform_sample(
     pipeline: Pipeline, plan: AnalysisPlan, runner: UniverseRunner
 ) -> None:
     garden = pipeline.garden
-    noops = noop_options(plan, garden)
+    noops = excluded_options(plan, garden)
     draws = draw_grid(plan, noops)
     kept, new = affordable_prefix(draws, garden, runner.remaining)
     if len(kept) < MIN_SAMPLE:

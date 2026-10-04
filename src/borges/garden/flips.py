@@ -4,9 +4,10 @@ from typing import Literal
 
 from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator, DecisionRule
 from borges.garden.contamination import contamination_reason
+from borges.garden.duplicates import excluded_options
 from borges.garden.estimand import estimand_detail
 from borges.garden.models import Change, Flip, Garden, Universe
-from borges.garden.noop import has_noop, noop_options, noop_pairs
+from borges.garden.noop import has_noop, noop_pairs
 
 UNKNOWN_DEFENSIBILITY = 0.9
 
@@ -77,7 +78,7 @@ def ranked_flips(plan: AnalysisPlan, garden: Garden) -> list[Flip]:
     baseline = garden.baseline
     if baseline is None or baseline.result is None or baseline.verdict is None:
         return []
-    pairs = noop_pairs(noop_options(plan, garden))
+    pairs = noop_pairs(excluded_options(plan, garden))
     scored: list[tuple[tuple[bool, bool, int, float, float], Flip]] = []
     for universe in garden.finished():
         if universe.flipped is not True or universe.verdict is None or universe.result is None:

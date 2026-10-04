@@ -68,6 +68,12 @@ class NoopOption(BaseModel):
     reason: str
 
 
+class DuplicateOption(NoopOption):
+    kept_option_id: str
+    kept_label: str
+    kept_origin: str
+
+
 class EstimandChange(BaseModel):
     step_id: str
     option_id: str
@@ -104,6 +110,7 @@ class Report(BaseModel):
     robustness_rating: float | None = None
     robustness_rating_reason: str | None = None
     noop_options: list[NoopOption] = Field(default_factory=list)
+    duplicate_options: list[DuplicateOption] = Field(default_factory=list)
     estimand_changes: list[EstimandChange] = Field(default_factory=list)
     contaminated_flip: Flip | None = None
     narrator_input_tokens: int | None = None

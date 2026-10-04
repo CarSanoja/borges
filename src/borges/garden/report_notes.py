@@ -1,16 +1,25 @@
 from __future__ import annotations
 
-from borges.garden.models import Flip, NoopOption
+from borges.analysis.models import AnalysisPlan
+from borges.garden.models import DuplicateOption, Flip, NoopOption
+from borges.garden.report_duplicate_notes import (
+    dead_step_notes,
+    duplicate_notes,
+    flip_attribution_notes,
+)
 from borges.garden.robustness import RobustnessFigures
 
 
 def figure_caveats(
+    plan: AnalysisPlan,
     n_universes: int,
     figures: RobustnessFigures,
     noops: list[NoopOption],
     flip: Flip | None,
     contaminated: Flip | None,
+    duplicates: list[DuplicateOption] | None = None,
 ) -> list[str]:
+    duplicates = duplicates or []
     notes: list[str] = []
     if figures.n_distinct and figures.n_distinct < n_universes:
         notes.append(
@@ -22,6 +31,9 @@ def figure_caveats(
             f"The option '{noop.label}' ({noop.step_id}) is a no-op: {noop.reason}. It is "
             "excluded from the robustness share and from the flip search."
         )
+    notes.extend(dead_step_notes(plan, noops))
+    notes.extend(duplicate_notes(duplicates))
+    notes.extend(flip_attribution_notes(flip, duplicates))
     if figures.basis == "design_weighted" and figures.beam is not None:
         notes.append(
             f"Robustness headline is design-weighted ({figures.design:.0%}): "

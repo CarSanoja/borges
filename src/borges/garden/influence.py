@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.duplicates import duplicate_options
 from borges.garden.estimand import estimand_changes
 from borges.garden.flips import ranked_flips
 from borges.garden.models import DecisionInfluence, Flip, Garden, Report
@@ -69,7 +70,8 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
     finished = garden.finished()
     failed = failed_universes(garden)
     noops = noop_options(plan, garden)
-    figures = robustness_figures(plan, garden, noops)
+    duplicates = duplicate_options(plan, garden, noops)
+    figures = robustness_figures(plan, garden, [*noops, *duplicates])
     estimands = estimand_changes(plan, garden)
     contaminated = next((f for f in ranked_flips(plan, garden) if f.contaminated), None)
     return Report(
@@ -89,12 +91,13 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         robustness_rating=figures.rating,
         robustness_rating_reason=figures.rating_reason,
         noop_options=noops,
+        duplicate_options=duplicates,
         estimand_changes=estimands,
         contaminated_flip=contaminated,
         n_failed=len(failed),
         failed=failed,
         caveats=[
             *reversal_caveats(garden),
-            *figure_caveats(len(finished), figures, noops, flip, contaminated),
+            *figure_caveats(plan, len(finished), figures, noops, flip, contaminated, duplicates),
         ],
     )
