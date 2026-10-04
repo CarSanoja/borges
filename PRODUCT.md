@@ -266,11 +266,14 @@ often a model gets these right.
 - **NVIDIA Nemotron 3 on Nebius Token Factory**, three models in seven roles:
   - Super 120B plans, argues as the adversary, judges defensibility, repairs failed code and
     reviews every option's code against its spec;
-  - Nano 30B writes the code for every branch (cheap and massively parallel);
+  - `nvidia/Nemotron-3_5-Lightning` writes the code for every branch (cheap and massively
+    parallel), as the recordings show; it was chosen by measurement (`evidence/coder-choice.md`),
+    replacing Nano 30B;
   - Ultra 550B writes the report from a bounded structured summary of the garden (the
     verdicts, the flip, the influences and the caveats), not from every universe: the
-    narrator call is about 1.2k tokens in on the recorded runs, and `Report.narrator_input_tokens`
-    records the estimate for each run. Its 1M-token context window is not used.
+    narrator call is 2,610 to 4,497 tokens in on the recorded runs, and
+    `Report.narrator_input_tokens` records the estimate for each run. Ultra (550B) is used only
+    for this ~3-4.5k-token summary; its 1M-token context window is not used.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
   checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
   and contract-tested with a fake SDK. It ran against the real service on 2 October 2026:

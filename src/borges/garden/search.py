@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator
+from borges.garden.duplicates import excluded_options
 from borges.garden.executor_ids import universe_id
 from borges.garden.flips import (
     UNKNOWN_DEFENSIBILITY,
@@ -10,7 +11,7 @@ from borges.garden.flips import (
     ranked_flips,
 )
 from borges.garden.models import Flip, Garden, Universe
-from borges.garden.noop import noop_options, noop_pairs
+from borges.garden.noop import noop_pairs
 
 Z_95 = 1.96
 
@@ -61,7 +62,7 @@ def combination_flip_choices(
     if baseline is None or baseline.result is None or limit <= 0 or size < 2:
         return []
     finished = [u for u in garden.finished() if u.kind != "verification"]
-    skipped = noop_pairs(noop_options(plan, garden))
+    skipped = noop_pairs(excluded_options(plan, garden))
     singles = [
         (_movement(plan, baseline, u), u.changed[0], u.choices[u.changed[0]])
         for u in finished
