@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 
+from borges.analysis.coder_armor import armor_refusal
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode, make_rewrite
@@ -61,7 +62,16 @@ async def generate_checked(
         templated = await request_template(llm, plan, step, option, models, skips)
         if templated is not None:
             return templated.code, 1, templated.note
-    code = await _request_code(llm, plan, step, option, models=models, notes=notes)
+    try:
+        code = await _request_code(llm, plan, step, option, models=models, notes=notes)
+    except LLMError as exc:
+        refusal = armor_refusal(exc)
+        if refusal is None:
+            raise
+        code, problem, model = await fresh_recode(llm, plan, step, option, [refusal], ":armor")
+        if models is not None:
+            models.append(model)
+        return (code, 2, join_notes(skips, notes)) if problem is None else (None, 2, problem)
     violations = option_violations(code, plan, step, option)
     if not violations:
         return code, 1, join_notes(skips, notes)
