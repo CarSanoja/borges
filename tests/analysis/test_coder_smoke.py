@@ -12,7 +12,6 @@ from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig, sample_rows
 from borges.analysis.models import CodingSummary
 from borges.analysis.schemas import CoderOutput
-from borges.llm.client import LLMError
 from borges.sandbox.local_backend import LocalBackend
 from tests.analysis.fakes import FakeLLM, make_plan
 
@@ -148,7 +147,9 @@ async def test_failing_default_promotes_a_smoked_sibling(tmp_path: Path) -> None
     assert recorder.status("keep")[0] == "failed"
 
 
-async def test_default_failing_with_no_sibling_raises(tmp_path: Path) -> None:
+async def test_a_data_step_with_no_runnable_option_is_left_out_and_reported(
+    tmp_path: Path,
+) -> None:
     llm = FakeLLM(
         responses(
             **{
@@ -161,8 +162,13 @@ async def test_default_failing_with_no_sibling_raises(tmp_path: Path) -> None:
             }
         )
     )
-    with pytest.raises(LLMError, match="smoke run"):
-        await code_plan(llm, make_plan(), smoke=config(tmp_path, Recorder()))
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, make_plan(), smoke=cfg)
+    assert [o.id for o in coded.step("d1").options] == ["left_out"]
+    assert [o.id for o in coded.step("m1").options] == ["ols", "welch"]
+    left = [n for n in cfg.state.notes if "was left out of the analysis" in n]
+    assert len(left) == 1 and "The decision 'Outliers'" in left[0]
+    assert "Label keep, Label trim" in left[0] and "does not reflect that decision" in left[0]
 
 
 async def test_smoke_runs_each_option_after_the_default_prefix(tmp_path: Path) -> None:

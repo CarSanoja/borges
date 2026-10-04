@@ -7,6 +7,7 @@ from typing import Any
 import pandas as pd
 
 from borges.analysis import harness
+from borges.analysis.model_spec.render_design import INPUT_FAULT
 from borges.analysis.models import Option, Step
 from borges.analysis.path_scrub import scrub_paths
 from borges.analysis.result_scale import convert
@@ -130,7 +131,7 @@ async def smoke_option(
         checkpoint, error, effects, result = await _attempt(config, parent, step, option, check)
     seen = [error] if error is not None else []
     used = 0
-    while error is not None and used < budget:
+    while error is not None and used < budget and INPUT_FAULT not in error:
         try:
             code, violation, model = await repair(step, option, error, attempts)
         except LLMError as exc:

@@ -8,6 +8,8 @@ from borges.analysis.smoke_types import Outcome, SmokeConfig
 from borges.sandbox.backend import Checkpoint
 
 Round = Callable[[Checkpoint], Awaitable[list[Outcome]]]
+Plain = Callable[[Checkpoint], Awaitable[bool]]
+Settled = tuple[Checkpoint, list[Outcome]]
 
 NOTE = (
     "No option of the step '{step}' ran after the default '{old}' of the step '{earlier}', so "
@@ -16,15 +18,17 @@ NOTE = (
 
 
 async def rescue_by_upstream_default(
-    config: SmokeConfig, earlier: Step, step: Step, run: Round
-) -> tuple[Checkpoint, list[Outcome]] | None:
+    config: SmokeConfig, earlier: Step, step: Step, plain: Plain, run: Round
+) -> Settled | None:
     """Try each other surviving option of the previous step as its default; keep the first that
-    lets an option of this step pass."""
+    lets an option of this step pass. The probe runs the code as written, with no model call."""
     current = config.state.defaults.get(earlier.id)
     if current is None:
         return None
     for outcome in config.state.outcomes.get(earlier.id, []):
         if outcome.checkpoint is None or outcome.option.id == current.option.id:
+            continue
+        if not await plain(outcome.checkpoint):
             continue
         outcomes = await run(outcome.checkpoint)
         if not has_survivor(outcomes):

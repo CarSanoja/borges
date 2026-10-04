@@ -10,13 +10,13 @@ from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.smoke_collision import resolve_outputs
 from borges.analysis.smoke_core import execute, sample_rows, smoke_option
-from borges.analysis.smoke_default_rescue import rescue_by_upstream_default
 from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
 from borges.analysis.smoke_model_probe import probe_model
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
 from borges.analysis.smoke_recode import recode_failed_default
-from borges.analysis.smoke_replan import has_survivor, replan_outcomes
+from borges.analysis.smoke_replan import has_survivor
 from borges.analysis.smoke_review import review_step
+from borges.analysis.smoke_settle import Tools, settle
 from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
 from borges.analysis.smoke_upstream import probe_upstream
 from borges.llm.client import LLMError
@@ -104,6 +104,18 @@ async def _smoke_round(
     return await resolve_outputs(config, repair, parent, step, outcomes, summary)
 
 
+async def _runs_as_written(
+    config: SmokeConfig, repair: Repair, step: Step, parent: Checkpoint
+) -> bool:
+    for option in step.options:
+        if option.code is None:
+            continue
+        outcome = await smoke_option(config, repair, parent, step, option, budget=0)
+        if outcome.status != "failed":
+            return True
+    return False
+
+
 async def _rerun(
     config: SmokeConfig,
     repair: Repair,
@@ -137,13 +149,14 @@ async def smoke_plan(
     for index, step in enumerate(smoked.steps):
         again = partial(_smoke_round, config, repair, recode, parent, step, semaphore, summary)
         outcomes = await again()
-        if replan is not None and not has_survivor(outcomes):
-            outcomes = await replan_outcomes(config, replan, step, outcomes, again)
-        if index > 0 and not has_survivor(outcomes):
-            rerun = partial(_rerun, config, repair, recode, step, semaphore, summary)
-            rescued = await rescue_by_upstream_default(config, smoked.steps[index - 1], step, rerun)
-            if rescued is not None:
-                parent, outcomes = rescued
+        if not has_survivor(outcomes):
+            tools = Tools(
+                partial(_rerun, config, repair, recode, step, semaphore, summary),
+                partial(_runs_as_written, config, repair, step),
+            )
+            parent, outcomes = await settle(
+                config, replan, smoked.steps, index, parent, outcomes, tools
+            )
         config.state.parents[step.id] = parent
         live_default = effective_default(step, outcomes)
         if live_default is not None:
