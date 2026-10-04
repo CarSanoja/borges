@@ -40,3 +40,9 @@ def test_uncoded_options_are_read_from_their_spec() -> None:
 def test_steps_that_do_not_mention_covariates_contribute_nothing() -> None:
     plan, model = plan_with(None, "winsorize y at the 1st percentile; player stays")
     assert ctx_covariate_names(plan, model, AVAILABLE) == []
+
+
+def test_a_coded_option_is_read_from_code_not_from_its_spec_text() -> None:
+    code = "def apply(df, ctx):\n    ctx['covariates'] = ['cat']\n    return df\n"
+    plan, model = plan_with(code, "covariates cat; cluster the errors on player")
+    assert ctx_covariate_names(plan, model, AVAILABLE) == ["cat"]

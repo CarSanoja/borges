@@ -33,8 +33,8 @@ def ctx_covariate_names(plan: AnalysisPlan, step: Step, available: list[str]) ->
         if earlier.id == step.id:
             break
         for option in earlier.options:
-            if option.code and "covariates" in option.code:
+            if option.code is not None:
                 names |= _code_names(option.code)
-            if "covariates" in option.spec:
+            elif "covariates" in option.spec:
                 names |= _spec_names(option.spec, available)
     return sorted(n for n in names if n in available)

@@ -21,6 +21,21 @@ def _failures(outcomes: list[Outcome]) -> list[tuple[str, str, str, str]]:
     ]
 
 
+MAX_REPLAN_OPTIONS = 4
+
+
+def _signature(spec: str) -> str:
+    return " ".join(spec.lower().split())
+
+
+def _novel(planned: ReplanOutput, outcomes: list[Outcome]) -> ReplanOutput | None:
+    seen = {_signature(o.option.spec) for o in outcomes}
+    fresh = [item for item in planned.options if _signature(item.spec) not in seen]
+    if not fresh:
+        return None
+    return ReplanOutput(options=fresh[:MAX_REPLAN_OPTIONS])
+
+
 def _options(
     step: Step, planned: ReplanOutput, plan: AnalysisPlan, taken: set[str]
 ) -> list[Option]:
@@ -65,5 +80,8 @@ async def propose_options(
         planned = ReplanOutput.model_validate(response.parsed)
     except (LLMError, ValidationError):
         return None
+    fresh = _novel(planned, outcomes)
+    if fresh is None:
+        return None
     failed = {o.option.id for o in outcomes}
-    return _options(step, planned, plan, set(failed))
+    return _options(step, fresh, plan, set(failed))

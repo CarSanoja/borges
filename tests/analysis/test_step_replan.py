@@ -90,3 +90,28 @@ async def test_a_reply_without_options_gives_no_replacement() -> None:
     plan = make_plan()
     llm = FakeLLM({replan_key("m1"): reply()})
     assert await propose_options(llm, plan, plan.step("m1"), [failed("ols", "x")]) is None
+
+
+async def test_an_option_repeating_a_failed_spec_is_dropped_under_a_new_id() -> None:
+    plan = make_plan()
+    step = plan.step("m1")
+    repeated = planned("fresh_id")
+    repeated["spec"] = "  " + failed("ols", "x").option.spec.upper() + " "
+    llm = FakeLLM({replan_key("m1"): reply(repeated, planned("other"))})
+    options = await propose_options(llm, plan, step, [failed("ols", "x")])
+    assert options is not None and [o.id for o in options] == ["other"]
+
+
+async def test_a_reply_that_only_repeats_failed_specs_gives_no_replacement() -> None:
+    plan = make_plan()
+    repeated = planned("again")
+    repeated["spec"] = failed("ols", "x").option.spec
+    llm = FakeLLM({replan_key("m1"): reply(repeated)})
+    assert await propose_options(llm, plan, plan.step("m1"), [failed("ols", "x")]) is None
+
+
+async def test_at_most_four_replacements_are_kept() -> None:
+    plan = make_plan()
+    llm = FakeLLM({replan_key("m1"): reply(*(planned(f"o{i}") for i in range(7)))})
+    options = await propose_options(llm, plan, plan.step("m1"), [failed("ols", "x")])
+    assert options is not None and len(options) == 4
