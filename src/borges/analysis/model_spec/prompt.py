@@ -14,7 +14,9 @@ renders the spec into code with fixed, tested templates, so you never write code
 Return JSON with these fields:
 - supported: true when the option is a single regression the templates express, otherwise false \
 with the reason in `reason`.
-- family: "ols", "logit" (binary outcome), "poisson" or "negbin" (count outcome).
+- family: "ols", "logit" (binary outcome), "poisson", "quasipoisson" or "negbin" (count \
+outcome). Use the family the option names: quasi-Poisson is "quasipoisson" (the Poisson estimate \
+with standard errors scaled by the Pearson dispersion), never "negbin".
 - outcome: the dependent column.
 - exposure: the column whose coefficient is the estimate: the treatment, group or attribute the \
 estimand is about, never the offset column and never the outcome.
@@ -25,13 +27,15 @@ listed. Leave it null for a numeric exposure; never invent a column for the dumm
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
-list an earlier step stored in ctx["covariates"].
-- offset_log: optional column whose log is the offset (poisson and negbin only).
+list an earlier step stored in ctx["covariates"]. Never repeat a column of that list in \
+covariates: the covariate step chooses it, and a literal copy would keep it in every universe.
+- offset_log: optional column whose log is the offset (count families only). The offset column may \
+also be a covariate, never the exposure.
 - cov_type: "nonrobust", "HC0", "HC1", "HC2", "HC3" or "cluster" (the one the option names); \
 with "cluster" set `cluster` to the grouping \
 column.
 - standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin).
-- report: "coefficient", "odds_ratio" (logit only), "rate_ratio" (poisson and negbin only) or \
+- report: "coefficient", "odds_ratio" (logit only), "rate_ratio" (count families only) or \
 "marginal_effect" (logit only, no moderator): the average marginal effect of the exposure on the \
 probability scale, the right report when the decision rule is a difference in proportions.
 

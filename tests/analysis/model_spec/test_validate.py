@@ -155,12 +155,25 @@ def test_ctx_covariates_count_only_when_the_spec_reads_the_ctx_list() -> None:
     "spec",
     [
         {"exposure": "games", "offset_log": "games"},
-        {"exposure": "skin_tone", "offset_log": "games", "covariates": ["games"]},
+        {"exposure": "skin_tone", "offset_log": "games", "moderator": "games"},
     ],
 )
-def test_the_offset_is_neither_the_exposure_nor_a_covariate(spec: dict) -> None:
+def test_the_offset_is_neither_the_exposure_nor_the_moderator(spec: dict) -> None:
     full = ModelSpecOutput(
         supported=True, family="poisson", outcome="redCards", report="rate_ratio", **spec
     )
     problems = validate_spec(full, ["redCards", "games", "skin_tone"])
     assert any("is the offset" in p for p in problems)
+
+
+def test_the_offset_column_may_also_be_a_covariate() -> None:
+    spec = ModelSpecOutput(
+        supported=True,
+        family="poisson",
+        outcome="redCards",
+        exposure="skin_tone",
+        covariates=["games"],
+        offset_log="games",
+        report="rate_ratio",
+    )
+    assert validate_spec(spec, ["redCards", "games", "skin_tone"]) == []

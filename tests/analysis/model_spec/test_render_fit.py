@@ -6,7 +6,7 @@ import pytest
 import statsmodels.api as sm
 
 from borges.analysis.model_spec.render import render_code
-from tests.analysis.model_spec.data import make_spec
+from tests.analysis.model_spec.data import make_spec, synthetic
 
 
 def experiment(rows: int = 600, seed: int = 3) -> pd.DataFrame:
@@ -65,3 +65,17 @@ def test_odds_ratio_and_coefficient_reports_are_unchanged_for_a_text_exposure() 
     namespace = {}
     exec(render_code(ratio_spec), namespace)
     assert namespace["estimate"](data, {})["estimate"] == pytest.approx(np.exp(coefficient))
+
+
+def test_quasi_poisson_keeps_the_poisson_estimate_and_scales_its_errors() -> None:
+    frame = synthetic().dropna()
+    namespace: dict = {}
+    exec(render_code(make_spec("quasipoisson", report="coefficient")), namespace)
+    got = namespace["estimate"](frame, {})
+    exog = sm.add_constant(frame[["x"]].astype(float), has_constant="add")
+    poisson = sm.GLM(frame["y_count"], exog, family=sm.families.Poisson()).fit()
+    dispersion = float(poisson.pearson_chi2 / poisson.df_resid)
+    assert got["estimate"] == pytest.approx(float(poisson.params["x"]), rel=1e-9)
+    half = (got["ci_high"] - got["ci_low"]) / 2
+    expected = 1.959963984540054 * float(poisson.bse["x"]) * np.sqrt(dispersion)
+    assert half == pytest.approx(expected, rel=1e-6)

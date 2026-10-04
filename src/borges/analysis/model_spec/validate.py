@@ -10,10 +10,15 @@ from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.result_scale import detect_scale, is_proportion_rule
 from borges.analysis.scale_check import is_ratio_rule
 
-COUNT_FAMILIES = ("poisson", "negbin")
+COUNT_FAMILIES = ("poisson", "quasipoisson", "negbin")
 MAX_FIXED_EFFECT_LEVELS = 50
 MARGINAL_REPORTS = {"logit": "marginal_effect"}
-RATIO_REPORTS = {"logit": "odds_ratio", "poisson": "rate_ratio", "negbin": "rate_ratio"}
+RATIO_REPORTS = {
+    "logit": "odds_ratio",
+    "poisson": "rate_ratio",
+    "quasipoisson": "rate_ratio",
+    "negbin": "rate_ratio",
+}
 
 
 def _required(spec: ModelSpecOutput) -> list[str]:
@@ -56,10 +61,10 @@ def _role_problems(spec: ModelSpecOutput) -> list[str]:
     problems = []
     if spec.exposure is not None and spec.exposure == spec.outcome:
         problems.append("exposure and outcome must be different columns")
-    if spec.offset_log is not None and spec.offset_log in (spec.exposure, *spec.covariates):
+    if spec.offset_log is not None and spec.offset_log in (spec.exposure, spec.moderator):
         problems.append(
             f"'{spec.offset_log}' is the offset: its coefficient is fixed at 1, so it cannot also"
-            " be the exposure or a covariate; the exposure is the variable the estimand is about"
+            " be the exposure or the moderator; the exposure is the variable the estimand is about"
         )
     if spec.moderator is not None and spec.moderator in (spec.exposure, spec.outcome):
         problems.append("moderator must differ from exposure and outcome")
@@ -86,7 +91,7 @@ def _consistency_problems(spec: ModelSpecOutput) -> list[str]:
     if spec.cov_type != "cluster" and spec.cluster is not None:
         problems.append("cluster is set but cov_type is not cluster")
     if spec.offset_log is not None and spec.family not in COUNT_FAMILIES:
-        problems.append("offset_log is only available for poisson and negbin")
+        problems.append("offset_log is only available for poisson, quasipoisson and negbin")
     return problems
 
 

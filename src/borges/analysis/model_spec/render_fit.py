@@ -12,10 +12,11 @@ def _fit_arguments(spec: ModelSpecOutput) -> str:
 
 def _count_lines(spec: ModelSpecOutput, arguments: str) -> list[str]:
     offset = ", offset=offset" if spec.offset_log is not None else ""
-    if spec.family == "poisson":
+    if spec.family in ("poisson", "quasipoisson"):
+        scale = 'scale="X2", ' if spec.family == "quasipoisson" else ""
         return [
             f"    model = sm.GLM(endog, exog, family=sm.families.Poisson(){offset})",
-            f"    fit = model.fit({arguments})",
+            f"    fit = model.fit({scale}{arguments})",
         ]
     return [
         f"    pilot = sm.GLM(endog, exog, family=sm.families.Poisson(){offset}).fit()",

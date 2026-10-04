@@ -5,7 +5,13 @@ import pandas as pd
 
 from borges.analysis.model_spec.schema import ModelSpecOutput
 
-OUTCOMES = {"ols": "y_cont", "logit": "y_bin", "poisson": "y_count", "negbin": "y_count"}
+OUTCOMES = {
+    "ols": "y_cont",
+    "logit": "y_bin",
+    "poisson": "y_count",
+    "quasipoisson": "y_count",
+    "negbin": "y_count",
+}
 
 
 def synthetic(seed: int = 7, rows: int = 400) -> pd.DataFrame:

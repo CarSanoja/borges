@@ -9,6 +9,7 @@ from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.model_spec.validate import validate_spec
+from borges.analysis.model_spec.validate_ctx import ctx_problems
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts.coder import _available_columns
 from borges.llm.client import LLMClient, LLMError, Role
@@ -65,10 +66,13 @@ async def _ask(
     return spec
 
 
-def _problems(plan: AnalysisPlan, step: Step, spec: ModelSpecOutput) -> list[str]:
+def _problems(plan: AnalysisPlan, step: Step, option: Option, spec: ModelSpecOutput) -> list[str]:
     available = _available_columns(plan, step)
     ctx_names = ctx_covariate_names(plan, step, available) if spec.covariates_from_ctx else []
-    return validate_spec(spec, available, plan.dataset, plan.decision_rule, ctx_names)
+    found = validate_spec(spec, available, plan.dataset, plan.decision_rule, ctx_names)
+    if not spec.supported:
+        return found
+    return [*found, *ctx_problems(spec, ctx_names, option_intent(option))]
 
 
 async def request_template(
@@ -84,14 +88,14 @@ async def request_template(
     spec = await _ask(llm, messages, key, models, skipped)
     if spec is None:
         return None
-    problems = _problems(plan, step, spec)
+    problems = _problems(plan, step, option, spec)
     if problems:
         _skip(skipped, "; ".join(problems))
         if not spec.supported:
             return None
         retry = [*messages, *correction(spec, problems)]
         spec = await _ask(llm, retry, f"{key}:retry", models, None)
-        if spec is None or _problems(plan, step, spec):
+        if spec is None or _problems(plan, step, option, spec):
             return None
         if skipped:
             skipped.pop()
