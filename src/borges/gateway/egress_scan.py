@@ -116,8 +116,9 @@ def jsonl_dump_size(text: str, columns: frozenset[str]) -> int:
 
 def _header_delimiter(line: str, columns: frozenset[str]) -> str | None:
     for delimiter in _DELIMITERS:
-        fields = {field.strip().strip('"') for field in line.split(delimiter)}
-        if len(fields) >= MIN_DUMP_KEYS and _grounded(fields, columns):
+        fields = [f.strip().strip('"') for f in line.split(delimiter) if f.strip().strip('"')]
+        others = [f for f in fields if f not in columns]
+        if len(fields) >= MIN_DUMP_KEYS and len(others) <= 1 and _grounded(set(fields), columns):
             return delimiter
     return None
 
