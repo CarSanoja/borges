@@ -35,3 +35,9 @@ def test_ctx_get_counts_as_using_ctx_covariates() -> None:
     spec = make_spec("ols", covariates=[])
     text = "X = sm.add_constant(df[['treatment'] + ctx.get('covariates', [])])"
     assert ctx_problems(spec, [], text)
+
+
+def test_an_option_that_declines_the_ctx_covariates_is_not_told_to_read_them() -> None:
+    spec = make_spec("logit", covariates=[])
+    text = "Fit logistic regression with y ~ campaign only (no covariates from ctx), HC1 robust SE"
+    assert ctx_problems(spec, CTX, text, varied=True) == []

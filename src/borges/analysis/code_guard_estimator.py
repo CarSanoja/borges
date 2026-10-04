@@ -16,6 +16,12 @@ POISSON_CLASSES = frozenset(
     {"Poisson", "poisson", "ZeroInflatedPoisson", "GeneralizedPoisson", "PoissonBayesMixedGLM"}
 )
 LOGIT_CLASSES = frozenset({"Logit", "logit", "Binomial"})
+PENALISED = re.compile(
+    r"\bfirth\b|(?<![\w-])penali[sz]ed\b|\bridge (?:regression|penalty|logistic)\b|\blasso\b|"
+    r"elastic[- ]net",
+    re.IGNORECASE,
+)
+PENALTY_NAMES = re.compile(r"fit_regularized|firth|penal|jeffreys", re.IGNORECASE)
 MODEL_NAMES = NEGBIN_CLASSES | POISSON_CLASSES | LOGIT_CLASSES | {"OLS", "ols", "GLM", "glm"}
 
 
@@ -62,10 +68,23 @@ def _problem(family: str, names: set[str], tree: ast.AST) -> str | None:
     return None
 
 
+def _penalty_problem(names: set[str], intent: str) -> list[str]:
+    """A Firth, ridge or lasso option fitted by plain maximum likelihood runs another estimator
+    under its label."""
+    if not PENALISED.search(intent) or any(PENALTY_NAMES.search(name) for name in names):
+        return []
+    return [
+        "the option names a penalised fit (Firth, ridge, lasso or elastic net) but the code fits "
+        "an unpenalised model; implement the penalty, for example with fit_regularized, or let "
+        "the option fail"
+    ]
+
+
 def estimator_violations(tree: ast.AST, intent: str) -> list[str]:
     family = named_family(intent) if intent else None
     names = _identifiers(tree)
-    if family is None or not names & MODEL_NAMES:
+    if not names & MODEL_NAMES:
         return []
-    problem = _problem(family, names, tree)
-    return [problem] if problem else []
+    penalty = _penalty_problem(names, intent) if intent else []
+    problem = _problem(family, names, tree) if family is not None else None
+    return [*penalty, *([problem] if problem else [])]

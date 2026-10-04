@@ -56,3 +56,15 @@ def test_matching_labels_pass() -> None:
 def test_code_without_a_model_is_not_judged() -> None:
     tree = ast.parse("def estimate(df, ctx):\n    return {}\n")
     assert estimator_violations(tree, "Poisson regression") == []
+
+
+def test_a_penalised_option_fitted_by_plain_likelihood_is_refused() -> None:
+    [problem] = violations("logit", "Firth logistic regression to reduce small-sample bias")
+    assert "penalised fit" in problem
+    assert violations("logit", "Logistic regression, unpenalized, HC1") == []
+    lasso = ast.parse(
+        "import statsmodels.api as sm\n"
+        "def estimate(df, ctx):\n"
+        "    fit = sm.Logit(df['y'], df[['x']]).fit_regularized(method='l1', alpha=1.0)\n"
+    )
+    assert estimator_violations(lasso, "Lasso logistic regression") == []

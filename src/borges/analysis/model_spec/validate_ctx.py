@@ -12,7 +12,8 @@ def ctx_problems(
     spec: ModelSpecOutput, ctx_names: list[str], option_text: str, varied: bool = False
 ) -> list[str]:
     problems = []
-    wanted = CTX_COVARIATES.search(option_text) or (varied and not UNADJUSTED.search(option_text))
+    unadjusted = UNADJUSTED.search(option_text)
+    wanted = not unadjusted and (CTX_COVARIATES.search(option_text) or varied)
     if wanted and not spec.covariates_from_ctx:
         problems.append(
             "the option uses the covariate list an earlier step stores in ctx['covariates']: "
