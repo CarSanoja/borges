@@ -33,3 +33,19 @@ def test_a_list_of_columns_followed_by_the_same_list_in_code_is_not_a_row() -> N
     )
     report = enforce_egress([{"role": "user", "content": text}], policy("profile_only"), COLUMNS)
     assert not report.violations
+
+
+def test_a_label_that_ends_its_prose_on_a_column_is_not_a_header() -> None:
+    text = (
+        "Conventional option(s) at this step: Adjust for user_id, arm, converted, revenue\n"
+        "Conventional spec: Set ctx['covariates'] = ['user_id', 'arm', 'converted', 'revenue']. "
+        "These columns already exist; no new columns are created. Return the DataFrame unchanged."
+    )
+    report = enforce_egress([{"role": "user", "content": text}], policy("profile_only"), COLUMNS)
+    assert not report.violations
+
+
+def test_a_pandas_index_header_still_makes_a_table() -> None:
+    table = "Unnamed: 0,user_id,arm,converted\n0,1,a,1\n1,2,b,0"
+    report = enforce_egress([{"role": "user", "content": table}], policy("profile_only"), COLUMNS)
+    assert report.violations

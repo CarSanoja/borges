@@ -13,6 +13,7 @@ _PROFILE_MARKERS = ('"n_missing"', '"n_unique"')
 MAX_REPR_TRIES = 40
 MIN_DUMP_KEYS = 3
 _DELIMITERS = (",", "\t", "|", ";")
+_INDEX_HEADER = re.compile(r"\S{1,40}|Unnamed: \d+")
 
 
 @dataclass(frozen=True)
@@ -118,7 +119,13 @@ def _header_delimiter(line: str, columns: frozenset[str]) -> str | None:
     for delimiter in _DELIMITERS:
         fields = [f.strip().strip('"') for f in line.split(delimiter) if f.strip().strip('"')]
         others = [f for f in fields if f not in columns]
-        if len(fields) >= MIN_DUMP_KEYS and len(others) <= 1 and _grounded(set(fields), columns):
+        labels = all(_INDEX_HEADER.fullmatch(f) for f in others)
+        if (
+            len(fields) >= MIN_DUMP_KEYS
+            and len(others) <= 1
+            and labels
+            and _grounded(set(fields), columns)
+        ):
             return delimiter
     return None
 
