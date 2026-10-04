@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.covariate_ids import listed_identifiers
 from borges.analysis.models import DatasetProfile
 from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
@@ -46,6 +47,16 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
             "These transform or feature steps do not declare produces; list the exact new "
             "column names or ctx keys that every option of the step creates, under the same "
             f"name and meaning: {', '.join(missing)}."
+        )
+    listed = sorted(
+        {name for s in steps for o in s.options for name in listed_identifiers(o.spec, profile)}
+    )
+    if listed:
+        problems.append(
+            f"These identifier columns appear in a covariate list: {', '.join(listed)}. An "
+            "identifier with many distinct values is no covariate (as dummies the design is too "
+            "wide to fit, as a number its coding is arbitrary); leave it out of every covariate "
+            "list, and cluster the standard errors on it in the model step where that is needed."
         )
     flags, outliers = flagged_columns(profile)
     names = [c.name for c in flags + outliers]

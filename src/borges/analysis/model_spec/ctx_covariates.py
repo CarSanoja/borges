@@ -12,7 +12,7 @@ def _literals(text: str) -> set[str]:
     return set(QUOTED.findall(text))
 
 
-def _code_names(code: str) -> set[str]:
+def covariate_names_in(code: str) -> set[str]:
     found: set[str] = set()
     for target in CTX_LIST.findall(code):
         if target.startswith("["):
@@ -34,7 +34,7 @@ def ctx_covariate_names(plan: AnalysisPlan, step: Step, available: list[str]) ->
             break
         for option in earlier.options:
             if option.code is not None:
-                names |= _code_names(option.code)
+                names |= covariate_names_in(option.code)
             elif "covariates" in option.spec:
                 names |= _spec_names(option.spec, available)
     return sorted(n for n in names if n in available)

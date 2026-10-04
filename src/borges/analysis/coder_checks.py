@@ -7,6 +7,7 @@ from borges.analysis.code_guard_missing import missing_violations
 from borges.analysis.code_guard_produces import products_read_violations, unused_products
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.code_guard_wide import wide_columns, wide_dummy_violations
+from borges.analysis.covariate_ids import covariate_id_violations
 from borges.analysis.models import AnalysisPlan, Option, Step
 
 
@@ -18,6 +19,7 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
             *found,
             *missing_violations(code, intent),
             *ctx_name_violations(code, step, option),
+            *covariate_id_violations(code, plan.dataset),
         ]
     return [
         *found,
