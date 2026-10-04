@@ -68,7 +68,7 @@ Be clear about this before reading further. The source of truth for every live n
 | ConTree sandboxes | **All six recordings ran on ConTree** (`backend: contree` in each `recording.json`). Earlier, on 2 October 2026, `tests/sandbox/test_contree_live.py` passed in 41.8 s |
 | What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". Each recording also has `spans.jsonl`, `audit.jsonl` and `recording.json`. A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
-| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the last universe) of all six recordings: 12 of 12 MATCH, run by the project lead |
+| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the last universe) of all six recordings: 12 of 12 MATCH, run by the project lead (MATCH proves the recorded code is deterministic, not that the statistics are correct) |
 | BLADE benchmark | Ran live on 4 October: mean F1 over 12 datasets 0.468 (planner arm) and 0.480 (adversary arm), one repeat each. The 0.012 difference is smaller than the gap between the two committed tables, and one repeat cannot show it is more than noise (`evidence/blade/README.md`) |
 | Hosted public demo | **None yet**: no public URL, no video |
 | Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
@@ -164,7 +164,7 @@ conversion lift is positive with p < 0.05"*.
 4. **Borges looks for the smallest defensible flip.** It tries one change, then two, then
    three (at most 10 combinations per level, those that moved the result closest to the
    threshold first), so the answer is the smallest flip a bounded search found, not a proven
-   minimum. It re-executes the winning universe from a fresh sandbox to prove it reproduces.
+   minimum. It re-executes the winning universe from a fresh sandbox to prove it reproduces (determinism of the recorded code, not statistical correctness).
 5. **You can step into any universe** and see its exact code, row counts, checkpoint ids
    and result.
 
@@ -311,7 +311,8 @@ uv run borges reproduce --case checkout_ab --source live --universe u_2daf3a388e
 
 `--source live` reads `cases/<case>/recorded-live/events.jsonl` instead of the scripted
 recording and re-executes that universe's code from scratch. It matched for all six cases
-(universe ids and results in `evidence/live-runs.md`).
+(universe ids and results in `evidence/live-runs.md`); a MATCH proves the recorded code is
+deterministic, not that it is statistically correct.
 
 (`uv run --no-sync` works too once `uv sync` has run.) It re-executes that universe's steps on the case dataset with the local backend, and prints
 `MATCH` only if estimate, interval, p-value, n and verdict equal the recording (exit 1 and
