@@ -88,3 +88,20 @@ def test_label_with_cue_is_a_reference() -> None:
     ]
     normalise_plan(plan)
     assert "(a: OLS of y on x)" in step.options[1].spec
+
+
+def test_reference_by_id_written_with_other_separators() -> None:
+    plan = make_plan()
+    step = _model_step(plan)
+    step.options = [
+        _opt("ols_hc3", "OLS with HC3 SEs", "Regress y on x and controls age, ses; HC3 covariance"),
+        _opt(
+            "ols_cluster_country",
+            "OLS clustered by country",
+            "Same regression as OLS-HC3 but use cluster-robust covariance clustered on country.",
+        ),
+        _opt("ols_plain", "OLS without controls", "OLS of y on x with HC3 covariance."),
+    ]
+    normalise_plan(plan)
+    assert "(ols_hc3: Regress y on x and controls age, ses" in step.options[1].spec
+    assert step.options[2].spec == "OLS of y on x with HC3 covariance."
