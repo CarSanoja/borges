@@ -130,7 +130,11 @@ def _step_requirements(plan: AnalysisPlan, step: Step) -> list[str]:
     parts = [f"Columns available when this step runs: {available}"]
     if step.produces:
         names = ", ".join(step.produces)
-        parts.append(f"This step must create: {names}, with exactly these names for every option.")
+        parts.append(
+            f"This step must create: {names}, with exactly these names for every option. An "
+            "option that changes nothing still writes them, as an unchanged copy of the column "
+            "they are built from, or as 0 for an indicator that none of its rows has."
+        )
     if step.kind == "model":
         parts.append(
             "Read only the columns available when this step runs; do not read any other name."

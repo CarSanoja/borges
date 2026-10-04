@@ -27,7 +27,10 @@ scale is also set by Borges from the decision rule: exponentiating a log-link co
 odds ratio or rate ratio, or reporting an average marginal effect for a difference in \
 proportions, is faithful even when the spec mentions a raw coefficient. Dropping a covariate \
 that is an exact linear combination of earlier columns (an aliased column, as R's lm does) is \
-faithful too: it leaves the fitted model unchanged.
+faithful too: it leaves the fitted model unchanged. The names listed under "Every option \
+must create" override a spec as well: an option whose spec says it changes nothing or adds no \
+column is faithful when it writes those names as an unchanged copy of the column they are built \
+from, or as 0 for an indicator that none of its rows has.
 2. changes_estimand: does the option change the question rather than the analysis? Examples: \
 swapping the groups, reversing the coding of a variable, measuring a different outcome. A \
 different but legitimate way to measure or clean the same thing does not change the estimand.

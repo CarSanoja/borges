@@ -47,7 +47,9 @@ the option.
 - produces lists the exact new column names (or ctx keys) that EVERY option of a transform or \
 feature step creates, under the same name and with the same meaning in every option. Later steps \
 and the model read these names, so each option of the step must create all of them and a \
-later spec may use only raw columns or names produced by earlier steps. Filter steps usually \
+later spec may use only raw columns or names produced by earlier steps. A spec that changes \
+nothing still says how it writes them, for example "games_w = games (no winsorizing)". Filter \
+steps usually \
 produce nothing. Every transform and feature step must declare a non-empty produces. Name what \
 is measured, not how: options "mean of the items" and "first principal component" both write \
 one column such as "cnorm_score", never "cnorm_mean" in one option and "cnorm_pca" in another.

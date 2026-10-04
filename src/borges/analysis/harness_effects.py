@@ -54,7 +54,9 @@ CHECKS_SOURCE = """
                 raise ValueError(
                     "this step must produce " + repr(name)
                     + " (every option of the step writes the same names so later steps can read"
-                    + " them); it is missing. Columns now: "
+                    + " them); it is missing. An option that changes nothing still writes it, as an"
+                    + " unchanged copy of the column it is built from, or as 0 for an indicator"
+                    + " that none of its rows has. Columns now: "
                     + repr(list(map(str, out.columns))[:80])
                     + "; ctx keys: " + repr(list(map(str, ctx)))
                 )
