@@ -5,9 +5,10 @@ from borges.analysis.harness_design import (
     DESIGN_MAX_ROWS,
     DESIGN_SOURCE,
     DESIGN_WIDE_COLUMNS,
-    FINGERPRINT_SOURCE,
 )
+from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
+from borges.analysis.harness_fingerprint import FINGERPRINT_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
 from borges.analysis.harness_outcome import LOG_LINK_MODELS, OUTCOME_MAX_ROWS, OUTCOME_SOURCE
@@ -220,7 +221,10 @@ MAIN_TEMPLATE = (
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
-    .replace("__DESIGN__", DESIGN_SOURCE.strip("\n") + "\n\n" + OUTCOME_SOURCE.strip("\n"))
+    .replace(
+        "__DESIGN__",
+        "\n\n".join(x.strip("\n") for x in (DESIGN_SOURCE, DESIGN_ERRORS_SOURCE, OUTCOME_SOURCE)),
+    )
     .replace("__OUTCOME_MAX_ROWS__", repr(OUTCOME_MAX_ROWS))
     .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))

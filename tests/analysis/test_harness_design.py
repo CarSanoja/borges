@@ -170,3 +170,26 @@ def test_a_design_of_hundreds_of_columns_names_the_identifier_cause(workdir: Pat
 def test_a_narrow_deficient_design_does_not_carry_the_identifier_hint(workdir: Path) -> None:
     error = parse_error(run_model(workdir, ALIASED_ESTIMATE).stdout) or ""
     assert "rank-deficient or collinear" in error and "hundreds of levels" not in error
+
+
+GEE = (
+    HEADER
+    + """
+    data = df.assign(x2=df["x"] ** 2)
+    exog = sm.add_constant(data[["x", "x2"]], has_constant="add")
+    model = sm.GEE(data["y"], exog, groups=data["month"], cov_struct=sm.cov_struct.Exchangeable())
+    result = model.fit(maxiter=50)
+    low, high = result.conf_int().loc["x"]
+    return {"estimate": float(result.params["x"]), "ci_low": float(low),
+            "ci_high": float(high), "p_value": float(result.pvalues["x"]), "n": int(result.nobs)}
+"""
+)
+
+
+def test_the_reported_model_is_described_not_a_helper_it_fits_internally(workdir: Path) -> None:
+    done = run_model(workdir, GEE)
+    assert done.returncode == 0, done.stdout
+    traces, _ = parse_output(done.stdout)
+    design = traces[0].design
+    assert design is not None and design["model"] == "GEE"
+    assert design["names"] == ["const", "x", "x2"] and design["n_models"] > 1

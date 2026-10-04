@@ -49,6 +49,8 @@ OUTCOME_SOURCE = """
         if not isinstance(estimate, (int, float)):
             return None
         for name, _, _, model_id in reversed(_designs):
+            if model_id in _helpers:
+                continue
             params = _fits.get(model_id)
             if params is None or not any(
                 abs(p - estimate) <= 1e-6 * max(1.0, abs(estimate)) for p in params

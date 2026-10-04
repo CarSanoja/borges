@@ -16,6 +16,16 @@ DESIGN_WIDE_COLUMNS = 500
 DESIGN_SOURCE = """
     _designs = []
     _fits = {}
+    _helpers = set()
+
+    def _inside_another(model):
+        frame = _sys._getframe(2)
+        while frame is not None and "statsmodels" in frame.f_code.co_filename:
+            owner = frame.f_locals.get("self")
+            if owner is not None and owner is not model:
+                return True
+            frame = frame.f_back
+        return False
 
     def _install_design_probe():
         try:
@@ -31,6 +41,8 @@ DESIGN_SOURCE = """
                 if self.exog is not None:
                     names = list(self.exog_names)
                     _designs.append((type(self).__name__, self.exog, names, id(self)))
+                    if _inside_another(self):
+                        _helpers.add(id(self))
                     _record_endog(self)
             except Exception:
                 pass
@@ -133,8 +145,11 @@ DESIGN_SOURCE = """
                     if str(n).lower() not in ("const", "intercept")
                 }
             )
+            hit = _exposure_index(_fits.get(model_id), estimate, x.shape[1]) is not None
             models.append(
                 {
+                    "reported": hit,
+                    "helper": model_id in _helpers,
                     "model": model_name,
                     "columns": int(x.shape[1]),
                     "rank": rank,
@@ -152,9 +167,11 @@ DESIGN_SOURCE = """
             )
         if not models:
             return None
-        bad = next((m for m in models if m["deficient"]), None)
-        main = bad or models[-1]
-        no_intercept = next((m["model"] for m in models if not m["intercept"]), None)
+        own = [m for m in models if not m.pop("helper")] or models
+        reported = [m for m in own if m.pop("reported")]
+        bad = next((m for m in own if m["deficient"]), None)
+        main = bad or (reported or own)[-1]
+        no_intercept = next((m["model"] for m in own if not m["intercept"]), None)
         aliased = sorted({n for m in models for n in m["aliased"]})
         return {
             **main,
@@ -163,53 +180,4 @@ DESIGN_SOURCE = """
             "deficient": bad is not None,
             "no_intercept": no_intercept,
         }
-
-    def _intercept_error(design):
-        return (
-            "the " + str(design["no_intercept"]) + " model has no intercept: no column of its"
-            + " design is constant, so the fit is forced through the origin and the coefficient"
-            + " of the exposure absorbs the missing constant; add one with"
-            + " sm.add_constant(X, has_constant='add') or use a formula, which adds it."
-            + " Columns: " + repr(design["names"][:20])
-        )
-
-    def _design_error(design):
-        cond = design["condition"]
-        if design["rank"] < design["columns"] or design["dead"]:
-            dead = ", all-zero columns " + repr(design["dead"][:8]) if design["dead"] else ""
-            detail = (
-                "rank " + str(design["rank"]) + " of " + str(design["columns"]) + " columns"
-                + dead
-            )
-        else:
-            detail = "condition number " + format(cond, ".3g") + " above __DESIGN_CONDITION_LIMIT__"
-        wide = ""
-        if design["columns"] > __DESIGN_WIDE_COLUMNS__:
-            wide = (
-                " The design has " + str(design["columns"]) + " columns: a categorical with"
-                + " hundreds of levels (an identifier such as a player, referee, user or country)"
-                + " must not be dummy-coded; cluster the errors on it or aggregate to that unit."
-            )
-        return (
-            "the model's design matrix is rank-deficient or collinear (" + detail
-            + "): collinear columns are redundant and make the standard errors meaningless;"
-            + " typical cause: dummy columns for every level of a categorical plus an intercept"
-            + " (use pd.get_dummies(..., drop_first=True, dtype=float))."
-            + wide
-            + " Columns: " + repr(design["names"][:20])
-        )
-"""
-
-FINGERPRINT_SOURCE = """
-    def _fingerprint(out, ctx):
-        import hashlib as _hashlib
-
-        try:
-            digest = _hashlib.sha1()
-            digest.update(_json.dumps(list(map(str, out.columns))).encode())
-            digest.update(_pd.util.hash_pandas_object(out, index=True).values.tobytes())
-            digest.update(_json.dumps(ctx, sort_keys=True, default=str).encode())
-            return digest.hexdigest()[:16]
-        except Exception:
-            return None
 """
