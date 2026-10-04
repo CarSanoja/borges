@@ -32,6 +32,7 @@ from borges.api.uploads import UploadStore
 from borges.armor.corpus_score import armor_score
 from borges.config import Settings, get_settings
 from borges.gateway.errors import PolicyError
+from borges.identity.anon_live_quota import AnonLiveQuota
 from borges.identity.authentication import Authenticator
 from borges.identity.chain import ChainBroken
 from borges.identity.middleware import IdentityMiddleware
@@ -104,6 +105,7 @@ def create_app(
     app.state.authenticator = Authenticator(resolved)
     app.state.limiter = RateLimiter(resolved)
     app.state.run_quota = RunQuota(resolved)
+    app.state.anon_live_quota = AnonLiveQuota(resolved)
     app.add_middleware(
         IdentityMiddleware,
         settings=resolved,

@@ -14,6 +14,8 @@ from borges.armor.audit import record_decision
 from borges.armor.audit_global import global_sink
 from borges.armor.errors import ArmorRefusal
 from borges.config import Settings
+from borges.identity.anon_live_quota import AnonLiveQuota
+from borges.identity.client_address import client_address
 from borges.identity.deps import get_principal, require_scope
 from borges.identity.principal import Principal
 from borges.identity.run_quota import RunQuota
@@ -67,7 +69,38 @@ async def _start(
     return result.run_id, result.created
 
 
-@router.post("/runs", status_code=202)
+async def _start_checked(
+    runtime: Runtime | None,
+    orchestrator: Any,
+    request: RunRequest,
+    principal: Principal,
+    client: str,
+    key: Any,
+    data: bytes | None,
+    name: str | None,
+    settings: Settings,
+) -> tuple[str, bool]:
+    try:
+        return await _start(runtime, orchestrator, request, principal, client, key, data, name)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=f"Unknown case {exc}.") from exc
+    except ArmorRefusal as exc:
+        sink = global_sink(settings, principal.id)
+        for decision in exc.decisions:
+            record_decision(
+                decision, sink, principal.id, stage="run_request", case_id=request.case_id
+            )
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _live_notice(quota: AnonLiveQuota, client: str) -> dict[str, Any]:
+    view = quota.view(client)
+    return {"est_cost_usd": view.est_cost_per_run_usd, "live_quota": view.as_dict()}
+
+
+@router.post("/runs", status_code=202, response_model_exclude_none=True)
 async def create_run(
     request: RunRequest,
     orchestrator: Orchestrator,
@@ -93,7 +126,7 @@ async def create_run(
     require_scope(principal, scope_for_run(request, settings))
     prescreen_request(request, settings, principal)
     quota: RunQuota = http.app.state.run_quota
-    client = http.client.host if http.client else "unknown"
+    client = client_address(http, settings)
     key = None
     if runtime is not None:
         key = runtime.idempotency(principal, client, request, idempotency_key)
@@ -110,7 +143,7 @@ async def create_run(
         (request.llm or settings.borges_llm) == "nebius",
         _is_active(runtime, orchestrator),
         principal=principal.id,
-        client=client,
+        client=http.app.state.anon_live_quota.client_hash(client),
     )
     request = audited_policy(
         settings,
@@ -126,23 +159,25 @@ async def create_run(
     )
     upload = _resolve_upload(request, uploads)
     data, name = upload if upload else (None, None)
-    try:
-        run_id, created = await _start(
-            runtime, orchestrator, request, principal, client, key, data, name
+    live_quota: AnonLiveQuota = http.app.state.anon_live_quota
+    metered = principal.anonymous and (request.llm or settings.borges_llm) == "nebius"
+    if metered:
+        audited_policy(
+            settings,
+            "anon_live_quota",
+            live_quota.check,
+            client,
+            principal=principal.id,
+            client=live_quota.client_hash(client),
         )
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"Unknown case {exc}.") from exc
-    except ArmorRefusal as exc:
-        sink = global_sink(settings, principal.id)
-        for decision in exc.decisions:
-            record_decision(
-                decision, sink, principal.id, stage="run_request", case_id=request.case_id
-            )
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    if created:
-        quota.record(principal, client, run_id)
-    else:
+    run_id, created = await _start_checked(
+        runtime, orchestrator, request, principal, client, key, data, name, settings
+    )
+    if not created:
         response.headers[REPLAY_HEADER] = "true"
-    return RunCreated(run_id=run_id)
+        return RunCreated(run_id=run_id)
+    quota.record(principal, client, run_id)
+    if not metered:
+        return RunCreated(run_id=run_id)
+    live_quota.record(client)
+    return RunCreated(run_id=run_id, **_live_notice(live_quota, client))

@@ -253,3 +253,20 @@ async def test_lifespan_keeps_a_queued_run_the_old_reconcile_would_have_failed(
         await env.runtime.drain(30)
     assert env.rig.store.snapshot("r_orphan").status == "completed"
     assert env.runtime._started is False
+
+
+async def test_behind_a_trusted_proxy_the_creator_still_cancels_by_forwarded_address(
+    tmp_path, monkeypatch
+) -> None:
+    env = Env(tmp_path, monkeypatch, borges_trusted_proxy=True)
+    env.scenario.hang = True
+    mine = {"X-Forwarded-For": "203.0.113.7"}
+    other = {"X-Forwarded-For": "203.0.113.8"}
+    async with env.client("10.9.9.9") as client:
+        run_id = (await client.post("/api/runs", json=BODY, headers=mine)).json()["run_id"]
+        await wait_for(lambda: env.scenario.entered_plan.is_set())
+        assert (await client.post(f"/api/runs/{run_id}/cancel", headers=other)).status_code == 403
+        env.scenario.hang = False
+        accepted = await client.post(f"/api/runs/{run_id}/cancel", headers=mine)
+        assert accepted.status_code == 202
+    await env.runtime.stop()

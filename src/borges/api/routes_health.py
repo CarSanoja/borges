@@ -11,13 +11,18 @@ from borges.api.live_rules import (
     uploads_unavailable_reason,
 )
 from borges.config import Settings
+from borges.identity.client_address import client_address
+from borges.identity.deps import get_principal
+from borges.identity.principal import Principal
 
 router = APIRouter()
 
 
 @router.get("/health")
 def health(
-    settings: Annotated[Settings, Depends(get_settings)], request: Request
+    settings: Annotated[Settings, Depends(get_settings)],
+    request: Request,
+    principal: Annotated[Principal, Depends(get_principal)],
 ) -> dict[str, Any]:
     spend = read_spend(settings)
     reason = live_unavailable_reason(settings)
@@ -32,8 +37,16 @@ def health(
         "backend": settings.borges_backend,
         "spend_usd": spend,
         "spend_cap_usd": settings.borges_spend_cap_usd,
+        "est_cost_per_live_run_usd": settings.borges_run_cap_usd,
+        "anon_live_quota": _anon_quota(request, settings, principal),
         **_capacity(request),
     }
+
+
+def _anon_quota(request: Request, settings: Settings, principal: Principal) -> dict[str, Any]:
+    quota = request.app.state.anon_live_quota
+    view = quota.view(client_address(request, settings)).as_dict()
+    return {"applies": principal.anonymous, **view}
 
 
 IDLE = {

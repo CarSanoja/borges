@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +26,8 @@ class RunRequest(BaseModel):
 
 class RunCreated(BaseModel):
     run_id: str
+    est_cost_usd: float | None = None
+    live_quota: dict[str, Any] | None = None
 
 
 class CheckpointNode(BaseModel):

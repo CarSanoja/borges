@@ -74,6 +74,11 @@ class Settings(BaseSettings):
     borges_anon_active_runs: int = 1
     borges_anon_runs_per_min: float = 6.0
     borges_anon_live_runs_per_hour: float = 12.0
+    borges_anon_live_per_client_per_day: int = 2
+    borges_anon_live_global_per_hour: int = 6
+    borges_ip_hash_salt: str | None = None
+    borges_trusted_proxy: bool = False
+    borges_trusted_proxy_hops: int = 1
     borges_agent_token_ttl_s: int = 3600
     borges_audit_anchor_key: str | None = None
     borges_audit_anchor_every: int = 50
