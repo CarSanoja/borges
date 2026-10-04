@@ -19,7 +19,7 @@ from borges.analysis.schemas import PlannedStep, PlannerOutput
 from borges.llm.client import LLMClient, LLMError, Role
 
 CTX_REFERENCE = re.compile(
-    r"""^ctx\s*(?:\[\s*["']?([^"'\]]+?)["']?\s*\]|\.get\(\s*["']([^"']+)["'][^)]*\)|[.:|/]\s*(.+))$"""
+    r"""^ctx\s*(?:\[\s*["']?([^"'\]]+?)["']?\s*\]?|\.get\(\s*["']([^"']+)["'][^)]*\)|[.:|/]\s*(.+))$"""
 )
 
 

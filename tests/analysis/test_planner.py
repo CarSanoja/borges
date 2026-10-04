@@ -123,6 +123,7 @@ async def test_plan_carries_the_scale_derived_from_the_metric() -> None:
         "ctx:covariates",
         "ctx.get('covariates', [])",
         " covariates ",
+        "ctx['covariates",
     ],
 )
 def test_produces_written_as_a_ctx_reference_is_the_bare_key(raw: str) -> None:
