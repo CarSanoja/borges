@@ -16,6 +16,7 @@ from borges.analysis.smoke_recode import recode_failed_default
 from borges.analysis.smoke_replan import has_survivor, replan_outcomes
 from borges.analysis.smoke_review import review_step
 from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
+from borges.analysis.smoke_upstream import probe_upstream
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 from borges.telemetry.scopes import option_span
@@ -119,7 +120,7 @@ async def smoke_plan(
     sample_n = pq.read_metadata(io.BytesIO(sample)).num_rows
     config.larger = LargerSample(config, smoked.steps, sample_n, execute, LARGE_MAX_ROWS)
     semaphore = asyncio.Semaphore(concurrency)
-    for step in smoked.steps:
+    for index, step in enumerate(smoked.steps):
         again = partial(_smoke_round, config, repair, recode, parent, step, semaphore, summary)
         outcomes = await again()
         if replan is not None and not has_survivor(outcomes):
@@ -142,4 +143,6 @@ async def smoke_plan(
             await config.on_smoke(
                 step.id, promoted.id, chosen.status, chosen.attempts, note, chosen.models
             )
+        if step.kind == "model" and index > 0:
+            await probe_upstream(config, repair, smoked.steps[index - 1], step, summary)
     return smoked
