@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import re
 
+from borges.analysis.code_guard_ctx import ctx_writes
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.models import AnalysisPlan, Step
 
-ASSIGN = re.compile(r"""ctx\[\s*["']outcome["']\s*\]\s*=\s*([^\n]+)""")
 LITERAL = re.compile(r"""^["']([^"']+)["']""")
 DEFINITION = "def estimate(df, ctx):"
 VARIABLE = "outcome_column"
@@ -19,11 +19,13 @@ def ctx_outcome_names(plan: AnalysisPlan, step: Step, available: list[str]) -> l
             break
         for option in earlier.options:
             text = option.code if option.code is not None else option.spec
-            for value in ASSIGN.findall(text):
-                literal = LITERAL.match(value.strip())
-                if literal is None:
-                    return None
-                names.append(literal.group(1))
+            value = ctx_writes(text).get("outcome")
+            if value is None:
+                continue
+            literal = LITERAL.match(value.strip())
+            if literal is None:
+                return None
+            names.append(literal.group(1))
     found = list(dict.fromkeys(names))
     if not found or any(name not in available for name in found):
         return None

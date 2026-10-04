@@ -6,6 +6,13 @@ import re
 from borges.analysis.models import AnalysisPlan, Step
 
 CTX_WRITE = re.compile(r"""ctx\s*\[\s*["'](\w+)["']\s*\]\s*(?:\+=|=(?!=)|\.extend\()\s*([^;\n]*)""")
+LITERAL = r"""(\[[^\]]*\]|["'][^"']+["'])"""
+KEY = r"""ctx\s*\[\s*["'](\w+)["']\s*\]"""
+PROSE_WRITE = re.compile(
+    rf"\b(?:write|store|save|put|record)s?\s+{LITERAL}\s+(?:to|in|into|as|under)\s+{KEY}",
+    re.IGNORECASE,
+)
+PROSE_SET = re.compile(rf"\bsets?\s+{KEY}\s+to\s+{LITERAL}", re.IGNORECASE)
 UNADJUSTED = re.compile(
     r"\bunadjusted\b|\bno covariates\b|\bwithout (?:any )?covariates\b|\bcovariates? ignored\b",
     re.IGNORECASE,
@@ -20,8 +27,12 @@ COLUMN_KEYS = frozenset({"covariates", "outcome"})
 CREATED = re.compile(r"""df\s*\[\s*["'](\w+)["']\s*\]\s*=(?!=)""")
 
 
-def _writes(text: str) -> dict[str, str]:
-    return {key: " ".join(value.split()) for key, value in CTX_WRITE.findall(text)}
+def ctx_writes(text: str) -> dict[str, str]:
+    """What a piece of code, or a spec in code or in prose, stores under each ctx key."""
+    prose = {key: value for value, key in PROSE_WRITE.findall(text)}
+    prose.update(dict(PROSE_SET.findall(text)))
+    coded = {key: " ".join(value.split()) for key, value in CTX_WRITE.findall(text)}
+    return {**prose, **coded}
 
 
 def _text(step: Step) -> list[str]:
@@ -65,7 +76,7 @@ def varying_ctx_keys(plan: AnalysisPlan, step: Step) -> dict[str, str]:
     earlier = plan.steps[: next(i for i, s in enumerate(plan.steps) if s.id == step.id)]
     columns = _columns(plan)
     for index, writer in enumerate(earlier):
-        writes = [_writes(text) for text in _text(writer)]
+        writes = [ctx_writes(text) for text in _text(writer)]
         for key in set().union(*writes):
             values = [w.get(key) for w in writes]
             if not _varies(key, values) or (

@@ -39,6 +39,15 @@ def test_the_literal_names_earlier_options_store_are_the_candidates() -> None:
     assert ctx_outcome_names(computed, computed.step("m1"), available) is None
 
 
+def test_an_outcome_chosen_in_a_spec_not_yet_coded_is_a_candidate() -> None:
+    plan = plan_choosing_outcome()
+    for option, name in zip(plan.steps[1].options, ["outcome", "outcome2"], strict=True):
+        option.code = None
+        option.spec = f"Use the pre-existing {name} column. Write '{name}' to ctx['outcome']."
+    available = ["group", "outcome", "score", "outcome2"]
+    assert ctx_outcome_names(plan, plan.step("m1"), available) == ["outcome", "outcome2"]
+
+
 async def test_a_ctx_outcome_is_templated_and_read_at_run_time() -> None:
     plan = plan_choosing_outcome()
     llm = llm_with(GOOD_SPEC)
