@@ -3,6 +3,7 @@
 A covariate written as a formula term, C(position, drop_first=True), is the column itself: the
 template dummy-encodes categorical covariates. An exposure set to the offset column is replaced by
 the one exposure the option names. A derived 0/1 exposure becomes its text column and level.
+Covariates the option names as predictors are added back when the spec leaves them out.
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ from __future__ import annotations
 import re
 
 from borges.analysis.model_spec.derived_exposure import derived_exposure
+from borges.analysis.model_spec.named_covariates import with_named_covariates
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.model_spec.validate_named_exposure import named_exposures
 from borges.analysis.models import DatasetProfile
@@ -46,4 +48,5 @@ def normalise_spec(
     if not spec.supported:
         return spec
     spec = _offset_exposure(_bare_covariates(spec, available), text, available)
+    spec = with_named_covariates(spec, text, available, profile)
     return derived_exposure(spec, text, available, profile)
