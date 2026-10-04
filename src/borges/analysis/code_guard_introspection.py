@@ -43,5 +43,10 @@ def _builds_string(key: ast.AST) -> bool:
 
 def subscript_violations(node: ast.Subscript) -> list[str]:
     if _builds_string(node.slice):
-        return [f"line {node.lineno}: subscript with a computed string key is not allowed"]
+        return [
+            f"line {node.lineno}: subscript with a computed string key is not allowed, such as "
+            "df[f'{c}_missing'] or df[c + '_x']; build the new columns in a dict and add them at "
+            "once, for example df = df.assign(**{f'{c}_missing': df[c].isna().astype(int) for c "
+            "in cols}), and read a column with df[c] where c comes from a list of names"
+        ]
     return []

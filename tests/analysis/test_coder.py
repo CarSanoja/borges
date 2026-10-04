@@ -224,3 +224,26 @@ async def test_a_fresh_recode_follows_a_failed_guard_repair(
     step = plan.step("m1")
     code, attempts, _ = await coder.generate_checked(llm, plan, step, step.option("welch"))
     assert attempts == 3 and code is not None
+
+
+async def test_a_step_none_of_whose_options_codes_is_replanned_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    fresh = {"id": "fresh", "label": "Fresh", "rationale": "r", "spec": "keep all rows"}
+    llm = FakeLLM(
+        {
+            "coder:d1.keep": CoderOutput(code="BAD"),
+            "coder:d1.keep:repair": CoderOutput(code="BAD"),
+            "coder:d1.trim": CoderOutput(code="BAD"),
+            "coder:d1.trim:repair": CoderOutput(code="BAD"),
+            "planner:replan:d1": {"options": [{**fresh, "is_default": True}]},
+            "coder:d1.fresh": CoderOutput(code=GOOD),
+            "coder:m1.ols": CoderOutput(code="O"),
+            "coder:m1.welch": CoderOutput(code="W"),
+        }
+    )
+    coded = await code_plan(llm, make_plan())
+    step = coded.step("d1")
+    assert [o.id for o in step.options] == ["fresh"]
+    assert step.default.id == "fresh" and step.default.code == GOOD

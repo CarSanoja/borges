@@ -8,6 +8,7 @@ from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode
 from borges.analysis.coder_replan import make_replan
+from borges.analysis.coder_rescue import promote_sibling, replan_uncoded_step
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
 from borges.analysis.model_spec.request import join_notes, request_template, template_family
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
@@ -136,6 +137,7 @@ async def code_plan(
 
     coded = plan.model_copy(deep=True)
     failed_defaults: dict[str, tuple[str, str | None]] = {}
+    failures: dict[tuple[str, str], tuple[int, str | None]] = {}
     attempts_by_option: dict[tuple[str, str], int] = {}
     for (step, option), (code, attempts, error) in zip(pending, results, strict=True):
         target = coded.step(step.id)
@@ -143,11 +145,21 @@ async def code_plan(
         if code is not None:
             target.option(option.id).code = code
             continue
+        failures[(step.id, option.id)] = (attempts, error)
         if option.is_default:
             failed_defaults[step.id] = (option.id, error)
         target.options = [o for o in target.options if o.id != option.id]
     for step_id, (default_id, error) in failed_defaults.items():
-        await _promote_sibling(
+        if not any(o.code is not None for o in coded.step(step_id).options):
+            errors = {o: v for (s, o), v in failures.items() if s == step_id}
+            on_replan = smoke.on_replan if smoke is not None else None
+            step = plan.step(step_id)
+            rescued = await replan_uncoded_step(
+                llm, coded, step, errors, generate_checked, on_coded, summary, on_replan
+            )
+            if rescued:
+                continue
+        await promote_sibling(
             coded, step_id, default_id, error, attempts_by_option, models_by_option, on_coded
         )
     if summary is not None:
@@ -166,33 +178,6 @@ async def code_plan(
 
     replan = make_replan(llm, coded, generate_checked, on_coded, summary)
     return await smoke_plan(smoke, coded, repair, summary, concurrency, recode, replan)
-
-
-async def _promote_sibling(
-    coded: AnalysisPlan,
-    step_id: str,
-    default_id: str,
-    error: str | None,
-    attempts_by_option: dict[tuple[str, str], int],
-    models_by_option: dict[tuple[str, str], list[str]],
-    on_coded: OnCoded | None,
-) -> None:
-    target = coded.step(step_id)
-    sibling = next((o for o in target.options if o.code is not None), None)
-    if sibling is None:
-        raise LLMError(f"default option {step_id}.{default_id} failed coding: {error}")
-    sibling.is_default = True
-    if on_coded is not None:
-        note = f"promoted to default because {default_id} failed coding: {error}"
-        attempts = attempts_by_option.get((step_id, sibling.id), 1)
-        await on_coded(
-            step_id,
-            sibling.id,
-            True,
-            attempts,
-            note,
-            models_by_option.get((step_id, sibling.id), []),
-        )
 
 
 async def repair_option(
