@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from borges.analysis.ids import slug_id
 from borges.analysis.models import (
     AnalysisPlan,
@@ -14,6 +16,18 @@ from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.result_scale import detect_scale
 from borges.analysis.schemas import PlannedStep, PlannerOutput
 from borges.llm.client import LLMClient, LLMError, Role
+
+CTX_REFERENCE = re.compile(
+    r"""^ctx\s*(?:\[\s*["']?([^"'\]]+?)["']?\s*\]|\.get\(\s*["']([^"']+)["'][^)]*\)|[.:|/]\s*(.+))$"""
+)
+
+
+def produced_name(raw: str) -> str:
+    name = raw.strip()
+    match = CTX_REFERENCE.match(name)
+    if match is None:
+        return name
+    return next(group for group in match.groups() if group).strip()
 
 
 def clean_id(raw: str, fallback: str) -> str:
@@ -70,7 +84,7 @@ def _build_step(planned: PlannedStep, step_id: str) -> Step:
         kind=planned.kind,
         description=planned.description,
         options=options,
-        produces=[name.strip() for name in planned.produces if name.strip()],
+        produces=list(dict.fromkeys(filter(None, map(produced_name, planned.produces)))),
     )
 
 

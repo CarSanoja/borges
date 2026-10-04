@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from borges.analysis.models import DecisionRule
-from borges.analysis.planner import plan_analysis
+from borges.analysis.planner import plan_analysis, produced_name
 from borges.analysis.schemas import PlannedOption, PlannedStep, PlannerOutput
 from borges.llm.client import LLMError, Role
 from tests.analysis.fakes import FakeLLM, make_profile
@@ -111,3 +111,23 @@ async def test_plan_carries_the_scale_derived_from_the_metric() -> None:
         llm = FakeLLM({"planner": out})
         plan = await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric=metric))
         assert plan.result_scale == scale
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "ctx|covariates",
+        "ctx['covariates']",
+        'ctx["covariates"]',
+        "ctx.covariates",
+        "ctx:covariates",
+        "ctx.get('covariates', [])",
+        " covariates ",
+    ],
+)
+def test_produces_written_as_a_ctx_reference_is_the_bare_key(raw: str) -> None:
+    assert produced_name(raw) == "covariates"
+
+
+def test_produces_that_only_starts_with_ctx_is_left_alone() -> None:
+    assert produced_name("ctx_score") == "ctx_score"
