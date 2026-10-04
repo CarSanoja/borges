@@ -109,6 +109,12 @@ def test_the_to_option_and_the_from_option_are_allowed_even_when_nested() -> Non
     assert wrong_labels(plan, both, "It excludes internal and bot-like sessions.") == []
 
 
+def test_only_a_sentence_about_the_flip_is_checked_for_other_options() -> None:
+    plan, report = checkout_plan(), checkout_report()
+    text = "Excluding internal and bot-like sessions keeps the verdict."
+    assert wrong_labels(plan, report, text) == []
+
+
 def test_insert_sentence_goes_second() -> None:
     assert insert_sentence("One. Two. Three.", "S.") == "One. S. Two. Three."
     assert insert_sentence("Only one", "S.") == "Only one S."

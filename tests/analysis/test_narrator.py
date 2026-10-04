@@ -86,7 +86,7 @@ async def test_missing_sentence_after_the_retry_is_inserted_as_second_sentence()
 
 
 async def test_failed_retry_falls_back_to_insertion() -> None:
-    bad = f"{ORIGINAL} It excludes internal and bot-like sessions."
+    bad = f"{ORIGINAL} This flip excludes internal and bot-like sessions."
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=["k"])})
     narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
@@ -164,3 +164,13 @@ async def test_a_correct_draft_that_leaves_out_a_required_sentence_is_kept_and_c
     narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
     assert llm.keys() == ["narrator"]
     assert narrative == f"{draft} {ROBUST}"
+
+
+async def test_another_option_of_the_flipped_step_told_with_its_own_result_is_kept() -> None:
+    draft = (
+        f"{ORIGINAL} {SENTENCE} Excluding internal and bot-like sessions also gives DON'T SHIP. "
+        f"{ROBUST}"
+    )
+    llm = FakeLLM({"narrator": NarratorOutput(narrative=draft, caveats=[])})
+    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    assert narrative == draft and llm.keys() == ["narrator"]

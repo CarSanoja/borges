@@ -9,6 +9,7 @@ _TOKEN = re.compile(r"[a-z0-9]+")
 _SUFFIXES = ("ing", "ed", "es", "s", "e")
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 _HOLE = "\0"
+THE_FLIP = re.compile(r"\b(?:the|this|minimal|smallest)\s+flip\b", re.IGNORECASE)
 
 
 def _stem(word: str) -> str:
@@ -59,10 +60,16 @@ def has_sentence(narrative: str, sentence: str) -> bool:
 
 
 def wrong_labels(plan: AnalysisPlan, report: Report, narrative: str) -> list[str]:
+    """Options of a flipped step that a sentence about the flip names besides the two it changes.
+
+    A sentence on another option's own result is not one: a 2a2d925 narrative was retried for
+    "as does switching to Psychological well-being (estimate 0.0245, p = 0.009)", true of that
+    option, and the retry kept only the required sentences."""
     flip = report.minimal_flip
     if flip is None:
         return []
-    text = _tokens(narrative)
+    about = [s for s in _SENTENCE_END.split(narrative.strip()) if THE_FLIP.search(s)]
+    text = _tokens(" ".join(about))
     found: list[str] = []
     for change in flip.changes:
         step = plan.step(change.step_id)
