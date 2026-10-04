@@ -32,6 +32,7 @@ def build_messages(
     flip_sentence: str | None = None,
     problems: list[str] | None = None,
     garden: dict[str, object] | None = None,
+    scale: str | None = None,
 ) -> list[dict[str, str]]:
     body = report.model_dump(mode="json", exclude={"narrative", "caveats", "narrator_input_tokens"})
     user = (
@@ -41,6 +42,8 @@ def build_messages(
     )
     if garden is not None:
         user += f"\nGarden: {compact_json(garden)}"
+    if scale is not None:
+        user += f"\nScale of the estimate: {scale} Describe every estimate on that scale."
     if flip_sentence is not None:
         user += (
             f"\nInclude this sentence verbatim in the summary, as its second sentence: "

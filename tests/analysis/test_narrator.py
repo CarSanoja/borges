@@ -108,3 +108,29 @@ async def test_fallback_removes_sentences_that_name_another_option_of_the_flippe
     narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"The verdict is SHIP. {SENTENCE} Robustness is 50%."
     assert "bot-like" not in narrative
+
+
+async def test_an_estimate_on_the_log_scale_is_never_read_as_additional_units() -> None:
+    from tests.garden.test_outcome_scale import garden
+
+    result = AnalysisResult(estimate=0.0293, ci_low=-0.05, ci_high=0.11, p_value=0.47, n=93)
+    report = Report(
+        question="Q?",
+        original_verdict="NO CLEAR EVIDENCE",
+        original_result=result,
+        minimal_flip=None,
+        influences=[],
+        robustness=1.0,
+        n_universes=3,
+        n_flipped=0,
+    )
+    bad = "No clear evidence. The estimate was 0.029 additional deaths per unit."
+    llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=[])})
+    scaled = garden({"kind": "log1p", "column": "alldeaths"})
+    narrative, _ = await narrate(llm, make_plan(), report, scaled)
+    assert llm.keys() == ["narrator", "narrator:retry"]
+    assert (
+        "Scale of the estimate: The original analysis is a model of log1p(alldeaths)"
+        in (llm.calls[0].messages[1]["content"])
+    )
+    assert "on the log scale: about 3.0% more alldeaths" in narrative
