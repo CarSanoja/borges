@@ -13,6 +13,7 @@ from borges.analysis.narrative_flip import (
 from borges.analysis.narrative_repeats import drop_repeated_sentences
 from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
+    kept_caveats,
     robustness_problems,
     robustness_sentence,
 )
@@ -89,7 +90,7 @@ async def narrate(
     narrative = drop_repeated_sentences(out.narrative.strip())
     issues = _issues(plan, report, narrative, scale)
     if not issues:
-        return narrative, list(out.caveats)
+        return narrative, kept_caveats(report, out.caveats)
     try:
         retry = await _ask(
             llm, plan, report, sentence, "narrator:retry", issues, garden, judged, scale
@@ -99,7 +100,7 @@ async def narrate(
     if retry is not None:
         second = drop_repeated_sentences(retry.narrative.strip())
         if not _issues(plan, report, second, scale) and NUMBER.search(second):
-            return second, list(retry.caveats)
+            return second, kept_caveats(report, retry.caveats)
     kept = drop_inverted_sentences(report, drop_wrong_sentences(plan, report, narrative))
     if sentence is not None and not has_sentence(kept, sentence):
         kept = insert_sentence(kept, sentence)
@@ -108,4 +109,4 @@ async def narrate(
         kept = f"{kept} {robust}"
     if scale is not None and not mentions_log_scale(kept):
         kept = insert_sentence(kept, scale)
-    return kept, list(out.caveats)
+    return kept, kept_caveats(report, out.caveats)
