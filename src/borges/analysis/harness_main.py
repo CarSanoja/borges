@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.harness_covariates import COVARIATES_SOURCE
 from borges.analysis.harness_design import (
     DESIGN_CONDITION_LIMIT,
     DESIGN_MAX_ROWS,
@@ -166,6 +167,9 @@ __FINGERPRINT__
                     raise ValueError(_design_error(design))
                 if __DESIGN_CHECK__ and design["no_intercept"]:
                     raise ValueError(_intercept_error(design))
+                ignored = _ignored_covariates(design, ctx, df, trace["note"])
+                if __DESIGN_CHECK__ and ignored:
+                    raise ValueError(_ignored_error(ignored, design))
                 if design["aliased"]:
                     alias = __ALIAS_NOTE__ + ", ".join(design["aliased"])
                     trace["note"] = (alias + "; " + trace["note"] if trace["note"] else alias)[:500]
@@ -231,7 +235,10 @@ MAIN_TEMPLATE = (
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
     .replace(
         "__DESIGN__",
-        "\n\n".join(x.strip("\n") for x in (DESIGN_SOURCE, DESIGN_ERRORS_SOURCE, OUTCOME_SOURCE)),
+        "\n\n".join(
+            x.strip("\n")
+            for x in (DESIGN_SOURCE, DESIGN_ERRORS_SOURCE, COVARIATES_SOURCE, OUTCOME_SOURCE)
+        ),
     )
     .replace("__OUTCOME_MAX_ROWS__", repr(OUTCOME_MAX_ROWS))
     .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))

@@ -4,6 +4,8 @@ import json
 import re
 from pathlib import Path
 
+from borges.analysis.code_guard_ctx import UNADJUSTED
+from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.harness_effects import EffectTrace
 from borges.analysis.harness_main import MAIN_TEMPLATE
 from borges.analysis.models import AnalysisResult, Option, Step, StepTrace
@@ -68,6 +70,7 @@ def render_step(
         .replace("__SPLIT_HALF__", repr(split_half))
         .replace("__DESIGN_CHECK__", repr(design_check))
         .replace("__PRODUCES__", repr(list(step.produces)))
+        .replace("__ADJUSTS__", repr(not UNADJUSTED.search(option_intent(option))))
     )
     return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 
