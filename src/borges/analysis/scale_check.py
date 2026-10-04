@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections.abc import Callable
 from typing import Any
 
@@ -13,7 +14,36 @@ def is_ratio_rule(rule: DecisionRule) -> bool:
     return rule.threshold == 1.0 and any(word in rule.metric.lower() for word in RATIO_WORDS)
 
 
+def is_difference_rule(rule: DecisionRule) -> bool:
+    return rule.threshold == 0.0 and not any(word in rule.metric.lower() for word in RATIO_WORDS)
+
+
+def ratio_shaped(estimate: float, low: float, high: float) -> bool:
+    if min(estimate, low, high) <= 0:
+        return False
+    multiplicative = abs(math.sqrt(low * high) - estimate) <= 1e-6 * estimate
+    additive = abs((low + high) / 2 - estimate) <= 1e-6 * estimate
+    return multiplicative and not additive
+
+
+def _difference_check(rule: DecisionRule) -> Callable[[dict[str, Any]], str | None]:
+    def check(result: dict[str, Any]) -> str | None:
+        estimate, low, high = result["estimate"], result["ci_low"], result["ci_high"]
+        if not ratio_shaped(estimate, low, high):
+            return None
+        return (
+            f"the decision rule compares the {rule.metric} with 0, so the estimate must be a "
+            f"difference whose sign shows the direction; got estimate {estimate:.4g} with "
+            f"interval [{low:.4g}, {high:.4g}], which is a ratio (exp of a coefficient) and is "
+            f"always positive: return the coefficient and its interval without exponentiating"
+        )
+
+    return check
+
+
 def scale_check(rule: DecisionRule) -> Callable[[dict[str, Any]], str | None] | None:
+    if is_difference_rule(rule):
+        return _difference_check(rule)
     if not is_ratio_rule(rule):
         return None
 

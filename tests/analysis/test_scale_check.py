@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import pytest
@@ -15,6 +16,7 @@ ODDS = DecisionRule(
     threshold=1.0,
 )
 LIFT = DecisionRule(metric="conversion lift (percentage points)", threshold=0.0)
+DEATHS = DecisionRule(metric="additional deaths from a feminine name", threshold=0.0)
 
 
 def _result(estimate: float, low: float, high: float) -> dict[str, Any]:
@@ -33,8 +35,22 @@ def test_odds_ratio_passes() -> None:
     assert check is not None and check(_result(0.89, 0.876, 0.905)) is None
 
 
-def test_additive_metrics_are_not_checked() -> None:
-    assert scale_check(LIFT) is None
+def test_an_additive_estimate_against_a_difference_rule_passes() -> None:
+    check = scale_check(LIFT)
+    assert check is not None and check(_result(0.005, 0.001, 0.009)) is None
+    assert check(_result(-0.2, -0.5, 0.1)) is None
+
+
+def test_a_rate_ratio_against_a_difference_rule_fails() -> None:
+    check = scale_check(DEATHS)
+    assert check is not None
+    coefficient, se = 0.0961, 0.07
+    ratio = _result(
+        math.exp(coefficient), math.exp(coefficient - 1.96 * se), math.exp(coefficient + 1.96 * se)
+    )
+    error = check(ratio)
+    assert error is not None and "without exponentiating" in error
+    assert check(_result(coefficient, coefficient - 1.96 * se, coefficient + 1.96 * se)) is None
 
 
 def test_instruction_states_the_threshold_and_the_ratio_scale() -> None:
