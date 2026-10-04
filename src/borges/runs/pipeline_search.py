@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from borges.analysis.models import AnalysisPlan
 from borges.garden.executor import GardenExecutor
+from borges.garden.models import Universe
 from borges.garden.search import minimal_flip, single_flip_choices
 from borges.runs.baseline_recovery import recover_baseline
 from borges.runs.pipeline_stages import (
@@ -12,7 +13,7 @@ from borges.runs.pipeline_stages import (
     run_uniform_sample,
     tolerate_budget,
 )
-from borges.runs.runner import UniverseRunner
+from borges.runs.runner import UniverseRunner, publish_plan
 from borges.runtime.alias_backend import AliasBackend
 from borges.runtime.restore_search import restore_search
 
@@ -48,9 +49,12 @@ async def search_garden(pipeline: Pipeline, plan: AnalysisPlan) -> None:
     )
     async with pipeline.stage("baseline"):
         baseline = await runner.run(plan.default_choices(), "baseline")
-        baseline = await recover_baseline(
-            plan, baseline, lambda c: runner.run(c, "baseline"), pipeline.caveats
-        )
+
+        async def rerun(choices: dict[str, str]) -> Universe:
+            await publish_plan(pipeline.emitter, plan)
+            return await runner.run(choices, "baseline")
+
+        baseline = await recover_baseline(plan, baseline, rerun, pipeline.caveats)
     async with pipeline.stage("single_flips"):
         singles = single_flip_choices(plan)
         if len(singles) > runner.remaining:

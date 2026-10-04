@@ -56,10 +56,22 @@ async def test_baseline_failure_is_repaired_once(tmp_path: Path, scenario: Scena
     assert baseline is not None and baseline.status == "done"
 
 
-async def test_baseline_failure_after_repair_fails_the_run(
+async def test_a_failed_baseline_default_is_replaced_by_its_sibling(
     tmp_path: Path, scenario: Scenario
 ) -> None:
     scenario.broken = {("s2", "x")}
+    scenario.unrepairable = True
+    rig = make_rig(tmp_path)
+    snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
+    assert snapshot.status == "completed"
+    assert snapshot.plan.step("s2").default.id == "y"
+    assert any("was promoted to default" in c for c in snapshot.report.caveats)
+
+
+async def test_baseline_failure_after_repair_fails_the_run(
+    tmp_path: Path, scenario: Scenario
+) -> None:
+    scenario.broken = {("s2", "x"), ("s2", "y")}
     scenario.unrepairable = True
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
