@@ -4,6 +4,7 @@ from borges.analysis.adversary import propose_options
 from borges.analysis.coder import _smoke_repair, code_option
 from borges.analysis.judge import judge_option
 from borges.analysis.models import AnalysisPlan, Option, Proposal, Step
+from borges.analysis.option_references import expand_option
 from borges.analysis.smoke_extra import smoke_extra_option
 from borges.analysis.smoke_types import SmokeConfig
 from borges.garden.models import Universe
@@ -58,7 +59,7 @@ async def _judge_and_code(
     memory: RunMemory | None = None,
 ) -> tuple[str, Option] | None:
     step = plan.step(proposal.step_id)
-    option = proposal.option
+    option = expand_option(plan, step, proposal.option)
     judgement = memory.recall_verdict(plan, step, option) if memory else None
     try:
         if judgement is None:

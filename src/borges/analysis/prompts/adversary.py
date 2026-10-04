@@ -26,6 +26,8 @@ steps where the data actually responds to the choice.
 the options of other steps.
 - Ids are short snake_case and unique within the step. source is an optional short citation.
 - Prefer a few strong proposals over many weak ones.
+- Every option spec must be self-contained and never say 'same as' another option: the coder \
+sees only the option it codes, so restate the full spec.
 
 Return only JSON matching the requested schema."""
 

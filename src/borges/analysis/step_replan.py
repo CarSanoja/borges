@@ -3,6 +3,7 @@ from __future__ import annotations
 from pydantic import ValidationError
 
 from borges.analysis.models import AnalysisPlan, Option, Step
+from borges.analysis.option_references import expand_option
 from borges.analysis.planner import normalise_ids, unique_id
 from borges.analysis.prompts.replan import build_replan_messages
 from borges.analysis.schemas import PlannedStep, PlannerOutput, ReplanOutput
@@ -84,4 +85,6 @@ async def propose_options(
     if fresh is None:
         return None
     failed = {o.option.id for o in outcomes}
-    return _options(step, fresh, plan, set(failed))
+    options = _options(step, fresh, plan, set(failed))
+    shell = step.model_copy(update={"options": options})
+    return [expand_option(plan, shell, o) for o in options]

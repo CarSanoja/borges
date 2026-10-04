@@ -86,6 +86,8 @@ alternative ways of measuring or estimating the same signed quantity.
 means more of the construct, for example by requiring a positive correlation with the mean of \
 their items.
 - estimand states precisely the quantity the decision rule judges, in one sentence.
+- Every option spec must be self-contained and never say 'same as' another option: the coder \
+sees only the option it codes, so restate the full spec.
 
 Return only JSON matching the requested schema."""
 
