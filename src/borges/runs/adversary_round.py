@@ -131,12 +131,9 @@ async def run_adversary_round(
     memory: RunMemory | None = None,
 ) -> list[Universe]:
     """Propose options from the real baseline state, judge them, then flip each accepted one."""
-    try:
-        avoid = memory.avoid_hints(plan) if memory else None
-        extra = {"avoid": avoid} if avoid else {}
-        proposed = await propose_options(llm, plan, baseline, **extra)
-    except LLMError:
-        return []
+    avoid = memory.avoid_hints(plan) if memory else None
+    extra = {"avoid": avoid} if avoid else {}
+    proposed = await propose_options(llm, plan, baseline, **extra)
     proposals = [p for p in proposed if any(s.id == p.step_id for s in plan.steps)]
     proposals = await drop_duplicates(plan, emitter, ledger, proposals, memory)
     if armor is not None:

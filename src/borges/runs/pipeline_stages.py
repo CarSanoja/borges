@@ -32,6 +32,12 @@ async def tolerate_budget(pipeline: Pipeline, work: Awaitable[object], label: st
         pipeline.caveats.append(f"{label} because the spend or run cap was reached: {exc}")
 
 
+NO_ADVERSARY = (
+    "No adversary option entered the garden: its proposals repeated options the plan already had "
+    "or did not pass the judge and the checks, so every universe uses the planner's options."
+)
+
+
 async def run_adversary(
     pipeline: Pipeline, plan: AnalysisPlan, runner: UniverseRunner, baseline: Universe
 ) -> None:
@@ -51,6 +57,9 @@ async def run_adversary(
             )
         except Exception as exc:
             pipeline.caveats.append(f"The adversary stage failed and was skipped: {exc}")
+        else:
+            if not any(o.origin == "adversary" for s in plan.steps for o in s.options):
+                pipeline.caveats.append(NO_ADVERSARY)
         if pipeline.smoke is not None:
             pipeline.caveats.extend(pipeline.smoke.state.notes[seen:])
 

@@ -6,6 +6,7 @@ import pytest
 
 from borges.llm.client import BudgetExceeded, LLMError
 from borges.runs.models import RunRequest
+from borges.runs.pipeline_stages import NO_ADVERSARY
 from tests.runs.engine_fakes import Scenario, install
 from tests.runs.fakes import adversary_proposal, make_rig
 
@@ -156,7 +157,7 @@ async def test_narrator_failure_keeps_the_report(tmp_path: Path, scenario: Scena
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
     assert snapshot.status == "completed"
     assert snapshot.report.narrative == ""
-    assert snapshot.report.caveats == ["Narrative unavailable: model down"]
+    assert snapshot.report.caveats == [NO_ADVERSARY, "Narrative unavailable: model down"]
 
 
 async def test_llm_error_on_the_adversary_leaves_a_completed_run(

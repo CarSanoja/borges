@@ -102,3 +102,13 @@ async def test_avoid_hints_reach_the_prompt_only_when_given() -> None:
     assert "Earlier runs" not in plain
     assert "Earlier runs on this dataset" in steered
     assert "- Keep engaged only: keep engaged (rejected)" in steered
+
+
+async def test_proposals_that_only_repeat_the_plan_are_asked_for_again() -> None:
+    repeats = AdversaryOutput(proposals=[proposed("m1", "other", spec="Spec for welch on outcome")])
+    fresh = AdversaryOutput(proposals=[proposed("d1", "clip")])
+    llm = FakeLLM({"adversary": repeats, "adversary:retry": fresh})
+    proposals = await propose_options(llm, make_plan(), baseline())
+    assert [(p.step_id, p.option.id) for p in proposals] == [("d1", "adv_clip")]
+    assert [c.key for c in llm.calls] == ["adversary", "adversary:retry"]
+    assert "'L other'" in llm.calls[1].messages[-1]["content"]

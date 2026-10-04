@@ -43,7 +43,7 @@ def patch(monkeypatch: pytest.MonkeyPatch, propose: Any, judge: Any) -> None:
     monkeypatch.setattr(adversary_round, "review_proposal", review_proposal)
 
 
-async def test_propose_llm_error_returns_no_universes(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_propose_llm_error_reaches_the_stage(monkeypatch: pytest.MonkeyPatch) -> None:
     async def propose(*args: Any) -> Any:
         raise LLMError("adversary: invalid output")
 
@@ -52,7 +52,8 @@ async def test_propose_llm_error_returns_no_universes(monkeypatch: pytest.Monkey
 
     patch(monkeypatch, propose, judge)
     runner = Runner()
-    assert await run_adversary_round(None, make_plan(), runner, Emitter(), None) == []
+    with pytest.raises(LLMError, match="invalid output"):
+        await run_adversary_round(None, make_plan(), runner, Emitter(), None)
     assert runner.ran == []
 
 
