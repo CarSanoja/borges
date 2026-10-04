@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.code_guard import check_code
 from borges.analysis.code_guard_statsmodels import option_intent
+from borges.analysis.code_guard_wide import wide_columns, wide_dummy_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts.coder import build_messages
@@ -26,5 +27,9 @@ async def fresh_recode(
     )
     code, _ = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)
     code, _ = add_missing_imports(code)
-    violations = check_code(code, step.kind, option_intent(option))
+    wide = wide_columns(plan.dataset) if step.kind == "model" else {}
+    violations = [
+        *check_code(code, step.kind, option_intent(option)),
+        *wide_dummy_violations(code, wide),
+    ]
     return code, ("\n".join(violations) if violations else None), response.usage.model

@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 
 from borges.analysis.code_guard_estimator import estimator_violations
+from borges.analysis.code_guard_fallback import fallback_violations
 from borges.analysis.code_guard_formula import formula_error, needs_formula_check
 from borges.analysis.code_guard_introspection import (
     attribute_violations as introspection_attribute_violations,
@@ -175,7 +176,7 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
     if kind == "model":
         violations.extend(row_filter_violations(func))
         violations.extend(statsmodels_violations(func, intent))
-        violations.extend(estimator_violations(func, intent))
+        violations.extend([*estimator_violations(func, intent), *fallback_violations(func)])
     return violations
 
 
