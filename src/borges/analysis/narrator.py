@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import re
+
 from borges.analysis.models import AnalysisPlan
 from borges.analysis.narrative_flip import (
     drop_wrong_sentences,
     flip_sentence,
+    has_sentence,
     insert_sentence,
     problems,
 )
@@ -14,6 +17,8 @@ from borges.analysis.schemas import NarratorOutput
 from borges.garden.models import Garden, Report
 from borges.llm.client import LLMClient, LLMError, Role
 from borges.runs.judged_ledger import JudgedLedger
+
+NUMBER = re.compile(r"\d")
 
 
 def _messages(
@@ -70,9 +75,13 @@ async def narrate(
         return narrative, list(out.caveats)
     try:
         retry = await _ask(llm, plan, report, sentence, "narrator:retry", issues, garden, judged)
-        narrative, out = drop_repeated_sentences(retry.narrative.strip()), retry
     except LLMError:
-        pass
-    if problems(plan, report, narrative):
-        narrative = insert_sentence(drop_wrong_sentences(plan, report, narrative), sentence)
-    return narrative, list(out.caveats)
+        retry = None
+    if retry is not None:
+        second = drop_repeated_sentences(retry.narrative.strip())
+        if not problems(plan, report, second) and NUMBER.search(second):
+            return second, list(retry.caveats)
+    kept = drop_wrong_sentences(plan, report, narrative)
+    if not has_sentence(kept, sentence):
+        kept = insert_sentence(kept, sentence)
+    return kept, list(out.caveats)
