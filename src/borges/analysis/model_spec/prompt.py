@@ -34,7 +34,9 @@ also be a covariate, never the exposure.
 - cov_type: "nonrobust", "HC0", "HC1", "HC2", "HC3" or "cluster" (the one the option names); \
 with "cluster" set `cluster` to the grouping \
 column.
-- standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin).
+- standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin); \
+when the decision rule asks for a standardised coefficient, z-score the outcome, the exposure \
+and any moderator.
 - report: "coefficient", "odds_ratio" (logit only), "rate_ratio" (count families only) or \
 "marginal_effect" (logit only, no moderator): the average marginal effect of the exposure on the \
 probability scale, the right report when the decision rule is a difference in proportions.

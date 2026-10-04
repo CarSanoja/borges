@@ -6,6 +6,7 @@ from borges.analysis.model_spec.validate_exposure import (
     is_text,
     profile_of,
 )
+from borges.analysis.model_spec.validate_standardized import standardized_problems
 from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.result_scale import detect_scale, is_proportion_rule
 from borges.analysis.scale_check import is_ratio_rule
@@ -189,4 +190,5 @@ def validate_spec(
         *_numeric_problems(spec, profile),
         *_level_problems(spec, profile, ctx_covariates or []),
         *_scale_problems(spec, rule),
+        *standardized_problems(spec, rule),
     ]
