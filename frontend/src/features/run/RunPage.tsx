@@ -95,7 +95,7 @@ export function RunPage({ source, onHome, replayControl = null }: Props) {
           <InfluenceBars snapshot={snapshot} />
         </div>
       </section>
-      <RunCaveats caveats={snapshot.report?.caveats} />
+      <RunCaveats caveats={snapshot.report?.caveats} plan={snapshot.plan} />
       <RunMemory memory={snapshot.memory} />
       <footer className="run-footer">
         <AgentsUsed agents={snapshot.agents ?? snapshot.report?.agents} />
