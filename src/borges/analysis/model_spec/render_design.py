@@ -48,6 +48,7 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
 
 ALIAS_TOLERANCE = 1e-7
 ALIAS_NOTE = "aliased covariates dropped: "
+TANGLED_NOTE = "; covariates that rebuild the exposure with them dropped: "
 ALIAS_LINES = [
     "    protected = ['const', *map(str, core.columns)]",
     "    basis = np.zeros((len(exog), 0))",
@@ -63,8 +64,20 @@ ALIAS_LINES = [
     "            basis = np.column_stack([basis, residual / size])",
     "        elif str(column) not in protected:",
     "            aliased.append(str(column))",
-    "    exog = exog.drop(columns=aliased)",
+    "    kept = [c for c in exog.columns if c not in aliased]",
+    "    tangled = []",
+    "    for column in aliased:",
+    "        target = exog[column].to_numpy(dtype=float)",
+    "        weights = np.linalg.lstsq(exog[kept].to_numpy(dtype=float), target, rcond=None)[0]",
+    "        sizes = np.abs(weights) * exog[kept].abs().max().to_numpy(dtype=float)",
+    f"        floor = {ALIAS_TOLERANCE!r} * (float(np.abs(target).max()) or 1.0)",
+    "        involved = [c for c, size in zip(kept, sizes) if size > floor]",
+    "        if any(c in core.columns for c in involved):",
+    "            tangled += [c for c in involved if c not in protected]",
+    "    tangled = list(dict.fromkeys(tangled))",
+    "    exog = exog.drop(columns=aliased + tangled)",
     f"    note = {ALIAS_NOTE!r} + ', '.join(aliased) if aliased else ''",
+    f"    note += {TANGLED_NOTE!r} + ', '.join(tangled) if tangled else ''",
 ]
 
 

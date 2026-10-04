@@ -87,3 +87,17 @@ def test_a_constant_exposure_is_kept_for_the_design_check_to_refuse() -> None:
     data = aliased_frame().assign(x=1.0)
     got = run(render_code(make_spec("ols", outcome="y", covariates=["w"])), data)
     assert got["note"] == ""
+
+
+def test_covariates_that_rebuild_the_exposure_are_dropped_together() -> None:
+    rng = np.random.default_rng(5)
+    r1, r2 = rng.uniform(size=300), rng.uniform(size=300)
+    data = pd.DataFrame({"r1": r1, "r2": r2, "w": rng.normal(size=300)})
+    data["x"] = (data["r1"] + data["r2"]) / 2
+    data["y"] = 2.0 * data["x"] + data["w"] + rng.normal(size=300)
+    got = run(render_code(make_spec("ols", outcome="y", covariates=["r1", "r2", "w"])), data)
+    lean = run(render_code(make_spec("ols", outcome="y", covariates=["w"])), data)
+    assert got["note"] == (
+        "aliased covariates dropped: r2; covariates that rebuild the exposure with them dropped: r1"
+    )
+    assert got["estimate"] == pytest.approx(lean["estimate"], rel=1e-9)

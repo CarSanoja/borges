@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import StepTrace
-from borges.garden.aliased import aliased_caveats
+from borges.garden.aliased import aliased_caveats, tangled_caveats
 from borges.garden.models import Garden, Universe
 
 
@@ -24,3 +24,18 @@ def test_aliased_covariates_are_counted_by_universe_and_named_once() -> None:
     [caveat] = aliased_caveats(garden)
     assert caveat.startswith("In 2 universes")
     assert "(elapsedyrs, region_b)" in caveat
+
+
+def test_covariates_that_rebuild_the_exposure_get_their_own_caveat() -> None:
+    garden = Garden()
+    garden.add(
+        universe(
+            "u1",
+            "aliased covariates dropped: rater2; "
+            "covariates that rebuild the exposure with them dropped: rater1",
+        )
+    )
+    [aliased] = aliased_caveats(garden)
+    [tangled] = tangled_caveats(garden)
+    assert "(rater2)" in aliased and "rater1" not in aliased
+    assert tangled.startswith("In 1 universes the covariates rater1 were also dropped")
