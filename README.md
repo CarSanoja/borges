@@ -26,7 +26,7 @@ smallest flip it found.**
 > command and compares them with this block):
 >
 > ```text
-> Universes: 27, checkpoints: 118, LLM calls: 38 scripted (0 cached)
+> Universes: 27, checkpoints: 119, LLM calls: 38 scripted (0 cached)
 > Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)
 > ```
 >
