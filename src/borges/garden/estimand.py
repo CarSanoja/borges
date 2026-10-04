@@ -22,7 +22,7 @@ def _named(terms: list[str]) -> str:
     generic = [t for t in terms if UNNAMED.fullmatch(t)]
     named = [t for t in terms if not UNNAMED.fullmatch(t)]
     if generic:
-        named.append(f"{len(generic)} unnamed columns")
+        named.append(f"{len(generic)} unnamed column" + ("s" if len(generic) > 1 else ""))
     return ", ".join(named)
 
 
