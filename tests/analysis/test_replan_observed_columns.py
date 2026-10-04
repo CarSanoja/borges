@@ -53,7 +53,7 @@ def test_a_model_replan_is_told_which_ctx_keys_and_products_it_must_read() -> No
         kind="transform",
         description="d",
         produces=["score"],
-        options=[option("s0", "mean of items"), option("s1", "first component")],
+        options=[option("s0", "score = mean of items"), option("s1", "score = first component")],
     )
     model = Step(
         id="m", title="Model", kind="model", description="d", options=[option("m0", "OLS")]

@@ -66,3 +66,15 @@ def test_a_single_option_step_or_a_ctx_key_step_is_left_to_other_checks() -> Non
     )
     covariates = covariates.model_copy(update={"produces": ["covariates"]})
     assert unused_products(plan(single, covariates, MODEL), MODEL) == {}
+
+
+def test_a_step_whose_options_also_impute_or_drop_rows_is_not_required() -> None:
+    missing = step(
+        "miss",
+        "Handle missing values",
+        "transform",
+        "Create job_missing = 1 when job is null, then fill job with 'missing'.",
+        "Fill nulls in job with its mode; no new columns.",
+        "Drop rows where job is null.",
+    ).model_copy(update={"produces": ["job_missing"]})
+    assert unused_products(plan(missing, MODEL), MODEL) == {}

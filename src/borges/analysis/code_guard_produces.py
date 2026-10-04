@@ -39,6 +39,8 @@ def unused_products(plan: AnalysisPlan, step: Step) -> Products:
         names = [n for n in writer.produces if n not in COLUMN_KEYS and not GLOB.search(n)]
         if writer.kind not in PRODUCING or len(writer.options) < 2 or not names:
             continue
+        if not all(any(_mention(n).search(t) for n in names) for t in _texts(writer)):
+            continue
         between = [t for s in earlier[position + 1 :] for t in _texts(s)]
         if any(_mention(name).search(text) for name in names for text in between):
             continue
