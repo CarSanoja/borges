@@ -199,3 +199,37 @@ async def test_failed_import_check_is_not_tagged() -> None:
 def test_project_id_reaches_the_auth_config() -> None:
     backend = ContreeBackend("key", "https://example.invalid", project_id="proj-123")
     assert backend._client.config.auth.get_headers()["Project"] == "proj-123"
+
+
+class FlakyImage(FakeImage):
+    def __init__(self, store: FakeStore, failures: int) -> None:
+        super().__init__("flaky", store)
+        self.failures = failures
+
+    def run(self, **kwargs: Any) -> Any:
+        from contree_sdk.sdk.exceptions import ApiTimeoutError
+
+        async def fail() -> FakeImage:
+            raise ApiTimeoutError.__new__(ApiTimeoutError)
+
+        if self.failures > 0:
+            self.failures -= 1
+            return fail()
+        return super().run(**kwargs)
+
+
+@pytest.mark.parametrize(("failures", "survives"), [(2, True), (3, False)])
+async def test_a_transport_timeout_is_retried_twice(
+    backend: ContreeBackend, monkeypatch: pytest.MonkeyPatch, failures: int, survives: bool
+) -> None:
+    from borges.sandbox import contree_backend
+
+    monkeypatch.setattr(contree_backend, "TRANSIENT_WAITS_S", (0.0, 0.0))
+    root = await backend.root({})
+    backend._images[root.id] = FlakyImage(backend._runner.store, failures)
+    if survives:
+        result = await backend.run(root, ["python", "-c", "pass"])
+        assert result.ok and result.checkpoint.parent_id == root.id
+    else:
+        with pytest.raises(SandboxError, match="contree run failed"):
+            await backend.run(root, ["python", "-c", "pass"])

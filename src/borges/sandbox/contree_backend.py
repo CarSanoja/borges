@@ -14,6 +14,7 @@ IMPORT_CHECK_COMMAND = "python -c 'import pandas, numpy, scipy, statsmodels, pya
 INSTALL_TIMEOUT_S = 900.0
 CHECK_TIMEOUT_S = 120.0
 STDERR_TAIL_CHARS = 400
+TRANSIENT_WAITS_S = (1.0, 4.0)
 
 
 def _remote_files(files: Mapping[str, bytes] | None) -> dict[str, bytes]:
@@ -132,14 +133,10 @@ class ContreeBackend:
             raise SandboxError("empty command")
         base = await self._image_for(parent)
         started = time.perf_counter()
+        arguments = {"command": command[0], "args": list(command[1:]), "cwd": WORKDIR}
         try:
-            image = await base.run(
-                command=command[0],
-                args=list(command[1:]),
-                cwd=WORKDIR,
-                files=_remote_files(files),
-                timeout=timeout_s,
-                disposable=False,
+            image = await _run_with_retries(
+                base, files=_remote_files(files), timeout=timeout_s, disposable=False, **arguments
             )
         except ContreeError as exc:
             raise SandboxError(f"contree run failed: {exc}") from exc
@@ -166,6 +163,18 @@ class ContreeBackend:
 
     async def close(self) -> None:
         return None
+
+
+async def _run_with_retries(base: Any, **arguments: Any) -> Any:
+    """A run is a pure function of its parent image, so a transport failure is safe to retry."""
+    from contree_sdk.sdk.exceptions import ApiTimeoutError, ContreeTransportError
+
+    for wait in TRANSIENT_WAITS_S:
+        try:
+            return await base.run(**arguments)
+        except (ApiTimeoutError, ContreeTransportError):
+            await asyncio.sleep(wait)
+    return await base.run(**arguments)
 
 
 def _require_success(image: Any, action: str) -> None:
