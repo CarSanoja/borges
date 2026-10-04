@@ -33,3 +33,16 @@ def test_a_spec_on_the_named_exposure_passes() -> None:
 def test_an_option_that_names_no_exposure_is_not_checked() -> None:
     spec = make_spec("ols", outcome="y", exposure="contact")
     assert named_exposure_problems(spec, "OLS with robust errors.", COLUMNS) == []
+
+
+LISTED = (
+    "Estimate a logistic regression with y as the dependent variable. Independent variables: job "
+    "(categorical, drop_first=True), contact (categorical), and campaign (numeric, exposure of "
+    "interest). Return 'estimate' = np.exp(coef['campaign'])."
+)
+
+
+def test_an_exposure_marked_in_a_list_of_independent_variables_outranks_the_first_item() -> None:
+    assert named_exposures(LISTED, COLUMNS) == ["campaign"]
+    spec = make_spec("logit", outcome="y", exposure="campaign", covariates=["job", "contact"])
+    assert named_exposure_problems(spec, LISTED, COLUMNS) == []

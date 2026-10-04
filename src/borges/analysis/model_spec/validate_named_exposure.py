@@ -16,15 +16,28 @@ CUES = (
 )
 
 
-def named_exposures(text: str, available: list[str]) -> list[str]:
+def _named(text: str, available: list[str], cues: tuple[re.Pattern[str], ...]) -> list[str]:
     columns = set(available)
     named: list[str] = []
-    for cue in CUES:
+    for cue in cues:
         for match in cue.finditer(text):
             name = match.groups()[-1]
             if name in columns and name not in named:
                 named.append(name)
     return named
+
+
+def named_exposures(text: str, available: list[str]) -> list[str]:
+    """Columns the option names as its exposure. An explicit mark ("x (exposure of interest)",
+    coef['x']) outranks a list of independent variables, whose first item need not be it."""
+    return _named(text, available, MARKED) or _named(text, available, CUES)
+
+
+MARKED = (
+    re.compile(rf"{NAME}\s*\([^()]*\b(?:exposure|treatment) of interest\b", re.IGNORECASE),
+    re.compile(r"""\b(?:coef|coefs|params|coefficients)\[\s*['"]([A-Za-z_]\w*)['"]\s*\]"""),
+    re.compile(rf"\bcoefficient (?:of|for|on)\s+{NAME}", re.IGNORECASE),
+)
 
 
 def named_exposure_problems(spec: ModelSpecOutput, text: str, available: list[str]) -> list[str]:
