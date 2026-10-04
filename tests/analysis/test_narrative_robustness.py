@@ -63,3 +63,9 @@ def test_narrator_caveats_on_the_search_method_or_with_inverted_shares_are_dropp
     assert kept_caveats(report(), caveats) == [
         "Square-root transformation changes the outcome scale."
     ]
+
+
+def test_a_caveat_about_re_execution_is_dropped_when_no_flip_was_found() -> None:
+    caveats = ["No independent re-execution was performed because no flip was found.", "Kept."]
+    assert report().minimal_flip is None
+    assert kept_caveats(report(), caveats) == ["Kept."]
