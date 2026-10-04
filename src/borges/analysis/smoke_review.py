@@ -33,7 +33,7 @@ NOT_RE_REVIEWED = "the repaired code could not be re-reviewed, so it cannot ente
 def _slim_effects(effects: dict[str, Any] | None) -> dict[str, Any] | None:
     if not effects:
         return None
-    slim = {k: v for k, v in effects.items() if k != "columns"}
+    slim = {k: v for k, v in effects.items() if k not in ("columns", "fingerprint")}
     columns = effects.get("columns") or {}
     slim["columns"] = {
         name: {k: v for k, v in stats.items() if k != "probe"} for name, stats in columns.items()

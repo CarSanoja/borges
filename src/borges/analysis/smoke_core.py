@@ -44,6 +44,7 @@ def _error_text(run_stdout: str, run_stderr: str, exit_code: int) -> str:
 
 def _trace_effects(stdout: str) -> dict[str, Any] | None:
     effects = None
+    fingerprint = None
     for line in stdout.splitlines():
         if not line.startswith(harness.TRACE_PREFIX):
             continue
@@ -51,9 +52,15 @@ def _trace_effects(stdout: str) -> dict[str, Any] | None:
             payload = json.loads(line[len(harness.TRACE_PREFIX) :])
         except json.JSONDecodeError:
             continue
-        if isinstance(payload, dict) and isinstance(payload.get("effects"), dict):
+        if not isinstance(payload, dict):
+            continue
+        if isinstance(payload.get("effects"), dict):
             effects = payload["effects"]
-    return effects
+        if isinstance(payload.get("fingerprint"), str):
+            fingerprint = payload["fingerprint"]
+    if fingerprint is None:
+        return effects
+    return {**(effects or {}), "fingerprint": fingerprint}
 
 
 async def execute(config: SmokeConfig, parent: Checkpoint, step: Step, option: Option) -> Executed:

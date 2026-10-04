@@ -36,6 +36,7 @@ async def run_adversary(
     pipeline: Pipeline, plan: AnalysisPlan, runner: UniverseRunner, baseline: Universe
 ) -> None:
     async with pipeline.stage("adversary"):
+        seen = len(pipeline.smoke.state.notes) if pipeline.smoke is not None else 0
         try:
             await run_adversary_round(
                 pipeline.llm,
@@ -50,6 +51,8 @@ async def run_adversary(
             )
         except Exception as exc:
             pipeline.caveats.append(f"The adversary stage failed and was skipped: {exc}")
+        if pipeline.smoke is not None:
+            pipeline.caveats.extend(pipeline.smoke.state.notes[seen:])
 
 
 def sample_reserve(runner: UniverseRunner) -> int:

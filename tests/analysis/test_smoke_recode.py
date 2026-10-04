@@ -70,7 +70,7 @@ async def test_sibling_is_promoted_when_recode_fails(tmp_path: Path) -> None:
     note = next(e[4] for e in recorder.events if e[1] == "welch" and e[4])
     assert note.startswith("promoted to default because ols")
     assert any("m1.ols" in n and "replaced by welch" in n for n in cfg.state.notes)
-    assert "Label ols" in cfg.state.notes[0]
+    assert any("Label ols" in n for n in cfg.state.notes)
 
 
 async def test_missing_recode_fixture_counts_as_a_failed_attempt(tmp_path: Path) -> None:

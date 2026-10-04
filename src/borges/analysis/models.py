@@ -144,3 +144,4 @@ class CodingSummary(BaseModel):
     options_dropped_by_review: int = 0
     options_dropped_by_judge: int = 0
     options_dropped_by_armor: int = 0
+    options_recoded_by_output_check: int = 0

@@ -5,7 +5,7 @@ from collections.abc import Awaitable, Callable
 
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
-from borges.analysis.coder_recode import fresh_recode
+from borges.analysis.coder_recode import fresh_recode, make_rewrite
 from borges.analysis.coder_replan import make_replan
 from borges.analysis.coder_rescue import promote_sibling, replan_uncoded_step
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
@@ -175,8 +175,9 @@ async def code_plan(
     async def recode(step: Step, option: Option, errors: list[str]) -> tuple[str, str | None, str]:
         return await fresh_recode(llm, coded, step, option, errors)
 
+    rewrite = make_rewrite(llm, coded)
     replan = make_replan(llm, coded, generate_checked, on_coded, summary)
-    return await smoke_plan(smoke, coded, repair, summary, concurrency, recode, replan)
+    return await smoke_plan(smoke, coded, repair, summary, concurrency, recode, replan, rewrite)
 
 
 async def repair_option(

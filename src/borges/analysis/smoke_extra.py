@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from borges.analysis.models import Option, Step
+from borges.analysis.smoke_collision import remember_extra, resolve_extra
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_orientation import orientation_error, produced_names
 from borges.analysis.smoke_review import review_extra
@@ -22,6 +23,8 @@ async def smoke_extra_option(
         return orientation_error(names, default.effects, effects)
 
     outcome = await smoke_option(config, repair, parent, step, option, check if names else None)
+    if outcome.status != "failed":
+        outcome = await resolve_extra(config, repair, parent, step, outcome)
     if config.on_smoke is not None:
         await config.on_smoke(
             step.id,
@@ -33,4 +36,7 @@ async def smoke_extra_option(
         )
     if outcome.status == "failed":
         return outcome
-    return await review_extra(config, repair, parent, step, default, outcome)
+    reviewed = await review_extra(config, repair, parent, step, default, outcome)
+    if reviewed.status != "failed":
+        remember_extra(config, step, reviewed)
+    return reviewed

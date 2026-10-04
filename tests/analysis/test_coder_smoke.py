@@ -74,10 +74,16 @@ def config(tmp_path: Path, recorder: Recorder, rows: int = 300) -> SmokeConfig:
 
 
 async def test_passing_options_cost_no_extra_llm_calls(tmp_path: Path) -> None:
-    llm = FakeLLM(responses())
+    distinct = responses(
+        **{
+            "coder:d1.trim": "def apply(df, ctx):\n    return df.head(100).copy()",
+            "coder:m1.welch": ESTIMATE.replace("0.5", "0.2"),
+        }
+    )
+    llm = FakeLLM(distinct)
     recorder, summary = Recorder(), CodingSummary()
     coded = await code_plan(llm, make_plan(), smoke=config(tmp_path, recorder), summary=summary)
-    assert sorted(llm.keys()) == sorted(responses())
+    assert sorted(llm.keys()) == sorted(distinct)
     assert {e[2] for e in recorder.events} == {"passed"} and len(recorder.events) == 4
     assert [o.id for o in coded.step("d1").options] == ["keep", "trim"]
     assert summary == CodingSummary(options=4, smoke_tested=4, repaired_after_smoke=0, failed=0)
