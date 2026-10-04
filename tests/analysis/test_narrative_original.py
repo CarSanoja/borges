@@ -40,10 +40,18 @@ def test_the_original_sentence_comes_from_the_report() -> None:
 
 def test_another_universe_told_as_the_original_and_an_invented_adversary_are_problems() -> None:
     found = original_problems(make_plan(), report(), WRONG)
-    assert found[0].startswith("the original sentence is missing")
+    assert found[0].startswith("it states the original analysis with numbers it does not have")
+    assert "0.024" in found[0]
     assert "no adversary option entered the garden" in found[1]
-    good = f"{original_sentence(report())} Both kept the verdict."
-    assert original_problems(make_plan(), report(), good) == []
+
+
+def test_the_original_in_the_narrator_s_words_and_rounding_is_accepted() -> None:
+    text = (
+        "The original analysis found an interaction of 0.037 (95% CI 0.02 to 0.054, n = 10,503) "
+        "and the verdict DEPENDS ON NORMS. Both kept the verdict."
+    )
+    assert original_problems(make_plan(), report(), text) == []
+    assert with_original(make_plan(), report(), text) == text
 
 
 def test_the_fallback_states_the_original_and_drops_what_contradicts_it() -> None:

@@ -14,8 +14,8 @@ from borges.analysis.narrative_original import original_problems, with_original
 from borges.analysis.narrative_repeats import drop_prompt_echoes, drop_repeated_sentences
 from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
+    inverted_shares,
     kept_caveats,
-    robustness_problems,
     robustness_sentence,
 )
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
@@ -27,6 +27,7 @@ from borges.llm.client import LLMClient, LLMError, Role
 from borges.runs.judged_ledger import JudgedLedger
 
 NUMBER = re.compile(r"\d")
+MISSING_FLIP = "the flip sentence is missing"
 
 
 def _messages(
@@ -72,14 +73,34 @@ async def _ask(
 
 
 def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | None) -> list[str]:
+    """Errors in what the narrator wrote. A required sentence it left out is not one: the
+    original, flip and robustness sentences are added afterwards."""
     found = [
         *original_problems(plan, report, narrative),
-        *problems(plan, report, narrative),
-        *robustness_problems(report, narrative),
+        *(p for p in problems(plan, report, narrative) if not p.startswith(MISSING_FLIP)),
+        *inverted_shares(report, narrative),
     ]
     if scale is not None and not mentions_log_scale(narrative):
         found.append(f"it reads the estimate as additional units of the outcome, but {scale}")
     return found
+
+
+def _clean(text: str) -> str:
+    return drop_repeated_sentences(drop_prompt_echoes(text, RULES))
+
+
+def _complete(
+    plan: AnalysisPlan, report: Report, narrative: str, sentence: str | None, scale: str | None
+) -> str:
+    kept = with_original(plan, report, narrative)
+    if sentence is not None and not has_sentence(kept, sentence):
+        kept = insert_sentence(kept, sentence)
+    robust = robustness_sentence(report)
+    if robust is not None and not has_sentence(kept, robust):
+        kept = f"{kept} {robust}"
+    if scale is not None and not mentions_log_scale(kept):
+        kept = insert_sentence(kept, scale)
+    return kept
 
 
 async def narrate(
@@ -92,27 +113,20 @@ async def narrate(
     sentence = flip_sentence(plan, report)
     scale = scale_note(garden) if garden is not None else None
     out = await _ask(llm, plan, report, sentence, "narrator", None, garden, judged, scale)
-    narrative = drop_repeated_sentences(drop_prompt_echoes(out.narrative, RULES))
+    narrative, caveats = _clean(out.narrative), out.caveats
     issues = _issues(plan, report, narrative, scale)
-    if not issues:
-        return narrative, kept_caveats(report, out.caveats)
-    try:
-        retry = await _ask(
-            llm, plan, report, sentence, "narrator:retry", issues, garden, judged, scale
-        )
-    except LLMError:
-        retry = None
-    if retry is not None:
-        second = drop_repeated_sentences(drop_prompt_echoes(retry.narrative, RULES))
-        if not _issues(plan, report, second, scale) and NUMBER.search(second):
-            return second, kept_caveats(report, retry.caveats)
-    kept = drop_inverted_sentences(report, drop_wrong_sentences(plan, report, narrative))
-    kept = with_original(plan, report, kept)
-    if sentence is not None and not has_sentence(kept, sentence):
-        kept = insert_sentence(kept, sentence)
-    robust = robustness_sentence(report)
-    if robust is not None and not has_sentence(kept, robust):
-        kept = f"{kept} {robust}"
-    if scale is not None and not mentions_log_scale(kept):
-        kept = insert_sentence(kept, scale)
-    return kept, kept_caveats(report, out.caveats)
+    if issues:
+        try:
+            retry = await _ask(
+                llm, plan, report, sentence, "narrator:retry", issues, garden, judged, scale
+            )
+        except LLMError:
+            retry = None
+        second = _clean(retry.narrative) if retry is not None else ""
+        if retry is not None and not _issues(plan, report, second, scale) and NUMBER.search(second):
+            narrative, caveats = second, retry.caveats
+        else:
+            narrative = drop_inverted_sentences(
+                report, drop_wrong_sentences(plan, report, narrative)
+            )
+    return _complete(plan, report, narrative, sentence, scale), kept_caveats(report, caveats)

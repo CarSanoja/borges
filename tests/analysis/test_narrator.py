@@ -152,3 +152,15 @@ async def test_an_instruction_copied_next_to_a_verbatim_sentence_is_dropped() ->
     prompt = llm.calls[0].messages[1]["content"]
     assert f"{ROBUST_RULE} Include the sentence below verbatim" in prompt
     assert f"\n{ROBUST}\n" in prompt
+
+
+async def test_a_correct_draft_that_leaves_out_a_required_sentence_is_kept_and_completed() -> None:
+    est = checkout_report().original_result.estimate
+    draft = (
+        f"The original analysis estimated a lift of {est:.2f} percentage points and shipped. "
+        f"{SENTENCE} Only the filter moves the estimate."
+    )
+    llm = FakeLLM({"narrator": NarratorOutput(narrative=draft, caveats=[])})
+    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    assert llm.keys() == ["narrator"]
+    assert narrative == f"{draft} {ROBUST}"

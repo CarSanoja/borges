@@ -55,7 +55,8 @@ def build_messages(
     if garden is not None:
         user += f"\nGarden: {compact_json(garden)}"
     user += (
-        f"\n{ORIGINAL_RULE} Include it verbatim as the first sentence of the summary:\n"
+        f"\n{ORIGINAL_RULE} Begin the summary with it; you may name the metric and its unit, "
+        "but keep every number exactly as written:\n"
         f"{original_sentence(report)}\n"
     )
     if scale is not None:
