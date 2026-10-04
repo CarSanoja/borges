@@ -18,7 +18,7 @@ smallest flip it found.**
 > ```bash
 > uv sync
 > uv run borges run --case marp_norms --llm scripted
-> uv run borges reproduce --case checkout_ab --source live --universe u_3a4a8a35a5
+> uv run borges reproduce --case checkout_ab --source live --universe u_2daf3a388e
 > ```
 >
 > The first is an offline scripted replay: the data, the code and every statistic are real, no
@@ -30,11 +30,10 @@ smallest flip it found.**
 > Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)
 > ```
 >
-> The second re-executes a universe from the live Nemotron recording of the checkout case and
-> prints `MATCH` when the result equals the recording. All five cases were recorded live on 2
-> October 2026 for $0.0145 to $0.0326 each, before several analysis fixes; the web app plays
-> those recordings by default, and re-recording them at the current commit is pending (see
-> "Pending live numbers"). The status table below says what is and is not live.
+> The second re-executes the flipping universe from the live Nemotron recording of the checkout
+> case and prints `MATCH` when the result equals the recording. Six cases were recorded live on
+> 4 October 2026 on ConTree sandboxes from an empty cache, for $0.0225 to $0.0408 each; the web
+> app plays those recordings by default. The status table below says what is and is not live.
 >
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
 > agree, and, with a calibration study (`evidence/calibration.md`), how much to trust a flip.
@@ -65,11 +64,12 @@ Be clear about this before reading further. The source of truth for every live n
 
 | | State today |
 |---|---|
-| Nemotron through Token Factory | **Ran live on 2 October 2026, all five cases, from an empty cache.** 150 calls in the five recordings (24, 32, 22, 31, 41), $0.0145 to $0.0326 per case. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The whole development day made 45 live runs, 31 completed, $0.65 recorded ($0.76 in the spend ledger with smoke checks) |
-| What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". A toggle switches to the scripted replay where one exists |
+| Nemotron through Token Factory | **Six cases ran live on 4 October 2026 (UTC)**, from an empty model cache, at commit `36b2f77`: 196 calls in all (29, 40, 23, 39, 32, 33), $0.0225 to $0.0408 per case, 0 failed universes. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks |
+| ConTree sandboxes | **All six recordings ran on ConTree** (`backend: contree` in each `recording.json`). Earlier, on 2 October 2026, `tests/sandbox/test_contree_live.py` passed in 41.8 s |
+| What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". Each recording also has `spans.jsonl`, `audit.jsonl` and `recording.json`. A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
-| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed a recorded live universe from scratch for all five cases and matched |
-| ConTree sandboxes | **Ran against the real service on 2 October 2026.** `tests/sandbox/test_contree_live.py` passed in 41.8 s; a scripted `checkout_ab` run on ConTree (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as the local backend; a live `marp_religiosity` run on Nemotron plus ConTree (`r_20261002T155440_0aa541`) completed 16 universes with 31 checkpoints. The five recordings above used the local subprocess backend |
+| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the last universe) of all six recordings: 12 of 12 MATCH, run by the project lead |
+| BLADE benchmark | Ran live on 4 October: mean F1 over 12 datasets 0.468 (planner arm) and 0.480 (adversary arm), one repeat each. The difference is within run-to-run noise (`evidence/blade/README.md`) |
 | Hosted public demo | **None yet**: no public URL, no video |
 | Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
 
@@ -77,66 +77,59 @@ The scripted recordings (`cases/*/recorded/events.jsonl`) still list the configu
 ids in the `run.started` `models` field, even though no model was called; the `llm` field of
 the same event says `scripted`.
 
-### The five live recordings
+### The six live recordings
 
-| Case | Calls | Tokens in / out | Cost | Original verdict | Smallest flip found |
-|---|---|---|---|---|---|
-| checkout_ab | 24 | 38,219 / 6,055 | $0.0145 | DON'T SHIP: lift -0.13 pp [-0.79, +0.53] | Keep all sessions: +0.84 pp, SHIP (direction). A contaminated analysis flip: it re-includes the rows the column notes mark invalid (see below) |
-| red_cards | 32 | 57,433 / 7,318 | $0.0183 | BIAS DETECTED: OR 1.34 [1.14, 1.58] | none in 9 universes, of which only 4 distinct results (one model option, no covariates; 3 universes repeat an earlier result) |
-| marp_religiosity | 22 | 66,078 / 5,201 | $0.0191 | POSITIVE ASSOCIATION: beta 0.090 [0.073, 0.107] | none in 24 universes |
-| marp_norms | 31 | 94,401 / 6,465 | $0.0266 | DEPENDS ON NORMS: interaction 0.036 [0.019, 0.052] | none in 32 universes |
-| bank_marketing_calls | 41 | 86,266 / 13,975 | $0.0326 | CAP THE CALLS: OR 0.878 per call [0.863, 0.892] | Listwise deletion plus robust SE: OR 0.88 [0.61, 1.27], p 0.50 (significance only). Disputed, see below |
+| Case | Original verdict | Smallest flip found | Universes |
+|---|---|---|---|
+| checkout_ab | SHIP: +0.53 pp [0.11, 0.95], p 0.014 | Exclude internal sessions only: -0.14 pp, DON'T SHIP (direction) | 10 |
+| red_cards | NO CLEAR EVIDENCE: OR 1.134 [0.949, 1.354], p 0.166 | Negative binomial with robust SE: OR 1.254, BIAS DETECTED (significance only) | 7 |
+| marp_religiosity | POSITIVE ASSOCIATION: 0.061 [0.050, 0.071] | none | 10 |
+| marp_norms | DEPENDS ON NORMS: interaction 0.021 [0.011, 0.032] | none | 29 |
+| bank_marketing_calls | CAP THE CALLS: OR 0.869 [0.855, 0.884] per call | none | 7 |
+| hurricanes | FEMININE NAMES DEADLIER: 1.098 [1.082, 1.114], n 93 | Elapsed years plus Quasi-Poisson: 1.056 [0.979, 1.140], NO CLEAR EVIDENCE (significance; an estimand change) | 17 |
 
-Run ids, universe counts and the reproduce results are in `evidence/live-runs.md`. A single
-live run per case is one sample of a model: it is not a measure of how often Nemotron finds a
-flip. Read these results with the r6 jury findings in mind:
+(Numbers rounded to the digits shown from the full values in `evidence/live-runs.md`, which also
+has the run ids, tokens, costs and reproduce results.) A single live run per case is one sample
+of a model: it is not a measure of how often Nemotron finds a flip. What changed since the r6
+jury read the 2 October recordings:
 
-- **The checkout flip is contaminated, not discovered.** The column notes of the case say
-  that `is_internal` marks sessions of internal staff or test users, "who are not genuine
-  customers", and that very short sessions are bot-like. The recorded plan defaulted to
-  excluding both, and the flip re-includes them. The notes handed the model the answer, so
-  this is not an unprompted discovery of the planted artefact. The analysis now flags a flip
-  that re-includes rows the plan's own notes mark invalid as a "contaminated analysis" flip.
-  The notes-stripped replication is pending (see "Pending live numbers").
-- **The bank flip is not a finding.** The jury re-executed the option: month dummies plus an
-  intercept are collinear (rank 12 of 13), which inflates the standard error, the point
-  estimate barely moves (0.878 to 0.881), and the option also changes the estimand (a
-  univariate baseline against about 40 covariates). With a full-rank design the jury got
-  OR [0.836, 0.929] and no flip. The harness now checks design rank and labels
-  covariate-adding options as estimand changes; the recording predates that and is to be
-  re-recorded.
-- **The red-cards live run is narrow.** One model option, no covariates, no clustering, and
-  3 of 9 universes repeat an earlier result, so "100% robust" there is over a space that
-  leaves out the dimensions that mattered. The live red-cards OR matches the default analysis
-  the case cites.
-- **On the same case the live and the scripted replays tell different stories** (the
-  scripted checkout replay excludes internal accounts and flips to DON'T SHIP; the live run
-  starts from DON'T SHIP and flips to SHIP). The scripted replay is hand-built fixtures; the
-  live recording is a model run. Both are labelled in the web app.
+- **The checkout flip is no longer the contaminated direction.** The run starts from the naive
+  default, keep all sessions, which gives SHIP. The smallest flip excludes internal sessions
+  and gives DON'T SHIP; the recording marks it `contaminated: false`. The column notes still
+  say internal sessions are not genuine customers, so the model had that hint. The
+  notes-stripped replication has not been done (see "Pending live numbers"). The run made one
+  live step re-plan: a model step lost both options and the planner replaced them.
+- **The bank flip the jury disputed is gone.** The new run found no flip in 7 universes. Its
+  extended-covariate options are labelled estimand changes. The 2 October flip (listwise
+  deletion, robust SE) is not in the recording.
+- **Red cards now starts from NO CLEAR EVIDENCE** and flips, on significance only, under a
+  negative binomial model. The space is still narrow: 7 universes, and the report does not
+  rate the robustness share (too few distinct results).
+- **Hurricanes' flip is labelled an estimand change** in the recording, because it adds a
+  covariate.
+- **Live and scripted replays differ on checkout.** The scripted replay is hand-built fixtures;
+  the live recording is a model run. Both are labelled in the web app.
 
 ### What the live runs taught us
 
-The first live batches failed in ways the scripted demos could not show, and each failure
-became a safeguard with a test.
+The live batches of 2, 3 and 4 October failed in ways the scripted demos could not show, and each
+failure became a safeguard with a test. The full tables, with run ids and commits, are in
+`evidence/live-runs.md`. In short:
 
-- **Standard errors 50 times too small.** The checkout fit reported -0.14 pp with a 95% CI of
-  [-0.145, -0.138] and p = 0. A split-half standard error check now re-estimates on random
-  halves and rejects intervals far too narrow, and (after a CI of [-341, +341] pp) far too wide.
-- **A flip to -398,439.** A broken Bayesian option produced an absurd estimate that counted as
-  a flip. Implausible estimates are now failed universes, never flips.
-- **A label that did not match the estimator.** The plan said "Firth's penalized logistic
-  regression" and the code was a plain Logit with an unseeded bootstrap, so the run did not
-  reproduce. Randomness is now seeded, the planner may only name estimators that statsmodels
-  or scipy provide, and Nemotron Super reviews every option, adversary options included,
-  against the estimator it names.
-- **A ratio rule on the wrong scale.** The bank case judged a log-odds coefficient (-0.116)
-  against "odds ratio < 1", so no universe could ever flip. A ratio rule now requires
-  positive estimates and intervals, and the coder is told the scale.
-- **A sign that meant nothing.** A mirror flip (+0.037 to -0.037 on the same rows) came from
-  an unoriented PCA score, and a "control indicator" option only reversed the sign. Smoke
-  runs now report observed effects and a deterministic orientation check fails reversed columns.
-- **Columns that never existed.** Steps now declare the names they produce, aggregations
-  carry group-constant columns along, and model steps start from complete cases.
+- **Impossible intervals and estimates.** A standard error 50 times too small, a CI of
+  [-341, +341] pp and a "flip" to -398,439. The smoke test now checks split-half standard errors
+  and plausibility, and such universes fail instead of flipping.
+- **Labels that did not match the estimator, and signs that meant nothing.** Estimator names are
+  checked against what was fitted, and an orientation check fails reversed columns.
+- **The model step was the weak link.** It passed its smoke run first try for 13% of 212 options.
+  It is now rendered from a structured spec by tested templates, written by a coder chosen by
+  measurement. Later failures were fixed in Borges, not by changing models: unit conversions
+  (the code contract overrides the spec), Armor flagging Borges's own repair hint, a
+  1,577-column dummy design (identifiers with hundreds of levels are refused), an offset used as
+  the exposure, a four-level text exposure.
+- **A step that loses every option** is re-planned once instead of killing the run.
+- **Honest reports.** A run where only the default analysis ran says robustness was not tested.
+  Each caveat is reported once.
 
 ---
 
@@ -179,7 +172,7 @@ conversion lift is positive with p < 0.05"*.
 
 The numbers in this section and in the next two come from the scripted replays of the hand-built
 option spaces (the offline path). The live recordings above reached their own verdicts, for
-example DON'T SHIP for the checkout case as run, and are summarised in the status section and
+example SHIP flipping to DON'T SHIP for the checkout case, and are summarised in the status section and
 in `evidence/live-runs.md`.
 
 | | Checkout A/B test (synthetic, effect planted) | Red cards (real data, 146,028 dyads) |
@@ -229,10 +222,8 @@ whether each extra call to a customer lowers the chance of a term-deposit subscr
 Nothing is planted. It has no scripted fixtures, so it runs only with `llm=nebius`, and a
 scripted run is refused with a clear message. Its only recording is the live one. Plain
 logistic regressions by the author gave an odds ratio of 0.86 to 0.93 per extra call in nine
-specifications. The live run (41 calls, $0.0326) gave OR 0.878 per call [0.863, 0.892], CAP
-THE CALLS, and found a significance-only flip: listwise deletion of rows with any missing
-covariate (45,211 to 7,842 rows) with robust standard errors gives OR 0.88 [0.61, 1.27], p
-0.50. See `cases/bank_marketing_calls/README.md`.
+specifications. The live run (32 calls, $0.0233) gave OR 0.8694 per call [0.8552, 0.8839], CAP
+THE CALLS, and found no flip in 7 universes. See `cases/bank_marketing_calls/README.md`.
 
 ### Real, unplanted data: the MARP cases
 
@@ -275,10 +266,10 @@ the same smallest flip as Borges in all four cases, or none in either. Borges us
 
 ## Pending live numbers
 
-These need the owner's key and are not claimed anywhere above: re-recording all five cases
-and the hurricanes case live at the current commit (each recording will carry its commit hash
-and its spans and audit chain), the checkout run with the column notes stripped over at
-least 5 seeds (below), the bank case with a full-rank design, and the live BLADE benchmark.
+Not done, and not claimed anywhere above: the checkout run with the column notes stripped over at
+least 5 seeds (below), repeats of each live case (every live number here is one run), and a
+head-to-head against another tool. The six cases were re-recorded and the BLADE benchmark ran
+live on 4 October (`evidence/live-runs.md`, `evidence/blade/`).
 
 | Checkout, notes stripped | Seeds | Runs proposing the exclusion of internal and bot rows | Flip rate |
 |---|---|---|---|
@@ -297,15 +288,15 @@ make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
-The web app plays the live recording of each of the five cases by default, with a toggle to the
-scripted replay for the four cases that have one (the bank case is live-only). It also has a "Replay offline (scripted)" button (hand-built fixtures, no model called,
+The web app plays the live recording of each of the six cases by default, with a toggle to the
+scripted replay for the five cases that have one (the bank case is live-only). It also has a "Replay offline (scripted)" button (hand-built fixtures, no model called,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
 live on Nemotron" (the button says why when it is disabled). The landing page has a "bring your own data" card: it is
 enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
 the `contree` backend or `BORGES_ALLOW_UNTRUSTED_LOCAL=true`) and otherwise shows the exact
 reason. The same flow is available over the API (`POST /api/uploads`, CSV or parquet, then
 `POST /api/runs` with `upload_id`). Uploaded data always needs a live run; the upload path
-has not been exercised with a live model, only the five curated cases have.
+has not been exercised with a live model, only the six curated cases have.
 
 ### Reproduce any universe
 
@@ -315,11 +306,11 @@ the live recordings:
 ```bash
 uv sync   # once, from a fresh clone
 uv run borges reproduce --case red_cards --universe u_a64c6b99f5
-uv run borges reproduce --case checkout_ab --source live --universe u_3a4a8a35a5
+uv run borges reproduce --case checkout_ab --source live --universe u_2daf3a388e
 ```
 
 `--source live` reads `cases/<case>/recorded-live/events.jsonl` instead of the scripted
-recording and re-executes that universe's code from scratch. It matched for all five cases
+recording and re-executes that universe's code from scratch. It matched for all six cases
 (universe ids and results in `evidence/live-runs.md`).
 
 (`uv run --no-sync` works too once `uv sync` has run.) It re-executes that universe's steps on the case dataset with the local backend, and prints
@@ -344,7 +335,7 @@ content leaking when thinking is disabled. `make record-live` runs the cases liv
 `cases/<case>/recorded-live/`. It never overwrites the scripted recordings in
 `cases/<case>/recorded/`. A single case can also be run with
 `uv run borges run --case checkout_ab --llm nebius --record`. A complete live run of one case
-cost between $0.015 and $0.033 on 2 October 2026.
+cost between $0.0225 and $0.0408 on 4 October 2026.
 
 Spend is capped twice, per run (`BORGES_RUN_CAP_USD`, default $0.50) and in total
 (`BORGES_SPEND_CAP_USD`, default $5). When the total is used up, the web app disables the
@@ -360,7 +351,7 @@ Set `NEBIUS_API_KEY` (the same Token Factory key; `CONTREE_API_KEY` overrides it
 `--backend contree` (or set `BORGES_BACKEND=contree` on a server). The endpoint defaults to
 `https://api.tokenfactory.nebius.com/sandboxes/`; `CONTREE_BASE_URL` overrides it. The ConTree backend is contract-tested with a fake SDK, and the live test
 (`tests/sandbox/test_contree_live.py`) runs only when credentials are present; it passed against the
-real service on 2 October 2026 (see the status table), and there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
+real service (see the status table), and there is no hosted demo yet. The first run builds a runner image with the scientific Python stack
 once; after that, every analysis step is a non-disposable `image.run` on its parent image,
 so each checkpoint is a real sandbox image you can branch from again.
 
@@ -450,7 +441,7 @@ judge-model second stage for ambiguous text. Details and limits are in `SECURITY
 |---|---|
 | Planner, adversary, judge, repairer | `nvidia/nemotron-3-super-120b-a12b` |
 | Reviewer: checks every option's code, adversary options included, against its spec, the estimator it names and the effects observed in the smoke run | `nvidia/nemotron-3-super-120b-a12b` |
-| Coder | `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` |
+| Coder (Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks) | `nvidia/Nemotron-3_5-Lightning` |
 | Narrator | `nvidia/Nemotron-3-Ultra-550b-a55b` |
 
 Details: [ARCHITECTURE.md](ARCHITECTURE.md). Product definition and the end-to-end
@@ -519,7 +510,7 @@ The closest open implementation is
 (the code of "Many AI analysts, one dataset", Bertran, Fogliato and Wu): persona agents each
 run a whole independent analysis and an LLM extracts the forks afterwards, where Borges forks
 a shared checkpointed execution and has an adversary propose forks. It has been run live at
-scale (about 5,000 analyst runs); Borges has five live recordings, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
+scale (about 5,000 analyst runs); Borges has six live recordings, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
 are compared in [PRODUCT.md](PRODUCT.md#related-work), with links and with what Borges does
 not do better.
 
@@ -535,7 +526,7 @@ Specification-curve and multiverse analysis are established ideas (Simonsohn et 
 Steegen et al. 2016); what is new here is agents that discover the alternatives, fork real
 execution state mid-analysis, search for the smallest flip and prove it reproduces. That claim
 rests on a design that was tested with scripted agents and then run live once per case on
-Nemotron (`evidence/live-runs.md`). Five recordings show it works end to end and reproduces;
+Nemotron (`evidence/live-runs.md`). Six recordings show it works end to end and reproduces;
 they do not show that Nemotron's forks are reliably good, and there is no outside user yet.
 
 ## Data

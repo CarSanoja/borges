@@ -35,7 +35,7 @@ def test_readme_names_the_same_first_commands_the_test_runs() -> None:
     text = README.read_text(encoding="utf-8")
     assert "uv run borges run --case marp_norms --llm scripted" in text
     reproduce = "uv run borges reproduce --case checkout_ab --source live"
-    assert f"{reproduce} --universe u_3a4a8a35a5" in text
+    assert f"{reproduce} --universe u_2daf3a388e" in text
 
 
 def test_readme_makes_no_unprompted_discovery_claim() -> None:
