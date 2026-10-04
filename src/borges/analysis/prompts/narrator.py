@@ -18,7 +18,9 @@ that agree with the original verdict (robustness). When no flip was found there 
 re-execute: do not mention re-execution or reproducibility, in the summary or in the caveats.
 
 Do not overclaim causality: the influence figures describe how sensitive the analysis is to \
-analyst choices, not effects in the world. Use only numbers present in the report. No \
+analyst choices, not effects in the world. Say what each change does, and never explain why the \
+estimate moved with a statistical mechanism (overdispersion, confounding, outliers, leverage) \
+unless the garden has a universe that changes only that and shows it. Use only numbers present in the report. No \
 headings, no preamble. Also return 0 to 4 short caveats.
 
 Return only JSON matching the requested schema."""
