@@ -42,7 +42,7 @@ async def model_inputs(
         picked += [(k, o) for o in _alternatives(config, steps[k])[:room]]
     built = await asyncio.gather(
         *(
-            model_input(config, repair, steps[k + 1 : index], o.checkpoint)
+            model_input(config, repair, steps[k + 1 : index], o.checkpoint, o.effects)
             for k, o in picked
             if o.checkpoint
         )

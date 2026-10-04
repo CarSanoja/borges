@@ -55,7 +55,7 @@ async def _probe(
     between: Sequence[Step] = (),
 ) -> str | None:
     assert outcome.checkpoint is not None
-    checkpoint = await model_input(config, repair, between, outcome.checkpoint)
+    checkpoint = await model_input(config, repair, between, outcome.checkpoint, outcome.effects)
     if checkpoint is None:
         return None
     default = config.state.defaults[model.id]
