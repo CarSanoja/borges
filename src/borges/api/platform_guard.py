@@ -10,6 +10,15 @@ from borges.config import Settings
 from borges.gateway.errors import PolicyError
 from borges.gateway.policy_load import policy_for
 
+SANDBOX_NETWORK_ENFORCEMENT = (
+    "declared; enforced in-process by the runtime policy (audit hook) and the code guard; "
+    "ConTree's own egress is not configured by Borges"
+)
+UNSIGNED_ANCHOR_REASON = (
+    "audit anchors are unsigned: set BORGES_AUDIT_ANCHOR_KEY or start with "
+    "BORGES_STORE_KEY_AUTOGEN=true on a fresh BORGES_HOME to sign them."
+)
+
 
 def gateway(settings: Settings) -> dict[str, Any]:
     try:
@@ -37,6 +46,7 @@ def gateway(settings: Settings) -> dict[str, Any]:
             "run_max_cost_usd": policy.run.max_cost_usd,
             "run_max_calls": policy.run.max_calls,
             "sandbox_network": policy.sandbox.network,
+            "sandbox_network_enforcement": SANDBOX_NETWORK_ENFORCEMENT,
             "agent_token_ttl_s": settings.borges_agent_token_ttl_s,
         },
     }
@@ -87,6 +97,8 @@ def observability(settings: Settings) -> dict[str, Any]:
         status = "ok"
     else:
         status, text = "ok", "No audit records yet; the chain starts with the first run."
+    if status == "ok" and not chain["signed_anchor"]:
+        status, text = "attention", f"{text} {UNSIGNED_ANCHOR_REASON}"
     return {
         "status": status,
         "summary": text,

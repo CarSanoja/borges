@@ -402,9 +402,10 @@ Sandbox executions are authorised as the `harness` (the only executor), may only
 only for code that passed the code guard in this run (the guard records the code it approved;
 the gateway refuses a step file that is not exactly the harness prelude, that approved code and
 the harness main, so code appended or prepended to approved code is refused). The policy states that sandboxes
-have no network egress; that is enforced by the sandbox backends (ConTree, resource-limited
-local process) and the code guard, and the gateway pins it as a declared, validated field rather
-than a check of its own.
+have no network egress; that is declared, not enforced by the gateway: it is enforced in-process
+by the runtime policy (audit hook) and the code guard. ConTree's own egress is not configured by
+Borges (the installed ConTree SDK exposes no run-level network option), and the gateway pins the
+field as a declared, validated value rather than a check of its own.
 
 Nothing reaches a provider or a backend any other way: the wrappers refuse to forward provider
 methods, a test fails if a provider or backend is constructed outside the factories or the SDK is
