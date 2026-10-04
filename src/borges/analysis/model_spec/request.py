@@ -11,6 +11,7 @@ from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.model_spec.validate import validate_spec
 from borges.analysis.model_spec.validate_ctx import ctx_problems
+from borges.analysis.model_spec.validate_named_exposure import named_exposure_problems
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts.coder import _available_columns
 from borges.llm.client import LLMClient, LLMError, Role
@@ -74,7 +75,11 @@ def _problems(plan: AnalysisPlan, step: Step, option: Option, spec: ModelSpecOut
     if not spec.supported:
         return found
     varied = "covariates" in varying_ctx_keys(plan, step)
-    return [*found, *ctx_problems(spec, ctx_names, option_intent(option), varied)]
+    return [
+        *found,
+        *ctx_problems(spec, ctx_names, option_intent(option), varied),
+        *named_exposure_problems(spec, option.spec, available),
+    ]
 
 
 async def request_template(
