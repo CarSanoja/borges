@@ -63,6 +63,7 @@ def corpus_score() -> dict[str, Any]:
         "obfuscations": score["obfuscations"],
         "suites": score["suites"],
         "held_out": score["held_out"],
+        "fresh_held_out": score["fresh_held_out"],
         "computed_at": score["computed_at"],
         "source": score["source"],
     }
@@ -71,12 +72,15 @@ def corpus_score() -> dict[str, Any]:
 def armor(settings: Settings) -> dict[str, Any]:
     score = corpus_score()
     held = score["held_out"]
+    fresh = score["fresh_held_out"]
     screens = [p.name for p in (UNTRUSTED_INPUT, MODEL_OUTPUT, PROMPT_INPUT, CODE_OUTPUT)]
     return {
         "status": "ok",
         "summary": f"{score['detected']} of {score['attacks']} corpus attacks detected, "
         f"{score['false_positives']} false alarms on {score['benign']} benign texts; "
-        f"{held['caught']} of {held['paraphrases']} held-out paraphrases caught.",
+        f"{held['caught']} of {held['paraphrases']} held-out paraphrases caught; "
+        f"{fresh['caught']} of {fresh['attacks']} fresh blind attacks caught, "
+        f"{fresh['false_positives']} of {fresh['benign']} fresh benign flagged.",
         "facts": {
             "screens": screens,
             "pii_kinds": list(KINDS),
