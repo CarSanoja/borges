@@ -73,23 +73,44 @@ async def test_template_family_reads_the_note() -> None:
     assert template_family("removed a stray closing-bracket line at the end of the code") is None
 
 
+RETRY_KEY = f"{KEY}:retry"
+
+
 @pytest.mark.parametrize(
-    "spec",
+    ("spec", "retried"),
     [
-        {"supported": False, "reason": "needs a mixed model"},
-        {**GOOD_SPEC, "exposure": "ghost"},
-        {**GOOD_SPEC, "report": "odds_ratio"},
-        {**GOOD_SPEC, "family": "gee"},
-        {"supported": True},
+        ({"supported": False, "reason": "needs a mixed model"}, False),
+        ({**GOOD_SPEC, "exposure": "ghost"}, True),
+        ({**GOOD_SPEC, "report": "odds_ratio"}, True),
+        ({**GOOD_SPEC, "family": "gee"}, False),
+        ({"supported": True}, True),
     ],
 )
-async def test_unsupported_or_invalid_spec_falls_back_to_free_code(spec: dict) -> None:
+async def test_unsupported_or_invalid_spec_falls_back_to_free_code(
+    spec: dict, retried: bool
+) -> None:
     llm = llm_with(spec)
     code, attempts, note = await code_welch(llm)
     assert code == FREE and attempts == 1
     assert note is not None and note.startswith("template skipped: ")
     assert template_family(note) is None
-    assert llm.keys() == [KEY, FREE_KEY]
+    assert llm.keys() == ([KEY, RETRY_KEY, FREE_KEY] if retried else [KEY, FREE_KEY])
+
+
+async def test_an_invalid_spec_gets_one_corrective_retry_with_its_problems() -> None:
+    llm = FakeLLM({KEY: {**GOOD_SPEC, "exposure": "ghost"}, RETRY_KEY: GOOD_SPEC})
+    code, attempts, note = await code_welch(llm)
+    assert note == "template: ols" and "sm.OLS" in code and attempts == 1
+    assert llm.keys() == [KEY, RETRY_KEY]
+    correction = llm.calls[1].messages[-1]["content"]
+    assert "ghost" in correction and "corrected spec" in correction
+
+
+async def test_a_retry_that_is_still_invalid_falls_back_with_the_first_reason() -> None:
+    bad = {**GOOD_SPEC, "exposure": "ghost"}
+    llm = FakeLLM({KEY: bad, RETRY_KEY: bad, FREE_KEY: CoderOutput(code=FREE)})
+    code, _, note = await code_welch(llm)
+    assert code == FREE and note is not None and "ghost" in note
 
 
 async def test_unsupported_note_carries_the_reason() -> None:

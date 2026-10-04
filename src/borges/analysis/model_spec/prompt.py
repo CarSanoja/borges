@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts import compact_json, messages
 from borges.analysis.prompts.coder import _available_columns, _earlier_specs
@@ -14,7 +15,8 @@ Return JSON with these fields:
 with the reason in `reason`.
 - family: "ols", "logit" (binary outcome), "poisson" or "negbin" (count outcome).
 - outcome: the dependent column.
-- exposure: the column whose coefficient is the estimate.
+- exposure: the column whose coefficient is the estimate: the treatment, group or attribute the \
+estimand is about, never the offset column and never the outcome.
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
@@ -50,3 +52,15 @@ def build_spec_messages(plan: AnalysisPlan, step: Step, option: Option) -> list[
         "Translate this option into the model spec, or return supported false with a reason.",
     ]
     return messages(SYSTEM, "\n\n".join(parts))
+
+
+def correction(spec: ModelSpecOutput, problems: list[str]) -> list[dict[str, str]]:
+    return [
+        {"role": "assistant", "content": spec.model_dump_json()},
+        {
+            "role": "user",
+            "content": "That spec cannot be rendered: "
+            + "; ".join(problems)
+            + ". Return a corrected spec for the same option, or supported false with a reason.",
+        },
+    ]

@@ -61,6 +61,11 @@ def _role_problems(spec: ModelSpecOutput) -> list[str]:
     problems = []
     if spec.exposure is not None and spec.exposure == spec.outcome:
         problems.append("exposure and outcome must be different columns")
+    if spec.offset_log is not None and spec.offset_log in (spec.exposure, *spec.covariates):
+        problems.append(
+            f"'{spec.offset_log}' is the offset: its coefficient is fixed at 1, so it cannot also"
+            " be the exposure or a covariate; the exposure is the variable the estimand is about"
+        )
     if spec.moderator is not None and spec.moderator in (spec.exposure, spec.outcome):
         problems.append("moderator must differ from exposure and outcome")
     literal = {spec.outcome, spec.exposure, spec.moderator, *spec.covariates}

@@ -149,3 +149,18 @@ def test_ctx_covariates_count_only_when_the_spec_reads_the_ctx_list() -> None:
     assert validate_spec(literal, *args, ["player"]) == []
     found = validate_spec(from_ctx, *args, ["player"])
     assert len(found) == 1 and found[0].startswith("player has 1577 levels")
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        {"exposure": "games", "offset_log": "games"},
+        {"exposure": "skin_tone", "offset_log": "games", "covariates": ["games"]},
+    ],
+)
+def test_the_offset_is_neither_the_exposure_nor_a_covariate(spec: dict) -> None:
+    full = ModelSpecOutput(
+        supported=True, family="poisson", outcome="redCards", report="rate_ratio", **spec
+    )
+    problems = validate_spec(full, ["redCards", "games", "skin_tone"])
+    assert any("is the offset" in p for p in problems)

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from borges.analysis.code_guard import check_code
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
-from borges.analysis.model_spec.prompt import build_spec_messages
+from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.model_spec.validate import validate_spec
@@ -43,21 +43,16 @@ def _skip(skipped: list[str] | None, reason: str) -> None:
         skipped.append(f"{SKIP_PREFIX}{reason}"[:SKIP_LIMIT])
 
 
-async def request_template(
+async def _ask(
     llm: LLMClient,
-    plan: AnalysisPlan,
-    step: Step,
-    option: Option,
-    models: list[str] | None = None,
-    skipped: list[str] | None = None,
-) -> Templated | None:
+    messages: list[dict[str, str]],
+    key: str,
+    models: list[str] | None,
+    skipped: list[str] | None,
+) -> ModelSpecOutput | None:
     try:
         response = await llm.complete(
-            Role.CODER,
-            build_spec_messages(plan, step, option),
-            key=f"coder:{step.id}.{option.id}:spec",
-            schema=ModelSpecOutput,
-            max_tokens=700,
+            Role.CODER, messages, key=key, schema=ModelSpecOutput, max_tokens=700
         )
         spec = ModelSpecOutput.model_validate(response.parsed)
     except LLMError:
@@ -67,13 +62,39 @@ async def request_template(
         return None
     if models is not None:
         models.append(response.usage.model)
-    rule = plan.decision_rule
+    return spec
+
+
+def _problems(plan: AnalysisPlan, step: Step, spec: ModelSpecOutput) -> list[str]:
     available = _available_columns(plan, step)
     ctx_names = ctx_covariate_names(plan, step, available) if spec.covariates_from_ctx else []
-    problems = validate_spec(spec, available, plan.dataset, rule, ctx_names)
+    return validate_spec(spec, available, plan.dataset, plan.decision_rule, ctx_names)
+
+
+async def request_template(
+    llm: LLMClient,
+    plan: AnalysisPlan,
+    step: Step,
+    option: Option,
+    models: list[str] | None = None,
+    skipped: list[str] | None = None,
+) -> Templated | None:
+    messages = build_spec_messages(plan, step, option)
+    key = f"coder:{step.id}.{option.id}:spec"
+    spec = await _ask(llm, messages, key, models, skipped)
+    if spec is None:
+        return None
+    problems = _problems(plan, step, spec)
     if problems:
         _skip(skipped, "; ".join(problems))
-        return None
+        if not spec.supported:
+            return None
+        retry = [*messages, *correction(spec, problems)]
+        spec = await _ask(llm, retry, f"{key}:retry", models, None)
+        if spec is None or _problems(plan, step, spec):
+            return None
+        if skipped:
+            skipped.pop()
     code = render_code(spec)
     violations = check_code(code, step.kind, option_intent(option))
     if violations:
