@@ -18,24 +18,24 @@ def design_terms(universe: Universe) -> set[str] | None:
 UNNAMED = re.compile(r"x\d+")
 
 
-def _named(terms: list[str]) -> str:
-    generic = [t for t in terms if UNNAMED.fullmatch(t)]
-    named = [t for t in terms if not UNNAMED.fullmatch(t)]
-    if generic:
-        named.append(f"{len(generic)} unnamed column" + ("s" if len(generic) > 1 else ""))
-    return ", ".join(named)
-
-
 def estimand_detail(baseline: Universe, universe: Universe) -> str | None:
     before, after = design_terms(baseline), design_terms(universe)
     if before is None or after is None or before == after:
         return None
+    if any(UNNAMED.fullmatch(t) for t in before | after):
+        if len(before) == len(after):
+            return None
+        return (
+            f"changes the number of covariates of the model from {len(before)} to "
+            f"{len(after)}: adjusted versus unadjusted answers a different question, so this "
+            "is an estimand change, not a re-analysis of the same quantity"
+        )
     added, removed = sorted(after - before), sorted(before - after)
     parts = []
     if added:
-        parts.append("adds " + _named(added))
+        parts.append("adds " + ", ".join(added))
     if removed:
-        parts.append("removes " + _named(removed))
+        parts.append("removes " + ", ".join(removed))
     return (
         "changes the covariates of the model (" + "; ".join(parts) + "): adjusted versus "
         "unadjusted answers a different question, so this is an estimand change, not a "

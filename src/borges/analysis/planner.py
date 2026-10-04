@@ -8,6 +8,7 @@ from borges.analysis.models import (
     Option,
     Step,
 )
+from borges.analysis.option_references import normalise_plan
 from borges.analysis.planner_validation import plan_shortfalls
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.result_scale import detect_scale
@@ -116,7 +117,7 @@ async def plan_analysis(
     out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile)
     taken: set[str] = set()
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(out.steps)]
-    return AnalysisPlan(
+    plan = AnalysisPlan(
         question=question,
         estimand=out.estimand,
         decision_rule=rule,
@@ -124,3 +125,4 @@ async def plan_analysis(
         steps=steps,
         result_scale=detect_scale(rule.metric),
     )
+    return normalise_plan(plan)

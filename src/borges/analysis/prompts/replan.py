@@ -27,6 +27,8 @@ APIs unless the failed errors show them working.
 - A model option names its outcome, exposure, covariates and covariance estimator. No option may \
 change the estimand or reverse the direction of a variable.
 - Ids are short snake_case and new: never reuse the id of a failed option.
+- Every option spec must be self-contained and never say 'same as' another option: the coder \
+sees only the option it codes, so restate the full spec.
 
 Return only JSON with an "options" list matching the requested schema."""
 
