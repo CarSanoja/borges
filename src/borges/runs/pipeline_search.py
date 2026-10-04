@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from borges.analysis.models import AnalysisPlan
 from borges.garden.executor import GardenExecutor
 from borges.garden.search import minimal_flip, single_flip_choices
+from borges.runs.baseline_recovery import recover_baseline
 from borges.runs.pipeline_stages import (
     run_adversary,
     run_combinations,
@@ -47,8 +48,9 @@ async def search_garden(pipeline: Pipeline, plan: AnalysisPlan) -> None:
     )
     async with pipeline.stage("baseline"):
         baseline = await runner.run(plan.default_choices(), "baseline")
-        if baseline.status != "done":
-            raise RuntimeError(f"the baseline analysis failed: {baseline.error}")
+        baseline = await recover_baseline(
+            plan, baseline, lambda c: runner.run(c, "baseline"), pipeline.caveats
+        )
     async with pipeline.stage("single_flips"):
         singles = single_flip_choices(plan)
         if len(singles) > runner.remaining:
