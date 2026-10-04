@@ -80,3 +80,22 @@ async def test_identical_specs_are_not_a_collision(tmp_path: Path) -> None:
     await code_plan(llm, plan, smoke=config(tmp_path, Recorder()))
     used = llm.keys()
     assert "coder:d1.trim:collision" not in used
+
+
+async def test_a_recode_the_reviewer_rejects_is_not_adopted(tmp_path: Path) -> None:
+    from borges.analysis.schemas import ReviewVerdict
+    from borges.analysis.smoke_types import ReviewResult
+
+    async def reviewer(step, entries, again: bool = False):
+        verdicts = [
+            ReviewVerdict(option_id=e.option.id, faithful=not again, problem="wrong estimand")
+            for e in entries
+        ]
+        return ReviewResult(verdicts, "fake")
+
+    llm = FakeLLM(scripted(**{"coder:d1.trim:collision": HEAD, "coder:d1.keep:collision": KEEP}))
+    cfg = config(tmp_path, Recorder())
+    cfg.reviewer = reviewer
+    coded = await code_plan(llm, make_plan(), smoke=cfg)
+    assert coded.step("d1").option("trim").code == KEEP
+    assert len(cfg.state.notes) == 1
