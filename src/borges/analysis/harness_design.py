@@ -31,6 +31,7 @@ DESIGN_SOURCE = """
                 if self.exog is not None:
                     names = list(self.exog_names)
                     _designs.append((type(self).__name__, self.exog, names, id(self)))
+                    _record_endog(self)
             except Exception:
                 pass
 

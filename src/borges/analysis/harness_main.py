@@ -10,6 +10,7 @@ from borges.analysis.harness_design import (
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
+from borges.analysis.harness_outcome import LOG_LINK_MODELS, OUTCOME_MAX_ROWS, OUTCOME_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 from borges.analysis.model_spec.render_design import ALIAS_NOTE
 
@@ -154,6 +155,9 @@ __FINGERPRINT__
             )
             if design is not None:
                 trace["design"] = design
+                scale = _outcome_scale(df, reported)
+                if scale is not None:
+                    design["outcome_log"] = scale
                 if __DESIGN_CHECK__ and design["deficient"]:
                     raise ValueError(_design_error(design))
                 if __DESIGN_CHECK__ and design["no_intercept"]:
@@ -216,7 +220,9 @@ MAIN_TEMPLATE = (
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
-    .replace("__DESIGN__", DESIGN_SOURCE.strip("\n"))
+    .replace("__DESIGN__", DESIGN_SOURCE.strip("\n") + "\n\n" + OUTCOME_SOURCE.strip("\n"))
+    .replace("__OUTCOME_MAX_ROWS__", repr(OUTCOME_MAX_ROWS))
+    .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
