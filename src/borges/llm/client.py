@@ -39,7 +39,7 @@ KNOWN_MODELS: dict[str, ModelSpec] = {m.id: m for m in (NANO, LIGHTNING, SUPER, 
 
 DEFAULT_ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.PLANNER: SUPER,
-    Role.CODER: NANO,
+    Role.CODER: LIGHTNING,
     Role.REPAIRER: SUPER,
     Role.ADVERSARY: SUPER,
     Role.JUDGE: SUPER,

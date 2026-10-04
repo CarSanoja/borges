@@ -16,7 +16,7 @@ from borges.analysis.prompts.coder import ALLOWLIST, SYSTEM, build_messages
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import (
     DEFAULT_ROLE_MODELS,
-    NANO,
+    LIGHTNING,
     SUPER,
     LLMError,
     LLMResponse,
@@ -98,7 +98,7 @@ async def test_guard_violation_is_repaired_by_super_and_recorded() -> None:
     coded = await code_plan(llm, plan_with_welch_only(), on_coded=on_coded)
     assert coded.step("m1").option("ols").code == GOOD
     assert [c[0] for c in llm.calls] == [Role.CODER, Role.REPAIRER]
-    assert events == [("m1", "ols", True, 2, None, [NANO.id, SUPER.id])]
+    assert events == [("m1", "ols", True, 2, None, [LIGHTNING.id, SUPER.id])]
     repair_prompt = llm.calls[1][2]
     assert "sklearn is not available; use statsmodels or numpy" in repair_prompt
     assert ALLOWLIST in repair_prompt and "statsmodels.formula.api" in ALLOWLIST
@@ -120,7 +120,7 @@ async def test_smoke_failure_for_a_missing_key_is_repaired_by_super(tmp_path: Pa
     coded = await code_plan(llm, plan_with_welch_only(), on_coded, smoke=config)
     assert coded.step("m1").option("ols").code == GOOD
     assert [c[0] for c in llm.calls] == [Role.CODER, Role.REPAIRER]
-    assert coded_events == [("m1", "ols", True, 1, None, [NANO.id])]
+    assert coded_events == [("m1", "ols", True, 1, None, [LIGHTNING.id])]
     model_smoke = next(e for e in smoke_events if e[0] == "m1")
     assert model_smoke[2:] == ("repaired", 2, None, [SUPER.id])
     prompt = llm.calls[1][2]
@@ -132,9 +132,9 @@ async def test_smoke_failure_for_a_missing_key_is_repaired_by_super(tmp_path: Pa
 async def test_costs_use_each_models_own_prices() -> None:
     llm = PricedLLM({"coder:m1.ols": SKLEARN, "coder:m1.ols:repair": GOOD})
     await code_plan(llm, plan_with_welch_only())
-    expected = NANO.cost(TOKENS_IN, TOKENS_OUT) + SUPER.cost(TOKENS_IN, TOKENS_OUT)
+    expected = LIGHTNING.cost(TOKENS_IN, TOKENS_OUT) + SUPER.cost(TOKENS_IN, TOKENS_OUT)
     assert abs(llm.spent - expected) < 1e-12
-    assert SUPER.cost(TOKENS_IN, TOKENS_OUT) > NANO.cost(TOKENS_IN, TOKENS_OUT)
+    assert SUPER.cost(TOKENS_IN, TOKENS_OUT) > LIGHTNING.cost(TOKENS_IN, TOKENS_OUT)
 
 
 def test_repairer_role_maps_to_the_planner_model() -> None:

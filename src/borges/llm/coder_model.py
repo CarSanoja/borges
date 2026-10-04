@@ -3,7 +3,7 @@ from __future__ import annotations
 from borges.llm.client import DEFAULT_ROLE_MODELS, LIGHTNING, NANO, SUPER, ModelSpec, Role
 
 CODER_MODELS: dict[str, ModelSpec] = {m.id: m for m in (NANO, LIGHTNING, SUPER)}
-DEFAULT_CODER_MODEL = NANO.id
+DEFAULT_CODER_MODEL = LIGHTNING.id
 
 
 def validate_coder_model(model_id: str) -> str:

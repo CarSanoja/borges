@@ -21,27 +21,27 @@ def coder_use(settings: Settings, provider: str = "nebius"):
     return next(a for a in run_provenance(settings, provider).agents if a.agent_id == "coder")
 
 
-def test_default_provenance_records_nano(tmp_path: Path) -> None:
+def test_default_provenance_records_lightning(tmp_path: Path) -> None:
     use = coder_use(make(tmp_path))
-    assert use.model_id == NANO.id and use.approval == "approved"
+    assert use.model_id == LIGHTNING.id and use.approval == "approved"
 
 
-def test_lightning_run_records_lightning_and_a_new_definition(tmp_path: Path) -> None:
+def test_nano_run_records_nano_and_a_new_definition(tmp_path: Path) -> None:
     default = coder_use(make(tmp_path))
-    use = coder_use(make(tmp_path, borges_coder_model=LIGHTNING.id))
-    assert use.model_id == LIGHTNING.id
+    use = coder_use(make(tmp_path, borges_coder_model=NANO.id))
+    assert use.model_id == NANO.id
     assert use.definition_sha != default.definition_sha
     others = {
         a.agent_id: a.model_id
-        for a in run_provenance(make(tmp_path, borges_coder_model=LIGHTNING.id), "nebius").agents
+        for a in run_provenance(make(tmp_path, borges_coder_model=NANO.id), "nebius").agents
     }
     assert others["repairer"] == SUPER.id
 
 
 def test_announced_models_show_the_chosen_coder(tmp_path: Path) -> None:
-    models = announced_models(make(tmp_path, borges_coder_model=LIGHTNING.id), "nebius")
-    assert models["coder"] == LIGHTNING.id and models["repairer"] == SUPER.id
-    assert announced_models(make(tmp_path), "nebius")["coder"] == NANO.id
+    models = announced_models(make(tmp_path, borges_coder_model=NANO.id), "nebius")
+    assert models["coder"] == NANO.id and models["repairer"] == SUPER.id
+    assert announced_models(make(tmp_path), "nebius")["coder"] == LIGHTNING.id
 
 
 def test_scripted_runs_ignore_the_choice(tmp_path: Path) -> None:

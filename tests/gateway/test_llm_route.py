@@ -11,7 +11,7 @@ from borges.gateway.armor_hooks import ArmorBlocked
 from borges.gateway.errors import GatewayBudgetExceeded, GatewayDenied, GatewayUnavailable
 from borges.gateway.policy_load import LoadedPolicy, policy_for
 from borges.identity.agent_tokens import process_issuer
-from borges.llm.client import NANO, SUPER, ULTRA, LLMResponse, Role
+from borges.llm.client import LIGHTNING, SUPER, ULTRA, LLMResponse, Role
 from borges.telemetry.caller import calling_as
 
 from .conftest import RUN, FakeLLM
@@ -89,7 +89,7 @@ async def test_another_agents_token_is_denied(make_gateway) -> None:
 
 
 async def test_capability_the_agent_does_not_hold_is_denied(make_gateway, settings, audit) -> None:
-    loaded = tweak(policy_for(settings), "coder", models=[NANO.id, SUPER.id])
+    loaded = tweak(policy_for(settings), "coder", models=[LIGHTNING.id, SUPER.id])
     llm = FakeLLM([Status(503)] * 3)
     with pytest.raises(GatewayDenied) as caught:
         await ask(make_gateway(loaded=loaded), llm, Role.CODER)
@@ -275,7 +275,7 @@ async def test_no_fallback_when_the_policy_lists_none(make_gateway) -> None:
     llm = FakeLLM([Status(503)] * 3)
     with pytest.raises(Status):
         await ask(make_gateway(), llm, Role.CODER)
-    assert {c["model"] for c in llm.calls} == {NANO.id}
+    assert {c["model"] for c in llm.calls} == {LIGHTNING.id}
 
 
 async def test_open_breaker_sends_the_call_straight_to_the_fallback(make_gateway) -> None:

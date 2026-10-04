@@ -29,10 +29,10 @@ def test_lightning_is_known_with_the_nano_price() -> None:
     assert (LIGHTNING.input_usd_per_m, LIGHTNING.output_usd_per_m) == (0.06, 0.24)
 
 
-def test_default_is_nano_and_blank_means_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    assert Settings(_env_file=None).borges_coder_model == NANO.id
+def test_default_is_lightning_and_blank_means_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert Settings(_env_file=None).borges_coder_model == LIGHTNING.id
     monkeypatch.setenv("BORGES_CODER_MODEL", "")
-    assert Settings(_env_file=None).borges_coder_model == NANO.id
+    assert Settings(_env_file=None).borges_coder_model == LIGHTNING.id
 
 
 def test_env_selects_an_allowed_model(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -70,7 +70,7 @@ def test_policy_that_does_not_list_the_choice_is_refused(tmp_path: Path) -> None
     from borges.config import REPO_ROOT
 
     text = (REPO_ROOT / "policy" / "gateway.json").read_text()
-    policy.write_text(text.replace('"nvidia/Nemotron-3_5-Lightning", ', ""))
-    chosen = settings(tmp_path, borges_coder_model=LIGHTNING.id, borges_gateway_policy=policy)
+    policy.write_text(text.replace('"nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B", ', ""))
+    chosen = settings(tmp_path, borges_coder_model=NANO.id, borges_gateway_policy=policy)
     with pytest.raises(LLMError, match="not allowed for the coder"):
         make_llm(chosen, mode="nebius")

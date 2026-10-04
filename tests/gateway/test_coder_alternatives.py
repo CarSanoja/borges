@@ -49,10 +49,10 @@ def test_alternatives_cannot_repeat_models() -> None:
         AgentPolicy(models=["a"], alternatives=["b", "b"], **BASE)
 
 
-def test_tracked_policy_lists_lightning_without_changing_the_chain(settings: Settings) -> None:
+def test_tracked_policy_lists_nano_without_changing_the_chain(settings: Settings) -> None:
     coder = policy_for(settings).agent("coder")
-    assert coder.models == [NANO.id] and coder.fallbacks == []
-    assert LIGHTNING.id in coder.alternatives and SUPER.id in coder.alternatives
+    assert coder.models == [LIGHTNING.id] and coder.fallbacks == []
+    assert NANO.id in coder.alternatives and SUPER.id in coder.alternatives
 
 
 async def test_chosen_model_is_allowed_with_its_capability(make_gateway) -> None:
@@ -76,7 +76,7 @@ async def test_other_models_are_still_denied(make_gateway) -> None:
     assert not llm.calls
 
 
-async def test_nano_is_denied_by_capability_when_lightning_is_chosen(make_gateway) -> None:
+async def test_nano_is_denied_by_capability_when_it_is_not_the_default(make_gateway) -> None:
     llm = FakeLLM(role_models={Role.CODER: NANO})
     with pytest.raises(GatewayDenied) as caught:
         await ask(make_gateway(), llm, Role.CODER)

@@ -12,7 +12,7 @@ from borges.gateway.policy_load import policy_for
 from borges.identity.fleet_authorizer import fleet_authorizer
 from borges.identity.run_identity import mint_run_identity
 from borges.llm.client import (
-    NANO,
+    LIGHTNING,
     SUPER,
     ULTRA,
     LLMResponse,
@@ -70,7 +70,7 @@ class FakeLLM:
 
 ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.PLANNER: SUPER,
-    Role.CODER: NANO,
+    Role.CODER: LIGHTNING,
     Role.REPAIRER: SUPER,
     Role.ADVERSARY: SUPER,
     Role.JUDGE: SUPER,
