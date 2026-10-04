@@ -11,6 +11,7 @@ from borges.analysis.models import Option, Step
 from borges.analysis.path_scrub import scrub_paths
 from borges.analysis.result_scale import convert
 from borges.analysis.smoke_larger import is_singular_error
+from borges.analysis.smoke_sample import sample_frame
 from borges.analysis.smoke_types import Check, Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
@@ -30,7 +31,7 @@ def sample_rows(data: bytes) -> bytes:
     target = min(SMOKE_MAX_ROWS, max(SMOKE_MIN_ROWS, int(len(frame) * SMOKE_FRACTION)))
     if len(frame) <= target:
         return data
-    sample = frame.sample(n=target, random_state=SMOKE_SEED).sort_index()
+    sample = sample_frame(frame, target, SMOKE_SEED)
     buffer = io.BytesIO()
     sample.to_parquet(buffer)
     return buffer.getvalue()
