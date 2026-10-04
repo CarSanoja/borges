@@ -244,3 +244,33 @@ def test_a_model_note_reaches_the_trace(workdir: Path) -> None:
     traces, result = parse_output(proc.stdout)
     assert proc.returncode == 0 and result is not None
     assert traces[0].note == "aliased covariates dropped: z"
+
+
+GLM_CODE = """
+import numpy as np
+import statsmodels.api as sm
+
+
+def estimate(df, ctx):
+    y = (df["age"] > df["age"].median()).astype(float)
+    x = df[["age"]].astype(float)
+    __CONST__
+    fit = sm.GLM(y, x, family=sm.families.Poisson()).fit()
+    low, high = fit.conf_int().loc["age"]
+    return {"estimate": float(fit.params["age"]), "ci_low": float(low),
+            "ci_high": float(high), "p_value": float(fit.pvalues["age"]), "n": int(len(df))}
+"""
+
+
+def test_a_model_without_an_intercept_fails_with_a_clear_reason(workdir: Path) -> None:
+    step, option = make_step("s1", "model", GLM_CODE.replace("__CONST__", "pass"))
+    proc = run(workdir, step, option)
+    assert proc.returncode != 0
+    assert "has no intercept" in (parse_error(proc.stdout) or "")
+
+
+def test_a_model_with_an_intercept_passes_the_check(workdir: Path) -> None:
+    code = GLM_CODE.replace("__CONST__", "x = sm.add_constant(x, has_constant='add')")
+    step, option = make_step("s1", "model", code)
+    proc = run(workdir, step, option)
+    assert "has no intercept" not in (parse_error(proc.stdout) or "")

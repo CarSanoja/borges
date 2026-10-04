@@ -152,6 +152,8 @@ __FINGERPRINT__
                 trace["design"] = design
                 if __DESIGN_CHECK__ and design["deficient"]:
                     raise ValueError(_design_error(design))
+                if __DESIGN_CHECK__ and design["no_intercept"]:
+                    raise ValueError(_intercept_error(design))
             result = _validate(raw_result)
             if __SPLIT_HALF__:
                 _check_split_half(df, ctx, result)

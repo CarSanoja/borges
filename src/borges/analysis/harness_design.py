@@ -64,6 +64,9 @@ DESIGN_SOURCE = """
             tol = sv.max() * max(scaled.shape) * _np.finfo(float).eps
             rank = int((sv > tol).sum())
             cond = float(sv.max() / sv.min()) if sv.min() > 0 else float("inf")
+            ones = _np.ones(x.shape[0])
+            fitted = x @ _np.linalg.lstsq(x, ones, rcond=None)[0]
+            intercept = bool(_np.linalg.norm(fitted - ones) < 1e-6 * _math.sqrt(x.shape[0]))
             terms = sorted(
                 {
                     _term_of(str(n), frame_columns)
@@ -81,6 +84,7 @@ DESIGN_SOURCE = """
                         rank < x.shape[1] or dead or cond > __DESIGN_CONDITION_LIMIT__
                     ),
                     "dead": dead,
+                    "intercept": intercept,
                     "terms": terms,
                     "names": [str(n) for n in names][:60],
                 }
@@ -89,7 +93,22 @@ DESIGN_SOURCE = """
             return None
         bad = next((m for m in models if m["deficient"]), None)
         main = bad or models[-1]
-        return {**main, "n_models": len(models), "deficient": bad is not None}
+        no_intercept = next((m["model"] for m in models if not m["intercept"]), None)
+        return {
+            **main,
+            "n_models": len(models),
+            "deficient": bad is not None,
+            "no_intercept": no_intercept,
+        }
+
+    def _intercept_error(design):
+        return (
+            "the " + str(design["no_intercept"]) + " model has no intercept: no column of its"
+            + " design is constant, so the fit is forced through the origin and the coefficient"
+            + " of the exposure absorbs the missing constant; add one with"
+            + " sm.add_constant(X, has_constant='add') or use a formula, which adds it."
+            + " Columns: " + repr(design["names"][:20])
+        )
 
     def _design_error(design):
         cond = design["condition"]
@@ -112,7 +131,7 @@ DESIGN_SOURCE = """
             "the model's design matrix is rank-deficient or collinear (" + detail
             + "): collinear columns are redundant and make the standard errors meaningless;"
             + " typical cause: dummy columns for every level of a categorical plus an intercept"
-            + " (use pd.get_dummies(..., drop_first=True, dtype=float) or drop the constant)."
+            + " (use pd.get_dummies(..., drop_first=True, dtype=float))."
             + wide
             + " Columns: " + repr(design["names"][:20])
         )
