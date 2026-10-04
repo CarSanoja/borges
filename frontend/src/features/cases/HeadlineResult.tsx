@@ -84,7 +84,9 @@ export function HeadlineResult({ headline, onOpen }: Props) {
         </p>
       ) : (
         <p className="headline-line" data-testid="headline-no-flip">
-          No defensible flip in {live.universes} universes: the decision held.
+          {live.universes > 1
+            ? `No defensible flip in ${live.universes} universes: the decision held.`
+            : "Only the default analysis ran: the decision was not tested."}
         </p>
       )}
       <Caveats card={card} />

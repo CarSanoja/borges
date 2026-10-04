@@ -17,7 +17,9 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
   const rule = activeRule(snapshot);
   const flip = activeFlip(snapshot);
   const explored = exploredCount(snapshot);
-  const clean = snapshot.status === "completed" && !flip;
+  const done = snapshot.status === "completed" && !flip;
+  const untested = done && (snapshot.report?.n_universes ?? 0) <= 1;
+  const clean = done && !untested;
 
   return (
     <div className="vc-face vc-face--front" aria-hidden={hidden} inert={hidden}>
@@ -28,6 +30,11 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
       {rule && <p className="vc-rule">{ruleInWords(rule)}</p>}
       {flip && !hidden && <p className="vc-hint">Borges found a fork that changes this verdict.</p>}
       {clean && <p className="vc-clean">No defensible flip found</p>}
+      {untested && (
+        <p className="vc-clean vc-clean--untested" data-testid="untested">
+          Not tested: only the default analysis ran
+        </p>
+      )}
       {!flip && <SearchNote search={snapshot.report?.search} flipFound={false} explored={explored} />}
     </div>
   );

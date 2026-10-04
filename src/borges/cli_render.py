@@ -101,7 +101,11 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
         if report.minimal_flip is not None:
             lines.extend(flip_lines(report.minimal_flip))
         else:
-            lines.append("Smallest flip found: none within the search budget")
+            lines.append(
+                "Smallest flip found: none, only the default analysis ran"
+                if report.n_universes <= 1
+                else "Smallest flip found: none within the search budget"
+            )
         lines.append(robustness_line(report))
         if report.n_failed:
             lines.append(

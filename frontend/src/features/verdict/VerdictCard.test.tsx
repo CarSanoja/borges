@@ -46,6 +46,18 @@ describe("VerdictCard", () => {
     expect(screen.queryByText("One defensible change reverses it:")).not.toBeInTheDocument();
   });
 
+  it("says the decision was not tested when only the default analysis ran", () => {
+    const snapshot = foldEvents("t", events);
+    const lone = {
+      ...snapshot,
+      flip: null,
+      report: snapshot.report ? { ...snapshot.report, minimal_flip: null, n_universes: 1, n_flipped: 0 } : null,
+    };
+    render(<VerdictCard snapshot={lone} />);
+    expect(screen.getByTestId("untested")).toHaveTextContent("Not tested: only the default analysis ran");
+    expect(screen.queryByText("No defensible flip found")).toBeNull();
+  });
+
   it("warns when the flip did not reproduce", () => {
     const snapshot = foldEvents("t", events);
     const flip = { ...snapshot.flip!, reproduced: false };

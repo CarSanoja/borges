@@ -24,8 +24,16 @@ def mirror_caveat(flip: Flip | None, threshold: float) -> str | None:
     )
 
 
+UNTESTED = (
+    "Only the default analysis ran: no alternative option survived judging and coding, so this "
+    "run did not test whether the decision is robust."
+)
+
+
 def report_caveats(report: Report, flip: Flip | None, threshold: float) -> list[str]:
     caveats: list[str] = []
+    if flip is None and report.n_universes <= 1:
+        caveats.append(UNTESTED)
     if report.n_failed:
         caveats.append(
             f"{report.n_failed} universes could not run and are left out of the robustness figure."
