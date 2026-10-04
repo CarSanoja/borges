@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from borges.analysis.models import DecisionRule
-from borges.analysis.planner import plan_analysis, produced_name
+from borges.analysis.planner import plan_analysis, produced_name, step_produces
 from borges.analysis.schemas import PlannedOption, PlannedStep, PlannerOutput
 from borges.llm.client import LLMError, Role
 from tests.analysis.fakes import FakeLLM, make_profile
@@ -131,3 +131,27 @@ def test_produces_written_as_a_ctx_reference_is_the_bare_key(raw: str) -> None:
 
 def test_produces_that_only_starts_with_ctx_is_left_alone() -> None:
     assert produced_name("ctx_score") == "ctx_score"
+
+
+def covariate_step(produces: list[str], *specs: str) -> PlannedStep:
+    options = [
+        PlannedOption(id=f"o{i}", label=f"o{i}", rationale="r", spec=spec, is_default=i == 0)
+        for i, spec in enumerate(specs)
+    ]
+    return PlannedStep(
+        id="cov", title="t", kind="feature", description="d", options=options, produces=produces
+    )
+
+
+def test_a_bare_ctx_produces_names_the_keys_every_option_writes() -> None:
+    step = covariate_step(
+        ["ctx"],
+        "Set ctx['covariates'] = ['age']; ctx['label'] = 'a'.",
+        "Set ctx['covariates'] = ['age', 'job']; return the frame unchanged.",
+    )
+    assert step_produces(step) == ["covariates"]
+
+
+def test_a_bare_ctx_produces_without_shared_writes_is_dropped() -> None:
+    step = covariate_step(["ctx", "score"], "Write df['score'].", "Write df['score'].")
+    assert step_produces(step) == ["score"]

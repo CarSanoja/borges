@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from borges.analysis.code_guard_ctx import CTX_WRITE
 from borges.analysis.ids import slug_id
 from borges.analysis.models import (
     AnalysisPlan,
@@ -28,6 +29,18 @@ def produced_name(raw: str) -> str:
     if match is None:
         return name
     return next(group for group in match.groups() if group).strip()
+
+
+BARE_CTX = frozenset({"ctx", "context"})
+
+
+def step_produces(planned: PlannedStep) -> list[str]:
+    names = [produced_name(name) for name in planned.produces]
+    if any(name.lower() in BARE_CTX for name in names):
+        written = [{key for key, _ in CTX_WRITE.findall(o.spec)} for o in planned.options]
+        shared = sorted(set.intersection(*written)) if written else []
+        names = [key for name in names for key in (shared if name.lower() in BARE_CTX else [name])]
+    return list(dict.fromkeys(filter(None, names)))
 
 
 def clean_id(raw: str, fallback: str) -> str:
@@ -84,7 +97,7 @@ def _build_step(planned: PlannedStep, step_id: str) -> Step:
         kind=planned.kind,
         description=planned.description,
         options=options,
-        produces=list(dict.fromkeys(filter(None, map(produced_name, planned.produces)))),
+        produces=step_produces(planned),
     )
 
 
