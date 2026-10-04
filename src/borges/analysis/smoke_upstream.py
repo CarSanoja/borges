@@ -54,13 +54,27 @@ async def _probe(
     model: Step,
     outcome: Outcome,
     between: Sequence[Step] = (),
+    every: bool = False,
 ) -> str | None:
+    """The model's default on the data an upstream option leaves; with `every`, each live model
+    option too, for an option added after the model was smoked under every other upstream one."""
     assert outcome.checkpoint is not None
     checkpoint = await model_input(config, repair, between, outcome.checkpoint, outcome.effects)
     if checkpoint is None:
         return None
-    default = config.state.defaults[model.id]
-    return await probe_option(config, repair, model, default.option, checkpoint)
+    default = config.state.defaults[model.id].option
+    error = await probe_option(config, repair, model, default, checkpoint)
+    if error is not None or not every:
+        return error
+    others = [
+        o.option
+        for o in config.state.outcomes.get(model.id, [])
+        if o.status != "failed" and o.option.id != default.id
+    ]
+    errors = await asyncio.gather(
+        *(probe_option(config, repair, model, o, checkpoint) for o in others)
+    )
+    return next((e for e in errors if e is not None), None)
 
 
 async def _repaired(
@@ -71,6 +85,7 @@ async def _repaired(
     outcome: Outcome,
     error: str,
     between: Sequence[Step] = (),
+    every: bool = False,
 ) -> Outcome | None:
     parent = config.state.parents[previous.id]
     message = REPAIR_MESSAGE.format(title=model.title, error=error)
@@ -88,7 +103,10 @@ async def _repaired(
     tried = await _re_review(config, previous, tried)
     if tried.status != "failed":
         tried = await resolve_extra(config, repair, parent, previous, tried)
-    if tried.status == "failed" or await _probe(config, repair, model, tried, between) is not None:
+    if (
+        tried.status == "failed"
+        or await _probe(config, repair, model, tried, between, every) is not None
+    ):
         return None
     return Outcome(
         tried.option,

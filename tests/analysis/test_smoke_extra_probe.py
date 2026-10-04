@@ -8,6 +8,7 @@ from borges.llm.client import LLMError
 from tests.analysis.fakes import FakeLLM, make_option
 from tests.analysis.test_coder_smoke import Recorder, config, passing_guard
 from tests.analysis.test_smoke_upstream import (
+    MODEL,
     NAMES_GROUP,
     NAMES_OUTCOME,
     scripted,
@@ -56,3 +57,27 @@ async def test_a_repair_through_the_probe_replaces_the_adversary_code(tmp_path: 
     outcome = await smoke_extra_option(cfg, repair, plan.step("c1"), option, plan.steps)
     assert outcome is not None and outcome.status == "repaired"
     assert outcome.option.code == fixed
+
+
+STRICT = MODEL.replace(
+    "def estimate(df, ctx):\n",
+    "def estimate(df, ctx):\n    if 'extra' in ctx.get('covariates', []):\n"
+    "        raise ValueError('this model cannot use extra')\n",
+    1,
+).replace("m = float(sub['outcome'].mean())", "m = float(sub['outcome'].mean()) + 1.0")
+
+
+async def test_an_adversary_option_that_breaks_another_model_option_is_refused(
+    tmp_path: Path,
+) -> None:
+    plan = three_step_plan()
+    plan.step("m1").options.append(make_option("strict"))
+    llm = FakeLLM(scripted(group_code=NAMES_OUTCOME, **{"coder:m1.strict": STRICT}))
+    cfg = config(tmp_path, Recorder())
+    plan = await code_plan(llm, plan, smoke=cfg)
+    assert [o.id for o in plan.step("m1").options] == ["ols", "strict"]
+    code = "def apply(df, ctx):\n    ctx['covariates'] = ['extra']\n    return df.assign(extra=1.0)"
+    option = make_option("adv_extra", code=code)
+    outcome = await smoke_extra_option(cfg, no_repair, plan.step("c1"), option, plan.steps)
+    assert outcome is not None and outcome.status == "failed"
+    assert outcome.error is not None and "this model cannot use extra" in outcome.error

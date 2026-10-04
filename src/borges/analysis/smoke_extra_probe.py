@@ -24,10 +24,10 @@ async def probe_extra(
     ):
         return outcome
     between = list(steps[ids.index(step.id) + 1 : ids.index(model.id)])
-    error = await _probe(config, repair, model, outcome, between)
+    error = await _probe(config, repair, model, outcome, between, every=True)
     if error is None:
         return outcome
-    fresh = await _repaired(config, repair, step, model, outcome, error, between)
+    fresh = await _repaired(config, repair, step, model, outcome, error, between, every=True)
     if fresh is not None:
         return fresh
     note = DROPPED_NOTE.format(label=outcome.option.label, title=step.title, error=_short(error))
