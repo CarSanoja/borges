@@ -73,5 +73,5 @@ def test_a_completed_run_that_lost_part_of_the_analysis_is_listed(tmp_path: Path
     module = load()
     text = module.render(module.load_batch(tmp_path), "abc1234", "2026-10-04")
     section = text.split("## Completed runs that lost part of the analysis")[1]
-    assert "case_a `r_completed_None`: 1 of 10 universes failed The decision 'Filter'" in section
+    assert "case_a `r_completed_None`: 1 of 11 universes failed The decision 'Filter'" in section
     assert "case_b" not in section and "Robustness headline" not in section

@@ -92,7 +92,8 @@ def _partial(rows: dict[str, list[dict[str, Any]]]) -> list[str]:
         for r in batch:
             if r["status"] != "completed":
                 continue
-            notes = [f"{r['failed']} of {r['universes']} universes failed"] if r["failed"] else []
+            tried = r["universes"] + r["failed"]
+            notes = [f"{r['failed']} of {tried} universes failed"] if r["failed"] else []
             notes += [c[:240] for c in r["left_out"] + r["replaced"]]
             if notes:
                 lines.append(f"- {label} `{r['run']}`: " + " ".join(notes))
@@ -117,7 +118,7 @@ def render(rows: dict[str, list[dict[str, Any]]], commit: str, date: str) -> str
         f"{high:.2f}). Cost of the completed runs: ${cost:.2f}.",
         "",
         "| case | completed | verdicts | flip found | flip rate (95% CI) | adversary flips "
-        "| decision that flips | universes (failed) | cost per run |",
+        "| decision that flips | universes run (failed) | cost per run |",
         "|---|---|---|---|---|---|---|---|---|",
         *(_case_row(label, batch) for label, batch in sorted(rows.items())),
         "",
