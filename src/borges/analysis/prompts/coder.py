@@ -57,9 +57,10 @@ place. Store only JSON-serialisable values (lists, numbers, strings). Read data 
 `df` by their literal names; ctx holds only what an earlier step stored in it (for example \
 ctx["covariates"]), so never look a column name up in ctx (`df["outcome"]`, not \
 `df[ctx["outcome"]]`).
-- The code guard rejects subscripts whose key is built at run time. Never write \
-`df[col + "_z"]` or `df[f"{col}_z"]`; write each column name as a plain string literal, or \
-build new columns with `df.assign(**{name: values})` or `df.rename(columns=mapping)`.
+- Keys built at run time, such as `df[col + "_z"]` or `df[f"{col}_z"]`, are allowed only on \
+the data frame itself (named df, out, data or frame); on any other object the code guard \
+rejects them, so write the key as a plain string literal there, or build new columns with \
+`df.assign(**{name: values})`.
 - For the step of kind model: compute standard errors, confidence intervals and p-values with \
 statsmodels (the formula API or the sm.stats functions), never by hand-written formulas. A \
 hand-computed standard error that is wrong makes the whole analysis wrong. Take p-values and \

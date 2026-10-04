@@ -41,12 +41,16 @@ def _builds_string(key: ast.AST) -> bool:
     return False
 
 
+FRAME_NAMES = frozenset({"df", "out", "data", "frame"})
+
+
 def subscript_violations(node: ast.Subscript) -> list[str]:
+    if isinstance(node.value, ast.Name) and node.value.id in FRAME_NAMES:
+        return []
     if _builds_string(node.slice):
         return [
-            f"line {node.lineno}: subscript with a computed string key is not allowed, such as "
-            "df[f'{c}_missing'] or df[c + '_x']; build the new columns in a dict and add them at "
-            "once, for example df = df.assign(**{f'{c}_missing': df[c].isna().astype(int) for c "
-            "in cols}), and read a column with df[c] where c comes from a list of names"
+            f"line {node.lineno}: subscript with a computed string key is not allowed outside the "
+            "data frame (df, out, data or frame), such as values[f'{c}_x'] or row[c + '_x']; "
+            "write the key as a plain string literal, or subscript the data frame instead"
         ]
     return []
