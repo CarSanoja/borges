@@ -23,7 +23,9 @@ estimand is about, never the offset column and never the outcome.
 - exposure_level: only when the exposure is a text column: the level coded 1, the treatment or the \
 group the estimand puts first ("treatment minus control" means level "treatment"). With more than \
 two levels the estimate compares that level with all the others together. Use a level exactly as \
-listed. Leave it null for a numeric exposure; never invent a column for the dummy.
+listed. Leave it null for a numeric exposure; never invent a column for the dummy. When the \
+option builds a 0/1 indicator from a text column, as treatment = (variant == 'treatment'), the \
+exposure is that text column and exposure_level its level: the template builds the indicator.
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
