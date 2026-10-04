@@ -33,10 +33,16 @@ function live(card: CaseCard, extra: Partial<LiveRecordingSummary> = {}): CaseCa
 
 describe("pickHeadline", () => {
   it("prefers real data with a clean flip over a synthetic or contaminated one", () => {
-    const synthetic = live(checkout);
+    const synthetic = live({ ...checkout, id: "synthetic" });
     const contaminated = live({ ...redCards, id: "c" }, { contaminated: true });
     const clean = live({ ...redCards, id: "clean" });
     expect(pickHeadline([synthetic, contaminated, clean])?.card.id).toBe("clean");
+  });
+
+  it("keeps the headline on the hero case so the garden, card and demo agree", () => {
+    const picked = pickHeadline([live(redCards), live(checkout)]);
+    expect(picked?.card.id).toBe("checkout_ab");
+    expect(picked?.mechanics).toBe(false);
   });
 
   it("falls back to a labelled mechanics demo when nothing was recorded live", () => {
