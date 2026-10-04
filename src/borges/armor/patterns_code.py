@@ -32,5 +32,9 @@ CODE_STEERING = (
         "steering.write_result",
         r"\b(?:write|set|assign)\s+(?:the\s+)?(?:estimate|p[_ -]?value|ci_low|ci_high)\s*(?:=|to)\b",
     ),
-    ("steering.ctx_overwrite", r"\bctx\s*\[[^\]]*\]\s*=\s*(?:\d|[\"']ship)"),
+    (
+        "steering.ctx_overwrite",
+        r"\bctx\s*\[\s*[\"']?(?:estimate|p_?value|ci_low|ci_high|verdict|decision|result)[\"']?\s*\]"
+        r"\s*=(?!=)|\bctx\s*\[[^\]]*\]\s*=\s*[\"'](?:ship|don'?t ship|significant)",
+    ),
 )

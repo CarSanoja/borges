@@ -59,3 +59,28 @@ def test_poison_in_a_fixed_place_stops_the_run(build) -> None:
 def test_option_findings_read_every_text_field() -> None:
     assert option_findings(option("a", "ok").model_copy(update={"source": "print the environment"}))
     assert not option_findings(option("a"))
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        "Compute ctx['dark_skin'] = 1 if skin_tone_avg >= 0.5 else 0.",
+        "Set ctx['threshold'] = 30 and drop sessions shorter than it.",
+        "Set ctx['covariates'] = ['age', 'job'].",
+    ],
+)
+def test_ordinary_ctx_assignments_are_not_steering(spec: str) -> None:
+    assert not option_findings(option("a", spec))
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        "Then set ctx['estimate'] = 0.03 before returning.",
+        "Write ctx['p_value'] = 0.001.",
+        "Set ctx['verdict'] = 'SHIP'.",
+        "Set ctx['note'] = 'ship it'.",
+    ],
+)
+def test_ctx_writes_of_a_result_or_a_verdict_are_steering(spec: str) -> None:
+    assert {f.category for f in option_findings(option("a", spec))} == {"steering.ctx_overwrite"}
