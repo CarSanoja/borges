@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import re
 
+from borges.analysis.covariate_ids import identifier_columns
 from borges.analysis.models import DatasetProfile, Step
 from borges.analysis.schemas import PlannedStep
 
 PRODUCING_KINDS = ("transform", "feature")
 CTX_KEYS = frozenset({"covariates", "outcome"})
+NUMERIC = re.compile(r"^(?:int|uint|float|bool)")
 QUOTED = re.compile(r"""["']([A-Za-z_]\w*)["']""")
 
 
@@ -84,3 +86,33 @@ def drop_renamed(steps: list[PlannedStep], profile: DatasetProfile) -> list[Plan
         produces = [n for n in step.produces if n in named or n in CTX_KEYS]
         kept.append(step.model_copy(update={"options": options, "produces": produces}))
     return kept
+
+
+def level_columns(names: list[str], profile: DatasetProfile) -> set[str]:
+    """Produced names that enumerate the levels of a dataset column (platform_ios, day_3,
+    user_id_17): which levels exist depends on the rows, so no option can promise them."""
+    columns = {c.name: c for c in profile.columns}
+    ids = identifier_columns(profile)
+    found: set[str] = set()
+    for name in names:
+        if name in columns:
+            continue
+        for column, profile_column in columns.items():
+            if not name.startswith(f"{column}_"):
+                continue
+            level = name[len(column) + 1 :]
+            categorical = NUMERIC.match(profile_column.dtype) is None
+            if column in ids or level.isdigit() or categorical:
+                found.add(name)
+    return found
+
+
+def drop_level_columns(steps: list[PlannedStep], profile: DatasetProfile) -> list[PlannedStep]:
+    return [
+        s.model_copy(
+            update={
+                "produces": [n for n in s.produces if n not in level_columns(s.produces, profile)]
+            }
+        )
+        for s in steps
+    ]

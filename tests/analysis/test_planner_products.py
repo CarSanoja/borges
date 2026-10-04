@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from borges.analysis.models import DecisionRule
+from borges.analysis.models import ColumnProfile, DecisionRule
 from borges.analysis.planner import plan_analysis
-from borges.analysis.planner_products import drop_renamed, renamed_products
+from borges.analysis.planner_products import drop_renamed, level_columns, renamed_products
 from borges.analysis.schemas import PlannedOption, PlannerOutput
 from tests.analysis.fakes import FakeLLM, make_profile
 from tests.analysis.test_planner import popt, pstep
@@ -64,3 +64,15 @@ def test_options_that_each_build_another_produced_name_are_found() -> None:
     assert renamed_products(steps, make_profile()) == {"t": ["binary"]}
     kept = drop_renamed(steps, make_profile())[1]
     assert [o.id for o in kept.options] == ["log", "both"] and kept.produces == ["log_outcome"]
+
+
+def test_names_that_enumerate_levels_of_a_column_are_not_promised() -> None:
+    profile = make_profile()
+    profile.columns += [
+        ColumnProfile(name="platform", dtype="object", n_missing=0, n_unique=2),
+        ColumnProfile(name="day", dtype="int64", n_missing=0, n_unique=14),
+        ColumnProfile(name="balance", dtype="int64", n_missing=0, n_unique=7000),
+        ColumnProfile(name="user_id", dtype="int64", n_missing=0, n_unique=9000),
+    ]
+    names = ["platform_ios", "day_3", "user_id_17", "balance_log", "rel_scale", "day"]
+    assert level_columns(names, profile) == {"platform_ios", "day_3", "user_id_17"}

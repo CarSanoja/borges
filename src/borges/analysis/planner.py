@@ -12,7 +12,7 @@ from borges.analysis.models import (
     Step,
 )
 from borges.analysis.option_references import normalise_plan
-from borges.analysis.planner_products import drop_renamed
+from borges.analysis.planner_products import drop_level_columns, drop_renamed
 from borges.analysis.planner_validation import plan_shortfalls, reads_the_result
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.result_scale import detect_scale
@@ -145,7 +145,7 @@ async def plan_analysis(
     messages = build_messages(profile, question, rule)
     out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile)
     taken: set[str] = set()
-    planned = drop_renamed(out.steps, profile)
+    planned = drop_renamed(drop_level_columns(out.steps, profile), profile)
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(planned)]
     plan = AnalysisPlan(
         question=question,
