@@ -51,7 +51,9 @@ async def test_a_lost_lease_stops_the_run_without_closing_it(tmp_path, monkeypat
     await wait_for(lambda: fake.scenario.entered_plan.is_set())
     with fake.runtime.db.transaction() as conn:
         conn.execute(
-            "UPDATE jobs SET lease_owner = 'someone-else' WHERE run_id = ?", (result.run_id,)
+            "UPDATE jobs SET lease_owner = 'someone-else', lease_expires = lease_expires + 3600"
+            " WHERE run_id = ?",
+            (result.run_id,),
         )
     await wait_for(lambda: result.run_id not in fake.rig.orchestrator.tasks)
     events = fake.rig.store.events(result.run_id)
