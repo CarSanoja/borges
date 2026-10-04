@@ -15,6 +15,7 @@ OnSmoke = Callable[..., Awaitable[None]]
 OnReview = Callable[[str, str, bool, bool, str, str], Awaitable[None]]
 Repair = Callable[[Step, Option, str, int], Awaitable[tuple[str, str | None, str]]]
 Recode = Callable[[Step, Option, list[str]], Awaitable[tuple[str, str | None, str]]]
+Rewrite = Callable[[Step, Option, Option, str], Awaitable[tuple[str, str | None, str]]]
 OnReplan = Callable[[str, list[str], list[str]], Awaitable[None]]
 Check = Callable[[dict[str, Any] | None], str | None]
 
@@ -50,6 +51,7 @@ class SmokeState:
     defaults: dict[str, Outcome] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     larger_rows: dict[tuple[str, str], int] = field(default_factory=dict)
+    outcomes: dict[str, list[Outcome]] = field(default_factory=dict)
 
 
 @dataclass
@@ -64,6 +66,8 @@ class SmokeConfig:
     result_check: Callable[[dict[str, Any]], str | None] | None = None
     result_scale: float = 1.0
     larger: LargerSample | None = None
+    rewrite: Rewrite | None = None
+    metric: str = ""
     state: SmokeState = field(default_factory=SmokeState)
 
 

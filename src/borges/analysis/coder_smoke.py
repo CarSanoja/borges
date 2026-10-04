@@ -8,13 +8,14 @@ import pyarrow.parquet as pq
 
 from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
+from borges.analysis.smoke_collision import resolve_outputs
 from borges.analysis.smoke_core import execute, sample_rows, smoke_option
 from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
 from borges.analysis.smoke_recode import recode_failed_default
 from borges.analysis.smoke_replan import has_survivor, replan_outcomes
 from borges.analysis.smoke_review import review_step
-from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, SmokeConfig
+from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 from borges.telemetry.scopes import option_span
@@ -96,7 +97,8 @@ async def _smoke_round(
     _record(summary, outcomes)
     outcomes = await recode_failed_default(config, repair, recode, parent, step, outcomes)
     outcomes = await apply_orientation(config, repair, parent, step, outcomes, summary)
-    return await review_step(config, repair, parent, step, outcomes, summary)
+    outcomes = await review_step(config, repair, parent, step, outcomes, summary)
+    return await resolve_outputs(config, repair, parent, step, outcomes, summary)
 
 
 async def smoke_plan(
@@ -107,8 +109,11 @@ async def smoke_plan(
     concurrency: int = 6,
     recode: Recode | None = None,
     replan: Replan | None = None,
+    rewrite: Rewrite | None = None,
 ) -> AnalysisPlan:
     smoked = plan.model_copy(deep=True)
+    config.rewrite = rewrite
+    config.metric = plan.decision_rule.metric
     sample = sample_rows(config.data)
     parent = await config.backend.root({harness.DATA_FILE: sample})
     sample_n = pq.read_metadata(io.BytesIO(sample)).num_rows
@@ -125,6 +130,7 @@ async def smoke_plan(
             config.state.defaults[step.id] = live_default
         replaced = step.default
         parent, promoted, cause = _apply(step, outcomes)
+        config.state.outcomes[step.id] = [o for o in outcomes if o.status != "failed"]
         if promoted is not None:
             config.state.notes.append(
                 f"The default option {step.id}.{replaced.id} ({replaced.label}) failed its smoke "
