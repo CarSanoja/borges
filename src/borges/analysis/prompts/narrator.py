@@ -27,6 +27,16 @@ in the report. No headings, no preamble. Also return 0 to 4 short caveats.
 
 Return only JSON matching the requested schema."""
 
+ORIGINAL_RULE = (
+    "Every number about the original analysis must match the sentence below; the other "
+    "universes are alternatives, never the original."
+)
+FLIP_RULE = "Name no other option of that step as part of the flip."
+ROBUST_RULE = (
+    "A share in the report's robustness fields is the share that AGREES with the original verdict."
+)
+RULES = (ORIGINAL_RULE, FLIP_RULE, ROBUST_RULE)
+
 
 def build_messages(
     plan: AnalysisPlan,
@@ -45,22 +55,21 @@ def build_messages(
     if garden is not None:
         user += f"\nGarden: {compact_json(garden)}"
     user += (
-        f"\nInclude this sentence verbatim as the first sentence of the summary: "
-        f"{original_sentence(report)} Every other number about the original analysis must match "
-        "it; the other universes are alternatives, never the original."
+        f"\n{ORIGINAL_RULE} Include it verbatim as the first sentence of the summary:\n"
+        f"{original_sentence(report)}\n"
     )
     if scale is not None:
         user += f"\nScale of the estimate: {scale} Describe every estimate on that scale."
     if flip_sentence is not None:
         user += (
-            f"\nInclude this sentence verbatim in the summary, as its second sentence: "
-            f"{flip_sentence}\nName no other option of that step as part of the flip."
+            f"\n{FLIP_RULE} Include the sentence below verbatim in the summary, as its second "
+            f"sentence:\n{flip_sentence}\n"
         )
     robust = robustness_sentence(report)
     if robust is not None:
         user += (
-            f"\nInclude this sentence verbatim where you state robustness: {robust} A share in the "
-            "report's robustness fields is the share that AGREES with the original verdict."
+            f"\n{ROBUST_RULE} Include the sentence below verbatim where you state robustness:\n"
+            f"{robust}\n"
         )
     if problems:
         user += "\nYour previous summary was rejected: " + "; ".join(problems) + "."

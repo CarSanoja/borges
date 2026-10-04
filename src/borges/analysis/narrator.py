@@ -11,7 +11,7 @@ from borges.analysis.narrative_flip import (
     problems,
 )
 from borges.analysis.narrative_original import original_problems, with_original
-from borges.analysis.narrative_repeats import drop_repeated_sentences
+from borges.analysis.narrative_repeats import drop_prompt_echoes, drop_repeated_sentences
 from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
     kept_caveats,
@@ -19,7 +19,7 @@ from borges.analysis.narrative_robustness import (
     robustness_sentence,
 )
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
-from borges.analysis.prompts.narrator import build_messages
+from borges.analysis.prompts.narrator import RULES, build_messages
 from borges.analysis.schemas import NarratorOutput
 from borges.garden.models import Garden, Report
 from borges.garden.outcome_scale import mentions_log_scale, scale_note
@@ -92,7 +92,7 @@ async def narrate(
     sentence = flip_sentence(plan, report)
     scale = scale_note(garden) if garden is not None else None
     out = await _ask(llm, plan, report, sentence, "narrator", None, garden, judged, scale)
-    narrative = drop_repeated_sentences(out.narrative.strip())
+    narrative = drop_repeated_sentences(drop_prompt_echoes(out.narrative, RULES))
     issues = _issues(plan, report, narrative, scale)
     if not issues:
         return narrative, kept_caveats(report, out.caveats)
@@ -103,7 +103,7 @@ async def narrate(
     except LLMError:
         retry = None
     if retry is not None:
-        second = drop_repeated_sentences(retry.narrative.strip())
+        second = drop_repeated_sentences(drop_prompt_echoes(retry.narrative, RULES))
         if not _issues(plan, report, second, scale) and NUMBER.search(second):
             return second, kept_caveats(report, retry.caveats)
     kept = drop_inverted_sentences(report, drop_wrong_sentences(plan, report, narrative))

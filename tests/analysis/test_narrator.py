@@ -140,3 +140,15 @@ async def test_an_estimate_on_the_log_scale_is_never_read_as_additional_units() 
         in (llm.calls[0].messages[1]["content"])
     )
     assert "on the log scale: about 3.0% more alldeaths" in narrative
+
+
+async def test_an_instruction_copied_next_to_a_verbatim_sentence_is_dropped() -> None:
+    from borges.analysis.prompts.narrator import ORIGINAL_RULE, ROBUST_RULE
+
+    echoed = f"{ORIGINAL} {ORIGINAL_RULE} {SENTENCE} {ROBUST} {ROBUST_RULE}"
+    llm = FakeLLM({"narrator": NarratorOutput(narrative=echoed, caveats=[])})
+    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
+    prompt = llm.calls[0].messages[1]["content"]
+    assert f"{ROBUST_RULE} Include the sentence below verbatim" in prompt
+    assert f"\n{ROBUST}\n" in prompt

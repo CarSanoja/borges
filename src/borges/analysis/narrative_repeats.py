@@ -54,3 +54,9 @@ def restates_any(text: str, earlier: list[str]) -> bool:
         if shared >= MIN_SHARED and shared / (min(len(words), len(before)) or 1) >= RESTATED:
             return True
     return False
+
+
+def drop_prompt_echoes(narrative: str, rules: tuple[str, ...]) -> str:
+    """A model told to copy a sentence sometimes copies the instruction next to it as well."""
+    kept = [s for s in SENTENCE.split(narrative.strip()) if s.strip() not in rules]
+    return " ".join(kept)
