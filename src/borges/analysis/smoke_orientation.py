@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+from functools import partial
 from typing import Any
 
 import numpy as np
@@ -9,7 +10,7 @@ import numpy as np
 from borges.analysis.models import CodingSummary, Step
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_larger import smoke_rows
-from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
+from borges.analysis.smoke_types import Check, Outcome, Repair, SmokeConfig
 from borges.sandbox.backend import Checkpoint
 
 MIN_PAIRS = 30
@@ -69,6 +70,17 @@ def orientation_error(
         if r is not None and r < REVERSED_BELOW:
             return REVERSED_TEMPLATE.format(name=name, r=r)
     return None
+
+
+def orientation_check(config: SmokeConfig, step: Step, option_id: str) -> Check | None:
+    """The orientation check for one option of a step, against the step's live default."""
+    default = config.state.defaults.get(step.id)
+    if default is None or step.kind == "model" or default.option.id == option_id:
+        return None
+    names = produced_names(step.produces, default.effects)
+    if not names:
+        return None
+    return partial(orientation_error, names, default.effects)
 
 
 def effective_default(step: Step, outcomes: list[Outcome]) -> Outcome | None:

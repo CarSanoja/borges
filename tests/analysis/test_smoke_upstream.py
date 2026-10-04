@@ -154,3 +154,30 @@ async def test_a_singular_probe_error_is_not_blamed_on_the_upstream_option(
     assert [o.id for o in coded.step("c1").options] == ["none", "with_group"]
     used = llm.keys()
     assert not [k for k in used if ":smoke" in k]
+
+
+def score_code(covariates: str, sign: str = "") -> str:
+    return (
+        f"def apply(df, ctx):\n    ctx['covariates'] = {covariates}\n    out = df.copy()\n"
+        f"    out['score'] = {sign}out['outcome']\n    return out"
+    )
+
+
+async def test_an_upstream_repair_that_reverses_the_option_s_score_is_dropped(
+    tmp_path: Path,
+) -> None:
+    llm = FakeLLM(
+        scripted(
+            group_code=score_code("['group']"),
+            **{
+                "coder:c1.none": score_code("[]"),
+                "coder:c1.with_group:smoke1": score_code("[]", "-"),
+            },
+        )
+    )
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, three_step_plan(), smoke=cfg)
+    used = llm.keys()
+    assert "coder:c1.with_group:smoke1" in used
+    assert [o.id for o in coded.step("c1").options] == ["none"]
+    assert len(cfg.state.notes) == 1 and "was dropped" in cfg.state.notes[0]

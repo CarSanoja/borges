@@ -26,6 +26,11 @@ set identical to the conventional one. Compare the option with the conventional 
 below; when it adds nothing, set accepted=false with reason "equivalent to the conventional \
 option".
 
+An option that reverses a variable's direction (orients a score so that higher values mean \
+less of what its items measure, flips a sign, swaps the groups) only flips the sign of the \
+result: set accepted=false with reason "reverses a variable's direction". Reverse-coding \
+negatively worded items so that all items point the same way is not a reversal.
+
 Penalise any option that changes the question or the estimand, leaks the outcome, or looks \
 chosen to produce a result. Set accepted=true only when defensibility is at least 0.6. Give a \
 one or two sentence reason and, when one exists, a short source for the practice.

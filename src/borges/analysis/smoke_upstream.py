@@ -9,6 +9,7 @@ from borges.analysis.smoke_chain import model_input
 from borges.analysis.smoke_collision import resolve_extra
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_larger import is_sample_artefact, smoke_rows
+from borges.analysis.smoke_orientation import orientation_check
 from borges.analysis.smoke_review import _re_review
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
@@ -80,7 +81,8 @@ async def _repaired(
     if violation is not None:
         return None
     option = outcome.option.model_copy(update={"code": code})
-    tried = await smoke_option(config, repair, parent, previous, option, budget=0)
+    check = orientation_check(config, previous, option.id)
+    tried = await smoke_option(config, repair, parent, previous, option, check, budget=0)
     if tried.status == "failed":
         return None
     tried = await _re_review(config, previous, tried)
