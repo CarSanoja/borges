@@ -17,6 +17,10 @@ def verdict(problem: str, faithful: bool = False) -> ReviewVerdict:
         "the raw coefficient from OLS (value) without multiplying by 100.",
         "The spec returns teff*100, ci_low*100, ci_high*100 (percentage points).",
         "Estimates should be multiplied by 100.",
+        "The spec returns estimate, ci_low, ci_high, and p_value scaled by 100 (percentage "
+        "points), but the code returns them unscaled (as proportions). For example, it shows "
+        "estimate: 0.18095781473481753, which is 0.18 percentage points, but the spec requires "
+        "percentage points (so should be ~18.1). This violates the spec's return statement.",
     ],
 )
 def test_unit_demands_alone_are_dropped(problem: str) -> None:
@@ -48,3 +52,8 @@ def test_other_problems_are_untouched(problem: str) -> None:
 
 def test_faithful_verdicts_are_untouched() -> None:
     assert apply_unit_contract(verdict("", faithful=True)) == verdict("", faithful=True)
+
+
+def test_a_follow_up_after_a_real_problem_is_kept() -> None:
+    problem = "The code fits plain OLS but the spec names HC3 errors. This changes the intervals."
+    assert apply_unit_contract(verdict(problem)).problem == problem

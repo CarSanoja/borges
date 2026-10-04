@@ -91,7 +91,7 @@ AGENT_DECLARATIONS: tuple[AgentDeclaration, ...] = (
         Role.REVIEWER,
         ReviewerOutput,
         (PROFILE, *LLM_CAPS),
-        ("analysis/prompts/reviewer.py", "analysis/smoke_review.py"),
+        ("analysis/prompts/reviewer.py", "analysis/smoke_review.py", "analysis/review_contract.py"),
     ),
     _agent(
         "narrator",

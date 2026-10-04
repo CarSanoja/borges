@@ -10,13 +10,23 @@ UNIT_DEMAND = re.compile(
     re.IGNORECASE,
 )
 SENTENCE = re.compile(r"(?<=[.!?])\s+")
+FOLLOW_UP = re.compile(
+    r"^(?:this|that|these|those|it|such|thus|therefore|hence|so|which|as a result)\b", re.IGNORECASE
+)
 IGNORED = "review point dropped: it asks for a unit conversion that the code contract forbids"
 
 
 def apply_unit_contract(verdict: ReviewVerdict) -> ReviewVerdict:
     if verdict.faithful or not verdict.problem or not UNIT_DEMAND.search(verdict.problem):
         return verdict
-    kept = [s for s in SENTENCE.split(verdict.problem.strip()) if not UNIT_DEMAND.search(s)]
+    kept: list[str] = []
+    dropped = False
+    for sentence in SENTENCE.split(verdict.problem.strip()):
+        if UNIT_DEMAND.search(sentence) or (dropped and FOLLOW_UP.match(sentence)):
+            dropped = True
+            continue
+        dropped = False
+        kept.append(sentence)
     if kept:
         return verdict.model_copy(update={"problem": " ".join(kept)})
     return verdict.model_copy(update={"faithful": True, "problem": IGNORED})
