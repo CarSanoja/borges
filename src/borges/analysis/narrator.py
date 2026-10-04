@@ -7,6 +7,7 @@ from borges.analysis.narrative_flip import (
     insert_sentence,
     problems,
 )
+from borges.analysis.narrative_repeats import drop_repeated_sentences
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
 from borges.analysis.prompts.narrator import build_messages
 from borges.analysis.schemas import NarratorOutput
@@ -63,13 +64,13 @@ async def narrate(
 ) -> tuple[str, list[str]]:
     sentence = flip_sentence(plan, report)
     out = await _ask(llm, plan, report, sentence, "narrator", None, garden, judged)
-    narrative = out.narrative.strip()
+    narrative = drop_repeated_sentences(out.narrative.strip())
     issues = problems(plan, report, narrative)
     if not issues or sentence is None:
         return narrative, list(out.caveats)
     try:
         retry = await _ask(llm, plan, report, sentence, "narrator:retry", issues, garden, judged)
-        narrative, out = retry.narrative.strip(), retry
+        narrative, out = drop_repeated_sentences(retry.narrative.strip()), retry
     except LLMError:
         pass
     if problems(plan, report, narrative):
