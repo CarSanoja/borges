@@ -34,6 +34,11 @@ COLLINEAR = (
 )
 
 FULL_RANK = COLLINEAR.replace("dtype=float)", "dtype=float, drop_first=True)")
+ALIASED_ESTIMATE = (
+    COLLINEAR.replace('params["x"]', 'params["month_jan"]')
+    .replace('loc["x"', 'loc["month_jan"')
+    .replace('pvalues["x"]', 'pvalues["month_jan"]')
+)
 
 NEAR_COLLINEAR = (
     HEADER
@@ -76,7 +81,7 @@ def run_model(workdir: Path, code: str, design_check: bool = True) -> subprocess
 
 
 def test_rank_deficient_design_fails_the_step_with_a_clear_reason(workdir: Path) -> None:
-    done = run_model(workdir, COLLINEAR)
+    done = run_model(workdir, ALIASED_ESTIMATE)
     assert done.returncode == 1
     error = parse_error(done.stdout)
     assert error is not None and "rank-deficient or collinear" in error
@@ -103,7 +108,7 @@ def test_condition_number_above_the_limit_fails_the_step(workdir: Path) -> None:
 
 
 def test_check_can_be_switched_off_and_still_reports_the_deficiency(workdir: Path) -> None:
-    done = run_model(workdir, COLLINEAR, design_check=False)
+    done = run_model(workdir, ALIASED_ESTIMATE, design_check=False)
     assert done.returncode == 0, done.stdout
     traces, _ = parse_output(done.stdout)
     assert traces[0].design is not None and traces[0].design["deficient"] is True
@@ -163,5 +168,5 @@ def test_a_design_of_hundreds_of_columns_names_the_identifier_cause(workdir: Pat
 
 
 def test_a_narrow_deficient_design_does_not_carry_the_identifier_hint(workdir: Path) -> None:
-    error = parse_error(run_model(workdir, COLLINEAR).stdout) or ""
+    error = parse_error(run_model(workdir, ALIASED_ESTIMATE).stdout) or ""
     assert "rank-deficient or collinear" in error and "hundreds of levels" not in error

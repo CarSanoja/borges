@@ -148,7 +148,10 @@ __FINGERPRINT__
             raw_result = estimate(df, ctx)
             if isinstance(raw_result, dict) and isinstance(raw_result.get("note"), str):
                 trace["note"] = raw_result["note"][:500]
-            design = _design_payload(list(map(str, df.columns)), seen.get("ctx_lists", []))
+            reported = raw_result.get("estimate") if isinstance(raw_result, dict) else None
+            design = _design_payload(
+                list(map(str, df.columns)), seen.get("ctx_lists", []), reported
+            )
             if design is not None:
                 trace["design"] = design
                 if __DESIGN_CHECK__ and design["deficient"]:

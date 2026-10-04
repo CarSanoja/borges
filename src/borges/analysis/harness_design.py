@@ -15,6 +15,7 @@ DESIGN_WIDE_COLUMNS = 500
 
 DESIGN_SOURCE = """
     _designs = []
+    _fits = {}
 
     def _install_design_probe():
         try:
@@ -22,16 +23,41 @@ DESIGN_SOURCE = """
         except Exception:
             return
         original = _sm_model.Model.__init__
+        results = _sm_model.LikelihoodModelResults.__init__
 
         def probed(self, *args, **kwargs):
             original(self, *args, **kwargs)
             try:
                 if self.exog is not None:
-                    _designs.append((type(self).__name__, self.exog, list(self.exog_names)))
+                    names = list(self.exog_names)
+                    _designs.append((type(self).__name__, self.exog, names, id(self)))
+            except Exception:
+                pass
+
+        def fitted(self, model, params, *args, **kwargs):
+            results(self, model, params, *args, **kwargs)
+            try:
+                _fits[id(model)] = _np.asarray(params, dtype=float).ravel()
             except Exception:
                 pass
 
         _sm_model.Model.__init__ = probed
+        _sm_model.LikelihoodModelResults.__init__ = fitted
+
+    def _exposure_index(params, estimate, width):
+        if params is None or len(params) != width or not isinstance(estimate, (int, float)):
+            return None
+        if not _math.isfinite(estimate):
+            return None
+        with _np.errstate(over="ignore"):
+            for values in (params, _np.exp(params), 100.0 * params):
+                close = [
+                    i for i in range(width)
+                    if abs(values[i] - estimate) <= 1e-6 * max(1.0, abs(estimate))
+                ]
+                if len(close) == 1:
+                    return close[0]
+        return None
 
     def _term_of(name, columns):
         best = ""
@@ -46,7 +72,7 @@ DESIGN_SOURCE = """
                 best = col
         return best or name
 
-    def _alias_split(x, names, scaled, rank, frame_columns, allowed):
+    def _alias_split(x, names, scaled, rank, frame_columns, allowed, exposure=None):
         if rank >= x.shape[1]:
             return [], False
         _, sv_all, vt = _np.linalg.svd(scaled, full_matrices=False)
@@ -55,7 +81,7 @@ DESIGN_SOURCE = """
         free = all(
             n.lower() in ("const", "intercept") or _term_of(n, frame_columns) in allowed
             for n in involved
-        )
+        ) or (exposure is not None and str(names[exposure]) not in involved)
         basis = _np.zeros((x.shape[0], 0))
         dropped = []
         for i in range(x.shape[1]):
@@ -69,10 +95,10 @@ DESIGN_SOURCE = """
                 dropped.append(str(names[i]))
         return dropped, bool(involved) and free and len(dropped) == x.shape[1] - rank
 
-    def _design_payload(frame_columns, allowed=()):
+    def _design_payload(frame_columns, allowed=(), estimate=None):
         allowed = set(map(str, allowed))
         models = []
-        for model_name, exog, names in _designs:
+        for model_name, exog, names, model_id in _designs:
             try:
                 x = _np.asarray(exog, dtype=float)
             except Exception:
@@ -91,7 +117,14 @@ DESIGN_SOURCE = """
             ones = _np.ones(x.shape[0])
             fitted = x @ _np.linalg.lstsq(x, ones, rcond=None)[0]
             intercept = bool(_np.linalg.norm(fitted - ones) < 1e-6 * _math.sqrt(x.shape[0]))
-            aliased, aliased_only = _alias_split(x, names, scaled, rank, frame_columns, allowed)
+            exposure = (
+                _exposure_index(_fits.get(model_id), estimate, x.shape[1])
+                if model_name in ("OLS", "WLS", "GLS", "GLSAR", "GLM")
+                else None
+            )
+            aliased, aliased_only = _alias_split(
+                x, names, scaled, rank, frame_columns, allowed, exposure
+            )
             terms = sorted(
                 {
                     _term_of(str(n), frame_columns)
