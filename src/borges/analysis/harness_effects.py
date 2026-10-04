@@ -7,6 +7,8 @@ class EffectTrace(StepTrace):
     effects: dict[str, object] | None = None
 
 
+RESTORED_NOTE = "columns the step dropped were kept from its input: "
+
 CHECKS_SOURCE = """
     def _check_columns(before_cols, rows_before, out, kind):
         lost = [c for c in before_cols if c not in out.columns]
@@ -20,6 +22,21 @@ CHECKS_SOURCE = """
             + " later model uses, keep every column and store the list of names in ctx (for"
             + " example ctx['covariates'] = [...]); the model step reads that list"
         )
+
+    def _restore_columns(before, out, columns, rows_before, kind):
+        lost = [c for c in columns if c not in out.columns]
+        if not lost or (kind != "filter" and len(out) != rows_before):
+            return out, []
+        if any(c not in before.columns for c in lost):
+            return out, []
+        unique = before.index.is_unique and out.index.is_unique
+        if not unique or not out.index.isin(before.index).all():
+            return out, []
+        shared = [c for c in out.columns if c in before.columns and before[c].nunique() > 1]
+        aligned = before.loc[out.index]
+        if not any(out[c].equals(aligned[c]) for c in shared):
+            return out, []
+        return out.join(aligned[lost]), lost
 
     def _carry_group_attributes(before, out):
         lost = [c for c in before.columns if c not in out.columns]

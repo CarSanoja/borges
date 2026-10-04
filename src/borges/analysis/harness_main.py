@@ -7,7 +7,7 @@ from borges.analysis.harness_design import (
     DESIGN_WIDE_COLUMNS,
 )
 from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
-from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
+from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE, RESTORED_NOTE
 from borges.analysis.harness_fingerprint import FINGERPRINT_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
@@ -178,6 +178,9 @@ __FINGERPRINT__
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
         out = _carry_group_attributes(df, out)
+        out, restored = _restore_columns(df, out, seen["columns"], rows_before, kind)
+        if restored:
+            trace["note"] = (__RESTORED_NOTE__ + ", ".join(map(str, restored)))[:500]
         _check_columns(seen["columns"], rows_before, out, kind)
         _check_produces(out, ctx, df)
         _check_ctx(ctx)
@@ -231,5 +234,6 @@ MAIN_TEMPLATE = (
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
     .replace("__ALIAS_NOTE__", repr(ALIAS_NOTE))
+    .replace("__RESTORED_NOTE__", repr(RESTORED_NOTE))
     .replace("__DESIGN_WIDE_COLUMNS__", repr(DESIGN_WIDE_COLUMNS))
 )

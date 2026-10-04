@@ -16,6 +16,11 @@ def apply(df, ctx):
     return df.drop(columns=["z"])
 """
 
+DROPS_AND_REORDERS = """
+def apply(df, ctx):
+    return df.drop(columns=["z"]).sort_values("x", ascending=False).reset_index(drop=True)
+"""
+
 FITS_WITH_NAN = """
 import statsmodels.api as sm
 
@@ -91,17 +96,17 @@ def run(tmp_path: Path, step: Step, option: Option, smoke: bool = True):
     return done, parse_error(done.stdout), parse_output(done.stdout)[0]
 
 
-def test_transform_keeping_rows_cannot_drop_a_column(tmp_path: Path) -> None:
-    done, error, _ = run(tmp_path, *make("transform", DROPS_COLUMN))
+def test_transform_keeping_rows_keeps_a_dropped_column(tmp_path: Path) -> None:
+    done, error, traces = run(tmp_path, *make("transform", DROPS_COLUMN))
+    assert done.returncode == 0, error
+    assert traces[0].note == "columns the step dropped were kept from its input: z"
+
+
+def test_transform_that_cannot_be_realigned_cannot_drop_a_column(tmp_path: Path) -> None:
+    done, error, _ = run(tmp_path, *make("transform", DROPS_AND_REORDERS))
     assert done.returncode == 1
     assert error is not None and "apply() dropped the columns ['z']" in error
     assert "never drop columns" in error
-
-
-def test_filter_dropping_a_column_fails(tmp_path: Path) -> None:
-    done, error, _ = run(tmp_path, *make("filter", DROPS_COLUMN))
-    assert done.returncode == 1
-    assert error is not None and "apply() dropped the columns ['z']" in error
 
 
 def test_aggregation_may_return_fewer_columns(tmp_path: Path) -> None:
@@ -109,9 +114,10 @@ def test_aggregation_may_return_fewer_columns(tmp_path: Path) -> None:
     assert done.returncode == 0, error
 
 
-def test_selecting_columns_fails(tmp_path: Path) -> None:
-    done, error, _ = run(tmp_path, *make("feature", READS_MISSING_ROWS))
-    assert done.returncode == 1 and error is not None and "['variant', 'z']" in error
+def test_selecting_columns_keeps_the_others(tmp_path: Path) -> None:
+    done, error, traces = run(tmp_path, *make("feature", READS_MISSING_ROWS))
+    assert done.returncode == 0, error
+    assert traces[0].note.endswith("variant, z")
 
 
 def test_missing_produced_name_fails(tmp_path: Path) -> None:

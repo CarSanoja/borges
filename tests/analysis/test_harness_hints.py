@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from borges.analysis.harness import parse_error, render_step
-from tests.analysis.test_harness_effects import DROPS_COLUMN, make, run
+from tests.analysis.test_harness_effects import DROPS_AND_REORDERS, make, run
 
 DISTRIBUTION_HINT = (
     "statsmodels has no probability distributions here: read p-values from the fitted result "
@@ -50,7 +50,7 @@ def test_unrelated_attribute_error_gets_no_hint(tmp_path: Path) -> None:
 
 
 def test_dropped_columns_error_explains_covariate_choice(tmp_path: Path) -> None:
-    done, error, _ = run(tmp_path, *make("transform", DROPS_COLUMN))
+    done, error, _ = run(tmp_path, *make("transform", DROPS_AND_REORDERS))
     assert error is not None and COVARIATE_HINT in error
 
 
