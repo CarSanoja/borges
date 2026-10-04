@@ -10,8 +10,11 @@ from borges.llm.client import LLMClient, Role
 
 REPEATS = (
     "Every proposal repeats an option the plan already has: {labels}. A new label for an "
-    "existing spec is the same option. Propose options whose implementation differs from every "
-    "option of their step."
+    "existing spec is the same option, and repeats are discarded. Return at least one option "
+    "whose implementation differs from every option of its step: another threshold or exclusion "
+    "rule, another model family or covariance estimator, another covariate set or another "
+    "construction of a derived variable, at a step where the baseline traces show the data "
+    "respond. Keep it defensible; the judge rejects what is not."
 )
 
 
