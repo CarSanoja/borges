@@ -6,6 +6,7 @@ from collections.abc import Awaitable, Callable
 from borges.analysis.coder_armor import armor_refusal
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
+from borges.analysis.coder_order import code_in_order
 from borges.analysis.coder_recode import fresh_recode, make_rewrite
 from borges.analysis.coder_replan import make_replan
 from borges.analysis.coder_rescue import promote_sibling, replan_uncoded_step
@@ -15,7 +16,6 @@ from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.prompts.coder import build_messages
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
-from borges.llm.gather import gather_cancelling
 from borges.telemetry.scopes import option_span
 
 NORMALISED_NOTE = "removed a stray closing-bracket line at the end of the code"
@@ -124,12 +124,14 @@ async def code_plan(
 
     models_by_option: dict[tuple[str, str], list[str]] = {}
 
-    async def work(step: Step, option: Option) -> tuple[str | None, int, str | None]:
+    async def work(
+        seen: AnalysisPlan, step: Step, option: Option
+    ) -> tuple[str | None, int, str | None]:
         models = models_by_option.setdefault((step.id, option.id), [])
         async with semaphore:
             with option_span("option.code", step.id, option.id) as span:
                 try:
-                    code, attempts, error = await generate_checked(llm, plan, step, option, models)
+                    code, attempts, error = await generate_checked(llm, seen, step, option, models)
                 except LLMError as exc:
                     code, attempts, error = None, 1, str(exc)
                 span.set_attribute("borges.option.ok", code is not None)
@@ -142,7 +144,7 @@ async def code_plan(
         return code, attempts, error
 
     pending = [(s, o) for s in plan.steps for o in s.options if o.code is None]
-    results = await gather_cancelling(work(s, o) for s, o in pending)
+    results = await code_in_order(plan, pending, work)
 
     coded = plan.model_copy(deep=True)
     failed_defaults: dict[str, tuple[str, str | None]] = {}

@@ -44,7 +44,7 @@ async def test_code_plan_failure_cancels_in_flight_siblings() -> None:
     with pytest.raises(BudgetExceeded):
         await code_plan(llm, make_plan())
     await asyncio.sleep(0.3)
-    assert len(started) == 4 and finished == []
+    assert started == ["coder:d1.keep", "coder:d1.trim"] and finished == []
 
 
 async def test_code_plan_respects_concurrency() -> None:
@@ -66,3 +66,29 @@ async def test_code_plan_respects_concurrency() -> None:
     llm = Slow({k: CoderOutput(code="C") for k in keys})
     await code_plan(llm, make_plan(), concurrency=2)
     assert peak == 2
+
+
+async def test_model_options_are_coded_after_the_steps_whose_ctx_writes_they_read() -> None:
+    plan = make_plan()
+    for option in plan.step("d1").options:
+        option.spec = "Pick the outcome. Write to ctx['outcome']."
+    writes = {"keep": "y", "trim": "y_log"}
+    responses = {
+        f"coder:d1.{name}": CoderOutput(
+            code=f"def apply(df, ctx):\n    ctx['outcome'] = '{column}'\n    return df"
+        )
+        for name, column in writes.items()
+    }
+    ignores = "def estimate(df, ctx):\n    return {'estimate': 1.0}"
+    reads = "def estimate(df, ctx):\n    return {'estimate': float(df[ctx['outcome']].mean())}"
+    responses |= {
+        "coder:m1.ols": CoderOutput(code=ignores),
+        "coder:m1.welch": CoderOutput(code=reads),
+    }
+    responses["coder:m1.ols:repair"] = CoderOutput(code=reads)
+    llm = FakeLLM(responses)
+    coded = await code_plan(llm, plan)
+    order = [c.key for c in llm.calls if not c.key.endswith(":spec")]
+    assert order.index("coder:m1.ols") > max(order.index(f"coder:d1.{n}") for n in writes)
+    assert "coder:m1.ols:repair" in order
+    assert {o.code for o in coded.step("m1").options} == {reads}
