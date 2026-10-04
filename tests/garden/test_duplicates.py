@@ -88,3 +88,28 @@ def test_a_step_whose_alternatives_are_all_noops_is_named_as_without_effect() ->
     assert any(
         "covariate decision 'Covariate set' had no effect on the model" in c for c in report.caveats
     )
+
+
+def test_same_estimate_and_verdict_with_a_different_interval_is_a_duplicate() -> None:
+    plan = model_plan()
+    base = universe(plan, {}, result(1.0))
+    planner = universe(plan, {"model": "planner"}, result(-0.5, half=0.2, p=0.011))
+    robust = universe(plan, {"model": "adv"}, result(-0.5, half=0.21, p=0.0126))
+    garden = garden_of(plan, base, planner, robust)
+    found = duplicate_options(plan, garden)
+    assert [(d.option_id, d.kept_option_id) for d in found] == [("adv", "planner")]
+    assert "different standard error" in found[0].reason
+    flip = minimal_flip(plan, garden)
+    assert flip is not None and flip.changes[0].to_option == "planner"
+
+
+def test_same_estimate_but_different_n_or_verdict_is_not_a_duplicate() -> None:
+    plan = model_plan()
+    base = universe(plan, {}, result(1.0))
+    planner = universe(plan, {"model": "planner"}, result(-0.5, p=0.011))
+    other_n = universe(plan, {"model": "adv"}, result(-0.5, p=0.011, n=90))
+    assert duplicate_options(plan, garden_of(plan, base, planner, other_n)) == []
+    wide = universe(plan, {"model": "adv"}, result(-0.5, half=5.0, p=0.9))
+    wide.verdict = "NO CLEAR EVIDENCE"
+    garden = garden_of(plan, base, planner, wide)
+    assert duplicate_options(plan, garden) == []

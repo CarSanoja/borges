@@ -39,7 +39,7 @@ def flip_attribution_notes(flip: Flip | None, duplicates: list[DuplicateOption])
             if d.step_id == change.step_id and d.kept_option_id == change.to_option:
                 notes.append(
                     f"The minimal flip's option '{change.to_label}' ({change.step_id}) is "
-                    f"{d.kept_origin}'s; '{d.label}' gives the identical result, so it is one "
-                    "finding, not two independent ones."
+                    f"the {d.kept_origin} option's; '{d.label}' gives the same point estimate, "
+                    "so it is one finding, not two independent ones."
                 )
     return notes
