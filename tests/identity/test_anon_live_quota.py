@@ -103,5 +103,5 @@ def test_the_view_states_cost_and_remaining(tmp_path: Path) -> None:
     quota = make(tmp_path, Clock(), borges_run_cap_usd=0.5)
     use(quota, "1.2.3.4")
     view = quota.view("1.2.3.4").as_dict()
-    assert view["remaining"] == 1 and view["est_cost_per_run_usd"] == 0.5
+    assert view["remaining"] == 1 and view["est_cost_per_run_usd"] == 0.03
     assert view["resets_at"] is not None and view["global_remaining"] == 5

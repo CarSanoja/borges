@@ -117,7 +117,7 @@ class AnonLiveQuota:
             mine[0] + DAY_S if mine else None,
             s.borges_anon_live_global_per_hour,
             max(0, s.borges_anon_live_global_per_hour - len(hour)),
-            s.borges_run_cap_usd,
+            s.borges_typical_run_cost_usd,
         )
 
     def check(self, ip: str) -> None:

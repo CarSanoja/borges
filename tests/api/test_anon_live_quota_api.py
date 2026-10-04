@@ -31,7 +31,7 @@ async def test_the_third_anonymous_live_run_is_429_with_the_reset_time(tmp_path:
         second = await post(client)
         third = await post(client)
     assert first.status_code == second.status_code == 202
-    assert first.json()["est_cost_usd"] == env.app.state.settings.borges_run_cap_usd
+    assert first.json()["est_cost_usd"] == env.app.state.settings.borges_typical_run_cost_usd
     assert first.json()["live_quota"]["remaining"] == 1
     assert second.json()["live_quota"]["remaining"] == 0
     assert third.status_code == 429
@@ -93,7 +93,8 @@ async def test_health_states_cost_and_remaining_quota(tmp_path: Path) -> None:
     quota = body["anon_live_quota"]
     assert quota["applies"] is True and quota["remaining"] == 1
     assert quota["per_client_per_day"] == 2 and quota["resets_at"]
-    assert body["est_cost_per_live_run_usd"] == env.app.state.settings.borges_run_cap_usd
+    assert body["est_cost_per_live_run_usd"] == env.app.state.settings.borges_typical_run_cost_usd
+    assert body["max_cost_per_live_run_usd"] == env.app.state.settings.borges_run_cap_usd
     assert "203.0.113" not in str(body)
 
 

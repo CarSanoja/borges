@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     borges_backend: Literal["local", "contree"] = "local"
     borges_spend_cap_usd: float = 5.0
     borges_run_cap_usd: float = 0.50
+    borges_typical_run_cost_usd: float = 0.03
     borges_max_universes: int = 40
     borges_concurrency: int = 6
     borges_allow_untrusted_local: bool = False

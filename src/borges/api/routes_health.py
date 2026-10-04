@@ -37,7 +37,8 @@ def health(
         "backend": settings.borges_backend,
         "spend_usd": spend,
         "spend_cap_usd": settings.borges_spend_cap_usd,
-        "est_cost_per_live_run_usd": settings.borges_run_cap_usd,
+        "est_cost_per_live_run_usd": settings.borges_typical_run_cost_usd,
+        "max_cost_per_live_run_usd": settings.borges_run_cap_usd,
         "anon_live_quota": _anon_quota(request, settings, principal),
         **_capacity(request),
     }
