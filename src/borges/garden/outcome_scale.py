@@ -6,7 +6,7 @@ from typing import Any
 
 from borges.garden.models import Garden, Universe
 
-LOG_WORDS = re.compile(r"\blog|logarithm", re.IGNORECASE)
+LOG_WORDS = re.compile(r"\blog(?!it|istic|ic)|logarithm|percent|%", re.IGNORECASE)
 
 
 def log_outcome(universe: Universe) -> dict[str, Any] | None:

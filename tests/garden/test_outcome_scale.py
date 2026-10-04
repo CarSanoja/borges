@@ -33,4 +33,6 @@ def test_an_estimate_on_the_metric_scale_has_no_note() -> None:
 
 def test_log_words_are_recognised() -> None:
     assert mentions_log_scale("a coefficient on the log scale")
+    assert mentions_log_scale("about 3% more deaths per unit")
     assert not mentions_log_scale("0.03 additional deaths")
+    assert not mentions_log_scale("the logistic and logit models agree")
