@@ -11,6 +11,7 @@ from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.smoke_collision import resolve_outputs
 from borges.analysis.smoke_core import execute, sample_rows, smoke_option
 from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
+from borges.analysis.smoke_model_probe import probe_model
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
 from borges.analysis.smoke_recode import recode_failed_default
 from borges.analysis.smoke_replan import has_survivor, replan_outcomes
@@ -145,4 +146,5 @@ async def smoke_plan(
             )
         if step.kind == "model" and index > 0:
             await probe_upstream(config, repair, smoked.steps[index - 1], step, summary)
+            await probe_model(config, repair, smoked.steps, index, summary)
     return smoked

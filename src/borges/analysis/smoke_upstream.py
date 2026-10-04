@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from dataclasses import replace
 
-from borges.analysis.models import CodingSummary, Step
+from borges.analysis.models import CodingSummary, Option, Step
+from borges.analysis.smoke_chain import model_input
 from borges.analysis.smoke_collision import resolve_extra
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_larger import is_singular_error, smoke_rows
 from borges.analysis.smoke_review import _re_review
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 from borges.llm.client import LLMError
+from borges.sandbox.backend import Checkpoint
 
 MAX_PROBED = 4
 SHORT_ERROR_CHARS = 160
@@ -34,19 +37,39 @@ def _short(error: str) -> str:
     return first[:SHORT_ERROR_CHARS]
 
 
-async def _probe(config: SmokeConfig, repair: Repair, model: Step, outcome: Outcome) -> str | None:
-    default = config.state.defaults[model.id]
+async def probe_option(
+    config: SmokeConfig, repair: Repair, model: Step, option: Option, checkpoint: Checkpoint
+) -> str | None:
     isolated = replace(config, larger=None)
-    tried = await smoke_option(
-        isolated, repair, outcome.checkpoint, model, default.option, budget=0
-    )
+    tried = await smoke_option(isolated, repair, checkpoint, model, option, budget=0)
     if tried.status != "failed" or is_singular_error(tried.error):
         return None
     return tried.error or "unknown error"
 
 
+async def _probe(
+    config: SmokeConfig,
+    repair: Repair,
+    model: Step,
+    outcome: Outcome,
+    between: Sequence[Step] = (),
+) -> str | None:
+    assert outcome.checkpoint is not None
+    checkpoint = await model_input(config, repair, between, outcome.checkpoint)
+    if checkpoint is None:
+        return None
+    default = config.state.defaults[model.id]
+    return await probe_option(config, repair, model, default.option, checkpoint)
+
+
 async def _repaired(
-    config: SmokeConfig, repair: Repair, previous: Step, model: Step, outcome: Outcome, error: str
+    config: SmokeConfig,
+    repair: Repair,
+    previous: Step,
+    model: Step,
+    outcome: Outcome,
+    error: str,
+    between: Sequence[Step] = (),
 ) -> Outcome | None:
     parent = config.state.parents[previous.id]
     message = REPAIR_MESSAGE.format(title=model.title, error=error)
@@ -63,7 +86,7 @@ async def _repaired(
     tried = await _re_review(config, previous, tried)
     if tried.status != "failed":
         tried = await resolve_extra(config, repair, parent, previous, tried)
-    if tried.status == "failed" or await _probe(config, repair, model, tried) is not None:
+    if tried.status == "failed" or await _probe(config, repair, model, tried, between) is not None:
         return None
     return Outcome(
         tried.option,
@@ -86,10 +109,13 @@ async def _handle(
     outcome: Outcome,
     error: str,
     summary: CodingSummary | None,
+    between: Sequence[Step] = (),
 ) -> None:
-    fresh = await _repaired(config, repair, previous, model, outcome, error)
+    fresh = await _repaired(config, repair, previous, model, outcome, error, between)
     outcomes = config.state.outcomes[previous.id]
     if fresh is not None:
+        if summary is not None:
+            summary.repaired_after_smoke += 1
         previous.options = [
             fresh.option if o.id == fresh.option.id else o for o in previous.options
         ]
