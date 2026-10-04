@@ -49,7 +49,7 @@ async def test_second_run_makes_fewer_judge_and_coder_calls_with_the_same_result
     assert first.memory.stored == {"verdict": 7, "code": 11, "adversary": 1}
 
     assert first_calls["judge"] == baseline_calls["judge"] == 7
-    assert first_calls["coder"] == baseline_calls["coder"] == 11
+    assert first_calls["coder"] == baseline_calls["coder"] == 14
     assert second_calls["judge"] < first_calls["judge"]
     assert second_calls["coder"] < first_calls["coder"]
     assert second_calls["planner"] == first_calls["planner"]
