@@ -7,6 +7,9 @@ import { NotFound } from "../notfound/NotFound";
 import { pickSource } from "../recording/recordingText";
 import { RunPage } from "./RunPage";
 
+export const INSTANT_SPEED = 100;
+export const ANIMATED_SPEED = 4;
+
 type Gate =
   | { kind: "loading" }
   | { kind: "card"; card: CaseCard }
@@ -22,10 +25,12 @@ interface Props {
 export function ReplayRoute({ caseId, requested = null, onHome }: Props) {
   const [gate, setGate] = useState<Gate>({ kind: "loading" });
   const { cases } = useCases();
+  const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     let active = true;
     setGate({ kind: "loading" });
+    setAnimated(false);
     getCase(caseId).then(
       (card) => active && setGate({ kind: "card", card }),
       (cause) => active && setGate({ kind: cause instanceof ApiError && cause.status === 404 ? "missing" : "unknown" }),
@@ -58,5 +63,11 @@ export function ReplayRoute({ caseId, requested = null, onHome }: Props) {
   const live = gate.kind === "card" ? gate.card.live_recording : null;
   const scripted = gate.kind === "card" ? gate.card.has_recording : true;
   const recording = gate.kind === "card" ? pickSource(requested, live, scripted) : undefined;
-  return <RunPage source={{ kind: "replay", caseId, speed: 1, recording }} onHome={onHome} />;
+  const speed = animated ? ANIMATED_SPEED : INSTANT_SPEED;
+  const replayControl = animated ? null : (
+    <button type="button" className="btn replay-animation" onClick={() => setAnimated(true)}>
+      Replay the animation
+    </button>
+  );
+  return <RunPage source={{ kind: "replay", caseId, speed, recording }} onHome={onHome} replayControl={replayControl} />;
 }
