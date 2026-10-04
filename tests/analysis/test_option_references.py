@@ -66,3 +66,25 @@ def test_expand_option_for_proposal() -> None:
     proposal = _opt("new_one", "New", f"Same as {base.id} but with robust errors")
     expanded = expand_option(plan, step, proposal)
     assert f"({base.id}: {base.spec}" in expanded.spec
+
+
+def test_label_that_extends_another_label_is_not_a_reference() -> None:
+    plan = make_plan()
+    step = _model_step(plan)
+    step.options = [
+        _opt("opt_ind", "Treatment indicator", "df['t'] = (v == 1).astype(int)"),
+        _opt("opt_ind_shifted", "Shifted treatment indicator", "df['t'] = (v == 1) - 0.5"),
+    ]
+    normalise_plan(plan)
+    assert step.options[1].spec == "df['t'] = (v == 1) - 0.5"
+
+
+def test_label_with_cue_is_a_reference() -> None:
+    plan = make_plan()
+    step = _model_step(plan)
+    step.options = [
+        _opt("a", "OLS basic", "OLS of y on x"),
+        _opt("b", "Same as OLS basic plus gdp", "add gdp"),
+    ]
+    normalise_plan(plan)
+    assert "(a: OLS of y on x)" in step.options[1].spec

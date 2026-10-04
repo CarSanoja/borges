@@ -115,3 +115,14 @@ async def test_at_most_four_replacements_are_kept() -> None:
     llm = FakeLLM({replan_key("m1"): reply(*(planned(f"o{i}") for i in range(7)))})
     options = await propose_options(llm, plan, plan.step("m1"), [failed("ols", "x")])
     assert options is not None and len(options) == 4
+
+
+async def test_replanned_option_referring_to_a_sibling_is_expanded() -> None:
+    plan = make_plan()
+    sibling = dict(planned("base_fit", True), spec="Poisson GLM with offset")
+    follower = dict(planned("clustered"), spec="Same as base_fit but cluster by referee")
+    llm = FakeLLM({replan_key("m1"): reply(sibling, follower)})
+    options = await propose_options(llm, plan, plan.step("m1"), [failed("ols", "x")])
+    assert options is not None
+    assert "(base_fit: Poisson GLM with offset)" in options[1].spec
+    assert options[0].spec == "Poisson GLM with offset"

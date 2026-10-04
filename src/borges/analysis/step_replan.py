@@ -86,5 +86,8 @@ async def propose_options(
         return None
     failed = {o.option.id for o in outcomes}
     options = _options(step, fresh, plan, set(failed))
-    shell = step.model_copy(update={"options": options})
-    return [expand_option(plan, shell, o) for o in options]
+    known = {o.id for o in options}
+    pooled = [o for o in step.options if o.id not in known] + options
+    shell = step.model_copy(update={"options": pooled})
+    scope = plan.model_copy(update={"steps": [shell if s.id == step.id else s for s in plan.steps]})
+    return [expand_option(scope, shell, o) for o in options]

@@ -6,6 +6,7 @@ from borges.analysis.models import AnalysisPlan, Option, Step
 
 MAX_REFERENCED_SPEC = 500
 MIN_LABEL_CHARS = 4
+CUE = re.compile(r"\b(same as|similar to|like|as in|as for|based on|plus|but)\b", re.IGNORECASE)
 
 
 def _mentions(text: str, needle: str) -> bool:
@@ -20,13 +21,15 @@ def _clip(spec: str) -> str:
 
 
 def _referenced(plan: AnalysisPlan, step: Step, option: Option) -> list[Option]:
-    text = f"{option.label} {option.spec}"
+    label_text = option.label if CUE.search(option.label) else ""
+    text = f"{label_text} {option.spec}"
+    id_text = f"{option.label} {option.spec}"
     found: list[Option] = []
     for other_step in plan.steps:
         for other in other_step.options:
             if other.id == option.id or other in found:
                 continue
-            by_id = _mentions(text, other.id)
+            by_id = _mentions(id_text, other.id)
             same_step = other_step.id == step.id
             by_label = (
                 same_step and len(other.label) >= MIN_LABEL_CHARS and _mentions(text, other.label)
