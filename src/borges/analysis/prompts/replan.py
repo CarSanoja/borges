@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import ast
+import re
+
 from borges.analysis.models import AnalysisPlan, ColumnProfile, Step
 from borges.analysis.prompts import compact_json, messages
 from borges.analysis.prompts.coder import _available_columns
 
 TEXT_DTYPES = ("object", "str", "string", "category")
 ERROR_CHARS = 600
+OBSERVED = re.compile(r"columns available \((\d+)\): (\[[^\]]*\])")
 
 SYSTEM = """You are a senior statistician repairing one step of an analysis plan. Every option \
 you proposed for the step failed to run on the data, so the step has no working option and the \
@@ -51,6 +55,23 @@ def _columns_at(plan: AnalysisPlan, step: Step) -> list[dict[str, object]]:
     ]
 
 
+def observed_columns(errors: list[str]) -> list[str] | None:
+    for error in errors:
+        for count, listed in OBSERVED.findall(error or ""):
+            try:
+                names = ast.literal_eval(listed)
+            except (ValueError, SyntaxError):
+                continue
+            if isinstance(names, list) and len(names) == int(count):
+                return [str(name) for name in names]
+    return None
+
+
+def _columns_seen(plan: AnalysisPlan, step: Step, observed: list[str]) -> list[dict[str, object]]:
+    known = {str(c["name"]): c for c in _columns_at(plan, step)}
+    return [known.get(name, {"name": name}) for name in observed]
+
+
 def build_replan_messages(
     plan: AnalysisPlan, step: Step, failures: list[tuple[str, str, str, str]]
 ) -> list[dict[str, str]]:
@@ -59,12 +80,19 @@ def build_replan_messages(
         for oid, label, spec, error in failures
     ]
     produces = ", ".join(step.produces) or "nothing"
+    observed = observed_columns([error for *_, error in failures])
+    columns = (
+        f"Columns available when this step runs: {compact_json(_columns_at(plan, step))}\n"
+        if observed is None
+        else "Columns this step saw on the sample (an earlier step dropped every other column, so "
+        f"no option may use one): {compact_json(_columns_seen(plan, step, observed))}\n"
+    )
     user = (
         f"Estimand: {plan.estimand}\n"
         f"Decision rule: {compact_json(plan.decision_rule)}\n"
         f"Step {step.id} ({step.kind}): {step.title}. {step.description}\n"
         f"The step produces: {produces}\n"
-        f"Columns available when this step runs: {compact_json(_columns_at(plan, step))}\n"
+        f"{columns}"
         f"Failed options and their last errors: {compact_json(failed)}"
     )
     return messages(SYSTEM, user)
