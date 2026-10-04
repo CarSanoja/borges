@@ -16,13 +16,22 @@ CUES = (
 )
 
 
+def _column(name: str, columns: set[str]) -> str | None:
+    """The column a name refers to. A suffixed name no earlier step builds (campaign_w when only
+    another option of the step creates it) refers to the column it is built from."""
+    if name in columns:
+        return name
+    stem = name.rsplit("_", 1)[0]
+    return stem if "_" in name and stem in columns else None
+
+
 def _named(text: str, available: list[str], cues: tuple[re.Pattern[str], ...]) -> list[str]:
     columns = set(available)
     named: list[str] = []
     for cue in cues:
         for match in cue.finditer(text):
-            name = match.groups()[-1]
-            if name in columns and name not in named:
+            name = _column(match.groups()[-1], columns)
+            if name is not None and name not in named:
                 named.append(name)
     return named
 

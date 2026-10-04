@@ -46,3 +46,15 @@ def test_an_exposure_marked_in_a_list_of_independent_variables_outranks_the_firs
     assert named_exposures(LISTED, COLUMNS) == ["campaign"]
     spec = make_spec("logit", outcome="y", exposure="campaign", covariates=["job", "contact"])
     assert named_exposure_problems(spec, LISTED, COLUMNS) == []
+
+
+def test_a_suffixed_name_no_earlier_step_builds_refers_to_its_source_column() -> None:
+    text = (
+        "Fit statsmodels Logit with y as dependent variable and ['campaign_w'] + ctx['covariates'];"
+        " extract coefficient for campaign_w, compute odds ratio = exp(coef)."
+    )
+    assert named_exposures(text, COLUMNS) == ["campaign"]
+    spec = make_spec("logit", outcome="y", exposure="contact", exposure_level="cellular")
+    [problem] = named_exposure_problems(spec, text, COLUMNS)
+    assert "'campaign'" in problem
+    assert named_exposures(text, [*COLUMNS, "campaign_w"]) == ["campaign_w"]

@@ -19,6 +19,7 @@ from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.model_spec.validate import validate_spec
 from borges.analysis.model_spec.validate_ctx import ctx_problems
+from borges.analysis.model_spec.validate_marked_exposure import marked_exposure_problems
 from borges.analysis.model_spec.validate_named_exposure import named_exposure_problems
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts.coder import _available_columns
@@ -102,6 +103,7 @@ def _problems(
         *found,
         *ctx_problems(spec, ctx_names, option_intent(option), varied),
         *named_exposure_problems(spec, option.spec, available),
+        *marked_exposure_problems(spec, plan.dataset),
     ]
 
 
