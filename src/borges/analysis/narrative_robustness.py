@@ -6,7 +6,9 @@ from borges.garden.models import Report
 
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 PERCENT = re.compile(r"(\d{1,3})\s?%")
-REVERSES = re.compile(r"\b(?:flip|flips|flipped|flipping|revers\w*|overturn\w*)\b", re.I)
+REVERSES = re.compile(
+    r"\b(?:flipped|flips? (?:the|its) (?:verdict|conclusion)|revers\w*|overturn\w*)\b", re.I
+)
 AGREES = re.compile(r"\b(?:agree\w*|support\w*|consistent|robust\w*|same verdict)\b", re.I)
 
 
