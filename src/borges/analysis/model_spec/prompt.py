@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.model_spec.schema import ModelSpecOutput
-from borges.analysis.model_spec.validate_exposure import column_levels, is_text
+from borges.analysis.model_spec.validate_exposure import MAX_LISTED_LEVELS, column_levels, is_text
 from borges.analysis.models import AnalysisPlan, ColumnProfile, Option, Step
 from borges.analysis.prompts import compact_json, messages
 from borges.analysis.prompts.coder import _available_columns, _earlier_specs
@@ -18,9 +18,10 @@ with the reason in `reason`.
 - outcome: the dependent column.
 - exposure: the column whose coefficient is the estimate: the treatment, group or attribute the \
 estimand is about, never the offset column and never the outcome.
-- exposure_level: only when the exposure is a text column with exactly two levels: the level coded \
-1, the treatment or the group the estimand puts first ("treatment minus control" means level \
-"treatment"). Leave it null for a numeric exposure; never invent a column for the dummy.
+- exposure_level: only when the exposure is a text column: the level coded 1, the treatment or the \
+group the estimand puts first ("treatment minus control" means level "treatment"). With more than \
+two levels the estimate compares that level with all the others together. Use a level exactly as \
+listed. Leave it null for a numeric exposure; never invent a column for the dummy.
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
@@ -49,7 +50,7 @@ def _column_entry(column: ColumnProfile) -> dict[str, object]:
         "dtype": column.dtype,
         "unique": column.n_unique,
     }
-    if is_text(column) and column.n_unique == 2:
+    if is_text(column) and 2 <= column.n_unique <= MAX_LISTED_LEVELS:
         entry["levels"] = column_levels(column)
     return entry
 

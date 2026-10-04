@@ -4,6 +4,7 @@ from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.models import ColumnProfile, DatasetProfile
 
 TEXT_DTYPES = ("object", "str", "string", "category")
+MAX_LISTED_LEVELS = 12
 
 
 def profile_of(profile: DatasetProfile | None, name: str) -> ColumnProfile | None:
@@ -41,11 +42,13 @@ def exposure_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> 
         if spec.report == "marginal_effect":
             return _binary_problems(name, column)
         return []
-    if column.n_unique != 2:
-        return [f"exposure '{name}' is text with {column.n_unique} levels: only two are allowed"]
+    if column.n_unique > MAX_LISTED_LEVELS:
+        return [
+            f"exposure '{name}' is text with {column.n_unique} levels: too many for one indicator"
+        ]
     levels = column_levels(column)
     if level is None:
         return [f"exposure '{name}' is text: set exposure_level to the level coded 1 ({levels})"]
     if level not in levels:
-        return [f"exposure_level '{level}' is not a level of '{name}' ({levels})"]
+        return [f"exposure_level '{level}' is not a listed level of '{name}' ({levels})"]
     return []

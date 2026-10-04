@@ -46,12 +46,21 @@ def test_a_two_level_text_exposure_with_a_named_level_is_accepted() -> None:
 def test_a_text_exposure_needs_a_level_that_exists() -> None:
     assert any("exposure_level" in p for p in problems("ols", exposure="variant"))
     missing = problems("ols", exposure="variant", exposure_level="variant_treat")
-    assert any("not a level" in p for p in missing)
+    assert any("not a listed level" in p for p in missing)
 
 
-def test_a_text_exposure_with_three_levels_is_refused() -> None:
-    result = problems("ols", exposure="tri", exposure_level="a")
-    assert any("3 levels" in p for p in result)
+def test_a_listed_level_of_a_multi_level_text_exposure_is_one_against_the_rest() -> None:
+    assert problems("ols", exposure="tri", exposure_level="b") == []
+    unknown = problems("ols", exposure="tri", exposure_level="d")
+    assert any("not a listed level" in p for p in unknown)
+
+
+def test_a_text_exposure_with_too_many_levels_is_refused() -> None:
+    many = DatasetProfile(
+        name="t", n_rows=100, columns=[*PROFILE.columns[1:], column("variant", "str", 40)]
+    )
+    spec = make_spec("ols", outcome="y_cont", exposure="variant", exposure_level="treatment")
+    assert any("40 levels" in p for p in validate_spec(spec, AVAILABLE, many, None))
 
 
 def test_a_numeric_exposure_must_not_set_a_level() -> None:
