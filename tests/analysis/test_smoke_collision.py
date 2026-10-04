@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from borges.analysis.coder import code_plan
+from borges.analysis.model_spec.render import HEADER, TEMPLATE_MARK
 from borges.analysis.models import CodingSummary
 from borges.analysis.schemas import CoderOutput
 from tests.analysis.fakes import FakeLLM, make_plan
@@ -18,6 +19,7 @@ from tests.analysis.test_coder_smoke import (
 __all__ = ["passing_guard"]
 
 HEAD = "def apply(df, ctx):\n    return df.head(100).copy()"
+BODY = ESTIMATE.split("\n", 1)[1]
 SHIFTED = ESTIMATE.replace('"p_value": 0.5', '"p_value": 0.2')
 
 
@@ -99,3 +101,14 @@ async def test_a_recode_the_reviewer_rejects_is_not_adopted(tmp_path: Path) -> N
     coded = await code_plan(llm, make_plan(), smoke=cfg)
     assert coded.step("d1").option("trim").code == KEEP
     assert len(cfg.state.notes) == 1
+
+
+async def test_two_rendered_templates_that_agree_are_left_alone(tmp_path: Path) -> None:
+    rendered = "\n".join(HEADER) + "\n    parts = [df]\n" + TEMPLATE_MARK + "\n" + BODY
+    llm = FakeLLM(scripted(**{"coder:m1.welch": rendered, "coder:m1.ols": rendered}))
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, make_plan(), smoke=cfg)
+    used = llm.keys()
+    assert not [k for k in used if k.startswith("coder:m1") and k.endswith(":collision")]
+    assert coded.step("m1").option("welch").code == rendered
+    assert not [n for n in cfg.state.notes if "m1." in n]

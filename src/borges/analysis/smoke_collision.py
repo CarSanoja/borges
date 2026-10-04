@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from borges.analysis.model_spec.render import is_rendered
 from borges.analysis.models import CodingSummary, Step
 from borges.analysis.prompts.coder_collision import COLLISION, SCALE
 from borges.analysis.smoke_core import smoke_option
@@ -76,6 +77,10 @@ async def _rewrite(
     return fresh
 
 
+def _both_rendered(a: Outcome, b: Outcome) -> bool:
+    return is_rendered(a.option.code) and is_rendered(b.option.code)
+
+
 def _record_unresolved(
     config: SmokeConfig, kind: str, step: Step, pairs: list[tuple[Outcome, Outcome]]
 ) -> None:
@@ -99,8 +104,10 @@ async def _resolve(
     default = effective_default(step, outcomes)
     partners: dict[str, Outcome] = {}
     for a, b in pairs:
-        partners.setdefault(a.option.id, b)
-        partners.setdefault(b.option.id, a)
+        if not is_rendered(a.option.code):
+            partners.setdefault(a.option.id, b)
+        if not is_rendered(b.option.code):
+            partners.setdefault(b.option.id, a)
 
     async def one(outcome: Outcome) -> Outcome:
         other = partners.get(outcome.option.id)
@@ -110,7 +117,7 @@ async def _resolve(
 
     updated = list(await asyncio.gather(*(one(o) for o in outcomes)))
     remaining = find_pairs(kind, step, [o for o in updated if o.status != "failed"])
-    _record_unresolved(config, kind, step, remaining)
+    _record_unresolved(config, kind, step, [p for p in remaining if not _both_rendered(*p)])
     return updated
 
 
@@ -142,7 +149,7 @@ async def resolve_extra(
     for kind in (COLLISION, SCALE):
         peers = [p for p in config.state.outcomes.get(step.id, []) if p.status != "failed"]
         other = next((p for p in peers if predicate(kind, step, outcome, p)), None)
-        if other is None:
+        if other is None or is_rendered(outcome.option.code):
             continue
         outcome = await _rewrite(
             config,

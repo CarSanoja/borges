@@ -14,6 +14,13 @@ HEADER = [
 ]
 
 
+TEMPLATE_MARK = "    exog = sm.add_constant(pd.concat(parts, axis=1), has_constant='add')"
+
+
+def is_rendered(code: str | None) -> bool:
+    return bool(code) and str(code).startswith("\n".join(HEADER)) and TEMPLATE_MARK in str(code)
+
+
 def render_code(spec: ModelSpecOutput) -> str:
     lines = [
         *HEADER,
