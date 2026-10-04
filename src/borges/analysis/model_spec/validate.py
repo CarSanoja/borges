@@ -1,24 +1,19 @@
 from __future__ import annotations
 
 from borges.analysis.model_spec.schema import RESERVED_COLUMNS, ModelSpecOutput
-from borges.analysis.models import ColumnProfile, DatasetProfile, DecisionRule
+from borges.analysis.model_spec.validate_exposure import (
+    exposure_problems,
+    is_text,
+    profile_of,
+)
+from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.result_scale import detect_scale
 from borges.analysis.scale_check import is_ratio_rule
 
-TEXT_DTYPES = ("object", "str", "string", "category")
 COUNT_FAMILIES = ("poisson", "negbin")
 MAX_FIXED_EFFECT_LEVELS = 50
+MARGINAL_REPORTS = {"logit": "marginal_effect"}
 RATIO_REPORTS = {"logit": "odds_ratio", "poisson": "rate_ratio", "negbin": "rate_ratio"}
-
-
-def _profile_of(profile: DatasetProfile | None, name: str) -> ColumnProfile | None:
-    if profile is None:
-        return None
-    return next((c for c in profile.columns if c.name == name), None)
-
-
-def _is_text(column: ColumnProfile | None) -> bool:
-    return column is not None and column.dtype.startswith(TEXT_DTYPES)
 
 
 def _required(spec: ModelSpecOutput) -> list[str]:
@@ -81,8 +76,11 @@ def _role_problems(spec: ModelSpecOutput) -> list[str]:
 
 def _consistency_problems(spec: ModelSpecOutput) -> list[str]:
     problems = []
-    if spec.report != "coefficient" and RATIO_REPORTS.get(spec.family or "") != spec.report:
+    allowed = {RATIO_REPORTS.get(spec.family or ""), MARGINAL_REPORTS.get(spec.family or "")}
+    if spec.report != "coefficient" and spec.report not in allowed:
         problems.append(f"report {spec.report} is not available for family {spec.family}")
+    if spec.report == "marginal_effect" and spec.moderator is not None:
+        problems.append("marginal_effect is not available with a moderator")
     if spec.cov_type == "cluster" and spec.cluster is None:
         problems.append("cov_type cluster needs a cluster column")
     if spec.cov_type != "cluster" and spec.cluster is not None:
@@ -95,13 +93,13 @@ def _consistency_problems(spec: ModelSpecOutput) -> list[str]:
 def _outcome_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
     if spec.outcome is None:
         return []
-    column = _profile_of(profile, spec.outcome)
+    column = profile_of(profile, spec.outcome)
     if column is None:
         return []
     problems = []
-    if spec.family in RATIO_REPORTS and _is_text(column):
+    if spec.family in RATIO_REPORTS and is_text(column):
         problems.append(f"outcome '{spec.outcome}' is not numeric")
-    if spec.family == "logit" and not _is_text(column):
+    if spec.family == "logit" and not is_text(column):
         low, high = column.summary.get("min"), column.summary.get("max")
         binary = column.n_unique <= 2
         if (
@@ -116,11 +114,13 @@ def _outcome_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> 
 
 
 def _numeric_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
-    numeric = [spec.exposure, spec.moderator, spec.offset_log, *spec.standardize]
+    numeric = [spec.moderator, spec.offset_log, *spec.standardize]
+    if spec.exposure_level is None:
+        numeric.append(spec.exposure)
     return [
         f"column '{name}' is not numeric"
         for name in numeric
-        if name is not None and _is_text(_profile_of(profile, name))
+        if name is not None and is_text(profile_of(profile, name))
     ]
 
 
@@ -132,8 +132,8 @@ def _level_problems(
         names += ctx_covariates
     problems = []
     for name in dict.fromkeys(names):
-        column = _profile_of(profile, name)
-        if _is_text(column) and column is not None and column.n_unique > MAX_FIXED_EFFECT_LEVELS:
+        column = profile_of(profile, name)
+        if is_text(column) and column is not None and column.n_unique > MAX_FIXED_EFFECT_LEVELS:
             problems.append(
                 f"{name} has {column.n_unique} levels: use it as the cluster column, "
                 "not as dummy fixed effects"
@@ -144,12 +144,16 @@ def _level_problems(
 def _scale_problems(spec: ModelSpecOutput, rule: DecisionRule | None) -> list[str]:
     if rule is None:
         return []
-    if detect_scale(rule.metric) != 1.0 and spec.family != "ols":
+    if detect_scale(rule.metric) != 1.0:
+        if spec.family == "ols" or spec.report == "marginal_effect":
+            return []
         return [
             "the decision rule is a difference in proportions, which this family does not "
-            "report as a coefficient"
+            "report as a coefficient; a logit reports it as report marginal_effect"
         ]
-    if is_ratio_rule(rule) and (spec.family == "ols" or spec.report == "coefficient"):
+    if is_ratio_rule(rule) and (
+        spec.family == "ols" or spec.report in ("coefficient", "marginal_effect")
+    ):
         return ["the decision rule compares a ratio with 1.0, so report a ratio"]
     return []
 
@@ -171,6 +175,7 @@ def validate_spec(
         *_role_problems(spec),
         *_consistency_problems(spec),
         *_outcome_problems(spec, profile),
+        *exposure_problems(spec, profile),
         *_numeric_problems(spec, profile),
         *_level_problems(spec, profile, ctx_covariates or []),
         *_scale_problems(spec, rule),

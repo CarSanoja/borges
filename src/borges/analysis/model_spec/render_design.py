@@ -32,6 +32,11 @@ def covariate_lines(spec: ModelSpecOutput) -> list[str]:
 
 def frame_lines(spec: ModelSpecOutput) -> list[str]:
     lines = ["    data = df.dropna(subset=used)"]
+    if spec.exposure_level is not None:
+        lines.append(
+            f"    data = data.assign(**{{{spec.exposure!r}: "
+            f"(data[{spec.exposure!r}].astype(str) == {spec.exposure_level!r}).astype(float)}})"
+        )
     if spec.standardize:
         lines += [
             f"    scaled = {spec.standardize!r}",

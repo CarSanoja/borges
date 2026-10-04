@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 Family = Literal["ols", "logit", "poisson", "negbin"]
 CovType = Literal["nonrobust", "HC0", "HC1", "HC2", "HC3", "cluster"]
-Report = Literal["coefficient", "odds_ratio", "rate_ratio"]
+Report = Literal["coefficient", "odds_ratio", "rate_ratio", "marginal_effect"]
 
 INTERACTION_COLUMN = "exposure_by_moderator"
 RESERVED_COLUMNS = frozenset({INTERACTION_COLUMN, "const"})
@@ -18,6 +18,7 @@ class ModelSpecOutput(BaseModel):
     family: Family | None = None
     outcome: str | None = None
     exposure: str | None = None
+    exposure_level: str | None = None
     moderator: str | None = None
     covariates: list[str] = Field(default_factory=list)
     covariates_from_ctx: bool = False

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from borges.analysis.model_spec.schema import ModelSpecOutput
-from borges.analysis.models import AnalysisPlan, Option, Step
+from borges.analysis.model_spec.validate_exposure import column_levels, is_text
+from borges.analysis.models import AnalysisPlan, ColumnProfile, Option, Step
 from borges.analysis.prompts import compact_json, messages
 from borges.analysis.prompts.coder import _available_columns, _earlier_specs
 from borges.analysis.scale_check import scale_instruction
@@ -17,6 +18,9 @@ with the reason in `reason`.
 - outcome: the dependent column.
 - exposure: the column whose coefficient is the estimate: the treatment, group or attribute the \
 estimand is about, never the offset column and never the outcome.
+- exposure_level: only when the exposure is a text column with exactly two levels: the level coded \
+1, the treatment or the group the estimand puts first ("treatment minus control" means level \
+"treatment"). Leave it null for a numeric exposure; never invent a column for the dummy.
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
@@ -26,7 +30,9 @@ list an earlier step stored in ctx["covariates"].
 with "cluster" set `cluster` to the grouping \
 column.
 - standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin).
-- report: "coefficient", "odds_ratio" (logit only) or "rate_ratio" (poisson and negbin only).
+- report: "coefficient", "odds_ratio" (logit only), "rate_ratio" (poisson and negbin only) or \
+"marginal_effect" (logit only, no moderator): the average marginal effect of the exposure on the \
+probability scale, the right report when the decision rule is a difference in proportions.
 
 Use exact column names from the list of available columns. Categorical covariates are \
 dummy-encoded automatically. Set supported to false for anything else: mixed or multilevel \
@@ -37,10 +43,19 @@ or a model that reads ctx values other than the covariate list.
 Return only JSON matching the requested schema."""
 
 
+def _column_entry(column: ColumnProfile) -> dict[str, object]:
+    entry: dict[str, object] = {
+        "name": column.name,
+        "dtype": column.dtype,
+        "unique": column.n_unique,
+    }
+    if is_text(column) and column.n_unique == 2:
+        entry["levels"] = column_levels(column)
+    return entry
+
+
 def build_spec_messages(plan: AnalysisPlan, step: Step, option: Option) -> list[dict[str, str]]:
-    columns = [
-        {"name": c.name, "dtype": c.dtype, "unique": c.n_unique} for c in plan.dataset.columns
-    ]
+    columns = [_column_entry(c) for c in plan.dataset.columns]
     parts = [
         f"Estimand: {plan.estimand}",
         f"Columns: {compact_json(columns)}",

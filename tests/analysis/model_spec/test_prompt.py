@@ -29,3 +29,8 @@ def test_earlier_steps_are_listed() -> None:
     step = plan.step("m1")
     user = build_spec_messages(plan, step, step.option("ols"))[1]["content"]
     assert "Spec for keep on outcome" in user
+
+
+def test_system_explains_exposure_level_and_marginal_effect() -> None:
+    assert "exposure_level" in SYSTEM and '"treatment minus control" means level' in SYSTEM
+    assert "marginal_effect" in SYSTEM

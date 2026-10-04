@@ -43,7 +43,25 @@ def fit_lines(spec: ModelSpecOutput) -> list[str]:
     return lines
 
 
+def _margeff_lines(spec: ModelSpecOutput) -> list[str]:
+    return [
+        f"    term = {design_term(spec)!r}",
+        '    effects = fit.get_margeff(at="overall", method="dydx", dummy=True).summary_frame()',
+        "    row = effects.loc[term]",
+        "    return {",
+        '        "estimate": float(row["dy/dx"]),',
+        '        "ci_low": float(row["Conf. Int. Low"]),',
+        '        "ci_high": float(row["Cont. Int. Hi."]),',
+        '        "p_value": float(row["Pr(>|z|)"]),',
+        '        "n": int(len(data)),',
+        '        "extra": {"std_err": float(row["Std. Err."])},',
+        "    }",
+    ]
+
+
 def result_lines(spec: ModelSpecOutput) -> list[str]:
+    if spec.report == "marginal_effect":
+        return _margeff_lines(spec)
     ratio = spec.report != "coefficient"
     lines = [
         f"    term = {design_term(spec)!r}",
