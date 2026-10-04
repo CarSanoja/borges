@@ -4,10 +4,8 @@ import json
 
 import pytest
 
-from borges.analysis import coder
-from borges.analysis.code_guard import check_code
+from borges.analysis import coder_checks
 from borges.analysis.coder import code_plan, generate_checked
-from borges.analysis.model_spec import request as request_module
 from borges.analysis.model_spec.request import request_template, template_family
 from borges.analysis.models import AnalysisPlan, ColumnProfile, DatasetProfile
 from borges.analysis.schemas import CoderOutput
@@ -145,11 +143,10 @@ async def test_guard_failing_template_falls_back(monkeypatch: pytest.MonkeyPatch
         seen.append(code)
         return ["denied"] if "sm.OLS" in code else []
 
-    monkeypatch.setattr(request_module, "check_code", reject)
-    monkeypatch.setattr(coder, "check_code", check_code)
+    monkeypatch.setattr(coder_checks, "check_code", reject)
     llm = llm_with(GOOD_SPEC)
     code, _, note = await code_welch(llm)
-    assert code == FREE and len(seen) == 1
+    assert code == FREE and "sm.OLS" in seen[0]
     assert note is not None and "failed the guard: denied" in note
 
 
@@ -160,7 +157,7 @@ async def test_guard_is_called_with_the_option_intent(monkeypatch: pytest.Monkey
         intents.append(f"{kind}|{intent}")
         return []
 
-    monkeypatch.setattr(request_module, "check_code", record)
+    monkeypatch.setattr(coder_checks, "check_code", record)
     assert await request_template(llm_with(GOOD_SPEC), plan_with_score(), *_welch()) is not None
     assert intents == ["model|Label welch Spec for welch on outcome"]
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from borges.analysis import coder
+from borges.analysis import coder, coder_checks
 from borges.analysis.coder import _request_code, code_option, code_plan, repair_option
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMError, Role
@@ -20,7 +20,7 @@ def guard(bad: set[str]):
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", guard(set()))
+    monkeypatch.setattr(coder_checks, "check_code", guard(set()))
 
 
 async def test_code_option_key_and_prompt() -> None:
@@ -75,7 +75,7 @@ async def test_code_plan_codes_missing_only_and_reports() -> None:
 
 
 async def test_code_plan_repairs_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD"}))
     llm = FakeLLM(
         {
             "coder:d1.trim": CoderOutput(code="BAD"),
@@ -97,7 +97,7 @@ async def test_code_plan_repairs_once(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 async def test_code_plan_drops_failing_non_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD"}))
     llm = FakeLLM(
         {
             "coder:d1.trim": CoderOutput(code="BAD"),
@@ -119,7 +119,7 @@ async def test_code_plan_drops_failing_non_default(monkeypatch: pytest.MonkeyPat
 async def test_code_plan_promotes_coded_sibling_when_default_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD"}))
     plan = make_plan()
     llm = FakeLLM(
         {
@@ -146,7 +146,7 @@ async def test_code_plan_promotes_coded_sibling_when_default_fails(
 async def test_code_plan_raises_when_no_option_of_step_codes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD"}))
     llm = FakeLLM(
         {
             "coder:d1.keep": CoderOutput(code="BAD"),
@@ -170,7 +170,7 @@ async def test_repair_option_returns_checked_option(monkeypatch: pytest.MonkeyPa
     assert repaired.code == "FIXED" and repaired.id == "trim"
     assert option.code == "OLD"
 
-    monkeypatch.setattr(coder, "check_code", guard({"FIXED"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"FIXED"}))
     with pytest.raises(LLMError):
         await repair_option(llm, plan, step, option, "err")
 
@@ -178,7 +178,7 @@ async def test_repair_option_returns_checked_option(monkeypatch: pytest.MonkeyPa
 async def test_code_option_rejects_code_that_violates_the_guard(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD", "WORSE"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD", "WORSE"}))
     llm = FakeLLM(
         {
             "coder:m1.welch": CoderOutput(code="BAD"),
@@ -194,7 +194,7 @@ async def test_code_option_rejects_code_that_violates_the_guard(
 
 
 async def test_code_option_repairs_guard_violation_once(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD"}))
     llm = FakeLLM(
         {
             "coder:m1.welch": CoderOutput(code="BAD"),
@@ -209,10 +209,9 @@ async def test_code_option_repairs_guard_violation_once(monkeypatch: pytest.Monk
 async def test_a_fresh_recode_follows_a_failed_guard_repair(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from borges.analysis import coder_recode
 
-    monkeypatch.setattr(coder, "check_code", guard({"BAD", "WORSE"}))
-    monkeypatch.setattr(coder_recode, "check_code", guard({"BAD", "WORSE"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD", "WORSE"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD", "WORSE"}))
     llm = FakeLLM(
         {
             "coder:m1.welch": CoderOutput(code="BAD"),
@@ -229,7 +228,7 @@ async def test_a_fresh_recode_follows_a_failed_guard_repair(
 async def test_a_step_none_of_whose_options_codes_is_replanned_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(coder, "check_code", guard({"BAD"}))
+    monkeypatch.setattr(coder_checks, "check_code", guard({"BAD"}))
     fresh = {"id": "fresh", "label": "Fresh", "rationale": "r", "spec": "keep all rows"}
     llm = FakeLLM(
         {

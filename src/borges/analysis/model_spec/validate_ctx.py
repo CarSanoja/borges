@@ -2,14 +2,18 @@ from __future__ import annotations
 
 import re
 
+from borges.analysis.code_guard_ctx import UNADJUSTED
 from borges.analysis.model_spec.schema import ModelSpecOutput
 
-CTX_COVARIATES = re.compile(r"""ctx\s*\[\s*["']covariates["']\s*\]|covariates from ctx""")
+CTX_COVARIATES = re.compile(r"""ctx\s*(?:\[\s*|\.get\(\s*)["']covariates["']|covariates from ctx""")
 
 
-def ctx_problems(spec: ModelSpecOutput, ctx_names: list[str], option_text: str) -> list[str]:
+def ctx_problems(
+    spec: ModelSpecOutput, ctx_names: list[str], option_text: str, varied: bool = False
+) -> list[str]:
     problems = []
-    if CTX_COVARIATES.search(option_text) and not spec.covariates_from_ctx:
+    wanted = CTX_COVARIATES.search(option_text) or (varied and not UNADJUSTED.search(option_text))
+    if wanted and not spec.covariates_from_ctx:
         problems.append(
             "the option uses the covariate list an earlier step stores in ctx['covariates']: "
             "set covariates_from_ctx to true"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from borges.analysis import coder
+from borges.analysis import coder_checks
 from borges.analysis.coder import code_plan
 from borges.analysis.schemas import CoderOutput
 from tests.analysis.fakes import FakeLLM, make_plan
@@ -19,7 +19,7 @@ def guard(bad: set[str]):
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", guard(set()))
+    monkeypatch.setattr(coder_checks, "check_code", guard(set()))
 
 
 async def test_code_plan_failure_cancels_in_flight_siblings() -> None:

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from borges.analysis import coder
+from borges.analysis import coder_checks
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig, sample_rows
 from borges.analysis.models import CodingSummary
@@ -31,12 +31,12 @@ BAD_ESTIMATE = (
 )
 
 
-real_check = coder.check_code
+real_check = coder_checks.check_code
 
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
+    monkeypatch.setattr(coder_checks, "check_code", lambda code, kind, intent="": [])
 
 
 def dataset(rows: int = 300) -> bytes:
@@ -197,7 +197,7 @@ async def test_syntax_error_repair_goes_through_the_guard_and_is_resent(
         )
     )
     recorder = Recorder()
-    monkeypatch.setattr(coder, "check_code", real_check)
+    monkeypatch.setattr(coder_checks, "check_code", real_check)
     coded = await code_plan(llm, make_plan(), smoke=config(tmp_path, recorder))
     assert coded.step("d1").option("trim").code == TRIM_FIXED
     prompt = next(c for c in llm.calls if c.key == "coder:d1.trim:smoke2").messages[1]["content"]

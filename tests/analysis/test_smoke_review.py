@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from borges.analysis import coder
+from borges.analysis import coder_checks
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
 from borges.analysis.models import CodingSummary
@@ -30,7 +30,7 @@ HALF = effects("treated", UP, rows=(100, 50), dropped={"variant": {"control": 50
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
+    monkeypatch.setattr(coder_checks, "check_code", lambda code, kind, intent="": [])
 
 
 class Reviews:

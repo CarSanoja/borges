@@ -3,9 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from borges.analysis.code_guard import check_code
-from borges.analysis.code_guard_statsmodels import option_intent
-from borges.analysis.code_guard_wide import wide_columns, wide_dummy_violations
+from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode
 from borges.analysis.coder_replan import make_replan
@@ -18,12 +16,6 @@ from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
 from borges.llm.gather import gather_cancelling
 from borges.telemetry.scopes import option_span
-
-
-def _violations(code: str, plan: AnalysisPlan, step: Step, option: Option) -> list[str]:
-    wide = wide_columns(plan.dataset) if step.kind == "model" else {}
-    return [*check_code(code, step.kind, option_intent(option)), *wide_dummy_violations(code, wide)]
-
 
 NORMALISED_NOTE = "removed a stray closing-bracket line at the end of the code"
 OnCoded = Callable[[str, str, bool, int, str | None, list[str]], Awaitable[None]]
@@ -70,13 +62,13 @@ async def generate_checked(
         if templated is not None:
             return templated.code, 1, templated.note
     code = await _request_code(llm, plan, step, option, models=models, notes=notes)
-    violations = _violations(code, plan, step, option)
+    violations = option_violations(code, plan, step, option)
     if not violations:
         return code, 1, join_notes(skips, notes)
     error = "\n".join(violations)
     draft = option.model_copy(update={"code": code})
     code = await _request_code(llm, plan, step, draft, error, models=models, notes=notes)
-    violations = _violations(code, plan, step, option)
+    violations = option_violations(code, plan, step, option)
     if not violations:
         return code, 2, join_notes(skips, notes)
     errors = [error, "\n".join(violations)]
@@ -106,7 +98,7 @@ async def _smoke_repair(
     code = await _request_code(
         llm, plan, step, option, error, suffix=f":smoke{attempt}", models=models
     )
-    violations = _violations(code, plan, step, option)
+    violations = option_violations(code, plan, step, option)
     return code, ("\n".join(violations) if violations else None), models[0]
 
 
@@ -191,7 +183,7 @@ async def repair_option(
     llm: LLMClient, plan: AnalysisPlan, step: Step, option: Option, error: str
 ) -> Option:
     code = await _request_code(llm, plan, step, option, error)
-    violations = _violations(code, plan, step, option)
+    violations = option_violations(code, plan, step, option)
     if violations:
         raise LLMError(
             f"repaired code for {step.id}.{option.id} violates the guard: " + "; ".join(violations)

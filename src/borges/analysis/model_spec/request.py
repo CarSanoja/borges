@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from borges.analysis.code_guard import check_code
+from borges.analysis.code_guard_ctx import varying_ctx_keys
 from borges.analysis.code_guard_statsmodels import option_intent
+from borges.analysis.coder_checks import option_violations
 from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
@@ -72,7 +73,8 @@ def _problems(plan: AnalysisPlan, step: Step, option: Option, spec: ModelSpecOut
     found = validate_spec(spec, available, plan.dataset, plan.decision_rule, ctx_names)
     if not spec.supported:
         return found
-    return [*found, *ctx_problems(spec, ctx_names, option_intent(option))]
+    varied = "covariates" in varying_ctx_keys(plan, step)
+    return [*found, *ctx_problems(spec, ctx_names, option_intent(option), varied)]
 
 
 async def request_template(
@@ -83,6 +85,13 @@ async def request_template(
     models: list[str] | None = None,
     skipped: list[str] | None = None,
 ) -> Templated | None:
+    pending = sorted(set(varying_ctx_keys(plan, step)) - {"covariates"})
+    if pending:
+        keys = ", ".join(f"ctx['{k}']" for k in pending)
+        _skip(
+            skipped, f"the model must read {keys}, chosen by an earlier step, and a template cannot"
+        )
+        return None
     messages = build_spec_messages(plan, step, option)
     key = f"coder:{step.id}.{option.id}:spec"
     spec = await _ask(llm, messages, key, models, skipped)
@@ -100,7 +109,7 @@ async def request_template(
         if skipped:
             skipped.pop()
     code = render_code(spec)
-    violations = check_code(code, step.kind, option_intent(option))
+    violations = option_violations(code, plan, step, option)
     if violations:
         _skip(skipped, "the rendered code failed the guard: " + "; ".join(violations))
         return None

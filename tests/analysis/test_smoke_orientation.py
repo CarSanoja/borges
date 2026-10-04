@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from borges.analysis import coder
+from borges.analysis import coder_checks
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
 from borges.analysis.models import AnalysisPlan, CodingSummary, DecisionRule, Option, Step
@@ -123,7 +123,7 @@ def data_bytes() -> bytes:
 
 @pytest.fixture(autouse=True)
 def passing_guard(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(coder, "check_code", lambda code, kind, intent="": [])
+    monkeypatch.setattr(coder_checks, "check_code", lambda code, kind, intent="": [])
 
 
 class Recorder:

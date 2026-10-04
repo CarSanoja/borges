@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from borges.analysis import coder
+from borges.analysis import coder_checks
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.schemas import CoderOutput
@@ -53,17 +53,17 @@ async def test_a_repair_with_a_stray_brace_is_normalised_before_the_guard() -> N
         notes.append(args)
 
     seen: list[str] = []
-    real = coder.check_code
+    real = coder_checks.check_code
 
     def spy(code, kind, intent=""):
         seen.append(code)
         return real(code, kind, intent)
 
-    coder.check_code = spy
+    coder_checks.check_code = spy
     try:
         await code_plan(FakeLLM(responses), plan, on_coded)
     finally:
-        coder.check_code = real
+        coder_checks.check_code = real
     assert all("\n}" not in code for code in seen)
     keep = next(n for n in notes if n[1] == "keep")
     assert keep[2] is True and "stray closing-bracket" in (keep[4] or "")
