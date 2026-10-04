@@ -34,7 +34,7 @@ async def test_catalog_lists_agents_and_templates(client: httpx.AsyncClient) -> 
         body = (await client.get("/api/agents")).json()
     assert len(body["agents"]) == 12 and body["summary"]["by_approval"] == {"approved": 12}
     judge = next(a for a in body["agents"] if a["agent_id"] == "judge")
-    assert judge["principal"] == "agent://borges/judge" and judge["version"] == "1.4.0"
+    assert judge["principal"] == "agent://borges/judge" and judge["version"] == "1.5.0"
     ids = {t["id"] for t in body["templates"]}
     assert {"checkout_ab", "red_cards"} <= ids
     template = next(t for t in body["templates"] if t["id"] == "checkout_ab")
@@ -57,7 +57,14 @@ async def test_agent_detail_has_history(client: httpx.AsyncClient) -> None:
         body = (await client.get("/api/agents/judge")).json()
         missing = await client.get("/api/agents/ghost")
     assert body["descriptor"]["field_sources"]["prompt_sha"] == "prompt_text"
-    assert [v["version"] for v in body["versions"]] == ["1.0.0", "1.1.0", "1.2.0", "1.3.0", "1.4.0"]
+    assert [v["version"] for v in body["versions"]] == [
+        "1.0.0",
+        "1.1.0",
+        "1.2.0",
+        "1.3.0",
+        "1.4.0",
+        "1.5.0",
+    ]
     assert missing.status_code == 404
 
 

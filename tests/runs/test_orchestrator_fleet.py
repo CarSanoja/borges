@@ -34,7 +34,7 @@ async def test_run_records_agent_versions_everywhere(tmp_path: Path) -> None:
     assert snapshot.agents is not None and snapshot.agents.registry_sha == meta["registry_sha"]
     assert snapshot.report is not None and snapshot.report.agents == snapshot.agents
     judge = next(a for a in meta["agents"] if a["agent_id"] == "judge")
-    assert judge["version"] == "1.4.0" and judge["approval"] == "approved"
+    assert judge["version"] == "1.5.0" and judge["approval"] == "approved"
     assert judge["model_id"] == "scripted" and len(judge["definition_sha"]) == 64
 
 
