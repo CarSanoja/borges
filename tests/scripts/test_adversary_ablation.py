@@ -42,7 +42,7 @@ def run(universes: list[dict[str, Any]]) -> dict[str, Any]:
         "case_id": "case",
         "plan": {"steps": steps},
         "garden": {"universes": {u["id"]: u for u in universes}},
-        "report": {"verdict": "NO"},
+        "report": {"original_verdict": "NO"},
     }
 
 
@@ -76,3 +76,16 @@ def test_a_flip_the_planner_twin_already_has_is_not_credited_to_the_adversary() 
 
 def test_failed_runs_are_skipped() -> None:
     assert load().ablate_run({"status": "failed"}) is None
+
+
+def test_the_markdown_lists_each_flip_the_adversary_found_alone() -> None:
+    ablation = load()
+    row = ablation.ablate_run(
+        run([universe("u0", "ols", "c0", False), universe("u2", "nb", "c0", True)])
+    )
+    text = ablation.render(
+        ablation.summarise([{**row, "file": "case-1.json"}]), [{**row, "file": "case-1.json"}], "T"
+    )
+    assert row["verdict"] == "NO"
+    assert "| **all** | **1** | **1** | **0** | **1** | **1** | **1** |" in text
+    assert "- `case-1.json` (NO): NB at `model` -> YES" in text

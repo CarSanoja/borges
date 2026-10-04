@@ -2,8 +2,8 @@
 
 Every run JSON in DIR is one `borges run --json` output named <case>-<i>.json. The report gives the
 completion rate with a Wilson interval, the verdicts and flip rate per case, adversary flips,
-failed universes, cost, self-corrections, every completed run that lost universes or left a
-decision out, and every run that did not complete.
+failed universes, cost, self-corrections, every completed run that lost universes, options or a
+stage, and every run that did not complete.
 
 Usage: uv run python scripts/repeats_report.py DIR --commit SHA --date YYYY-MM-DD [--out FILE]
 """
@@ -13,12 +13,15 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-LEFT_OUT = "was left out of the analysis"
-REPLACED = "failed its smoke run and was replaced by"
+LOST = re.compile(
+    r"left out of the analysis|stage failed and was skipped|"
+    r"failed its smoke run and was replaced by|was dropped: with it"
+)
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -57,8 +60,7 @@ def load_run(path: Path) -> dict[str, Any]:
         "recoded": coding.get("options_recoded_by_output_check") or 0,
         "repaired": coding.get("repaired_after_smoke") or 0,
         "replanned": coding.get("replanned_steps") or 0,
-        "left_out": [c for c in report.get("caveats") or [] if LEFT_OUT in c],
-        "replaced": [c for c in report.get("caveats") or [] if REPLACED in c],
+        "lost": [c for c in report.get("caveats") or [] if LOST.search(c)],
     }
 
 
@@ -94,7 +96,7 @@ def _partial(rows: dict[str, list[dict[str, Any]]]) -> list[str]:
                 continue
             tried = r["universes"] + r["failed"]
             notes = [f"{r['failed']} of {tried} universes failed"] if r["failed"] else []
-            notes += [c[:240] for c in r["left_out"] + r["replaced"]]
+            notes += [c[:240] for c in r["lost"]]
             if notes:
                 lines.append(f"- {label} `{r['run']}`: " + " ".join(notes))
     return lines or ["None."]

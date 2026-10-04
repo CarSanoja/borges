@@ -64,6 +64,7 @@ def test_a_completed_run_that_lost_part_of_the_analysis_is_listed(tmp_path: Path
     body = run("completed")
     body["report"]["caveats"] = [
         "The decision 'Filter' was left out of the analysis: none of its options could be run.",
+        "The adversary stage failed and was skipped: gateway denied (egress).",
         "Robustness headline: 100%.",
     ]
     (tmp_path / "case_a-1.json").write_text(json.dumps(body))
@@ -74,4 +75,5 @@ def test_a_completed_run_that_lost_part_of_the_analysis_is_listed(tmp_path: Path
     text = module.render(module.load_batch(tmp_path), "abc1234", "2026-10-04")
     section = text.split("## Completed runs that lost part of the analysis")[1]
     assert "case_a `r_completed_None`: 1 of 11 universes failed The decision 'Filter'" in section
+    assert "The adversary stage failed and was skipped" in section
     assert "case_b" not in section and "Robustness headline" not in section

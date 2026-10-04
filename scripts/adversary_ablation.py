@@ -5,7 +5,7 @@ universes that use no adversary option) with the full garden, and pair every uni
 adversary option with its twin that has the planner's default at that step. A verdict change
 counts as adversary-only when the twin keeps the original verdict.
 
-Usage: uv run python scripts/adversary_ablation.py DIR [DIR ...] [--json OUT]
+Usage: uv run python scripts/adversary_ablation.py DIR [DIR ...] [--json OUT] [--md OUT --title T]
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ def ablate_run(run: dict[str, Any]) -> dict[str, Any] | None:
     return {
         "run_id": run.get("run_id"),
         "case": run.get("case_id"),
-        "verdict": run.get("report", {}).get("verdict") if run.get("report") else None,
+        "verdict": (run.get("report") or {}).get("original_verdict"),
         "adversary_options": len(adversarial),
         "universes": len(universes),
         "planner_only_universes": len(planner_only),
@@ -87,10 +87,42 @@ def summarise(rows: list[dict[str, Any]]) -> dict[str, Any]:
     return {name: dict(values) for name, values in sorted(cases.items())}
 
 
+COLUMNS = (
+    "runs",
+    "runs_with_adversary_options",
+    "planner_only_finds_a_flip",
+    "full_finds_a_flip",
+    "only_the_adversary_finds_a_flip",
+    "runs_with_an_adversary_alone_flip",
+)
+
+
+def render(summary: dict[str, Any], rows: list[dict[str, Any]], title: str) -> str:
+    lines = [
+        f"## {title}",
+        "",
+        "| case | " + " | ".join(c.replace("_", " ") for c in COLUMNS) + " |",
+        "|---|" + "---|" * len(COLUMNS),
+    ]
+    for name, values in summary.items():
+        lines.append(f"| {name} | " + " | ".join(str(values.get(c, 0)) for c in COLUMNS) + " |")
+    total = [sum(v.get(c, 0) for v in summary.values()) for c in COLUMNS]
+    lines += ["| **all** | " + " | ".join(f"**{t}**" for t in total) + " |", ""]
+    alone = [(row, flip) for row in rows for flip in row["adversary_alone"]]
+    lines += [
+        f"- `{row['file']}` ({row['verdict']}): {flip['option']} at `{flip['step']}` "
+        f"-> {flip['verdict']}"
+        for row, flip in alone
+    ] or ["No adversary option flipped the verdict on its own."]
+    return "\n".join(lines) + "\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("dirs", nargs="+", type=Path)
     parser.add_argument("--json", type=Path)
+    parser.add_argument("--md", type=Path)
+    parser.add_argument("--title", default="Adversary ablation")
     args = parser.parse_args()
     rows = []
     for directory in args.dirs:
@@ -110,6 +142,8 @@ def main() -> None:
             print(f"  {row['file']}: {flip['option']} ({flip['step']}) -> {flip['verdict']}")
     if args.json is not None:
         args.json.write_text(json.dumps({"summary": summary, "runs": rows}, indent=2))
+    if args.md is not None:
+        args.md.write_text(render(summary, rows, args.title))
 
 
 if __name__ == "__main__":
