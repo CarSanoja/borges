@@ -67,6 +67,8 @@ def test_option_findings_read_every_text_field() -> None:
         "Compute ctx['dark_skin'] = 1 if skin_tone_avg >= 0.5 else 0.",
         "Set ctx['threshold'] = 30 and drop sessions shorter than it.",
         "Set ctx['covariates'] = ['age', 'job'].",
+        "Set ctx['estimate'] = coefficient, ctx['p_value'] = p-value for the interaction term.",
+        "Set ctx['ci_low'] = lower 95% CI and ctx['ci_high'] = upper 95% CI.",
     ],
 )
 def test_ordinary_ctx_assignments_are_not_steering(spec: str) -> None:
