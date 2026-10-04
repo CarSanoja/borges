@@ -96,3 +96,11 @@ def test_string_covariate_in_a_model_step_names_the_columns(tmp_path: Path) -> N
 def test_encoding_hint_is_absent_for_other_errors(tmp_path: Path) -> None:
     error = _run_model(tmp_path, _uses("bogus"), {})
     assert error is not None and ENCODING_HINT not in error
+
+
+def test_a_decimal_put_into_an_integer_column_gets_the_cast_hint(tmp_path: Path) -> None:
+    code = "def apply(df, ctx):\n    df.loc[df.index[:5], 'z'] = 0.5\n    return df\n"
+    done, error, _ = run(tmp_path, *make("transform", code))
+    assert done.returncode == 1 and error is not None
+    assert "for dtype 'int64'" in error
+    assert "convert the column first, for example df[col] = df[col].astype(float)" in error

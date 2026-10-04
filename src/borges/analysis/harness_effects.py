@@ -81,6 +81,11 @@ CHECKS_SOURCE = """
                 + " from the fitted result (result.pvalues) and intervals from"
                 + " result.conf_int(); if you really need a distribution use scipy.stats.norm"
             )
+        if "Invalid value" in text and "for dtype 'int" in text:
+            text = (
+                text + " | pandas does not put a decimal value into an integer column: convert the"
+                + " column first, for example df[col] = df[col].astype(float), then clip or assign"
+            )
         if seen and seen.get("missing") and (
             "nan" in lowered or "same length" in lowered or "missing" in lowered
         ):

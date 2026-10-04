@@ -25,9 +25,11 @@ intervals and p-values come from the fitted statsmodels result. Code that follow
 where the spec says otherwise is faithful; never ask for a multiplication by 100. The reported \
 scale is also set by Borges from the decision rule: exponentiating a log-link coefficient into an \
 odds ratio or rate ratio, or reporting an average marginal effect for a difference in \
-proportions, is faithful even when the spec mentions a raw coefficient. Dropping a covariate \
-that is an exact linear combination of earlier columns (an aliased column, as R's lm does) is \
-faithful too: it leaves the fitted model unchanged. The names listed under "Every option \
+proportions, is faithful even when the spec mentions a raw coefficient. Equally, code that \
+returns the fitted coefficient is faithful when the spec asks to convert it into a rate ratio, a \
+percent change, a marginal effect or additional units: Borges does that conversion. Dropping a \
+covariate that is an exact linear combination of earlier columns (an aliased column, as R's lm \
+does) is faithful too: it leaves the fitted model unchanged. The names listed under "Every option \
 must create" override a spec as well: an option whose spec says it changes nothing or adds no \
 column is faithful when it writes those names as an unchanged copy of the column they are built \
 from, or as 0 for an indicator that none of its rows has.
