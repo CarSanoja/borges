@@ -10,6 +10,7 @@ from borges.analysis import harness
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.smoke_collision import resolve_outputs
 from borges.analysis.smoke_core import execute, sample_rows, smoke_option
+from borges.analysis.smoke_default_rescue import rescue_by_upstream_default
 from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
 from borges.analysis.smoke_model_probe import probe_model
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
@@ -103,6 +104,18 @@ async def _smoke_round(
     return await resolve_outputs(config, repair, parent, step, outcomes, summary)
 
 
+async def _rerun(
+    config: SmokeConfig,
+    repair: Repair,
+    recode: Recode | None,
+    step: Step,
+    semaphore: asyncio.Semaphore,
+    summary: CodingSummary | None,
+    parent: Checkpoint,
+) -> list[Outcome]:
+    return await _smoke_round(config, repair, recode, parent, step, semaphore, summary)
+
+
 async def smoke_plan(
     config: SmokeConfig,
     plan: AnalysisPlan,
@@ -126,6 +139,11 @@ async def smoke_plan(
         outcomes = await again()
         if replan is not None and not has_survivor(outcomes):
             outcomes = await replan_outcomes(config, replan, step, outcomes, again)
+        if index > 0 and not has_survivor(outcomes):
+            rerun = partial(_rerun, config, repair, recode, step, semaphore, summary)
+            rescued = await rescue_by_upstream_default(config, smoked.steps[index - 1], step, rerun)
+            if rescued is not None:
+                parent, outcomes = rescued
         config.state.parents[step.id] = parent
         live_default = effective_default(step, outcomes)
         if live_default is not None:

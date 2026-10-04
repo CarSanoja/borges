@@ -101,3 +101,16 @@ def test_covariates_that_rebuild_the_exposure_are_dropped_together() -> None:
         "aliased covariates dropped: r2; covariates that rebuild the exposure with them dropped: r1"
     )
     assert got["estimate"] == pytest.approx(lean["estimate"], rel=1e-9)
+
+
+def test_a_numeric_binary_exposure_with_a_text_level_is_used_as_coded() -> None:
+    data = frame().assign(variant=lambda f: (f.variant == "treatment").astype(int))
+    spec = make_spec("ols", outcome="y", exposure="variant", exposure_level="treatment")
+    got = run(render_code(spec), data)
+    assert got["estimate"] == pytest.approx(4.0 - 1.8333333, rel=1e-6)
+
+
+def test_a_level_that_is_not_a_value_of_the_exposure_fails_loudly() -> None:
+    spec = make_spec("ols", outcome="y", exposure="variant", exposure_level="treated")
+    with pytest.raises(ValueError, match="exposure level treated is not a value"):
+        run(render_code(spec), frame())

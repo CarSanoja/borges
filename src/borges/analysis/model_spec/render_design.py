@@ -30,13 +30,25 @@ def covariate_lines(spec: ModelSpecOutput) -> list[str]:
     return lines
 
 
+def _indicator_lines(column: str, level: str) -> list[str]:
+    return [
+        f"    hit = data[{column!r}].astype(str) == {level!r}",
+        f"    numeric = pd.api.types.is_numeric_dtype(data[{column!r}])",
+        f"    binary = numeric and set(pd.unique(data[{column!r}])) <= {{0, 1}}",
+        "    if not hit.any() and not binary:",
+        "        raise ValueError(",
+        f"            'the exposure level ' + {level!r} + ' is not a value of the column ' + "
+        f"{column!r}",
+        "        )",
+        "    if hit.any():",
+        f"        data = data.assign(**{{{column!r}: hit.astype(float)}})",
+    ]
+
+
 def frame_lines(spec: ModelSpecOutput) -> list[str]:
     lines = ["    data = df.dropna(subset=used)"]
     if spec.exposure_level is not None:
-        lines.append(
-            f"    data = data.assign(**{{{spec.exposure!r}: "
-            f"(data[{spec.exposure!r}].astype(str) == {spec.exposure_level!r}).astype(float)}})"
-        )
+        lines += _indicator_lines(str(spec.exposure), spec.exposure_level)
     if spec.standardize:
         lines += [
             f"    scaled = {spec.standardize!r}",

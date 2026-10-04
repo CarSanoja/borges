@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from borges.analysis.code_guard import check_code
 
 HEADER = (
@@ -100,3 +102,27 @@ def test_manual_numpy_model_with_robust_label_is_not_flagged() -> None:
 def test_non_model_steps_are_unaffected() -> None:
     code = "def apply(df, ctx):\n    return df\n"
     assert check_code(code, "filter", ROBUST) == []
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        "sm.Logit(df['y'], X, weights=df['w'])",
+        "smf.logit('y ~ x', df, weights=df['w'])",
+        "sm.GLM(df['y'], X, family=sm.families.Binomial(), weights=df['w'])",
+    ],
+)
+def test_weights_a_model_ignores_are_rejected(call: str) -> None:
+    code = model(f"    X = sm.add_constant(df[['x']])\n    fit = {call}.fit()\n    return {{}}\n")
+    violations = check_code(code, "model")
+    assert len(violations) == 1 and "silently ignored" in violations[0]
+    assert "freq_weights" in violations[0]
+
+
+def test_wls_weights_pass() -> None:
+    code = model(
+        "    X = sm.add_constant(df[['x']])\n"
+        "    fit = sm.WLS(df['y'], X, weights=df['w']).fit()\n"
+        "    return {}\n"
+    )
+    assert check_code(code, "model") == []

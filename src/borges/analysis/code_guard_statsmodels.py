@@ -35,6 +35,7 @@ MODEL_CLASSES = frozenset(
     }
 )
 FIT_METHODS = frozenset({"fit", "fit_regularized"})
+WEIGHTED_CLASSES = frozenset({"WLS", "wls"})
 CONSTRUCTOR_KEYWORDS = ("cov_type", "cov_kwds", "robust")
 COVARIANCE_HELPERS = ("cov_hc0", "cov_hc1", "cov_hc2", "cov_hc3", "cov_cluster", "cov_white")
 ROBUST_INTENT = re.compile(
@@ -68,15 +69,26 @@ def _has_kwargs_splat(node: ast.Call) -> bool:
     return any(k.arg is None for k in node.keywords)
 
 
+def _weights_violations(node: ast.Call, name: str) -> list[str]:
+    if "weights" not in _keywords(node) or name in WEIGHTED_CLASSES:
+        return []
+    return [
+        f"line {node.lineno}: weights= passed to {name} is silently ignored by statsmodels, so "
+        "the fit is unweighted; for frequency weights fit sm.GLM(endog, exog, family=..., "
+        "freq_weights=w), for analytic weights sm.WLS(endog, exog, weights=w) or GLM var_weights"
+    ]
+
+
 def _constructor_violations(node: ast.Call, name: str) -> list[str]:
     bad = [k for k in CONSTRUCTOR_KEYWORDS if k in _keywords(node)]
     if not bad:
-        return []
+        return _weights_violations(node, name)
     names = ", ".join(f"{k}=" for k in bad)
     return [
         f"line {node.lineno}: {names} passed to the {name} constructor is silently ignored by "
         f"statsmodels, so the reported standard errors stay classical; pass the covariance "
-        f'option to the fit call instead, for example {name}(y, X).fit(cov_type="HC3")'
+        f'option to the fit call instead, for example {name}(y, X).fit(cov_type="HC3")',
+        *_weights_violations(node, name),
     ]
 
 

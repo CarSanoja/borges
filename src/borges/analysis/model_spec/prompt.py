@@ -34,8 +34,9 @@ covariates: the covariate step chooses it, and a literal copy would keep it in e
 - offset_log: optional column whose log is the offset (count families only). The offset column may \
 also be a covariate, never the exposure.
 - cov_type: "nonrobust", "HC0", "HC1", "HC2", "HC3" or "cluster" (the one the option names); \
-with "cluster" set `cluster` to the grouping \
-column.
+with "cluster" set `cluster` to the grouping column. "gee" is a GEE with an exchangeable working \
+correlation within `cluster` and robust standard errors (families ols, logit, poisson; report a \
+coefficient or a ratio).
 - standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin); \
 when the decision rule asks for a standardised coefficient, z-score the outcome, the exposure \
 and any moderator.
@@ -45,11 +46,12 @@ probability scale, the right report when the decision rule is a difference in pr
 
 Use exact column names from the list of available columns. Categorical covariates are \
 dummy-encoded automatically. Set supported to false for anything else: mixed or multilevel \
-models, GEE, t-tests, difference in proportions, bootstrap, nonparametric tests, weights, \
+models, t-tests, difference in proportions, bootstrap, nonparametric tests, weights, \
 splines, outcome transformations, fixed effects written as dummies of a column you cannot list, \
-or a model that reads ctx values other than the covariate list. Never refuse for any other \
-reason: translate the exposure the option names even if you would choose another (a validator \
-checks it against the estimand), and any available column, numeric or text, can be the cluster.
+or a model that reads ctx values other than the covariate list and the outcome. Never refuse \
+for any other reason: translate the exposure the option names even if you would choose another \
+(a validator checks it against the estimand), and any available column, numeric or text, can be \
+the cluster.
 
 Return only JSON matching the requested schema."""
 

@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from borges.analysis.model_spec.schema import RESERVED_COLUMNS, ModelSpecOutput
+from borges.analysis.model_spec.schema import (
+    GEE_FAMILIES,
+    GROUPED,
+    RESERVED_COLUMNS,
+    ModelSpecOutput,
+)
 from borges.analysis.model_spec.validate_exposure import (
     exposure_problems,
     is_text,
@@ -87,10 +92,14 @@ def _consistency_problems(spec: ModelSpecOutput) -> list[str]:
         problems.append(f"report {spec.report} is not available for family {spec.family}")
     if spec.report == "marginal_effect" and spec.moderator is not None:
         problems.append("marginal_effect is not available with a moderator")
-    if spec.cov_type == "cluster" and spec.cluster is None:
-        problems.append("cov_type cluster needs a cluster column")
-    if spec.cov_type != "cluster" and spec.cluster is not None:
+    if spec.cov_type in GROUPED and spec.cluster is None:
+        problems.append(f"cov_type {spec.cov_type} needs a cluster column")
+    if spec.cov_type not in GROUPED and spec.cluster is not None:
         problems.append("cluster is set but cov_type is not cluster")
+    if spec.cov_type == "gee" and spec.family not in GEE_FAMILIES:
+        problems.append("GEE is available for the ols, logit and poisson families only")
+    if spec.cov_type == "gee" and spec.report == "marginal_effect":
+        problems.append("GEE reports a coefficient or a ratio, not a marginal effect")
     if spec.offset_log is not None and spec.family not in COUNT_FAMILIES:
         problems.append("offset_log is only available for poisson, quasipoisson and negbin")
     return problems

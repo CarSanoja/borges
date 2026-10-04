@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.model_spec.render_design import design_term
-from borges.analysis.model_spec.schema import ModelSpecOutput
+from borges.analysis.model_spec.schema import GEE_FAMILIES, GROUPED, ModelSpecOutput
 
 
 def _fit_arguments(spec: ModelSpecOutput) -> str:
@@ -28,14 +28,28 @@ def _count_lines(spec: ModelSpecOutput, arguments: str) -> list[str]:
     ]
 
 
+def _gee_lines(spec: ModelSpecOutput) -> list[str]:
+    family = GEE_FAMILIES[str(spec.family)]
+    offset = ", offset=offset" if spec.offset_log is not None else ""
+    return [
+        "    model = sm.GEE(",
+        f"        endog, exog, groups=groups, family=sm.families.{family}(),",
+        f"        cov_struct=sm.cov_struct.Exchangeable(){offset}",
+        "    )",
+        "    fit = model.fit(maxiter=100)",
+    ]
+
+
 def fit_lines(spec: ModelSpecOutput) -> list[str]:
     arguments = _fit_arguments(spec)
     lines = []
     if spec.offset_log is not None:
         lines.append(f"    offset = np.log(data[{spec.offset_log!r}].astype(float))")
-    if spec.cov_type == "cluster":
+    if spec.cov_type in GROUPED:
         lines.append(f"    groups = pd.factorize(data[{spec.cluster!r}])[0]")
-    if spec.family == "ols":
+    if spec.cov_type == "gee":
+        lines += _gee_lines(spec)
+    elif spec.family == "ols":
         lines += ["    model = sm.OLS(endog, exog)", f"    fit = model.fit({arguments})"]
     elif spec.family == "logit":
         lines += ["    model = sm.Logit(endog, exog)", f"    fit = model.fit(disp=0, {arguments})"]
