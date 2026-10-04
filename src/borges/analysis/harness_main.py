@@ -179,7 +179,7 @@ __FINGERPRINT__
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
         out = _carry_group_attributes(df, out)
         _check_columns(seen["columns"], rows_before, out, kind)
-        _check_produces(out, ctx)
+        _check_produces(out, ctx, df)
         _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)
         out.to_parquet(state_df)

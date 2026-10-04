@@ -41,13 +41,20 @@ CHECKS_SOURCE = """
         merged.index = out.index
         return merged
 
-    def _check_produces(out, ctx):
+    def _one_level(name, frames):
+        base = name[:-2] if name.endswith("_*") else None
+        for frame in frames:
+            if base is not None and base in frame.columns:
+                return frame[base].nunique(dropna=True) <= 1
+        return False
+
+    def _check_produces(out, ctx, df):
         import fnmatch as _fnmatch
 
         present = list(map(str, out.columns)) + list(map(str, ctx))
         for name in __PRODUCES__:
             if any(char in name for char in "*?["):
-                found = bool(_fnmatch.filter(present, name))
+                found = bool(_fnmatch.filter(present, name)) or _one_level(name, (out, df))
             else:
                 found = name in out.columns or name in ctx
             if not found:
