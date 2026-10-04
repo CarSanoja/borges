@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from borges.analysis.models import AnalysisPlan, CodingSummary, DatasetProfile, Proposal
+from borges.analysis.models import AnalysisPlan, CodingSummary, DatasetProfile, Option, Proposal
 from borges.armor.audit import record_decision, record_report
 from borges.armor.option_guard import option_findings, poison_decision, poison_reason, screen_plan
 from borges.armor.profile_guard import guard_profile
@@ -72,18 +72,20 @@ class ArmorStage:
         await publish_plan(self.emitter, plan)
         return plan
 
+    async def _passes(
+        self, step_id: str, option: Option, origin: Literal["planner", "adversary"]
+    ) -> bool:
+        findings = option_findings(option)
+        if not findings:
+            return True
+        decision = poison_decision(f"{origin}:{step_id}.{option.id}", "drop", findings)
+        self.report.add(decision)
+        record_decision(decision)
+        await self._drop(step_id, option.id, origin, poison_reason(findings))
+        return False
+
     async def proposals(self, proposals: list[Proposal]) -> list[Proposal]:
-        kept: list[Proposal] = []
-        for proposal in proposals:
-            findings = option_findings(proposal.option)
-            if not findings:
-                kept.append(proposal)
-                continue
-            field = f"adversary:{proposal.step_id}.{proposal.option.id}"
-            decision = poison_decision(field, "drop", findings)
-            self.report.add(decision)
-            record_decision(decision)
-            await self._drop(
-                proposal.step_id, proposal.option.id, "adversary", poison_reason(findings)
-            )
-        return kept
+        return [p for p in proposals if await self._passes(p.step_id, p.option, "adversary")]
+
+    async def planner_options(self, step_id: str, options: list[Option]) -> list[Option]:
+        return [o for o in options if await self._passes(step_id, o, "planner")]

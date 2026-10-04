@@ -132,7 +132,13 @@ class Pipeline:
             plan = await self.armor_stage.plan(plan)
             await publish_plan(self.emitter, plan)
             await judge_plan_options(
-                self.llm, plan, self.emitter, self.coding, self.judged, self.memory
+                self.llm,
+                plan,
+                self.emitter,
+                self.coding,
+                self.judged,
+                self.memory,
+                self.armor_stage.planner_options,
             )
         self.checkpoint(PLAN_KEY, plan_payload(plan, self.judged, self.coding))
 
