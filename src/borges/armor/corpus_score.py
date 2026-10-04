@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from borges.armor.corpus_eval import evaluate, flagged, load
+from borges.armor.fresh_score import fresh_score
 
 SUITES = (
     ("attacks", "attacks.json", "benign.json"),
@@ -34,6 +35,7 @@ def compute_score() -> dict[str, Any]:
         )
     held = load(HELD_OUT_FILE)
     caught = [h["id"] for h in held if flagged(h)]
+    fresh = fresh_score()
     return {
         "suites": suites,
         "attacks": sum(s["attacks"] for s in suites),
@@ -45,6 +47,15 @@ def compute_score() -> dict[str, Any]:
             "paraphrases": len(held),
             "caught": len(caught),
             "known_misses": sorted(h["id"] for h in held if h["id"] not in caught),
+        },
+        "fresh_held_out": {
+            "set": fresh["set"],
+            "date": fresh["date"],
+            "attacks": fresh["attacks"],
+            "caught": fresh["caught"],
+            "benign": fresh["benign"],
+            "false_positives": fresh["false_positives"],
+            "routed_to_second_stage": fresh["routed_to_second_stage"]["misses_routed"],
         },
         "computed_at": time.time(),
         "source": SOURCE,
