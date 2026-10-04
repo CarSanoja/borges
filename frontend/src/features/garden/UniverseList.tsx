@@ -1,3 +1,4 @@
+import "./universeList.css";
 import type { AnalysisPlan, Universe } from "../../shared/types/contracts";
 import { universeAriaLabel } from "./labels";
 
@@ -13,7 +14,7 @@ function lowerFirst(text: string): string {
 
 export function UniverseList({ plan, universes, onSelect }: Props) {
   return (
-    <ul className="visually-hidden" aria-label="Universes">
+    <ul className="universe-list" aria-label="Universes">
       {universes.map((universe) => (
         <li key={universe.id}>
           <button type="button" onClick={() => onSelect(universe.id)}>

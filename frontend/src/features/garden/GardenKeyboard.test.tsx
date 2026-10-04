@@ -115,6 +115,8 @@ describe("Garden keyboard", () => {
     const list = screen.getByRole("list", { name: "Universes" });
     const buttons = within(list).getAllByRole("button");
     expect(buttons).toHaveLength(2);
+    expect(list).toHaveClass("universe-list");
+    expect(list).not.toHaveClass("visually-hidden");
     buttons[1]?.focus();
     await userEvent.keyboard("{Enter}");
     expect(onSelect).toHaveBeenCalledTimes(1);
