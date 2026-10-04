@@ -2,7 +2,8 @@
 
 Every run JSON in DIR is one `borges run --json` output named <case>-<i>.json. The report gives the
 completion rate with a Wilson interval, the verdicts and flip rate per case, adversary flips,
-failed universes, cost, self-corrections and every run that did not complete.
+failed universes, cost, self-corrections, every completed run that lost universes or left a
+decision out, and every run that did not complete.
 
 Usage: uv run python scripts/repeats_report.py DIR --commit SHA --date YYYY-MM-DD [--out FILE]
 """
@@ -15,6 +16,9 @@ import math
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
+
+LEFT_OUT = "was left out of the analysis"
+REPLACED = "failed its smoke run and was replaced by"
 
 
 def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
@@ -53,6 +57,8 @@ def load_run(path: Path) -> dict[str, Any]:
         "recoded": coding.get("options_recoded_by_output_check") or 0,
         "repaired": coding.get("repaired_after_smoke") or 0,
         "replanned": coding.get("replanned_steps") or 0,
+        "left_out": [c for c in report.get("caveats") or [] if LEFT_OUT in c],
+        "replaced": [c for c in report.get("caveats") or [] if REPLACED in c],
     }
 
 
@@ -78,6 +84,19 @@ def _case_row(label: str, runs: list[dict[str, Any]]) -> str:
         f"{steps or '—'} | "
         f"{sum(r['universes'] for r in done)} ({sum(r['failed'] for r in done)}) | ${mean:.3f} |"
     )
+
+
+def _partial(rows: dict[str, list[dict[str, Any]]]) -> list[str]:
+    lines = []
+    for label, batch in sorted(rows.items()):
+        for r in batch:
+            if r["status"] != "completed":
+                continue
+            notes = [f"{r['failed']} of {r['universes']} universes failed"] if r["failed"] else []
+            notes += [c[:240] for c in r["left_out"] + r["replaced"]]
+            if notes:
+                lines.append(f"- {label} `{r['run']}`: " + " ".join(notes))
+    return lines or ["None."]
 
 
 def render(rows: dict[str, list[dict[str, Any]]], commit: str, date: str) -> str:
@@ -112,6 +131,10 @@ def render(rows: dict[str, list[dict[str, Any]]], commit: str, date: str) -> str
         f"- options recoded because their output failed a check: {sum(r['recoded'] for r in done)}",
         f"- options repaired after the smoke stage: {sum(r['repaired'] for r in done)}",
         f"- steps re-planned after every option failed: {sum(r['replanned'] for r in done)}",
+        "",
+        "## Completed runs that lost part of the analysis",
+        "",
+        *_partial(rows),
         "",
         "## Runs that did not complete",
         "",
