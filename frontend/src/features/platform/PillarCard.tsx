@@ -1,4 +1,5 @@
 import { AppLink } from "../../shared/router";
+import { Denials } from "./Denials";
 import { factRows, isInternalPage, statusLabel } from "./platformFormat";
 import { corpusNote, provenanceBadges } from "./platformProvenance";
 import type { Pillar } from "./platformTypes";
@@ -35,6 +36,7 @@ export function PillarCard({ pillar }: { pillar: Pillar }) {
           {corpusNote(pillar)}
         </p>
       )}
+      {pillar.id === "identity" && <Denials facts={pillar.facts} />}
       <p className="platform-verify">
         <span className="platform-verify__label">How to verify</span>
         <code>{pillar.verify}</code>
