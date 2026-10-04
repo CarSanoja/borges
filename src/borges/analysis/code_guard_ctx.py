@@ -16,6 +16,10 @@ def _read_pattern(key: str) -> re.Pattern[str]:
     return re.compile(rf"""ctx\s*(?:\[\s*|\.get\(\s*)["']{key}["'](?!\s*\]\s*(?:=(?!=)|\+=))""")
 
 
+COLUMN_KEYS = frozenset({"covariates", "outcome"})
+CREATED = re.compile(r"""df\s*\[\s*["'](\w+)["']\s*\]\s*=(?!=)""")
+
+
 def _writes(text: str) -> dict[str, str]:
     return {key: " ".join(value.split()) for key, value in CTX_WRITE.findall(text)}
 
@@ -24,13 +28,43 @@ def _text(step: Step) -> list[str]:
     return [option.code or option.spec for option in step.options]
 
 
+def _names(value: str | None) -> list[str] | None:
+    if value is None:
+        return []
+    try:
+        parsed = ast.literal_eval(value.rstrip(")").strip())
+    except (ValueError, SyntaxError, MemoryError, RecursionError):
+        return None
+    items = [parsed] if isinstance(parsed, str) else parsed
+    if not isinstance(items, list | tuple) or not all(isinstance(i, str) for i in items):
+        return None
+    return list(items)
+
+
+def _names_columns(values: list[str | None], columns: set[str]) -> bool:
+    named = [_names(v) for v in values]
+    if any(n is None for n in named):
+        return False
+    flat = [c for n in named if n for c in n]
+    return bool(flat) and all(c in columns for c in flat)
+
+
+def _columns(plan: AnalysisPlan) -> set[str]:
+    created = {c for s in plan.steps for t in _text(s) for c in CREATED.findall(t)}
+    return {c.name for c in plan.dataset.columns} | created
+
+
 def varying_ctx_keys(plan: AnalysisPlan, step: Step) -> dict[str, str]:
     found: dict[str, str] = {}
     earlier = plan.steps[: next(i for i, s in enumerate(plan.steps) if s.id == step.id)]
+    columns = _columns(plan)
     for index, writer in enumerate(earlier):
         writes = [_writes(text) for text in _text(writer)]
         for key in set().union(*writes):
-            if len({w.get(key) for w in writes}) < 2:
+            values = [w.get(key) for w in writes]
+            if len(set(values)) < 2:
+                continue
+            if key not in COLUMN_KEYS and not _names_columns(values, columns):
                 continue
             reader = _read_pattern(key)
             later = [t for s in earlier[index + 1 :] for t in _text(s)]

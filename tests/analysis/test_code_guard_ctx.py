@@ -62,3 +62,25 @@ def test_code_that_reads_the_key_or_an_unadjusted_option_passes() -> None:
 def test_a_write_alone_does_not_count_as_a_read() -> None:
     code = "def estimate(df, ctx):\n    ctx['outcome'] = 'y'\n    return 1\n"
     assert ctx_read_violations(code, {"outcome": "O"}, "OLS")
+
+
+def test_a_key_whose_values_are_labels_not_columns_is_ignored() -> None:
+    labels = step(
+        "sk",
+        "Skin tone",
+        "transform",
+        "ctx['skin_tone'] = 'mean_0.5'",
+        "ctx['skin_tone'] = 'max_0.5'",
+    )
+    data = step("pc", "Norms", "transform", "ctx['cnorms'] = pc1.tolist()", "df['c'] = 1")
+    assert varying_ctx_keys(plan(labels, data, MODEL), MODEL) == {}
+
+
+def test_a_key_whose_values_name_columns_counts() -> None:
+    chosen = step(
+        "ex", "Exposure", "feature", "ctx['x_col'] = 'treatment'", "ctx['x_col'] = 'score'"
+    )
+    current = plan(chosen, MODEL)
+    current.dataset.columns[0].name = "treatment"
+    current.dataset.columns[1].name = "score"
+    assert varying_ctx_keys(current, MODEL) == {"x_col": "Exposure"}
