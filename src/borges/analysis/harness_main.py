@@ -7,6 +7,7 @@ from borges.analysis.harness_design import (
     DESIGN_WIDE_COLUMNS,
 )
 from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
+from borges.analysis.harness_domain import DOMAIN_SOURCE
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE, RESTORED_NOTE
 from borges.analysis.harness_fingerprint import FINGERPRINT_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
@@ -109,6 +110,8 @@ __NORMALISE__
 
 __SPLIT_HALF_CHECK__
 __CHECKS__
+
+__DOMAIN__
 __EFFECTS__
 __HINTS__
 __DESIGN__
@@ -174,7 +177,7 @@ __FINGERPRINT__
             return
         ctx_before = set(ctx)
         before = df.copy() if __SPLIT_HALF__ else None
-        out = apply(df, ctx)
+        out, finite_before, domain = _apply_watching_domain(df, ctx)
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
         out = _carry_group_attributes(df, out)
@@ -182,6 +185,7 @@ __FINGERPRINT__
         if restored:
             trace["note"] = (__RESTORED_NOTE__ + ", ".join(map(str, restored)))[:500]
         _check_columns(seen["columns"], rows_before, out, kind)
+        _check_domain(out, finite_before, domain)
         _check_produces(out, ctx, df)
         _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)
@@ -222,6 +226,7 @@ MAIN_TEMPLATE = (
     _TEMPLATE.replace("__NORMALISE__", NORMALISE_SOURCE.strip("\n"))
     .replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
+    .replace("__DOMAIN__", DOMAIN_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
     .replace(
