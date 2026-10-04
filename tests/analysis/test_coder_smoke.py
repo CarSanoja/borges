@@ -147,6 +147,23 @@ async def test_failing_default_promotes_a_smoked_sibling(tmp_path: Path) -> None
     assert recorder.status("keep")[0] == "failed"
 
 
+async def test_a_failing_alternative_is_named_in_the_notes(tmp_path: Path) -> None:
+    llm = FakeLLM(
+        responses(
+            **{
+                "coder:d1.trim": TRIM_RAISES,
+                "coder:d1.trim:smoke1": TRIM_RAISES,
+                "coder:d1.trim:smoke2": TRIM_RAISES,
+            }
+        )
+    )
+    cfg = config(tmp_path, Recorder())
+    coded = await code_plan(llm, make_plan(), smoke=cfg)
+    assert [o.id for o in coded.step("d1").options] == ["keep"]
+    [note] = [n for n in cfg.state.notes if "failed its smoke run and is not in" in n]
+    assert note.startswith("The option 'Label trim' of the step 'Outliers' failed its smoke run")
+
+
 async def test_a_data_step_with_no_runnable_option_is_left_out_and_reported(
     tmp_path: Path,
 ) -> None:

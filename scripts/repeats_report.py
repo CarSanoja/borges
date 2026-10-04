@@ -20,7 +20,8 @@ from typing import Any
 
 LOST = re.compile(
     r"left out of the analysis|stage failed and was skipped|"
-    r"failed its smoke run and was replaced by|was dropped: with it"
+    r"failed its smoke run and was replaced by|was dropped: with it|"
+    r"failed its smoke run and is not in the analysis"
 )
 
 

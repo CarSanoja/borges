@@ -18,10 +18,15 @@ from borges.analysis.smoke_replan import has_survivor
 from borges.analysis.smoke_review import review_step
 from borges.analysis.smoke_settle import Tools, settle
 from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
-from borges.analysis.smoke_upstream import probe_upstream
+from borges.analysis.smoke_upstream import _short, probe_upstream
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 from borges.telemetry.scopes import option_span
+
+FAILED_NOTE = (
+    "The option '{label}' of the step '{title}' failed its smoke run and is not in the analysis "
+    "({error})."
+)
 
 __all__ = ["SmokeConfig", "sample_rows", "smoke_plan"]
 
@@ -164,6 +169,11 @@ async def smoke_plan(
         replaced = step.default
         parent, promoted, cause = _apply(step, outcomes)
         config.state.outcomes[step.id] = [o for o in outcomes if o.status != "failed"]
+        config.state.notes.extend(
+            FAILED_NOTE.format(label=o.option.label, title=step.title, error=_short(o.error or ""))
+            for o in outcomes
+            if o.status == "failed" and o.option.id != replaced.id
+        )
         if promoted is not None:
             config.state.notes.append(
                 f"The default option {step.id}.{replaced.id} ({replaced.label}) failed its smoke "
