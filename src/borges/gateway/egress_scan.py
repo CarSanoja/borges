@@ -123,6 +123,11 @@ def _header_delimiter(line: str, columns: frozenset[str]) -> str | None:
     return None
 
 
+def _names_again(line: str, delimiter: str, columns: frozenset[str]) -> bool:
+    fields = {f.strip().strip("'\"[]() ") for f in line.split(delimiter)}
+    return len(fields & columns) >= min(MIN_DUMP_KEYS, len(columns))
+
+
 def delimited_dump_size(text: str, columns: frozenset[str]) -> int:
     if not columns:
         return 0
@@ -138,7 +143,7 @@ def delimited_dump_size(text: str, columns: frozenset[str]) -> int:
         while followers and not followers[0].strip():
             followers = followers[1:]
         for follower in followers:
-            if follower.count(delimiter) != width:
+            if follower.count(delimiter) != width or _names_again(follower, delimiter, columns):
                 break
             rows += 1
         best = max(best, rows)
