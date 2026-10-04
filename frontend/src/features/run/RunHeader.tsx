@@ -33,7 +33,7 @@ export function RunHeader({ snapshot, onHome, traceRunId = null, provenance = nu
         )}
         {resumed && <span className="chip chip--resumed">{resumed}</span>}
         {rule && <span className="chip chip--rule">{describeRule(rule)}</span>}
-        <span className={`chip chip--status chip--${snapshot.status}`} role="status">
+        <span className={`chip chip--status chip--${snapshot.status}`} role="status" aria-live="polite">
           <span className="chip__dot" aria-hidden="true" />
           {statusLabel(snapshot)}
         </span>
