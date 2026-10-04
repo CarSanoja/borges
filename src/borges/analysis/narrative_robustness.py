@@ -10,7 +10,7 @@ REVERSES = re.compile(
     r"\b(?:flipped|flips? (?:the|its) (?:verdict|conclusion)|revers\w*|overturn\w*)\b", re.I
 )
 AGREES = re.compile(r"\b(?:agree\w*|support\w*|consistent|robust\w*|same verdict)\b", re.I)
-METHOD = re.compile(r"\bbeam\b|\bagreement rate\b|\bexplored region\b", re.I)
+METHOD = re.compile(r"\bbeam\b|\bagreement rate\b|\bexplored region\b|\badversar", re.I)
 
 
 def robustness_sentence(report: Report) -> str | None:
@@ -65,6 +65,7 @@ def drop_inverted_sentences(report: Report, narrative: str) -> str:
 
 
 def kept_caveats(report: Report, caveats: list[str]) -> list[str]:
-    """The deterministic robustness sentence and caveats state the basis of the share; a narrator
-    caveat that describes the search method again, or inverts a share, is dropped."""
+    """The deterministic robustness sentence and caveats state the basis of the share and what the
+    adversary added; a narrator caveat that describes the search method or the adversary again, or
+    inverts a share, is dropped."""
     return [c for c in caveats if not METHOD.search(c) and not inverted_shares(report, c)]

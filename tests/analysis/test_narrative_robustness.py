@@ -57,6 +57,7 @@ def test_narrator_caveats_on_the_search_method_or_with_inverted_shares_are_dropp
         "The beam search sampled universes closest to flipping; the 100% agreement rate reflects "
         "the explored region, not the full grid.",
         "69% of the explored universes reversed the conclusion.",
+        "The adversary proposals that entered the garden all yielded the same verdict.",
         "Square-root transformation changes the outcome scale.",
     ]
     assert kept_caveats(report(), caveats) == [

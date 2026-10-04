@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisResult
+from borges.analysis.narrative_original import original_sentence
 from borges.analysis.narrative_robustness import robustness_sentence
 from borges.analysis.narrator import narrate
 from borges.analysis.schemas import NarratorOutput
@@ -25,10 +26,11 @@ async def test_narrate_returns_text_and_caveats() -> None:
         caveats=["old caveat"],
     )
     robust = robustness_sentence(report)
-    out = NarratorOutput(narrative=f"  Plain text. {robust}  ", caveats=["c1"])
+    first = original_sentence(report)
+    out = NarratorOutput(narrative=f"  {first} Plain text. {robust}  ", caveats=["c1"])
     llm = FakeLLM({"narrator": out})
     narrative, caveats = await narrate(llm, make_plan(), report)
-    assert narrative == f"Plain text. {robust}"
+    assert narrative == f"{first} Plain text. {robust}"
     assert caveats == ["c1"]
     call = llm.calls[0]
     assert call.role is Role.NARRATOR and call.key == "narrator" and call.max_tokens == 1200
@@ -42,10 +44,11 @@ SENTENCE = (
     'to "Exclude internal sessions".'
 )
 ROBUST = robustness_sentence(checkout_report())
+ORIGINAL = original_sentence(checkout_report())
 
 
 async def test_flip_sentence_is_requested_verbatim_and_a_faithful_narrative_is_kept() -> None:
-    good = f"The verdict is SHIP. {SENTENCE} {ROBUST}"
+    good = f"{ORIGINAL} {SENTENCE} {ROBUST}"
     llm = FakeLLM({"narrator": NarratorOutput(narrative=good, caveats=["c"])})
     narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == good and caveats == ["c"]
@@ -55,8 +58,8 @@ async def test_flip_sentence_is_requested_verbatim_and_a_faithful_narrative_is_k
 
 
 async def test_checkout_narrative_naming_the_wrong_option_is_retried() -> None:
-    wrong = "The verdict is SHIP. The flip comes from excluding internal and bot-like sessions."
-    fixed = f"The verdict is SHIP. {SENTENCE} {ROBUST}"
+    wrong = f"{ORIGINAL} The flip comes from excluding internal and bot-like sessions."
+    fixed = f"{ORIGINAL} {SENTENCE} {ROBUST}"
     llm = FakeLLM(
         {
             "narrator": NarratorOutput(narrative=wrong, caveats=["old"]),
@@ -71,7 +74,7 @@ async def test_checkout_narrative_naming_the_wrong_option_is_retried() -> None:
 
 
 async def test_missing_sentence_after_the_retry_is_inserted_as_second_sentence() -> None:
-    bad = f"The verdict is SHIP. {ROBUST}"
+    bad = f"{ORIGINAL} {ROBUST}"
     llm = FakeLLM(
         {
             "narrator": NarratorOutput(narrative=bad),
@@ -79,14 +82,14 @@ async def test_missing_sentence_after_the_retry_is_inserted_as_second_sentence()
         }
     )
     narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative == f"The verdict is SHIP. {SENTENCE} {ROBUST}"
+    assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
 
 
 async def test_failed_retry_falls_back_to_insertion() -> None:
-    bad = "The verdict is SHIP. It excludes internal and bot-like sessions."
+    bad = f"{ORIGINAL} It excludes internal and bot-like sessions."
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=["k"])})
     narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative == f"The verdict is SHIP. {SENTENCE} {ROBUST}"
+    assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
     assert caveats == ["k"]
     assert llm.keys() == ["narrator", "narrator:retry"]
 
@@ -94,22 +97,19 @@ async def test_failed_retry_falls_back_to_insertion() -> None:
 async def test_retry_that_repairs_only_the_label_still_gets_the_sentence() -> None:
     llm = FakeLLM(
         {
-            "narrator": NarratorOutput(narrative=f"First. Second. {ROBUST}"),
-            "narrator:retry": NarratorOutput(narrative=f"First. {SENTENCE} Second. {ROBUST}"),
+            "narrator": NarratorOutput(narrative=f"{ORIGINAL} Second. {ROBUST}"),
+            "narrator:retry": NarratorOutput(narrative=f"{ORIGINAL} {SENTENCE} Second. {ROBUST}"),
         }
     )
     narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative == f"First. {SENTENCE} Second. {ROBUST}"
+    assert narrative == f"{ORIGINAL} {SENTENCE} Second. {ROBUST}"
 
 
 async def test_fallback_removes_sentences_that_name_another_option_of_the_flipped_step() -> None:
-    bad = (
-        "The verdict is SHIP. The flip comes from excluding internal and bot-like sessions. "
-        f"{ROBUST}"
-    )
+    bad = f"{ORIGINAL} The flip comes from excluding internal and bot-like sessions. {ROBUST}"
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad)})
     narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative == f"The verdict is SHIP. {SENTENCE} {ROBUST}"
+    assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
     assert "bot-like" not in narrative
 
 

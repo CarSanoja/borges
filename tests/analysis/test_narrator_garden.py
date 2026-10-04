@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import Judgement
+from borges.analysis.narrative_original import original_sentence
 from borges.analysis.narrative_robustness import robustness_sentence
 from borges.analysis.narrator import narrate
 from borges.analysis.narrator_garden import (
@@ -77,7 +78,7 @@ def test_over_budget_digests_are_thinned_in_steps_and_never_lose_the_flips() -> 
 async def test_narrate_feeds_the_whole_garden_and_records_the_input_tokens() -> None:
     plan, garden, judged = fixtures()
     report = build_report(plan, garden, None)
-    text = f"Plain. {robustness_sentence(report)}"
+    text = f"{original_sentence(report)} Plain. {robustness_sentence(report)}"
     llm = FakeLLM({"narrator": NarratorOutput(narrative=text, caveats=[])})
     await narrate(llm, plan, report, garden, judged)
     content = llm.calls[0].messages[1]["content"]

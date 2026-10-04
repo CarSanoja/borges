@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
+from borges.analysis.narrative_original import original_sentence
 from borges.analysis.narrative_robustness import robustness_sentence
 from borges.analysis.prompts import compact_json, messages
 from borges.garden.models import Report
@@ -43,6 +44,11 @@ def build_messages(
     )
     if garden is not None:
         user += f"\nGarden: {compact_json(garden)}"
+    user += (
+        f"\nInclude this sentence verbatim as the first sentence of the summary: "
+        f"{original_sentence(report)} Every other number about the original analysis must match "
+        "it; the other universes are alternatives, never the original."
+    )
     if scale is not None:
         user += f"\nScale of the estimate: {scale} Describe every estimate on that scale."
     if flip_sentence is not None:
