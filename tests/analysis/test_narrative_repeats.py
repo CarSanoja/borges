@@ -47,3 +47,16 @@ def test_a_caveat_about_another_option_or_new_facts_is_kept() -> None:
     assert not restates_any(
         "Two universes failed because the column 'day' was missing.", deterministic
     )
+
+
+def test_a_figure_restated_inside_its_own_parenthesis_is_collapsed() -> None:
+    text = (
+        "The original analysis found a lift of 0.53 percentage points (0.53 percentage points "
+        "(95% CI 0.14 to 0.92, p = 0.008) and returned SHIP."
+    )
+    assert drop_repeated_sentences(text) == (
+        "The original analysis found a lift of 0.53 percentage points (95% CI 0.14 to 0.92, "
+        "p = 0.008) and returned SHIP."
+    )
+    plain = "An odds ratio of 1.33 (95% CI 1.13 to 1.56) for darker players (n = 124621)."
+    assert drop_repeated_sentences(plain) == plain

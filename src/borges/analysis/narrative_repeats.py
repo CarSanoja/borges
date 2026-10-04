@@ -10,6 +10,7 @@ OVERLAP = 0.5
 RESTATED = 0.6
 MIN_SHARED = 4
 QUOTED = re.compile(r"'([^']{3,})'")
+RESTATED_OPENING = re.compile(r"([^()]{1,60}) \(\1 \(")
 STOP = frozenset({"that", "this", "with", "from", "were", "have", "been", "they", "their", "which"})
 
 
@@ -32,6 +33,7 @@ def _repeats(sentence: str, earlier: str) -> bool:
 
 def drop_repeated_sentences(narrative: str) -> str:
     kept: list[str] = []
+    narrative = RESTATED_OPENING.sub(r"\1 (", narrative)
     for sentence in SENTENCE.split(narrative.strip()):
         if not any(_repeats(sentence, earlier) for earlier in kept):
             kept.append(sentence)
