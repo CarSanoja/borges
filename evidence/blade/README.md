@@ -14,13 +14,14 @@ See `src/borges/bench/README.md` for the method and its differences from BLADE.
 Both tables score 12 datasets with two arms: planner only, and planner plus adversary. The
 matcher is `nvidia/nemotron-3-super-120b-a12b`. Mean F1 over the 12 datasets in the `a5252e3`
 table, computed from `summary.json`: planner 0.468, adversary 0.480. The adversary is at or above
-the planner on 9 of 12 datasets.
+the planner on 9 of 12 datasets: 5 of those are exact ties, it is higher on 4 (two by 0.005 or
+less) and lower on 3.
 
 Read these numbers with the limits in mind:
 
 - There is one repeat per dataset. The two tables differ by as much as the arms do: affairs
   planner scores 0.55 in the `36b2f77` table and 0.31 in the `a5252e3` table. The arm difference
-  (0.012) is within noise.
+  (0.012) is smaller than that, and one repeat cannot show whether it is more than noise.
 - Transforms are matched semantically by the matcher, not by BLADE's data-value hashes.
 - BLADE's model-with-variables metric is not computed.
 - Coverage of models and transforms is low on several datasets, and one run per dataset does
@@ -45,9 +46,9 @@ sent makes the old replies `missing` for that kind.
 
 The 3 October run (commit `5cdcbe5`) is not in the repository. Seventeen of its 24 runs died on a
 network error (`Connection error`) and have no analyses. Of the seven that completed, the zeros
-were not measurements. Every `model` and `transform` reply in the cache was a bare `{}`, and so
-were the `cvar` replies of affairs and teachingratings, although the lists plainly contained
-matches (for example expert "negative binomial regression" against agent "negative binomial
+were not measurements. Of the 21 matcher replies of those seven runs, 18 were a bare `{}`: all
+14 `model` and `transform` replies and 4 `cvar` replies (affairs and teachingratings), although
+the lists plainly contained matches (for example expert "negative binomial regression" against agent "negative binomial
 regression"). The prompts for those kinds had no worked example, unlike BLADE's, and the matcher
 asked for json_object with thinking off. The parser also dropped key spellings such as "1-A1B1",
 "B1-A2" and "A3-A5-A6-B3". Both were fixed (`6c5217f`, `94fb417`) and the benchmark was run

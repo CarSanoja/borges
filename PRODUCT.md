@@ -282,7 +282,7 @@ often a model gets these right.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
 - **Status:** six cases ran live on Nemotron through Token Factory on 4 October 2026
-  (196 calls, $0.0225 to $0.0408 per case; `evidence/live-runs.md`), and each recorded
+  (195 calls, $0.0225 to $0.0408 per case; `evidence/live-runs.md`), and each recorded
   universe re-executes with `borges reproduce --source live`. The scripted replays remain as
   the offline path, hand-built and labelled as such. Still missing: a public URL, and any outside user.
 - **Enterprise fleet:** the same server reports seven controls (agent registry, runtime queue, memory bank,

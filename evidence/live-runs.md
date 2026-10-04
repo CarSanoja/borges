@@ -32,7 +32,11 @@ re-executes a recorded universe from scratch and must match the recording exactl
 | marp_religiosity | r_20261004T021652_9b9a83 | 23 (0) | 74,622 / 4,802 | $0.0225 | 10 (0) |
 | marp_norms | r_20261004T021841_a241e4 | 39 (0) | 131,782 / 9,665 | $0.0408 | 29 (0) |
 | bank_marketing_calls | r_20261004T022158_acad7c | 32 (0) | 63,783 / 7,797 | $0.0233 | 7 (0) |
-| hurricanes | r_20261004T023159_0d9d8d | 33 (0) | 59,226 / 5,578 | $0.0253 | 17 (0) |
+| hurricanes | r_20261004T023159_0d9d8d | 32 (0) | 59,226 / 5,578 | $0.0253 | 17 (0) |
+
+Calls are the `llm_calls` of each recording's last `usage` event. The hurricanes `spans.jsonl`
+has 33 `model_call` spans: one is a judge call with status `GatewayDenied` that the gateway
+refused, so no model was called and no tokens were counted.
 
 | Case | Original verdict | Smallest flip found | Reproduce |
 |---|---|---|---|
@@ -86,7 +90,8 @@ and `summary-36b2f77.md` (commit `36b2f77`, 22 of 24; both amtl runs failed, $0.
 Borges against the expert decisions of BLADE on 12 datasets, planner arm and adversary arm. Mean
 F1 over the 12 datasets, computed from `summary.json`: planner 0.468, adversary 0.480. There is
 one repeat per dataset, and the two tables differ by as much as the arms do (affairs planner 0.55
-in the first, 0.31 in the second). The arm difference is within noise. Transforms are matched
+in the `36b2f77` table, 0.31 in the `a5252e3` table). The arm difference is smaller than that,
+and one repeat cannot show whether it is more than noise. Transforms are matched
 semantically by the matcher, not by BLADE's data-value hashes, and BLADE's model-with-variables
 metric is not computed. See `evidence/blade/README.md`.
 
