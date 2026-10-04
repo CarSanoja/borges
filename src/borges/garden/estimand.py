@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 
 from borges.analysis.models import AnalysisPlan
@@ -17,6 +18,7 @@ def design_terms(universe: Universe) -> set[str] | None:
 
 
 UNNAMED = re.compile(r"x\d+")
+MIN_STEM = 4
 
 
 def _scale_name(scale: dict[str, object] | None, column: str) -> str:
@@ -40,7 +42,16 @@ def scale_detail(baseline: Universe, universe: Universe) -> str | None:
     )
 
 
-def estimand_detail(baseline: Universe, universe: Universe) -> str | None:
+def _renamed(added: list[str], removed: list[str], columns: set[str]) -> bool:
+    """One derived variable named differently by two options, not a change of covariates."""
+    if len(added) != 1 or len(removed) != 1 or {*added, *removed} & columns:
+        return False
+    return len(os.path.commonprefix([added[0].lower(), removed[0].lower()])) >= MIN_STEM
+
+
+def estimand_detail(
+    baseline: Universe, universe: Universe, columns: set[str] | None = None
+) -> str | None:
     scale = scale_detail(baseline, universe)
     if scale is not None:
         return scale
@@ -56,6 +67,8 @@ def estimand_detail(baseline: Universe, universe: Universe) -> str | None:
             "is an estimand change, not a re-analysis of the same quantity"
         )
     added, removed = sorted(after - before), sorted(before - after)
+    if columns is not None and _renamed(added, removed, columns):
+        return None
     parts = []
     if added:
         parts.append("adds " + ", ".join(added))
@@ -72,13 +85,14 @@ def estimand_changes(plan: AnalysisPlan, garden: Garden) -> list[EstimandChange]
     baseline = garden.baseline
     if baseline is None:
         return []
+    columns = {c.name for c in plan.dataset.columns}
     found: list[EstimandChange] = []
     for step in plan.decision_steps:
         for option in step.options:
             if option.id == step.default.id:
                 continue
             single = single_universe(garden, step.id, option.id)
-            detail = estimand_detail(baseline, single) if single is not None else None
+            detail = estimand_detail(baseline, single, columns) if single is not None else None
             if detail is not None:
                 found.append(
                     EstimandChange(

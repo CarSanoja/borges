@@ -39,7 +39,7 @@ def _build(plan: AnalysisPlan, garden: Garden, universe: Universe, changes: list
         baseline_verdict=baseline.verdict,
         flipped_verdict=universe.verdict,
         kind=flip_kind(plan.decision_rule, baseline.result, universe.result),
-        estimand_change=estimand_detail(baseline, universe),
+        estimand_change=estimand_detail(baseline, universe, {c.name for c in plan.dataset.columns}),
         contaminated=reason is not None,
         contamination_reason=reason,
     )
