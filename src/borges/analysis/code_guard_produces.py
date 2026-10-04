@@ -9,6 +9,10 @@ PRODUCING = frozenset({"transform", "feature"})
 GLOB = re.compile(r"[*?\[]")
 STAR = re.compile(r"(\w+?)_?\*")
 Products = dict[str, tuple[list[str], set[str], set[str]]]
+COUNT_OR_BINARY_FIT = re.compile(
+    r"\b(?:Poisson|NegativeBinomial\w*|GeneralizedPoisson|ZeroInflated\w*|Logit|Probit|Binomial)\b"
+)
+OUTCOME_READ = re.compile(r"""\b(?:endog|y)\s*=\s*\w+\[\s*["'](\w+)["']\s*\]""")
 
 
 def _mention(name: str) -> re.Pattern[str]:
@@ -69,6 +73,15 @@ def unused_products(plan: AnalysisPlan, step: Step) -> Products:
     return found
 
 
+def _raw_outcome(code: str, sources: set[str]) -> bool:
+    """A count or binary model needs the raw count or 0/1 column as its outcome, so reading the
+    column an earlier step transformed is not rebuilding the transform."""
+    if not COUNT_OR_BINARY_FIT.search(code):
+        return False
+    read = {source for source in sources if _mention(source).search(code)}
+    return bool(read) and read <= set(OUTCOME_READ.findall(code))
+
+
 def products_read_violations(code: str, products: Products) -> list[str]:
     """A model that rebuilds an earlier product from its raw columns is refused; a model that
     touches neither the product nor the columns it is built from simply does not use it."""
@@ -79,6 +92,8 @@ def products_read_violations(code: str, products: Products) -> list[str]:
         if any(ctx_read_pattern(key).search(code) for key in carriers):
             continue
         if sources and not any(_mention(source).search(code) for source in sources):
+            continue
+        if _raw_outcome(code, sources):
             continue
         listed = ", ".join(f"'{name}'" for name in names)
         problems.append(

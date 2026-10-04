@@ -116,3 +116,45 @@ def test_numbered_items_named_as_a_range_all_count_as_sources() -> None:
     assert products["Religiosity score"][2] == {"rel_1", "rel_2", "rel_3"}
     code = "def estimate(df, ctx):\n    score = df[['rel_2', 'rel_3']].mean(axis=1)\n"
     assert len(products_read_violations(code, products)) == 1
+
+
+DEATHS = step(
+    "t",
+    "Transform death outcome",
+    "transform",
+    "Create 'log_alldeaths' = np.log1p(alldeaths).",
+    "Create 'deaths_binary' = (alldeaths > 0).astype(int).",
+).model_copy(update={"produces": ["log_alldeaths", "deaths_binary"]})
+POISSON = """
+def estimate(df, ctx):
+    endog = data['alldeaths'].astype(float)
+    model = sm.GLM(endog, exog, family=sm.families.Poisson())
+"""
+OLS_ON_RAW = """
+def estimate(df, ctx):
+    endog = data['alldeaths'].astype(float)
+    model = sm.OLS(endog, exog)
+"""
+POISSON_REBUILDS_COVARIATE = """
+def estimate(df, ctx):
+    y = df['deaths']
+    x = np.log1p(df['alldeaths'])
+    model = sm.Poisson(y, x)
+"""
+
+
+def deaths_plan() -> AnalysisPlan:
+    base = plan(DEATHS, MODEL)
+    columns = [
+        *base.dataset.columns,
+        base.dataset.columns[1].model_copy(update={"name": "alldeaths"}),
+        base.dataset.columns[1].model_copy(update={"name": "deaths"}),
+    ]
+    return base.model_copy(update={"dataset": base.dataset.model_copy(update={"columns": columns})})
+
+
+def test_a_count_model_on_the_raw_outcome_is_not_rebuilding_its_transform() -> None:
+    products = unused_products(deaths_plan(), MODEL)
+    assert products_read_violations(POISSON, products) == []
+    assert len(products_read_violations(OLS_ON_RAW, products)) == 1
+    assert len(products_read_violations(POISSON_REBUILDS_COVARIATE, products)) == 1
