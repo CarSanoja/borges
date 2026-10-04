@@ -180,3 +180,22 @@
   font-size: var(--text-sm);
   color: var(--paper-300);
 }
+
+.platform-denials table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-xs);
+}
+
+.platform-denials th,
+.platform-denials td {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.platform-denials th {
+  color: var(--paper-500);
+  font-weight: 500;
+}

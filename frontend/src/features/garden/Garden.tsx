@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PointerEvent } from "react";
 import type { RunSnapshot } from "../../shared/types/contracts";
+import { statusLabel } from "../run/runLabels";
 import { GardenCanvas } from "./GardenCanvas";
 import { Legend } from "./Legend";
 import { Tooltip } from "./Tooltip";
+import { UniverseList } from "./UniverseList";
 import { resolveLabel } from "./labels";
 import { useElementSize } from "./useElementSize";
 import { useGardenModel } from "./useGardenModel";
@@ -63,12 +65,15 @@ export function Garden({ snapshot, selectedUniverseId = null, onSelectUniverse, 
   const onSelect = useCallback((id: string) => onSelectUniverse?.(id), [onSelectUniverse]);
 
   const planted = model.layout.nodes.length > 0;
+  const active = snapshot.status === "running" || snapshot.status === "queued";
   if (!planted && ambient) return <div className="garden garden--ambient" aria-hidden="true" />;
   if (!planted) {
     return (
       <div className="panel garden garden--empty" data-testid="garden-empty">
         <span className="eyebrow">Garden</span>
-        <p className="garden-empty-text">The garden has not been planted yet.</p>
+        <p className="garden-empty-text">
+          {active ? `${statusLabel(snapshot)}. The garden appears once the plan is ready.` : "The garden has not been planted yet."}
+        </p>
       </div>
     );
   }
@@ -98,6 +103,7 @@ export function Garden({ snapshot, selectedUniverseId = null, onSelectUniverse, 
           onSelect={onSelect}
         />
       </div>
+      {interactive && <UniverseList plan={plan} universes={Object.values(snapshot.garden.universes)} onSelect={onSelect} />}
       {interactive && <Legend />}
       {interactive && hover && hovered && (
         <Tooltip

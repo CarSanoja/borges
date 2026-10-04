@@ -36,4 +36,19 @@ describe("PlatformPage", () => {
     const memory = pillars.find((p) => p.id === "memory")!;
     expect(factRows(memory).map(([label]) => label)).not.toContain("tenants");
   });
+
+  it("lists the recent denials with rule, agent, reason and time", async () => {
+    const data = samplePlatform();
+    const identity = data.pillars.find((p) => p.id === "identity")!;
+    identity.facts.recent_denials = [
+      { seq: 7, ts: 1791058796, kind: "armor.screen", principal: "agent://coder", route: "/api/runs", reason: "prompt injection pattern" },
+    ];
+    respond(data);
+    render(<PlatformPage />);
+    const block = await screen.findByTestId("recent-denials");
+    expect(block).toHaveTextContent("armor.screen");
+    expect(block).toHaveTextContent("agent://coder");
+    expect(block).toHaveTextContent("prompt injection pattern");
+    expect(block).toHaveTextContent("2026-10-03 20:19:56 UTC");
+  });
 });

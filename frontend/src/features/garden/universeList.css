@@ -1,0 +1,43 @@
+.universe-list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.universe-list:focus-within {
+  left: var(--space-3);
+  bottom: var(--space-3);
+  width: min(22rem, calc(100% - 2 * var(--space-3)));
+  height: auto;
+  max-height: 40%;
+  overflow-y: auto;
+  clip: auto;
+  white-space: normal;
+  padding: var(--space-2);
+  background: var(--ink-800);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  z-index: 5;
+}
+
+.universe-list button {
+  display: block;
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: 0;
+  color: var(--paper-100);
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.universe-list button:focus-visible {
+  outline: 2px solid var(--gold);
+  background: var(--gold-soft);
+}

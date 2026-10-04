@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { KeyboardEvent, PointerEvent } from "react";
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { GardenLink } from "./GardenLink";
@@ -22,12 +21,11 @@ interface Props {
   onSelect: (id: string) => void;
 }
 
+const noopFocus = () => undefined;
+
 export function GardenCanvas({ snapshot, model, size, selectedUniverseId, interactive, showLabels, onHover, onLeave, onSelect }: Props) {
   const { plan } = snapshot;
   const leafIds = model.layout.nodes.filter((n) => model.leafUniverse.has(n.id)).map((n) => n.id);
-  const selectedLeaf = leafIds.find((id) => model.leafUniverse.get(id)?.id === selectedUniverseId);
-  const [focused, setFocused] = useState<string | null>(null);
-  const stopId = [focused, selectedLeaf].find((id) => id && leafIds.includes(id)) ?? leafIds[0] ?? null;
   const onKeyDown = (event: KeyboardEvent<SVGSVGElement>) => {
     const current = (event.target as Element).closest("[data-node-id]")?.getAttribute("data-node-id") ?? null;
     const index = current ? leafIds.indexOf(current) : -1;
@@ -45,7 +43,6 @@ export function GardenCanvas({ snapshot, model, size, selectedUniverseId, intera
     if (target === undefined) return;
     event.preventDefault();
     const id = leafIds[target] as string;
-    setFocused(id);
     event.currentTarget.querySelector<SVGGElement>(`[data-node-id="${id}"]`)?.focus();
   };
   const roleOf = new Map<string, LinkRole>(model.links.map((l) => [l.id, l.role]));
@@ -76,9 +73,9 @@ export function GardenCanvas({ snapshot, model, size, selectedUniverseId, intera
               universeId={universe?.id ?? null}
               ariaLabel={universe ? universeAriaLabel(plan, universe) : undefined}
               selected={universe !== undefined && universe.id === selectedUniverseId}
-              tabbable={node.id === stopId}
+              tabbable
               interactive={interactive}
-              onFocusNode={setFocused}
+              onFocusNode={noopFocus}
               onHover={onHover}
               onLeave={onLeave}
               onSelect={onSelect}

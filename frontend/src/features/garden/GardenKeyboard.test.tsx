@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type {
@@ -103,11 +103,23 @@ function leaves() {
 }
 
 describe("Garden keyboard", () => {
-  it("is one tab stop with a roving tabindex across the leaves", () => {
+  it("makes every universe node a tab stop", () => {
     render(<Garden snapshot={snapshot()} selectedUniverseId={null} onSelectUniverse={noop} />);
     const stops = leaves().filter((n) => n.getAttribute("tabindex") === "0");
-    expect(stops).toHaveLength(1);
-    expect(leaves()).toHaveLength(2);
+    expect(stops).toHaveLength(2);
+  });
+
+  it("lists every universe as a keyboard button that opens it", async () => {
+    const onSelect = vi.fn();
+    render(<Garden snapshot={snapshot()} selectedUniverseId={null} onSelectUniverse={onSelect} />);
+    const list = screen.getByRole("list", { name: "Universes" });
+    const buttons = within(list).getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+    expect(list).toHaveClass("universe-list");
+    expect(list).not.toHaveClass("visually-hidden");
+    buttons[1]?.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
   it("moves with the arrow keys, Home and End, and Enter opens the universe", async () => {
@@ -117,8 +129,6 @@ describe("Garden keyboard", () => {
     first.focus();
     await userEvent.keyboard("{ArrowRight}");
     expect(second).toHaveFocus();
-    expect(second).toHaveAttribute("tabindex", "0");
-    expect(first).toHaveAttribute("tabindex", "-1");
     await userEvent.keyboard("{ArrowRight}");
     expect(second).toHaveFocus();
     await userEvent.keyboard("{Home}");
@@ -129,12 +139,6 @@ describe("Garden keyboard", () => {
     expect(first).toHaveFocus();
     await userEvent.keyboard("{Enter}");
     expect(onSelect).toHaveBeenCalledWith(first.getAttribute("aria-label")?.startsWith("Baseline") ? "u0" : "u1");
-  });
-
-  it("makes the selected universe the tab stop", () => {
-    render(<Garden snapshot={snapshot()} selectedUniverseId="u1" onSelectUniverse={noop} />);
-    const stop = leaves().find((n) => n.getAttribute("tabindex") === "0");
-    expect(stop?.dataset.nodeId).toBe("c2");
   });
 });
 

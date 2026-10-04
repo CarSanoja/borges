@@ -156,9 +156,22 @@
   animation: vc-grow var(--dur-reveal) var(--ease-out) both;
 }
 
-.vc-robust__note {
-  font-size: var(--text-sm);
+.vc-robust__headline {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--paper-100);
+}
+
+.vc-robust__secondary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
   color: var(--paper-500);
+}
+
+.vc-robust__secondary p {
+  margin: 0;
 }
 
 
@@ -173,7 +186,3 @@
   font-weight: 600;
 }
 
-.vc-robust__value--unrated {
-  font-size: var(--text-sm);
-  color: var(--paper-300);
-}

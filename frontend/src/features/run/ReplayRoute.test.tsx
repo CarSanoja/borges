@@ -1,3 +1,4 @@
+import userEvent from "@testing-library/user-event";
 import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "../../shared/api/client";
@@ -69,6 +70,17 @@ describe("ReplayRoute", () => {
     await waitFor(() => expect(created).toHaveLength(1));
     expect(created[0]).toContain("/api/cases/checkout_ab/recording");
     expect(screen.queryByTestId("needs-live")).toBeNull();
+  });
+
+  it("shows the finished replay at once and animates only on request", async () => {
+    vi.mocked(client.getCase).mockResolvedValue(checkout);
+    render(<ReplayRoute caseId="checkout_ab" onHome={() => undefined} />);
+    await waitFor(() => expect(created).toHaveLength(1));
+    expect(created[0]).toContain("speed=100");
+    await userEvent.click(screen.getByRole("button", { name: "Replay the animation" }));
+    await waitFor(() => expect(created).toHaveLength(2));
+    expect(created[1]).toContain("speed=4");
+    expect(screen.queryByRole("button", { name: "Replay the animation" })).toBeNull();
   });
 
   it("shows not found for an unknown case without opening the stream", async () => {

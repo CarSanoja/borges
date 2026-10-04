@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import type { MouseEvent } from "react";
 import { Garden } from "../garden/Garden";
 import { InfluenceBars } from "../influence/InfluenceBars";
@@ -22,9 +23,10 @@ import "./skipLink.css";
 interface Props {
   source: RunSource;
   onHome: () => void;
+  replayControl?: ReactNode;
 }
 
-export function RunPage({ source, onHome }: Props) {
+export function RunPage({ source, onHome, replayControl = null }: Props) {
   const snapshot = useRun(source);
   const card = useCaseCard(source.kind === "replay" ? source.caseId : snapshot.case_id);
   const [selected, setSelected] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export function RunPage({ source, onHome }: Props) {
           hasScripted={card?.has_recording ?? true}
         />
       )}
+      {replayControl && <div className="run-replay-control">{replayControl}</div>}
       {snapshot.error && (
         <p className="run-error" role="alert">
           {snapshot.error}
@@ -92,7 +95,7 @@ export function RunPage({ source, onHome }: Props) {
           <InfluenceBars snapshot={snapshot} />
         </div>
       </section>
-      <RunCaveats caveats={snapshot.report?.caveats} />
+      <RunCaveats caveats={snapshot.report?.caveats} plan={snapshot.plan} />
       <RunMemory memory={snapshot.memory} />
       <footer className="run-footer">
         <AgentsUsed agents={snapshot.agents ?? snapshot.report?.agents} />

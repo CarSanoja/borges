@@ -19,7 +19,11 @@ function score(card: CaseCard): number {
   );
 }
 
+export const HERO_CASE_ID = "checkout_ab";
+
 export function pickHeadline(cases: readonly CaseCard[]): Headline | null {
+  const hero = cases.find((card) => card.id === HERO_CASE_ID && (card.live_recording || card.has_recording));
+  if (hero) return { card: hero, mechanics: !hero.live_recording };
   const live = cases.filter((card) => card.live_recording);
   const best = [...live].sort((a, b) => score(b) - score(a))[0];
   if (best) return { card: best, mechanics: false };

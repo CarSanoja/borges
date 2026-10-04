@@ -23,7 +23,7 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
 
   return (
     <div className="vc-face vc-face--front" aria-hidden={hidden} inert={hidden}>
-      {snapshot.report && <Robustness report={snapshot.report} range={effectRange(snapshot)} />}
+      {snapshot.report && <Robustness report={snapshot.report} range={effectRange(snapshot)} plan={snapshot.plan} />}
       <span className="eyebrow">The original verdict</span>
       <h2 className="vc-verdict vc-verdict--gold">{verdict}</h2>
       {result && <ResultStats result={result} tone="gold" threshold={rule?.threshold ?? 0} />}
