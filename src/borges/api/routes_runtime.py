@@ -5,6 +5,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from borges.api.runtime_wiring import require_runtime
+from borges.identity.client_address import client_address
 from borges.identity.deps import get_principal
 from borges.identity.principal import Principal
 from borges.runtime import audit
@@ -36,7 +37,7 @@ async def cancel_run(
     job = runtime.queue.get(run_id)
     if job is None:
         raise HTTPException(status_code=404, detail=f"Unknown run '{run_id}'.")
-    client = http.client.host if http.client else "unknown"
+    client = client_address(http, runtime.settings)
     if not runtime.authorized(job, principal, client):
         raise HTTPException(
             status_code=403, detail="Only the run's creator or an admin can cancel it."
