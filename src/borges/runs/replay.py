@@ -5,7 +5,9 @@ from collections.abc import AsyncIterator, Sequence
 
 from borges.runs.events import Event
 
-PREPARATION = frozenset({"option.coded", "option.smoke", "option.reviewed", "usage"})
+PREPARATION = frozenset(
+    {"option.coded", "option.smoke", "option.reviewed", "step.replanned", "usage"}
+)
 
 
 async def replay_events(

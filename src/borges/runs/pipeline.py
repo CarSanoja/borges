@@ -24,7 +24,7 @@ from borges.runs.emitter import RunEmitter
 from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
 from borges.runs.pipeline_armor import ArmorStage
-from borges.runs.pipeline_callbacks import coding_callbacks
+from borges.runs.pipeline_callbacks import coding_callbacks, replan_callback
 from borges.runs.pipeline_caveats import report_caveats
 from borges.runs.pipeline_data import load_dataframe
 from borges.runs.pipeline_finish import narrate_stage, verify_stage
@@ -142,6 +142,7 @@ class Pipeline:
             self.settings.borges_step_timeout_s,
             reviewer=llm_reviewer(self.llm, plan),
             on_review=on_review,
+            on_replan=replan_callback(self.emitter),
             result_check=scale_check(plan.decision_rule),
             result_scale=plan.result_scale,
         )

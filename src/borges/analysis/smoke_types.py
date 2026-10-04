@@ -15,7 +15,17 @@ OnSmoke = Callable[..., Awaitable[None]]
 OnReview = Callable[[str, str, bool, bool, str, str], Awaitable[None]]
 Repair = Callable[[Step, Option, str, int], Awaitable[tuple[str, str | None, str]]]
 Recode = Callable[[Step, Option, list[str]], Awaitable[tuple[str, str | None, str]]]
+OnReplan = Callable[[str, list[str], list[str]], Awaitable[None]]
 Check = Callable[[dict[str, Any] | None], str | None]
+
+
+@dataclass
+class Replanned:
+    options: list[Option]
+    errors: dict[str, str] = field(default_factory=dict)
+
+
+Replan = Callable[[Step, list["Outcome"]], Awaitable[Replanned | None]]
 
 
 @dataclass
@@ -50,6 +60,7 @@ class SmokeConfig:
     timeout_s: float = 60.0
     reviewer: Reviewer | None = None
     on_review: OnReview | None = None
+    on_replan: OnReplan | None = None
     result_check: Callable[[dict[str, Any]], str | None] | None = None
     result_scale: float = 1.0
     larger: LargerSample | None = None

@@ -26,15 +26,15 @@ def normalise_ids(out: PlannerOutput) -> PlannerOutput:
     for si, step in enumerate(out.steps, 1):
         opt_taken: set[str] = set()
         options = [
-            o.model_copy(update={"id": _unique(clean_id(o.id, f"option_{oi}"), opt_taken)})
+            o.model_copy(update={"id": unique_id(clean_id(o.id, f"option_{oi}"), opt_taken)})
             for oi, o in enumerate(step.options, 1)
         ]
-        step_id = _unique(clean_id(step.id, f"step_{si}"), step_taken)
+        step_id = unique_id(clean_id(step.id, f"step_{si}"), step_taken)
         steps.append(step.model_copy(update={"id": step_id, "options": options}))
     return out.model_copy(update={"steps": steps})
 
 
-def _unique(candidate: str, taken: set[str]) -> str:
+def unique_id(candidate: str, taken: set[str]) -> str:
     value, n = candidate, 2
     while value in taken:
         value = f"{candidate}_{n}"
@@ -52,7 +52,7 @@ def _build_step(planned: PlannedStep, step_id: str) -> Step:
         default_seen = default_seen or is_default
         options.append(
             Option(
-                id=_unique(item.id, taken),
+                id=unique_id(item.id, taken),
                 label=item.label,
                 rationale=item.rationale,
                 spec=item.spec,
@@ -115,7 +115,7 @@ async def plan_analysis(
     messages = build_messages(profile, question, rule)
     out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile)
     taken: set[str] = set()
-    steps = [_build_step(p, _unique(p.id, taken)) for p in _order_model_last(out.steps)]
+    steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(out.steps)]
     return AnalysisPlan(
         question=question,
         estimand=out.estimand,

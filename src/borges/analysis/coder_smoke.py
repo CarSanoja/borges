@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+from functools import partial
 
 import pyarrow.parquet as pq
 
@@ -11,8 +12,9 @@ from borges.analysis.smoke_core import execute, sample_rows, smoke_option
 from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
 from borges.analysis.smoke_recode import recode_failed_default
+from borges.analysis.smoke_replan import has_survivor, replan_outcomes
 from borges.analysis.smoke_review import review_step
-from borges.analysis.smoke_types import Outcome, Recode, Repair, SmokeConfig
+from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, SmokeConfig
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 from borges.telemetry.scopes import option_span
@@ -81,6 +83,22 @@ def _apply(step: Step, outcomes: list[Outcome]) -> tuple[Checkpoint, Option | No
     return survivors[step.default.id].checkpoint, None, ""
 
 
+async def _smoke_round(
+    config: SmokeConfig,
+    repair: Repair,
+    recode: Recode | None,
+    parent: Checkpoint,
+    step: Step,
+    semaphore: asyncio.Semaphore,
+    summary: CodingSummary | None,
+) -> list[Outcome]:
+    outcomes = await _smoke_step(config, repair, parent, step, semaphore)
+    _record(summary, outcomes)
+    outcomes = await recode_failed_default(config, repair, recode, parent, step, outcomes)
+    outcomes = await apply_orientation(config, repair, parent, step, outcomes, summary)
+    return await review_step(config, repair, parent, step, outcomes, summary)
+
+
 async def smoke_plan(
     config: SmokeConfig,
     plan: AnalysisPlan,
@@ -88,6 +106,7 @@ async def smoke_plan(
     summary: CodingSummary | None = None,
     concurrency: int = 6,
     recode: Recode | None = None,
+    replan: Replan | None = None,
 ) -> AnalysisPlan:
     smoked = plan.model_copy(deep=True)
     sample = sample_rows(config.data)
@@ -96,11 +115,10 @@ async def smoke_plan(
     config.larger = LargerSample(config, smoked.steps, sample_n, execute, LARGE_MAX_ROWS)
     semaphore = asyncio.Semaphore(concurrency)
     for step in smoked.steps:
-        outcomes = await _smoke_step(config, repair, parent, step, semaphore)
-        _record(summary, outcomes)
-        outcomes = await recode_failed_default(config, repair, recode, parent, step, outcomes)
-        outcomes = await apply_orientation(config, repair, parent, step, outcomes, summary)
-        outcomes = await review_step(config, repair, parent, step, outcomes, summary)
+        again = partial(_smoke_round, config, repair, recode, parent, step, semaphore, summary)
+        outcomes = await again()
+        if replan is not None and not has_survivor(outcomes):
+            outcomes = await replan_outcomes(config, replan, step, outcomes, again)
         config.state.parents[step.id] = parent
         live_default = effective_default(step, outcomes)
         if live_default is not None:

@@ -36,6 +36,10 @@ class PlannerOutput(BaseModel):
     steps: list[PlannedStep] = Field(min_length=1)
 
 
+class ReplanOutput(BaseModel):
+    options: list[PlannedOption] = Field(min_length=1)
+
+
 class CoderOutput(BaseModel):
     code: str
 

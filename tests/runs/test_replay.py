@@ -57,3 +57,13 @@ async def test_preparation_events_are_compressed(sleeps: list[float]) -> None:
     ]
     _ = [e async for e in replay_events(stream, speed=4.0)]
     assert sleeps == [0.15, 0.15, 1.5]
+
+
+async def test_step_replanned_is_a_preparation_event(sleeps: list[float]) -> None:
+    stream = [
+        Event(seq=1, ts=0.0, run_id="r", type="option.smoke"),
+        Event(seq=2, ts=8.0, run_id="r", type="step.replanned"),
+        Event(seq=3, ts=16.0, run_id="r", type="universe.finished"),
+    ]
+    _ = [e async for e in replay_events(stream, speed=4.0)]
+    assert sleeps == [0.15, 1.5]

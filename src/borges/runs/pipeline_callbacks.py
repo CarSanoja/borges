@@ -3,11 +3,17 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 
 from borges.runs.emitter import RunEmitter
-from borges.runs.events import OptionCodedData, OptionReviewedData, OptionSmokeData
+from borges.runs.events import (
+    OptionCodedData,
+    OptionReviewedData,
+    OptionSmokeData,
+    StepReplannedData,
+)
 
 OnCoded = Callable[[str, str, bool, int, str | None, list[str] | None], Awaitable[None]]
 OnSmoke = Callable[..., Awaitable[None]]
 OnReview = Callable[[str, str, bool, bool, str, str], Awaitable[None]]
+OnReplan = Callable[[str, list[str], list[str]], Awaitable[None]]
 
 
 def coding_callbacks(emitter: RunEmitter) -> tuple[OnCoded, OnSmoke, OnReview]:
@@ -71,3 +77,11 @@ def coding_callbacks(emitter: RunEmitter) -> tuple[OnCoded, OnSmoke, OnReview]:
         await emitter.emit("option.reviewed", payload.model_dump(mode="json"))
 
     return on_coded, on_smoke, on_review
+
+
+def replan_callback(emitter: RunEmitter) -> OnReplan:
+    async def on_replan(step_id: str, failed: list[str], new: list[str]) -> None:
+        payload = StepReplannedData(step_id=step_id, failed_option_ids=failed, new_option_ids=new)
+        await emitter.emit("step.replanned", payload.model_dump(mode="json"))
+
+    return on_replan

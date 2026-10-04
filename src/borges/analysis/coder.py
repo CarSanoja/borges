@@ -7,6 +7,7 @@ from borges.analysis.code_guard import check_code
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_recode import fresh_recode
+from borges.analysis.coder_replan import make_replan
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
 from borges.analysis.model_spec.request import join_notes, request_template, template_family
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
@@ -163,7 +164,8 @@ async def code_plan(
     async def recode(step: Step, option: Option, errors: list[str]) -> tuple[str, str | None, str]:
         return await fresh_recode(llm, coded, step, option, errors)
 
-    return await smoke_plan(smoke, coded, repair, summary, concurrency, recode)
+    replan = make_replan(llm, coded, generate_checked, on_coded, summary)
+    return await smoke_plan(smoke, coded, repair, summary, concurrency, recode, replan)
 
 
 async def _promote_sibling(

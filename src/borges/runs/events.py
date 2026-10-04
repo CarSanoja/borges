@@ -15,6 +15,7 @@ EventType = Literal[
     "option.coded",
     "option.smoke",
     "option.reviewed",
+    "step.replanned",
     "option.proposed",
     "option.judged",
     "memory.used",
@@ -96,6 +97,12 @@ class OptionReviewedData(BaseModel):
     changes_estimand: bool
     problem: str = ""
     model: str = ""
+
+
+class StepReplannedData(BaseModel):
+    step_id: str
+    failed_option_ids: list[str]
+    new_option_ids: list[str]
 
 
 class OptionJudgedData(BaseModel):

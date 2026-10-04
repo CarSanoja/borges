@@ -240,3 +240,10 @@ def test_a_cancelled_run_ends_cancelled() -> None:
         ]
     )
     assert snapshot.status == "cancelled" and snapshot.error is None
+
+
+def test_a_step_replanned_event_is_tolerated_by_the_fold() -> None:
+    replanned = {"step_id": "s1", "failed_option_ids": ["a"], "new_option_ids": ["b"]}
+    events = [evt(1, "plan.ready", plan_data()), evt(2, "step.replanned", replanned)]
+    snapshot = fold(events)
+    assert snapshot.last_seq == 2 and snapshot.plan is not None and snapshot.status == "running"
