@@ -6,7 +6,7 @@ from borges.analysis.code_guard_ctx import varying_ctx_keys
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
-from borges.analysis.model_spec.derived_exposure import derived_exposure
+from borges.analysis.model_spec.normalise import normalise_spec
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
@@ -104,7 +104,7 @@ async def request_template(
     spec = await _ask(llm, messages, key, models, skipped)
     if spec is None:
         return None
-    spec = derived_exposure(spec, option.spec, available, plan.dataset)
+    spec = normalise_spec(spec, option.spec, available, plan.dataset)
     problems = _problems(plan, step, option, spec)
     if problems:
         _skip(skipped, "; ".join(problems))
@@ -113,7 +113,7 @@ async def request_template(
         retry = [*messages, *correction(spec, problems)]
         spec = await _ask(llm, retry, f"{key}:retry", models, None)
         if spec is not None:
-            spec = derived_exposure(spec, option.spec, available, plan.dataset)
+            spec = normalise_spec(spec, option.spec, available, plan.dataset)
         if spec is None or _problems(plan, step, option, spec):
             return None
         if skipped:
