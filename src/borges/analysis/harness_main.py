@@ -11,6 +11,7 @@ from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
+from borges.analysis.model_spec.render_design import ALIAS_NOTE
 
 _TEMPLATE = """
 
@@ -147,13 +148,16 @@ __FINGERPRINT__
             raw_result = estimate(df, ctx)
             if isinstance(raw_result, dict) and isinstance(raw_result.get("note"), str):
                 trace["note"] = raw_result["note"][:500]
-            design = _design_payload(list(map(str, df.columns)))
+            design = _design_payload(list(map(str, df.columns)), seen.get("ctx_lists", []))
             if design is not None:
                 trace["design"] = design
                 if __DESIGN_CHECK__ and design["deficient"]:
                     raise ValueError(_design_error(design))
                 if __DESIGN_CHECK__ and design["no_intercept"]:
                     raise ValueError(_intercept_error(design))
+                if design["aliased"]:
+                    alias = __ALIAS_NOTE__ + ", ".join(design["aliased"])
+                    trace["note"] = (alias + "; " + trace["note"] if trace["note"] else alias)[:500]
             result = _validate(raw_result)
             if __SPLIT_HALF__:
                 _check_split_half(df, ctx, result)
@@ -213,5 +217,6 @@ MAIN_TEMPLATE = (
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
+    .replace("__ALIAS_NOTE__", repr(ALIAS_NOTE))
     .replace("__DESIGN_WIDE_COLUMNS__", repr(DESIGN_WIDE_COLUMNS))
 )

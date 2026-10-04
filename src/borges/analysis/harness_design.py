@@ -46,7 +46,31 @@ DESIGN_SOURCE = """
                 best = col
         return best or name
 
-    def _design_payload(frame_columns):
+    def _alias_split(x, names, scaled, rank, frame_columns, allowed):
+        if rank >= x.shape[1]:
+            return [], False
+        _, sv_all, vt = _np.linalg.svd(scaled, full_matrices=False)
+        null = vt[sv_all <= sv_all.max() * max(scaled.shape) * _np.finfo(float).eps]
+        involved = [str(names[i]) for i in range(x.shape[1]) if _np.abs(null[:, i]).max() > 1e-6]
+        free = all(
+            n.lower() in ("const", "intercept") or _term_of(n, frame_columns) in allowed
+            for n in involved
+        )
+        basis = _np.zeros((x.shape[0], 0))
+        dropped = []
+        for i in range(x.shape[1]):
+            residual = scaled[:, i]
+            for _ in range(2):
+                residual = residual - basis @ (basis.T @ residual)
+            size = float(_np.linalg.norm(residual))
+            if size >= 1e-7:
+                basis = _np.column_stack([basis, residual / size])
+            else:
+                dropped.append(str(names[i]))
+        return dropped, bool(involved) and free and len(dropped) == x.shape[1] - rank
+
+    def _design_payload(frame_columns, allowed=()):
+        allowed = set(map(str, allowed))
         models = []
         for model_name, exog, names in _designs:
             try:
@@ -67,6 +91,8 @@ DESIGN_SOURCE = """
             ones = _np.ones(x.shape[0])
             fitted = x @ _np.linalg.lstsq(x, ones, rcond=None)[0]
             intercept = bool(_np.linalg.norm(fitted - ones) < 1e-6 * _math.sqrt(x.shape[0]))
+            aliased, aliased_only = _alias_split(x, names, scaled, rank, frame_columns, allowed)
+            aliased_only = aliased_only and not dead
             terms = sorted(
                 {
                     _term_of(str(n), frame_columns)
@@ -81,8 +107,11 @@ DESIGN_SOURCE = """
                     "rank": rank,
                     "condition": None if not _math.isfinite(cond) else cond,
                     "deficient": bool(
-                        rank < x.shape[1] or dead or cond > __DESIGN_CONDITION_LIMIT__
+                        (rank < x.shape[1] and not aliased_only)
+                        or dead
+                        or (cond > __DESIGN_CONDITION_LIMIT__ and not aliased_only)
                     ),
+                    "aliased": aliased if aliased_only else [],
                     "dead": dead,
                     "intercept": intercept,
                     "terms": terms,
@@ -94,8 +123,10 @@ DESIGN_SOURCE = """
         bad = next((m for m in models if m["deficient"]), None)
         main = bad or models[-1]
         no_intercept = next((m["model"] for m in models if not m["intercept"]), None)
+        aliased = sorted({n for m in models for n in m["aliased"]})
         return {
             **main,
+            "aliased": aliased,
             "n_models": len(models),
             "deficient": bad is not None,
             "no_intercept": no_intercept,

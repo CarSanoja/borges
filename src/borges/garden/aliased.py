@@ -12,7 +12,7 @@ def aliased_covariates(garden: Garden) -> tuple[int, list[str]]:
             name
             for trace in universe.traces
             if trace.note.startswith(ALIAS_NOTE)
-            for name in trace.note[len(ALIAS_NOTE) :].split(", ")
+            for name in trace.note[len(ALIAS_NOTE) :].split(";")[0].split(", ")
             if name
         ]
         if dropped:
