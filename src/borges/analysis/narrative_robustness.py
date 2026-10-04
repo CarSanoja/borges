@@ -77,3 +77,21 @@ def kept_caveats(report: Report, caveats: list[str]) -> list[str]:
         and not inverted_shares(report, c)
         and not (no_flip and REEXECUTION.search(c))
     ]
+
+
+BEAM = re.compile(r"\bbeam\b", re.IGNORECASE)
+
+
+def drop_method_sentences(report: Report, narrative: str) -> str:
+    """Sentences on how robustness was searched, and another robustness headline, are dropped:
+    the robustness sentence and the caveats state both. A bank summary repeated the robustness
+    headline and the beam-search caveat (4323c97); three of the 35 cecf187 summaries described the
+    beam search, one as the search over the grid, which it is not."""
+    robust = robustness_sentence(report)
+    exact = " ".join(robust.split()) if robust else None
+
+    def method(sentence: str) -> bool:
+        other = sentence.startswith("Robustness") and " ".join(sentence.split()) != exact
+        return bool(BEAM.search(sentence)) or other
+
+    return " ".join(s for s in SENTENCE_END.split(narrative.strip()) if not method(s))

@@ -3,6 +3,7 @@ from __future__ import annotations
 from borges.analysis.models import AnalysisResult
 from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
+    drop_method_sentences,
     kept_caveats,
     robustness_problems,
     robustness_sentence,
@@ -69,3 +70,13 @@ def test_a_caveat_about_re_execution_is_dropped_when_no_flip_was_found() -> None
     caveats = ["No independent re-execution was performed because no flip was found.", "Kept."]
     assert report().minimal_flip is None
     assert kept_caveats(report(), caveats) == ["Kept."]
+
+
+def test_method_talk_and_another_robustness_headline_are_dropped() -> None:
+    sentence = robustness_sentence(report())
+    text = (
+        "The estimate held. Robustness: 100% of the analysis grid agrees (uniform random sample of "
+        "the grid: 12 draws). The beam search samples the universes closest to flipping. "
+        f"{sentence}"
+    )
+    assert drop_method_sentences(report(), text) == f"The estimate held. {sentence}"
