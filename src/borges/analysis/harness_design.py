@@ -11,6 +11,7 @@ from __future__ import annotations
 
 DESIGN_CONDITION_LIMIT = 1e10
 DESIGN_MAX_ROWS = 200000
+DESIGN_WIDE_COLUMNS = 500
 
 DESIGN_SOURCE = """
     _designs = []
@@ -100,11 +101,19 @@ DESIGN_SOURCE = """
             )
         else:
             detail = "condition number " + format(cond, ".3g") + " above __DESIGN_CONDITION_LIMIT__"
+        wide = ""
+        if design["columns"] > __DESIGN_WIDE_COLUMNS__:
+            wide = (
+                " The design has " + str(design["columns"]) + " columns: a categorical with"
+                + " hundreds of levels (an identifier such as a player, referee, user or country)"
+                + " must not be dummy-coded; cluster the errors on it or aggregate to that unit."
+            )
         return (
             "the model's design matrix is rank-deficient or collinear (" + detail
             + "): collinear columns are redundant and make the standard errors meaningless;"
             + " typical cause: dummy columns for every level of a categorical plus an intercept"
             + " (use pd.get_dummies(..., drop_first=True, dtype=float) or drop the constant)."
+            + wide
             + " Columns: " + repr(design["names"][:20])
         )
 """

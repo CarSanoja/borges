@@ -4,6 +4,7 @@ from borges.analysis.harness_design import (
     DESIGN_CONDITION_LIMIT,
     DESIGN_MAX_ROWS,
     DESIGN_SOURCE,
+    DESIGN_WIDE_COLUMNS,
     FINGERPRINT_SOURCE,
 )
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE
@@ -208,4 +209,5 @@ MAIN_TEMPLATE = (
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
+    .replace("__DESIGN_WIDE_COLUMNS__", repr(DESIGN_WIDE_COLUMNS))
 )

@@ -12,7 +12,20 @@ from borges.analysis.models import (
 )
 from tests.analysis.model_spec.data import make_spec
 
-AVAILABLE = ["x", "m", "a", "cat", "g", "games", "y_cont", "y_bin", "y_count", "flag"]
+AVAILABLE = [
+    "x",
+    "m",
+    "a",
+    "cat",
+    "g",
+    "games",
+    "y_cont",
+    "y_bin",
+    "y_count",
+    "flag",
+    "player",
+    "country",
+]
 
 
 def column(name: str, dtype: str, unique: int, **summary: float) -> ColumnProfile:
@@ -32,6 +45,8 @@ PROFILE = DatasetProfile(
         column("y_neg", "float64", 20, min=-1.0, max=11.0),
         column("y_many", "float64", 50, min=0.0, max=1.0),
         column("cat", "object", 3),
+        column("player", "object", 1577),
+        column("country", "object", 50),
         column("games", "int64", 20, min=1.0, max=30.0),
     ],
 )
@@ -113,3 +128,24 @@ def test_decision_rule_scale() -> None:
 def test_without_a_profile_only_structure_is_checked() -> None:
     spec = make_spec("logit", outcome="y_cont")
     assert validate_spec(spec, AVAILABLE) == []
+
+
+def test_identifier_with_hundreds_of_levels_is_not_a_fixed_effect() -> None:
+    found = problems(make_spec("ols", covariates=["a", "player"]))
+    assert found == [
+        "player has 1577 levels: use it as the cluster column, not as dummy fixed effects"
+    ]
+
+
+def test_the_level_limit_is_fifty_and_numeric_columns_are_exempt() -> None:
+    assert problems(make_spec("ols", covariates=["country", "games"])) == []
+    assert problems(make_spec("ols", cov_type="cluster", cluster="player")) == []
+
+
+def test_ctx_covariates_count_only_when_the_spec_reads_the_ctx_list() -> None:
+    literal = make_spec("ols", covariates=["a"])
+    from_ctx = make_spec("ols", covariates=["a"], covariates_from_ctx=True)
+    args = (AVAILABLE, PROFILE, None)
+    assert validate_spec(literal, *args, ["player"]) == []
+    found = validate_spec(from_ctx, *args, ["player"])
+    assert len(found) == 1 and found[0].startswith("player has 1577 levels")

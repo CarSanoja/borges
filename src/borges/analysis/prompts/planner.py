@@ -59,6 +59,10 @@ and every option of that step aggregates to the same unit.
 interval by 100; Borges converts units itself.
 - Never add a step whose only job is dummy or one-hot encoding of categorical columns: the \
 model step encodes them itself with drop_first=True.
+- Identifiers with hundreds of levels (players, referees, users, countries when there are \
+many) are never dummy fixed effects: a design with that many dummy columns is rank-deficient and \
+cannot be fitted. Cluster the standard errors on them or aggregate to that unit instead. The \
+profile gives n_unique for every column; check it before naming a categorical covariate.
 - Covariate sets are options of the model step: each model option names the covariates it \
 adjusts for. Never create a separate step that chooses covariates by dropping columns.
 - When the question is a regression-style association (does X relate to Y, the effect of X on \

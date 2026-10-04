@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from borges.analysis.code_guard import check_code
 from borges.analysis.code_guard_statsmodels import option_intent
+from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
 from borges.analysis.model_spec.prompt import build_spec_messages
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
@@ -67,7 +68,9 @@ async def request_template(
     if models is not None:
         models.append(response.usage.model)
     rule = plan.decision_rule
-    problems = validate_spec(spec, _available_columns(plan, step), plan.dataset, rule)
+    available = _available_columns(plan, step)
+    ctx_names = ctx_covariate_names(plan, step, available) if spec.covariates_from_ctx else []
+    problems = validate_spec(spec, available, plan.dataset, rule, ctx_names)
     if problems:
         _skip(skipped, "; ".join(problems))
         return None

@@ -226,3 +226,8 @@ def test_judge_rejects_no_op_alternatives_against_the_conventional_spec() -> Non
     text = " ".join(JUDGE_SYSTEM.split())
     assert "would reproduce the conventional option's result on these data is a no-op" in text
     assert 'accepted=false with reason "equivalent to the conventional option"' in text
+
+
+def test_planner_forbids_dummy_fixed_effects_for_identifiers_with_many_levels() -> None:
+    assert "never dummy fixed effects" in PLANNER_SYSTEM
+    assert "Cluster the standard errors on them or aggregate to that unit" in PLANNER_SYSTEM

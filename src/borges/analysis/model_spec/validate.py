@@ -7,6 +7,7 @@ from borges.analysis.scale_check import is_ratio_rule
 
 TEXT_DTYPES = ("object", "str", "string", "category")
 COUNT_FAMILIES = ("poisson", "negbin")
+MAX_FIXED_EFFECT_LEVELS = 50
 RATIO_REPORTS = {"logit": "odds_ratio", "poisson": "rate_ratio", "negbin": "rate_ratio"}
 
 
@@ -118,6 +119,23 @@ def _numeric_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> 
     ]
 
 
+def _level_problems(
+    spec: ModelSpecOutput, profile: DatasetProfile | None, ctx_covariates: list[str]
+) -> list[str]:
+    names = list(spec.covariates)
+    if spec.covariates_from_ctx:
+        names += ctx_covariates
+    problems = []
+    for name in dict.fromkeys(names):
+        column = _profile_of(profile, name)
+        if _is_text(column) and column is not None and column.n_unique > MAX_FIXED_EFFECT_LEVELS:
+            problems.append(
+                f"{name} has {column.n_unique} levels: use it as the cluster column, "
+                "not as dummy fixed effects"
+            )
+    return problems
+
+
 def _scale_problems(spec: ModelSpecOutput, rule: DecisionRule | None) -> list[str]:
     if rule is None:
         return []
@@ -136,6 +154,7 @@ def validate_spec(
     available: list[str],
     profile: DatasetProfile | None = None,
     rule: DecisionRule | None = None,
+    ctx_covariates: list[str] | None = None,
 ) -> list[str]:
     if not spec.supported:
         return [f"the spec is marked unsupported: {spec.reason}"]
@@ -148,5 +167,6 @@ def validate_spec(
         *_consistency_problems(spec),
         *_outcome_problems(spec, profile),
         *_numeric_problems(spec, profile),
+        *_level_problems(spec, profile, ctx_covariates or []),
         *_scale_problems(spec, rule),
     ]

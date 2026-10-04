@@ -132,3 +132,36 @@ def test_filter_steps_carry_a_data_fingerprint(workdir: Path) -> None:
         prints.append(traces[0].fingerprint)
         (workdir / "state" / "df.parquet").unlink()
     assert prints[0] is not None and prints[0] == prints[1] != prints[2]
+
+
+WIDE = (
+    HEADER
+    + """
+    dummies = pd.get_dummies(df["player"], prefix="player", dtype=float)
+    x = pd.concat([df[["x"]], dummies], axis=1)
+    fit = sm.OLS(df["y"], sm.add_constant(x)).fit()
+    return {"estimate": 0.0, "ci_low": -1.0, "ci_high": 1.0, "p_value": 0.5, "n": int(fit.nobs)}
+"""
+)
+
+
+def test_a_design_of_hundreds_of_columns_names_the_identifier_cause(workdir: Path) -> None:
+    rng = np.random.default_rng(1)
+    rows = 1400
+    frame = pd.DataFrame(
+        {
+            "x": rng.normal(size=rows),
+            "y": rng.normal(size=rows),
+            "player": [f"p{i % 700}" for i in range(rows)],
+        }
+    )
+    frame.to_parquet(workdir / "data.parquet")
+    done = run_model(workdir, WIDE)
+    error = parse_error(done.stdout) or ""
+    assert done.returncode == 1 and "702 columns" in error
+    assert "cluster the errors on it or aggregate to that unit" in error
+
+
+def test_a_narrow_deficient_design_does_not_carry_the_identifier_hint(workdir: Path) -> None:
+    error = parse_error(run_model(workdir, COLLINEAR).stdout) or ""
+    assert "rank-deficient or collinear" in error and "hundreds of levels" not in error
