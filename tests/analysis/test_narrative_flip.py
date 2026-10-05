@@ -118,3 +118,22 @@ def test_only_a_sentence_about_the_flip_is_checked_for_other_options() -> None:
 def test_insert_sentence_goes_second() -> None:
     assert insert_sentence("One. Two. Three.", "S.") == "One. S. Two. Three."
     assert insert_sentence("Only one", "S.") == "Only one S."
+
+
+def test_a_flip_that_changes_the_estimand_says_so_in_the_required_sentence() -> None:
+    report = checkout_report()
+    assert report.minimal_flip is not None
+    report.minimal_flip.estimand_change = (
+        "puts the outcome on another scale (alldeaths instead of log1p(alldeaths)): its estimate "
+        "is not comparable with the original one, so this is an estimand change, not a "
+        "re-analysis of the same quantity"
+    )
+    sentence = flip_sentence(checkout_plan(), report)
+    assert sentence is not None
+    assert sentence.endswith(
+        "This flip puts the outcome on another scale (alldeaths instead of log1p(alldeaths)): "
+        "its estimate is not comparable with the original one, so this is an estimand change, "
+        "not a re-analysis of the same quantity."
+    )
+    narrative = f"The original analysis estimated 0.4. {sentence}"
+    assert problems(checkout_plan(), report, narrative) == []

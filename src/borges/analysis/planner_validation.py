@@ -7,6 +7,7 @@ from borges.analysis.models import DatasetProfile
 from borges.analysis.planner_products import renamed_products, renamed_shortfall
 from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
+from borges.analysis.shadow_columns import shadow_copies, shadow_shortfall
 
 MIN_BRANCHING_STEPS = 3
 RESULT_NAMES = {"estimate", "ci_low", "ci_high", "p_value"}
@@ -74,6 +75,17 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
     renamed = renamed_shortfall(renamed_products(steps, profile), steps)
     if renamed is not None:
         problems.append(renamed)
+    columns = {c.name for c in profile.columns}
+    shadows = {
+        f"{s.id}.{o.id}": found
+        for s in steps
+        if s.kind != "model"
+        for o in s.options
+        if (found := shadow_copies(o.spec, s.produces, columns))
+    }
+    shadow = shadow_shortfall(shadows)
+    if shadow is not None:
+        problems.append(shadow)
     listed = sorted(
         {name for s in steps for o in s.options for name in listed_identifiers(o.spec, profile)}
     )

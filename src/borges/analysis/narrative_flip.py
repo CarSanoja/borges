@@ -52,7 +52,10 @@ def flip_sentence(plan: AnalysisPlan, report: Report) -> str | None:
         f'{change.step_title} from "{_from_label(plan, change)}" to "{change.to_label}"'
         for change in flip.changes
     ]
-    return f"The minimal flip changes {' and '.join(parts)}."
+    sentence = f"The minimal flip changes {' and '.join(parts)}."
+    if flip.estimand_change:
+        sentence += f" This flip {flip.estimand_change}."
+    return sentence
 
 
 def has_sentence(narrative: str, sentence: str) -> bool:

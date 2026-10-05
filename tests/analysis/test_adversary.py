@@ -112,3 +112,18 @@ async def test_proposals_that_only_repeat_the_plan_are_asked_for_again() -> None
     assert [(p.step_id, p.option.id) for p in proposals] == [("d1", "adv_clip")]
     assert [c.key for c in llm.calls] == ["adversary", "adversary:retry"]
     assert "'L other'" in llm.calls[1].messages[-1]["content"]
+
+
+async def test_a_proposal_that_writes_a_copy_of_a_column_is_asked_for_again() -> None:
+    copy = proposed("d1", "cap", spec="Create 'outcome_capped' = min(outcome, 10).")
+    kept = proposed("m1", "huber")
+    fixed = proposed("d1", "cap", spec="Clip 'outcome' at 10 in place.")
+    llm = FakeLLM(
+        {
+            "adversary": AdversaryOutput(proposals=[copy, kept]),
+            "adversary:retry": AdversaryOutput(proposals=[kept, fixed]),
+        }
+    )
+    proposals = await propose_options(llm, make_plan(), baseline())
+    assert [(p.step_id, p.option.id) for p in proposals] == [("m1", "adv_huber"), ("d1", "adv_cap")]
+    assert "'L cap'" in llm.calls[1].messages[-1]["content"]
