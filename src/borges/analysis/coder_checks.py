@@ -8,6 +8,7 @@ from borges.analysis.code_guard_ctx import ctx_read_violations, varying_ctx_keys
 from borges.analysis.code_guard_ctx_names import ctx_name_violations
 from borges.analysis.code_guard_ctx_spec import (
     positional_dummy_violations,
+    sibling_outcome_violations,
     spec_ctx_write_violations,
 )
 from borges.analysis.code_guard_interval import interval_level_violations
@@ -39,6 +40,7 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
             *_mode_violations(code),
             *ctx_name_violations(code, step, option),
             *spec_ctx_write_violations(code, option.spec),
+            *sibling_outcome_violations(code, step, option),
             *positional_dummy_violations(code),
             *row_scale_violations(code),
             *row_filter_violations(code, option.spec),

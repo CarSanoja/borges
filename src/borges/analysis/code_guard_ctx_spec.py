@@ -12,11 +12,13 @@ from __future__ import annotations
 import ast
 import re
 
-from borges.analysis.code_guard_ctx import COLUMN_KEYS
+from borges.analysis.code_guard_ctx import COLUMN_KEYS, ctx_writes
+from borges.analysis.models import Option, Step
 
 SET_IN_SPEC = re.compile(
     r"""(?:\b(?:set|sets|setting|assign|assigns|store|stores|put|puts|write|writes|update|updates)"""
-    r"""\s+ctx\s*\[\s*["'](\w+)["']\s*\])|(?:ctx\s*\[\s*["'](\w+)["']\s*\]\s*=(?!=))""",
+    r"""\s+(?:(?:to|into|in)\s+)?ctx\s*\[\s*["'](\w+)["']\s*\])"""
+    r"""|(?:ctx\s*\[\s*["'](\w+)["']\s*\]\s*=(?!=))""",
     re.IGNORECASE,
 )
 MUTATORS = frozenset({"append", "extend", "insert", "update", "add"})
@@ -71,6 +73,35 @@ def spec_ctx_write_violations(code: str, spec: str) -> list[str]:
         f"steps do not see it; assign ctx['{key}'] as the spec says"
         for key in promised
         if key not in written
+    ]
+
+
+def _writes_outcome(option: Option) -> bool:
+    if option.code is not None:
+        try:
+            return "outcome" in _written_keys(ast.parse(option.code))
+        except SyntaxError:
+            return False
+    promised = {a or b for a, b in SET_IN_SPEC.findall(option.spec)}
+    return "outcome" in promised or "outcome" in ctx_writes(option.spec)
+
+
+def sibling_outcome_violations(code: str, step: Step, option: Option) -> list[str]:
+    """A marp_norms step at 568a627 chose the outcome: 'Psychological well-being mean' wrote
+    ctx['outcome'] and the default 'Overall well-being mean' only built a column, so the model fell
+    back to wb_psych_mean and the headline estimate was fitted on the other outcome."""
+    if not any(_writes_outcome(o) for o in step.options if o.id != option.id):
+        return []
+    try:
+        written = _written_keys(ast.parse(code))
+    except SyntaxError:
+        return []
+    if written & {"*", "outcome"}:
+        return []
+    return [
+        "the other options of this step write ctx['outcome'], which later steps read; write "
+        "ctx['outcome'] here too, with the outcome column this option uses, or a later step falls "
+        "back to another option's outcome"
     ]
 
 

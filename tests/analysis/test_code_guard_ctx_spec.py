@@ -4,8 +4,10 @@ import pytest
 
 from borges.analysis.code_guard_ctx_spec import (
     positional_dummy_violations,
+    sibling_outcome_violations,
     spec_ctx_write_violations,
 )
+from borges.analysis.models import Option, Step
 
 PLATFORM = """import pandas as pd
 
@@ -64,3 +66,25 @@ def test_dummies_picked_by_name_pass() -> None:
         "    return df.join(dummies[['platform_ios', 'platform_web']])\n"
     )
     assert positional_dummy_violations(code) == []
+
+
+def test_a_promise_to_write_to_ctx_is_held_to_the_spec() -> None:
+    code = "def apply(df, ctx):\n    df['outcome'] = df['wb_overall_mean']\n    return df\n"
+    spec = (
+        "Use wb_overall_mean as the outcome; write to ctx['outcome'] the value of wb_overall_mean."
+    )
+    [problem] = spec_ctx_write_violations(code, spec)
+    assert "never writes ctx['outcome']" in problem
+
+
+def test_an_option_whose_siblings_write_the_outcome_must_write_it_too() -> None:
+    silent = "def apply(df, ctx):\n    return df.assign(outcome=df['wb_overall_mean'])\n"
+    psych = "def apply(df, ctx):\n    ctx['outcome'] = 'wb_psych_mean'\n    return df\n"
+    overall = Option(id="o", label="Overall", rationale="r", spec="Use overall.", is_default=True)
+    other = Option(id="p", label="Psych", rationale="r", spec="Use psych.", code=psych)
+    step = Step(id="s", title="Outcome", kind="feature", description="d", options=[overall, other])
+    [problem] = sibling_outcome_violations(silent, step, overall)
+    assert "other options of this step write ctx['outcome']" in problem
+    assert sibling_outcome_violations(psych.replace("psych", "overall"), step, overall) == []
+    lone = step.model_copy(update={"options": [overall]})
+    assert sibling_outcome_violations(silent, lone, overall) == []
