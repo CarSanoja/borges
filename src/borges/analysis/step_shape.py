@@ -7,9 +7,7 @@ from functools import cache
 from borges.analysis.harness import POLICY_CALL, POLICY_SOURCE
 from borges.analysis.harness_main import MAIN_TEMPLATE
 
-_PLACEHOLDERS = re.compile(
-    r"__(?:STEP_ID|OPTION_ID|KIND|RESULT_KEYS|SPLIT_HALF|DESIGN_CHECK|PRODUCES|ADJUSTS|READS|IMPUTES|COMPARED|OFFSET|KEEPS_ROWS)__"
-)
+_PLACEHOLDERS = re.compile(r"__[A-Z][A-Z_]*__")
 _PRELUDE_LINE = re.compile(
     r"exec\(compile\((?P<literal>'(?:[^'\\\n]|\\.)*'|\"(?:[^\"\\\n]|\\.)*\"), "
     r"'<borges-policy>', 'exec'\), \{\}\)\n"
