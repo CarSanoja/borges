@@ -92,3 +92,60 @@ change (`35335ce`). In the bank case a winsorising option and an adversary cap w
 the planner and the adversary are now asked to change the column in place. In hurricanes the
 headline flip changed the outcome scale and the caveat said so, but the summary did not; the
 required flip sentence now carries the estimand change (`eee7b36`).
+
+An independent refit of the `b4e2f4e` recordings (three offline auditors who implemented each
+headline universe from its spec before reading the recorded code) agreed with checkout,
+marp_religiosity, marp_norms and hurricanes once spec readings were aligned, confirmed the
+red_cards and bank defects above, and found one more: a "Huber-White" logit was translated into
+standard errors clustered on the exposure itself. A spec that clusters on a variable of the model
+is now refused (`17615bc`). The recordings at `597c38e` showed the red_cards defect again in a
+data step: `(rater1.fillna(0) + rater2.fillna(0)) / 2` gave 21,407 unrated dyads a skin tone of 0,
+and the flip was the filter that removed them. A data step now fails when a new column takes one
+value on every row where all the columns it reads are missing, or when a 0/1 cut codes the
+missing rows of its column as one group, unless the option says it imputes (`1fa82aa`). Replayed
+offline, the check marks nothing in the 18 recorded gardens besides that step, and 8 of 786
+option runs in four earlier batches of repeats, all red_cards cuts that had coded unrated players
+as light-skinned (6 of 20 red_cards repeats). The same recordings showed a flip that swapped the
+outcome for a subscale reported as a re-analysis (marp_norms, now labelled, `91c5ad3`), a
+template that reported additional deaths as its rule asks lost to a reviewer who wanted the IRR
+its spec named (hurricanes, `a3fb2f8`), and narrator caveats that restated the method or came out
+garbled; every caveat is now computed from the garden, and the narrator writes only the summary
+(`e7cdadf`).
+
+Two more rounds of six recordings followed. At `2327203` red_cards did not complete: a principal
+component computed with `np.cov` over missing ratings came out as the constant 0 in every row, and
+the model and its re-plan could only fail. A new column that is 0 on every row while the columns
+it reads vary now fails the data step, and every missing-value error names the line that keeps
+those rows missing (`e340584`). The same round showed a summary that copied a prompt instruction
+and repeated sentences (`89ec534`), and a Poisson option in free code lost to a reviewer asking
+for a ratio under a difference rule (`2c1c540`). At `8520d7a` all six completed, but the red_cards
+headline came from a Poisson model in free code that built `dark_skin = skin_tone >= 0.5` inside
+`estimate()` and fitted 146,028 rows where 124,621 had a rating. A model step that compares a
+column with a value now fails when it reports more rows than that column has known values
+(`78d9ed7`); replayed offline over every universe of the two previous rounds, with each model
+re-executed, it marks nothing else, and in this round it marks exactly the two contaminated
+universes. The same round lost six hurricanes universes to count models fitted on damage figures
+up to 75,000 (a singular Hessian; rescaling the covariates leaves the exposure's coefficient
+unchanged and the fit converges), lost a checkout option whose formula left out the exposure when
+there were no covariates (the error now names the fitted terms), and leaked internal option ids in
+a caveat (`0d6b0dc`, `63c765f`, `ea2a803`).
+
+At `a0fe149` all six completed; red_cards had a clean headline, but its summary stated a count
+of universes that none of the report's figures gives. A sentence of the form "X of Y universes"
+or a share of universes is now kept only when it matches a count or share the report holds
+(`acb76dc`). A key error on a column name spelled letter by letter now says so (`7238de8`). At
+`068fa85` all six completed again and three defects surfaced. The red_cards baseline was specified
+as a Poisson model with `offset=np.log(games)` and its code fitted none, so the headline flip to a
+negative binomial with the offset was the offset, not overdispersion; a model whose spec names an
+offset or an exposure now fails when the fitted model has none (`908433d`), and replayed on the
+red_cards models of the four previous rounds it marks nothing else. In checkout, the filter
+options that re-include rows the plan's notes mark as invalid were already kept out of the
+headline flip but still counted in the robustness share (40% agreement); they are now excluded
+from it too, with a caveat that names each option and its rows (`3ed553a`). The bank summary
+listed as accepted an imputation option that had failed its smoke run and never ran; accepted
+options that are not in the analysis no longer reach the narrator (`9751a4b`). The hurricanes
+summary opened with "0.024 additional expected deaths" for a model of `log1p(alldeaths)`: another
+sentence named the log scale, so the check passed. A sentence that carries the original estimate
+and speaks of additional or more units with no log scale or percentage is now an error, and the
+final summary drops it and states the scale (`9d33e01`); replayed on every summary of the last
+five rounds, it marks that sentence and nothing else.
