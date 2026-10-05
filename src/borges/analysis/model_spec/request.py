@@ -5,6 +5,11 @@ from dataclasses import dataclass
 from borges.analysis.code_guard_ctx import varying_ctx_keys
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_checks import option_violations
+from borges.analysis.model_spec.assigned_covariates import (
+    UNBUILT,
+    unbuilt_covariates,
+    with_assigned_covariates,
+)
 from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
 from borges.analysis.model_spec.ctx_listed import stored_names, without_ctx_listed
 from borges.analysis.model_spec.ctx_outcome import (
@@ -130,6 +135,10 @@ async def request_template(
             skipped, f"the model must read {keys}, chosen by an earlier step, and a template cannot"
         )
         return None
+    unbuilt = unbuilt_covariates(option, available)
+    if unbuilt:
+        _skip(skipped, UNBUILT + ", ".join(unbuilt))
+        return None
     messages = build_spec_messages(plan, step, option)
     if outcomes:
         last = messages[-1]
@@ -141,6 +150,7 @@ async def request_template(
         listed = {*ctx_covariate_names(plan, step, available), *stored_names(plan, step)}
         found = without_ctx_listed(found, listed, available)
         found = with_labelled_effects(found, option.label, available)
+        found = with_assigned_covariates(found, option, available)
         found = with_produced_outcome(found, option.spec, produced_before(plan, step))
         found = report_for_rule(standardize_for_rule(found, plan.decision_rule), plan.decision_rule)
         return pin_outcome(found, outcomes) if outcomes else found
