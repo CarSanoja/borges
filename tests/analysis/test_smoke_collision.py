@@ -57,7 +57,7 @@ async def test_a_collision_that_persists_is_kept_and_noted(tmp_path: Path) -> No
     assert [o.id for o in coded.step("d1").options] == ["keep", "trim"]
     assert len(cfg.state.notes) == 1
     note = cfg.state.notes[0]
-    assert "d1.trim" in note and "identical output" in note
+    assert "of the step 'Outliers'" in note and "identical output" in note
 
 
 async def test_a_model_collision_compares_estimate_interval_p_value_and_n(tmp_path: Path) -> None:
@@ -111,4 +111,4 @@ async def test_two_rendered_templates_that_agree_are_left_alone(tmp_path: Path) 
     used = llm.keys()
     assert not [k for k in used if k.startswith("coder:m1") and k.endswith(":collision")]
     assert coded.step("m1").option("welch").code == rendered
-    assert not [n for n in cfg.state.notes if "m1." in n]
+    assert not [n for n in cfg.state.notes if "'Estimator'" in n]

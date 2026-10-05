@@ -72,4 +72,4 @@ async def test_an_adversary_collision_that_persists_is_noted(tmp_path: Path) -> 
         cfg, no_repair, plan.step("d1"), adversary("adv_dup", keep_code)
     )
     assert outcome is not None and outcome.status != "failed"
-    assert len(cfg.state.notes) == 1 and "d1.adv_dup" in cfg.state.notes[0]
+    assert len(cfg.state.notes) == 1 and "'Label adv_dup'" in cfg.state.notes[0]

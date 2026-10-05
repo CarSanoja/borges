@@ -58,7 +58,7 @@ async def test_a_persisting_scale_mismatch_adds_a_caveat_naming_both(tmp_path: P
     await code_plan(llm, make_plan(), smoke=cfg)
     assert len(cfg.state.notes) == 1
     note = cfg.state.notes[0]
-    assert "m1.ols" in note and "m1.welch" in note and "different scales" in note
+    assert "'Label ols'" in note and "'Label welch'" in note and "different scales" in note
     assert "mean_diff" in note
 
 
