@@ -88,3 +88,14 @@ def test_an_absent_minimal_flip_is_dropped() -> None:
     assert rewrite_claimed_flips(report(False), text) == (
         "The search found no change that reversed the verdict."
     )
+
+
+def test_a_null_flip_after_a_colon_or_alone_leaves_no_stray_punctuation() -> None:
+    text = (
+        "No combination of defensible analyst choices reversed that verdict: the minimal flip is "
+        "null. The minimal flip is none. Across 21 universes every one agreed."
+    )
+    assert rewrite_claimed_flips(report(False), text) == (
+        "No combination of defensible analyst choices reversed that verdict. Across 21 universes "
+        "every one agreed."
+    )

@@ -6,7 +6,8 @@ sentences called the same flip contaminated. With no minimal flip in the report,
 rewritten to say the flip found is contaminated, or dropped when the report has no flip at all. A
 bank summary at a491fe1 echoed the report field ("the minimal flip is null") and added "there is
 no re-execution to report"; both are dropped, as is "the minimal flip is absent" (red_cards at
-027d581).
+027d581). A checkout summary at 70a6102 wrote "reversed that verdict: the minimal flip is null." and
+kept a stray colon.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ CLAIM = re.compile(
 )
 CONTAMINATED = "The only flip found is contaminated"
 NULL_FLIP = re.compile(
-    r"[;,]?\s*(?:and\s+)?the\s+minimal\s+flip\s+is\s+(?:null|none|empty|absent|missing)\b",
+    r"\s*[;,:\u2014]?\s*(?:and\s+)?the\s+minimal\s+flip\s+is\s+(?:null|none|empty|absent|missing)\b",
     re.IGNORECASE,
 )
 NOTHING_TO_REPORT = re.compile(r"\bno\s+re-?execution\s+to\s+report\b", re.IGNORECASE)
@@ -55,6 +56,7 @@ def rewrite_claimed_flips(report: Report, narrative: str) -> str:
     for sentence in _SENTENCE_END.split(narrative.strip()):
         if report.minimal_flip is None:
             sentence = "" if NOTHING_TO_REPORT.search(sentence) else NULL_FLIP.sub("", sentence)
+            sentence = sentence.strip() if sentence.strip(" .") else ""
         if sentence and sentence in claimed_flips(report, sentence):
             if not _contaminated(report):
                 continue
