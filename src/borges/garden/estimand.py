@@ -4,6 +4,7 @@ import os
 import re
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.measure import measure_detail
 from borges.garden.models import EstimandChange, Garden, Universe
 from borges.garden.noop import single_universe
 from borges.garden.outcome_scale import log_outcome
@@ -108,6 +109,7 @@ def estimand_detail(
         scale_detail(baseline, universe)
         or outcome_detail(baseline, universe, columns)
         or exposure_detail(baseline, universe, columns)
+        or measure_detail(baseline, universe)
     )
     if scale is not None:
         return scale

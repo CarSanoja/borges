@@ -173,6 +173,7 @@ DESIGN_SOURCE = """
                     else None,
                     "exposure_sd": float(_np.std(x[:, found])) if hit else None,
                     "offset": _offsets.get(model_id),
+                    "family": type(getattr(_endogs.get(model_id), "family", None)).__name__,
                     "names": [str(n) for n in names][:60],
                 }
             )
