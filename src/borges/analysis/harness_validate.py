@@ -58,10 +58,18 @@ VALIDATE_SOURCE = """
         if not missing:
             return
         bases = sorted({b for c in missing for b in columns if c.startswith(b + "_")})
+        prefixes = tuple(b + "_" for b in bases)
+        present = [c for c in columns if c not in bases and c.startswith(prefixes)]
+        have = (
+            " the returned DataFrame has " + repr(present[:12])
+            + " (get_dummies with drop_first=True drops the first level), so list those, or"
+            if present
+            else ""
+        )
         hint = (
-            " they look like dummies of " + ", ".join(map(repr, bases)) + ": list "
+            " they look like dummies of " + ", ".join(map(repr, bases)) + ":" + have + " list "
             + ("that column" if len(bases) == 1 else "those columns")
-            + " itself, the model encodes categorical covariates;"
+            + " itself and let the model encode it;"
             if bases
             else ""
         )

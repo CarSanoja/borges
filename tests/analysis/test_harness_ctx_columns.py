@@ -60,3 +60,15 @@ def test_a_formula_term_over_no_column_fails(workdir: Path) -> None:
     done = run(workdir, NAMES_UNKNOWN_TERM)
     error = parse_error(done.stdout)
     assert done.returncode == 1 and error is not None and "['C(region)']" in error
+
+
+def test_the_hint_lists_the_dummies_the_frame_has(workdir: Path) -> None:
+    code = (
+        "import pandas as pd\n\n\ndef apply(df, ctx):\n"
+        "    wide = pd.get_dummies(df['country'], prefix='country', drop_first=True)\n"
+        "    out = pd.concat([df, wide], axis=1)\n"
+        "    ctx['covariates'] = ['country_1', 'country_2']\n    return out\n"
+    )
+    error = parse_error(run(workdir, code).stdout)
+    assert error is not None and "['country_1']" in error
+    assert "has ['country_2', 'country_3']" in error and "drop_first=True" in error
