@@ -21,6 +21,7 @@ from borges.garden.failed_caveat import failed_caveat
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary
 from borges.garden.outcome_scale import scale_note
+from borges.garden.scaled_outcome import scaled_outcome_caveats
 from borges.llm.client import LLMClient, UsageTotals
 from borges.memory.run_memory import RunMemory
 from borges.runs.emitter import RunEmitter
@@ -190,7 +191,13 @@ class Pipeline:
         failed = failed_caveat(plan, self.garden)
         threshold = plan.decision_rule.threshold
         self.caveats.extend(report_caveats(self.report, self.flip, threshold, failed))
-        self.caveats.extend([*aliased_caveats(self.garden), *tangled_caveats(self.garden)])
+        self.caveats.extend(
+            [
+                *aliased_caveats(self.garden),
+                *tangled_caveats(self.garden),
+                *scaled_outcome_caveats(self.garden),
+            ]
+        )
         note = scale_note(self.garden)
         if note is not None:
             self.caveats.append(note)

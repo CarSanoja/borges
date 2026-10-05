@@ -79,3 +79,14 @@ def test_quasi_poisson_keeps_the_poisson_estimate_and_scales_its_errors() -> Non
     half = (got["ci_high"] - got["ci_low"]) / 2
     expected = 1.959963984540054 * float(poisson.bse["x"]) * np.sqrt(dispersion)
     assert half == pytest.approx(expected, rel=1e-6)
+
+
+def test_a_z_scored_outcome_and_the_fitted_dispersion_are_noted() -> None:
+    frame = synthetic().dropna()
+    namespace: dict = {}
+    exec(render_code(make_spec("ols", outcome="y_cont", standardize=["y_cont", "x"])), namespace)
+    assert (
+        "outcome z-scored with the predictors: y_cont" in namespace["estimate"](frame, {})["note"]
+    )
+    exec(render_code(make_spec("negbin")), namespace)
+    assert "negative binomial alpha" in namespace["estimate"](frame, {})["note"]

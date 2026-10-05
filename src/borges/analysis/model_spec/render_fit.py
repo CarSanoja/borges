@@ -11,6 +11,7 @@ from borges.analysis.model_spec.render_count_margins import count_margin_lines
 from borges.analysis.model_spec.render_design import design_term
 from borges.analysis.model_spec.schema import GEE_FAMILIES, GROUPED, ModelSpecOutput
 
+SCALED_OUTCOME = "outcome z-scored with the predictors: "
 NB_UNCONVERGED = "the negative binomial dispersion did not converge by maximum likelihood"
 ALPHA_BOUNDS = (-10.0, 5.0)
 AT_BOUND = ", at the lower bound: no overdispersion, so the model is in effect a Poisson model"
@@ -82,6 +83,8 @@ def fit_lines(spec: ModelSpecOutput) -> list[str]:
         lines += ["    model = sm.Logit(endog, exog)", f"    fit = model.fit(disp=0, {arguments})"]
     else:
         lines += _count_lines(spec, arguments)
+    if spec.outcome in spec.standardize:
+        lines.append(f"    note += ('; ' if note else '') + {SCALED_OUTCOME + str(spec.outcome)!r}")
     return lines
 
 
