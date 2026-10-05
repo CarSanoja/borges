@@ -39,3 +39,18 @@ def test_a_covariate_option_without_a_default_twin_gives_no_note() -> None:
         universe(plan, {"cov": "contact", "model": "robust"}, result(0.87, n=8252)),
     )
     assert covariate_sample_caveats(plan, garden) == []
+
+
+def test_a_loss_under_one_other_choice_counts_and_names_it() -> None:
+    plan = covariate_plan()
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(0.88, n=45211)),
+        universe(plan, {"cov": "contact"}, result(0.91, n=45211)),
+        universe(plan, {"model": "robust"}, result(0.88, n=45211)),
+        universe(plan, {"cov": "contact", "model": "robust"}, result(0.87, n=8182)),
+    )
+    notes = covariate_sample_caveats(plan, garden)
+    assert len(notes) == 1
+    assert "so in 1 of its 2 universes (those with '" in notes[0]
+    assert "at the step 'Step model') it keeps 8,182 of the 45,211 rows" in notes[0]
