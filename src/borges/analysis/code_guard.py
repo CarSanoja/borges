@@ -22,6 +22,7 @@ from borges.analysis.code_guard_rules import (
     FORBIDDEN_NAMES,
     IO_PREFIXES,
 )
+from borges.analysis.code_guard_se_label import se_label_violations
 from borges.analysis.code_guard_statsmodels import statsmodels_violations
 from borges.analysis.models import StepKind
 from borges.gateway.code_evidence import record_guarded
@@ -178,6 +179,7 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
         return violations + nan_threshold_violations(func) + component_sign_violations(func)
     violations.extend(row_filter_violations(func))
     violations.extend(statsmodels_violations(func, intent))
+    violations.extend(se_label_violations(func, intent))
     return violations + estimator_violations(func, intent) + fallback_violations(func)
 
 

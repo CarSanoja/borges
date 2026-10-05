@@ -171,3 +171,27 @@ def test_robust_errors_are_read_from_the_option_own_words(intent: str, robust: b
     from borges.analysis.code_guard_statsmodels import robust_intended
 
     assert robust_intended(intent) is robust
+
+
+@pytest.mark.parametrize(
+    ("label", "cov", "refused"),
+    [
+        ("OLS with i.i.d. standard errors", 'cov_type="HC1"', True),
+        ("OLS with i.i.d. standard errors", 'cov_type="nonrobust"', False),
+        ("OLS with HC3 robust standard errors", 'cov_type="HC1"', True),
+        ("OLS with HC3 robust standard errors", 'cov_type="HC3"', False),
+        ("OLS clustered by country", 'cov_type="cluster", cov_kwds={"groups": g}', False),
+    ],
+)
+def test_the_standard_errors_a_label_names_are_the_ones_fitted(
+    label: str, cov: str, refused: bool
+) -> None:
+    from borges.analysis.code_guard_se_label import se_label_violations
+
+    code = (
+        "def estimate(df, ctx):\n    g = df['c']\n"
+        f"    fit = sm.OLS(df['y'], df[['x']]).fit({cov})\n    return fit\n"
+    )
+    import ast
+
+    assert bool(se_label_violations(ast.parse(code), label)) is refused
