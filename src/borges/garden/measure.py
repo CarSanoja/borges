@@ -39,6 +39,11 @@ def reported_measure(universe: Universe) -> str | None:
     return None
 
 
+def shared_measure(garden: Garden) -> str | None:
+    found = {reported_measure(u) for u in garden.universes.values() if u.result is not None}
+    return found.pop() if len(found) == 1 else None
+
+
 def _a(measure: str) -> str:
     return f"an {measure}" if measure[0] in "aeiou" else f"a {measure}"
 

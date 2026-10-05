@@ -13,7 +13,7 @@ from borges.analysis.narrative_flip import (
     problems,
 )
 from borges.analysis.narrative_ids import drop_option_ids
-from borges.analysis.narrative_measure import name_original_measure
+from borges.analysis.narrative_measure import name_every_measure, name_original_measure
 from borges.analysis.narrative_no_flip import no_flip_problems, rewrite_claimed_flips
 from borges.analysis.narrative_original import original_problems, with_original
 from borges.analysis.narrative_repeats import drop_prompt_echoes, drop_repeated_sentences
@@ -28,7 +28,7 @@ from borges.analysis.narrative_singles import restate_single_counts
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
 from borges.analysis.prompts.narrator import RULES, SCALE_LABEL, build_messages
 from borges.analysis.schemas import NarratorOutput
-from borges.garden.measure import reported_measure
+from borges.garden.measure import reported_measure, shared_measure
 from borges.garden.models import Garden, Report
 from borges.garden.outcome_scale import mentions_log_scale, scale_note
 from borges.llm.client import LLMClient, LLMError, Role
@@ -148,4 +148,5 @@ async def narrate(
             )
     fitted = reported_measure(garden.baseline) if garden and garden.baseline else None
     done = name_original_measure(_complete(plan, report, narrative, sentence, scale), fitted)
+    done = name_every_measure(done, shared_measure(garden) if garden else None)
     return restate_single_counts(report, garden, done)

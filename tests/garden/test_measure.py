@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.models import AnalysisResult
 from borges.garden.estimand import estimand_detail
-from borges.garden.measure import measure_caveats, reported_measure
+from borges.garden.measure import measure_caveats, reported_measure, shared_measure
 from tests.garden.synthetic import garden_of, option, plan_of, step_of, trace, universe
 
 PLAN = plan_of(
@@ -63,3 +63,18 @@ def test_a_rule_stated_as_an_odds_ratio_over_a_rate_ratio_is_named() -> None:
     [caveat] = rule_measure_caveats(stated, pois)
     assert caveat.startswith("The decision rule is stated as an odds ratio, but the original")
     assert rule_measure_caveats(PLAN, garden()) == []
+
+
+def test_a_measure_is_shared_only_when_every_universe_reports_it() -> None:
+    counts = garden_of(
+        PLAN,
+        universe(PLAN, {}, ratio(1.15), traces=[trace("m", model="GLM", family="Poisson")]),
+        universe(
+            PLAN,
+            {"m": "pois"},
+            ratio(1.16),
+            traces=[trace("m", model="GLM", family="NegativeBinomial")],
+        ),
+    )
+    assert shared_measure(counts) == "rate ratio"
+    assert shared_measure(garden()) is None
