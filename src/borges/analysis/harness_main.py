@@ -101,6 +101,7 @@ __FINGERPRINT__
                 if __DESIGN_CHECK__ and design["no_intercept"]:
                     raise ValueError(_intercept_error(design))
                 _check_offset(design)
+                _check_weights(design)
                 _check_main_effects(df, reported)
                 ignored = _ignored_covariates(design, ctx, df, trace["note"])
                 if __DESIGN_CHECK__ and ignored:

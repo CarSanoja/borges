@@ -17,6 +17,32 @@ from __future__ import annotations
 PRODUCT_MAX_COLUMNS = 150
 
 DESIGN_CHECKS_SOURCE = """
+    def _weight_array(model):
+        for name in ("freq_weights", "var_weights", "weights"):
+            values = getattr(model, name, None)
+            if values is None or _np.ndim(values) != 1:
+                continue
+            values = _np.asarray(values, dtype=float)
+            if values.size and _np.std(values) > 0:
+                return values
+        return None
+
+    def _same_values(weights, column):
+        if weights is None:
+            return False
+        if weights.shape[0] > column.shape[0]:
+            weights = weights[:: int(_math.ceil(weights.shape[0] / __DESIGN_MAX_ROWS__))]
+        return bool(weights.shape == column.shape and _np.allclose(weights, column))
+
+    def _check_weights(design):
+        if __DESIGN_CHECK__ and design.get("exposure_weighted"):
+            raise ValueError(
+                "the " + str(design["model"]) + " that reports the estimate weights each row by"
+                + " the exposure itself, which changes the estimand and, as frequency weights,"
+                + " counts each row that many times: fit it unweighted, or weight by a survey or"
+                + " design weight the option names"
+            )
+
     def _check_offset(design):
         if __DESIGN_CHECK__ and __OFFSET__ and design.get("offset") is False:
             raise ValueError(

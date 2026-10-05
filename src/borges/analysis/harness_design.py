@@ -17,6 +17,7 @@ DESIGN_SOURCE = """
     _designs = []
     _fits = {}
     _offsets = {}
+    _weights = {}
     _results = {}
     _helpers = set()
 
@@ -57,6 +58,7 @@ DESIGN_SOURCE = """
                 _offsets[id(model)] = any(
                     getattr(model, name, None) is not None for name in ("offset", "exposure")
                 )
+                _weights[id(model)] = _weight_array(model)
             except Exception:
                 pass
 
@@ -176,6 +178,7 @@ DESIGN_SOURCE = """
                     else None,
                     "exposure_sd": float(_np.std(x[:, found])) if hit else None,
                     "offset": _offsets.get(model_id),
+                    "exposure_weighted": hit and _same_values(_weights.get(model_id), x[:, found]),
                     "family": type(family).__name__,
                     "link": type(getattr(family, "link", None)).__name__,
                     "endog_levels": _endog_levels(model_id),
