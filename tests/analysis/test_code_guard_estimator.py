@@ -68,3 +68,34 @@ def test_a_penalised_option_fitted_by_plain_likelihood_is_refused() -> None:
         "    fit = sm.Logit(df['y'], df[['x']]).fit_regularized(method='l1', alpha=1.0)\n"
     )
     assert estimator_violations(lasso, "Lasso logistic regression") == []
+
+
+WLS_CODE = (
+    "import statsmodels.api as sm\n\n\ndef estimate(df, ctx):\n"
+    "    fit = sm.WLS(df['y'], sm.add_constant(df[['x']]), weights=df['w']).fit()\n"
+    "    return fit\n"
+)
+GLM_WEIGHTED = (
+    "import statsmodels.api as sm\n\n\ndef estimate(df, ctx):\n"
+    "    fit = sm.GLM(df['y'], df[['x']], var_weights=df['w']).fit()\n    return fit\n"
+)
+
+
+def test_a_weighted_label_on_an_unweighted_fit_is_refused() -> None:
+    [problem] = violations("ols", "Weighted OLS by session length")
+    assert "weighted fit" in problem and "WLS" in problem
+
+
+@pytest.mark.parametrize("code", [WLS_CODE, GLM_WEIGHTED])
+def test_a_weighted_fit_passes(code: str) -> None:
+    assert estimator_violations(ast.parse(code), "Weighted least squares by inverse variance") == []
+
+
+def test_robust_weights_and_unweighted_labels_are_not_weighted_fits() -> None:
+    assert violations("ols", "OLS with HC3 standard errors, unweighted") == []
+    robust = estimator_violations(ast.parse(WLS_CODE), "Huber weights robust regression")
+    assert all("weighted fit" not in problem for problem in robust)
+
+
+def test_a_covariate_called_weight_is_no_weighted_fit() -> None:
+    assert violations("ols", "OLS adjusting for height and weight") == []

@@ -29,6 +29,9 @@ ROBUST_FIT = re.compile(
     re.IGNORECASE,
 )
 ROBUST_CLASSES = frozenset({"RLM", "rlm", "QuantReg", "quantreg"})
+WEIGHTED = re.compile(r"\bweight(?:ed|s|ing)\b|\bWLS\b", re.IGNORECASE)
+WEIGHTED_CLASSES = frozenset({"WLS", "wls", "GLS", "gls"})
+WEIGHT_KEYWORDS = frozenset({"weights", "freq_weights", "var_weights", "sample_weight"})
 MODEL_NAMES = NEGBIN_CLASSES | POISSON_CLASSES | LOGIT_CLASSES | {"OLS", "ols", "GLM", "glm"}
 
 
@@ -101,6 +104,27 @@ def _robust_problem(names: set[str], intent: str) -> list[str]:
     ]
 
 
+def weighted_intent(intent: str) -> bool:
+    return bool(WEIGHTED.search(intent)) and not ROBUST_FIT.search(intent)
+
+
+def _weights_problem(names: set[str], tree: ast.AST, intent: str) -> list[str]:
+    """A checkout adversary option at 70a6102, "Weighted OLS by session length", was fitted as an
+    unweighted OLS and reported as a no-op; of 10 recorded model options that named weights, 2
+    fitted no weighted model."""
+    if not weighted_intent(intent) or names & WEIGHTED_CLASSES:
+        return []
+    keywords = {
+        k.arg for node in ast.walk(tree) if isinstance(node, ast.Call) for k in node.keywords
+    }
+    if keywords & WEIGHT_KEYWORDS:
+        return []
+    return [
+        "the option names a weighted fit but the code fits an unweighted model; fit statsmodels "
+        "WLS with weights=..., or a GLM with var_weights or freq_weights, or let the option fail"
+    ]
+
+
 def estimator_violations(tree: ast.AST, intent: str) -> list[str]:
     family = named_family(intent) if intent else None
     names = _identifiers(tree)
@@ -108,5 +132,6 @@ def estimator_violations(tree: ast.AST, intent: str) -> list[str]:
         return []
     penalty = _penalty_problem(names, intent) if intent else []
     robust = _robust_problem(names, intent) if intent else []
+    weights = _weights_problem(names, tree, intent) if intent else []
     problem = _problem(family, names, tree) if family is not None else None
-    return [*penalty, *robust, *([problem] if problem else [])]
+    return [*penalty, *robust, *weights, *([problem] if problem else [])]

@@ -201,3 +201,16 @@ async def test_scripted_runs_have_no_spec_fixtures_and_fall_back(tmp_path) -> No
         await llm.complete(Role.CODER, [], key=KEY)
     code, attempts, note = await generate_checked(llm, plan, step, step.option("welch"))
     assert code == FREE and attempts == 1 and note is None
+
+
+async def test_a_weighted_option_is_written_as_free_code_without_asking_for_a_spec() -> None:
+    plan = plan_with_score()
+    step = plan.step("m1")
+    welch = step.option("welch")
+    weighted = welch.model_copy(update={"spec": welch.spec + " Rows weighted by their score."})
+    step.options = [weighted if o.id == "welch" else o for o in step.options]
+    llm = llm_with(GOOD_SPEC)
+    code, attempts, note = await code_welch(llm, plan)
+    assert code == FREE and attempts == 1
+    assert note is not None and "weights the observations" in note
+    assert llm.keys() == [FREE_KEY]

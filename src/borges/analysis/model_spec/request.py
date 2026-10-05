@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from borges.analysis.code_guard_ctx import varying_ctx_keys
+from borges.analysis.code_guard_estimator import weighted_intent
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.model_spec.assigned_covariates import (
@@ -119,6 +120,9 @@ def _problems(
     ]
 
 
+WEIGHTED_SKIP = "the option weights the observations, which a template cannot express"
+
+
 async def request_template(
     llm: LLMClient,
     plan: AnalysisPlan,
@@ -135,6 +139,9 @@ async def request_template(
         _skip(
             skipped, f"the model must read {keys}, chosen by an earlier step, and a template cannot"
         )
+        return None
+    if weighted_intent(option_intent(option)):
+        _skip(skipped, WEIGHTED_SKIP)
         return None
     unbuilt = unbuilt_covariates(option, available)
     if unbuilt:
