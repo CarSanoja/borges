@@ -13,6 +13,8 @@ from borges.analysis.code_guard_ctx_spec import (
 from borges.analysis.code_guard_missing import missing_violations
 from borges.analysis.code_guard_mode import empty_mode_violations
 from borges.analysis.code_guard_produces import products_read_violations, unused_products
+from borges.analysis.code_guard_row_filter import row_filter_violations
+from borges.analysis.code_guard_row_scale import row_scale_violations
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.code_guard_wide import wide_columns, wide_dummy_violations
 from borges.analysis.covariate_ids import covariate_id_violations
@@ -37,6 +39,8 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
             *ctx_name_violations(code, step, option),
             *spec_ctx_write_violations(code, option.spec),
             *positional_dummy_violations(code),
+            *row_scale_violations(code),
+            *row_filter_violations(code, option.spec),
             *covariate_id_violations(code, plan.dataset),
         ]
     return [
