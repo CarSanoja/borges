@@ -127,3 +127,28 @@ def test_every_contaminated_flip_with_its_own_change_is_reported() -> None:
     assert len(report.contaminated_flips) == 2
     [note] = [c for c in report.caveats if "none is the headline" in c]
     assert note.startswith("2 flips were found") and "re-includes 50 rows" in note
+
+
+def test_a_flip_that_reports_another_exposure_is_an_estimand_change() -> None:
+    plan = covariate_plan()
+
+    def model(exposure: str, binary: bool):
+        return trace(
+            "model",
+            terms=["games", exposure],
+            exposure=exposure,
+            exposure_binary=binary,
+            deficient=False,
+        )
+
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(1.16, p=0.11), traces=[model("skin_tone", False)]),
+        universe(plan, {"model": "adjusted"}, result(1.13), traces=[model("dark", True)]),
+    )
+    flip = minimal_flip(plan, garden)
+    assert flip is not None and flip.estimand_change is not None
+    assert flip.estimand_change.startswith("reports the coefficient of dark where the original")
+    garden.baseline.traces = [model("skin_tone", True)]
+    flip = minimal_flip(plan, garden)
+    assert flip is not None and flip.estimand_change is None

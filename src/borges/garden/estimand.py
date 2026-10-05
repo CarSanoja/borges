@@ -49,13 +49,46 @@ def _renamed(added: list[str], removed: list[str], columns: set[str]) -> bool:
     return len(os.path.commonprefix([added[0].lower(), removed[0].lower()])) >= MIN_STEM
 
 
+def reported_term(universe: Universe) -> tuple[str, object] | None:
+    for trace in universe.traces:
+        if trace.design and isinstance(trace.design.get("exposure"), str):
+            return str(trace.design["exposure"]), trace.design.get("exposure_binary")
+    return None
+
+
+def exposure_detail(baseline: Universe, universe: Universe, columns: set[str] | None) -> str | None:
+    """Another quantity's coefficient reported as the estimate: two dataset columns (contact and
+    campaign, bank, 2a2d925), or a 0/1 cut and the scale it cuts (dark and skin_tone, red_cards,
+    b4e2f4e). Two names for one 0/1 indicator are the same exposure."""
+    before, after = reported_term(baseline), reported_term(universe)
+    if before is None or after is None or before[0] == after[0]:
+        return None
+    raw = columns is not None and {before[0], after[0]} <= columns
+    if not raw and before[1] == after[1]:
+        return None
+    return (
+        f"reports the coefficient of {after[0]} where the original analysis reports "
+        f"{before[0]}: another exposure answers another question, so this is an estimand "
+        "change, not a re-analysis of the same quantity"
+    )
+
+
+def _covariate_terms(universe: Universe) -> set[str] | None:
+    terms, exposure = design_terms(universe), reported_term(universe)
+    if terms is None or exposure is None:
+        return terms
+    return terms - {exposure[0]}
+
+
 def estimand_detail(
     baseline: Universe, universe: Universe, columns: set[str] | None = None
 ) -> str | None:
-    scale = scale_detail(baseline, universe)
+    scale = scale_detail(baseline, universe) or exposure_detail(baseline, universe, columns)
     if scale is not None:
         return scale
     before, after = design_terms(baseline), design_terms(universe)
+    if reported_term(baseline) is not None and reported_term(universe) is not None:
+        before, after = _covariate_terms(baseline), _covariate_terms(universe)
     if before is None or after is None or before == after:
         return None
     if any(UNNAMED.fullmatch(t) for t in before | after):

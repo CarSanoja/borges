@@ -26,6 +26,10 @@ two levels the estimate compares that level with all the others together. Use a 
 listed. Leave it null for a numeric exposure; never invent a column for the dummy. When the \
 option builds a 0/1 indicator from a text column, as treatment = (variant == 'treatment'), the \
 exposure is that text column and exposure_level its level: the template builds the indicator.
+- exposure_threshold: only when the option cuts a numeric column into a 0/1 indicator, as \
+dark = (skin_tone >= 0.5): the exposure is that numeric column and exposure_threshold the cut; \
+the template codes 1 at or above it after dropping the rows where the column is missing. Never \
+put a cut in exposure_level.
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \

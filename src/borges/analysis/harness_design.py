@@ -145,7 +145,8 @@ DESIGN_SOURCE = """
                     if str(n).lower() not in ("const", "intercept")
                 }
             )
-            hit = _exposure_index(_fits.get(model_id), estimate, x.shape[1]) is not None
+            found = _exposure_index(_fits.get(model_id), estimate, x.shape[1])
+            hit = found is not None
             models.append(
                 {
                     "reported": hit,
@@ -162,6 +163,10 @@ DESIGN_SOURCE = """
                     "dead": dead,
                     "intercept": intercept,
                     "terms": terms,
+                    "exposure": _term_of(str(names[found]), frame_columns) if hit else None,
+                    "exposure_binary": bool(set(_np.unique(x[:, found])) <= {0.0, 1.0})
+                    if hit
+                    else None,
                     "names": [str(n) for n in names][:60],
                 }
             )

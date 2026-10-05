@@ -29,7 +29,17 @@ def _binary_problems(name: str | None, column: ColumnProfile) -> list[str]:
     return []
 
 
+def _threshold_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
+    if spec.exposure_level is not None:
+        return ["set exposure_level for a text exposure or exposure_threshold for a cut, not both"]
+    if is_text(profile_of(profile, str(spec.exposure))):
+        return [f"exposure '{spec.exposure}' is text: a cut needs a numeric column"]
+    return []
+
+
 def exposure_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
+    if spec.exposure_threshold is not None:
+        return _threshold_problems(spec, profile)
     name, level = spec.exposure, spec.exposure_level
     if spec.report == "marginal_effect" and name in spec.standardize:
         return [f"marginal_effect needs the exposure '{name}' unscaled: remove it from standardize"]

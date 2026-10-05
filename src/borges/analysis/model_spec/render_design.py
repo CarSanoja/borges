@@ -38,11 +38,20 @@ def covariate_lines(spec: ModelSpecOutput) -> list[str]:
     return lines
 
 
+FRACTIONAL_LEVEL = (
+    "the exposure is coded 1 only where {column} equals {level} exactly, but {column} is a "
+    "numeric column with fractional values, so one value is not a group; to cut it, code 1 for "
+    "values at or above the cut after dropping the rows where {column} is missing"
+)
+
+
 def _indicator_lines(column: str, level: str) -> list[str]:
     return [
         f"    hit = data[{column!r}].astype(str) == {level!r}",
         f"    numeric = pd.api.types.is_numeric_dtype(data[{column!r}])",
         f"    binary = numeric and set(pd.unique(data[{column!r}])) <= {{0, 1}}",
+        f"    if numeric and not binary and not (data[{column!r}] % 1 == 0).all():",
+        f"        raise ValueError({FRACTIONAL_LEVEL.format(level=level, column=column)!r})",
         "    if not hit.any() and not binary:",
         "        raise ValueError(",
         f"            'the exposure level ' + {level!r} + ' is not a value of the column ' + "
@@ -68,6 +77,12 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
     ]
     if spec.exposure_level is not None:
         lines += _indicator_lines(str(spec.exposure), spec.exposure_level)
+    if spec.exposure_threshold is not None:
+        column, cut = str(spec.exposure), float(spec.exposure_threshold)
+        lines.append(
+            f"    data = data.assign(**{{{column!r}: "
+            f"(data[{column!r}].astype(float) >= {cut!r}).astype(float)}})"
+        )
     lines += _varies_lines(str(spec.exposure))
     if spec.standardize:
         lines += [

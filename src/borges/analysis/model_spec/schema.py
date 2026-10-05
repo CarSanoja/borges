@@ -21,6 +21,7 @@ class ModelSpecOutput(BaseModel):
     outcome: str | None = None
     exposure: str | None = None
     exposure_level: str | None = None
+    exposure_threshold: float | None = None
     moderator: str | None = None
     covariates: list[str] = Field(default_factory=list)
     covariates_from_ctx: bool = False

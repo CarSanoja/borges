@@ -193,3 +193,10 @@ def test_the_reported_model_is_described_not_a_helper_it_fits_internally(workdir
     design = traces[0].design
     assert design is not None and design["model"] == "GEE"
     assert design["names"] == ["const", "x", "x2"] and design["n_models"] > 1
+
+
+def test_the_design_names_the_term_whose_coefficient_is_reported(workdir: Path) -> None:
+    done = run_model(workdir, FULL_RANK)
+    traces, _ = parse_output(done.stdout)
+    assert traces[0].design is not None and traces[0].design["exposure"] == "x"
+    assert traces[0].design["exposure_binary"] is False
