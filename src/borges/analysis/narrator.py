@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from borges.analysis.models import AnalysisPlan
+from borges.analysis.narrative_counts import drop_wrong_counts
 from borges.analysis.narrative_flip import (
     drop_wrong_sentences,
     flip_sentence,
@@ -86,9 +87,8 @@ def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | Non
 
 
 def _clean(report: Report, text: str) -> str:
-    return drop_method_sentences(
-        report, drop_repeated_sentences(drop_prompt_echoes(text, RULES, (SCALE_LABEL,)))
-    )
+    echoes = drop_prompt_echoes(text, RULES, (SCALE_LABEL,))
+    return drop_wrong_counts(report, drop_method_sentences(report, drop_repeated_sentences(echoes)))
 
 
 def _complete(
