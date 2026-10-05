@@ -74,6 +74,7 @@ class ReviewVerdict(_Slugged):
     faithful: bool
     changes_estimand: bool = False
     problem: str = ""
+    quote: str = ""
 
 
 class ReviewerOutput(BaseModel):

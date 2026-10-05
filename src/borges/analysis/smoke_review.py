@@ -6,6 +6,7 @@ from typing import Any
 from borges.analysis.models import AnalysisPlan, CodingSummary, Step
 from borges.analysis.prompts.reviewer import build_messages
 from borges.analysis.review_dummies import apply_contracts
+from borges.analysis.review_quote import checked_quotes
 from borges.analysis.schemas import ReviewerOutput, ReviewVerdict
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_orientation import (
@@ -59,19 +60,19 @@ def llm_reviewer(llm: LLMClient, plan: AnalysisPlan) -> Reviewer:
     async def review(
         step: Step, entries: list[ReviewEntry], again: bool = False
     ) -> ReviewResult | None:
+        messages = build_messages(plan, step, [_payload(e) for e in entries])
+        key = f"reviewer:{step.id}:again" if again else f"reviewer:{step.id}"
         try:
             response = await llm.complete(
-                Role.REVIEWER,
-                build_messages(plan, step, [_payload(e) for e in entries]),
-                key=f"reviewer:{step.id}:again" if again else f"reviewer:{step.id}",
-                schema=ReviewerOutput,
-                max_tokens=1500,
+                Role.REVIEWER, messages, key=key, schema=ReviewerOutput, max_tokens=1500
             )
         except LLMError:
             return None
         out = ReviewerOutput.model_validate(response.parsed)
+        specs = {e.option.id: e.option.spec for e in entries}
+        quoted = await checked_quotes(llm, messages, out, specs, key)
         notes = {e.option.id: (e.effects or {}).get("harness_note") for e in entries}
-        verdicts = apply_contracts(out.verdicts, notes, plan.decision_rule)
+        verdicts = apply_contracts(quoted, notes, plan.decision_rule)
         return ReviewResult(verdicts, response.usage.model)
 
     return review

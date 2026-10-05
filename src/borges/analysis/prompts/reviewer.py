@@ -44,13 +44,17 @@ different but legitimate way to measure or clean the same thing does not change 
 Rules: judge every option listed, once, by its option_id, against its own spec only; options \
 of the same step are meant to differ from each other. Use the observed effects as evidence, \
 not the label. Mark faithful=false only when you can quote the phrase of that option's own spec \
-that the code or the effects contradict, and put the quote in the problem. When the code and \
+that the code or the effects contradict: copy it word for word into quote (Borges checks that the \
+spec contains it). The names under "Every option must create" are shared by the step and may \
+describe another option's method, such as log_deaths written by a square-root option: judge the \
+computation the spec states, not the column name. When the code and \
 effects are consistent with the spec, answer faithful=true, changes_estimand=false and an \
 empty problem. When faithful is false, state in the problem, in one or two sentences with the \
 column or group names and numbers, what the code does instead of what the spec says, so that \
 the coder can fix it.
 
-Return only JSON: {"verdicts": [{"option_id", "faithful", "changes_estimand", "problem"}]}."""
+Return only JSON: {"verdicts": [{"option_id", "faithful", "changes_estimand", "problem", \
+"quote"}]}."""
 
 
 def _column_notes(plan: AnalysisPlan) -> dict[str, str]:
