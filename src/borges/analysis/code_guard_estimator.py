@@ -52,9 +52,21 @@ def _identifiers(tree: ast.AST) -> set[str]:
     return names
 
 
-def _scales_dispersion(tree: ast.AST) -> bool:
+def _robust(call: ast.Call) -> bool:
     return any(
-        isinstance(node, ast.Call) and any(k.arg == "scale" for k in node.keywords)
+        k.arg == "cov_type" and isinstance(k.value, ast.Constant) and k.value.value != "nonrobust"
+        for k in call.keywords
+    )
+
+
+def _scales_dispersion(tree: ast.AST) -> bool:
+    """A red_cards adversary option at d988b34, "Quasi-Poisson regression", fitted
+    .fit(scale="X2", cov_type="HC0"): statsmodels ignores the scale under a sandwich covariance,
+    so it gave the Poisson HC0 interval to 14 digits."""
+    return any(
+        isinstance(node, ast.Call)
+        and any(k.arg == "scale" for k in node.keywords)
+        and not _robust(node)
         for node in ast.walk(tree)
     )
 
@@ -65,7 +77,8 @@ def _problem(family: str, names: set[str], tree: ast.AST) -> str | None:
         return (
             "the option names quasi-Poisson, which keeps the Poisson estimate and scales its "
             "standard errors by the Pearson dispersion: fit a Poisson GLM with "
-            '.fit(scale="X2"); a negative binomial is a different estimator'
+            '.fit(scale="X2") and no robust or cluster cov_type (statsmodels ignores the scale '
+            "under one); a negative binomial is a different estimator"
         )
     if family == "negbin" and not negbin:
         return "the option names a negative binomial model but the code fits none"

@@ -16,7 +16,8 @@ Return JSON with these fields:
 with the reason in `reason`.
 - family: "ols", "logit" (binary outcome), "poisson", "quasipoisson" or "negbin" (count \
 outcome). Use the family the option names: quasi-Poisson is "quasipoisson" (the Poisson estimate \
-with standard errors scaled by the Pearson dispersion), never "negbin".
+with standard errors scaled by the Pearson dispersion, cov_type "nonrobust": statsmodels \
+ignores that scale under a robust or cluster covariance), never "negbin".
 - outcome: the dependent column.
 - exposure: the column whose coefficient is the estimate: the treatment, group or attribute the \
 estimand is about, never the offset column and never the outcome.

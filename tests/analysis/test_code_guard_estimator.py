@@ -99,3 +99,10 @@ def test_robust_weights_and_unweighted_labels_are_not_weighted_fits() -> None:
 
 def test_a_covariate_called_weight_is_no_weighted_fit() -> None:
     assert violations("ols", "OLS adjusting for height and weight") == []
+
+
+def test_a_quasi_poisson_label_on_a_robust_poisson_fit_is_refused() -> None:
+    tree = ast.parse(render_code(make_spec("poisson", report="rate_ratio", cov_type="HC0")))
+    source = ast.unparse(tree).replace("model.fit(", 'model.fit(scale="X2", ')
+    [problem] = estimator_violations(ast.parse(source), "Quasi-Poisson regression")
+    assert "statsmodels ignores the scale" in problem

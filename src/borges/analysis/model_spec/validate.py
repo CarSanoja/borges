@@ -18,6 +18,11 @@ from borges.analysis.scale_check import is_difference_rule, is_ratio_rule
 
 COUNT_FAMILIES = ("poisson", "quasipoisson", "negbin")
 MAX_FIXED_EFFECT_LEVELS = 50
+QUASI_ROBUST = (
+    "quasipoisson scales the model-based standard errors by the Pearson dispersion, and "
+    "statsmodels ignores that scale under cov_type {cov}: use cov_type nonrobust for "
+    "quasi-Poisson, or family poisson for {cov} standard errors"
+)
 MARGINAL_REPORTS = {
     "logit": "marginal_effect",
     "poisson": "marginal_effect",
@@ -107,6 +112,8 @@ def _consistency_problems(spec: ModelSpecOutput) -> list[str]:
         problems.append(f"cov_type {spec.cov_type} needs a cluster column")
     if spec.cov_type not in GROUPED and spec.cluster is not None:
         problems.append("cluster is set but cov_type is not cluster")
+    if spec.family == "quasipoisson" and spec.cov_type != "nonrobust":
+        problems.append(QUASI_ROBUST.format(cov=spec.cov_type))
     if spec.cov_type == "gee" and spec.family not in GEE_FAMILIES:
         problems.append("GEE is available for the ols, logit and poisson families only")
     if spec.cov_type == "gee" and spec.report == "marginal_effect":

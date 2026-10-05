@@ -6,6 +6,7 @@ import pytest
 import statsmodels.api as sm
 
 from borges.analysis.model_spec.render import render_code
+from borges.analysis.model_spec.validate import validate_spec
 from tests.analysis.model_spec.data import make_spec, synthetic
 
 
@@ -90,3 +91,9 @@ def test_a_z_scored_outcome_and_the_fitted_dispersion_are_noted() -> None:
     )
     exec(render_code(make_spec("negbin")), namespace)
     assert "negative binomial alpha" in namespace["estimate"](frame, {})["note"]
+
+
+def test_quasi_poisson_with_a_sandwich_covariance_is_refused() -> None:
+    spec = make_spec("quasipoisson", report="rate_ratio", cov_type="HC0")
+    assert any("ignores that scale" in p for p in validate_spec(spec, ["y_count", "x"]))
+    assert not validate_spec(make_spec("quasipoisson", report="rate_ratio"), ["y_count", "x"])
