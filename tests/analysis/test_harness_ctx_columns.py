@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -7,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from borges.analysis.harness import parse_error, render_step
+from borges.analysis.harness import parse_error, parse_output, render_step
 from borges.analysis.models import Option, Step
 
 PROMISES_DUMMIES = (
@@ -62,13 +63,25 @@ def test_a_formula_term_over_no_column_fails(workdir: Path) -> None:
     assert done.returncode == 1 and error is not None and "['C(region)']" in error
 
 
-def test_the_hint_lists_the_dummies_the_frame_has(workdir: Path) -> None:
+def test_dummies_of_the_dropped_level_are_replaced_by_the_ones_built(workdir: Path) -> None:
     code = (
         "import pandas as pd\n\n\ndef apply(df, ctx):\n"
         "    wide = pd.get_dummies(df['country'], prefix='country', drop_first=True)\n"
         "    out = pd.concat([df, wide], axis=1)\n"
-        "    ctx['covariates'] = ['country_1', 'country_2']\n    return out\n"
+        "    ctx['covariates'] = ['age', 'country_1', 'country_2']\n    return out\n"
+    )
+    done = run(workdir, code)
+    assert done.returncode == 0, done.stdout
+    ctx = json.loads((workdir / "state" / "ctx.json").read_text())
+    assert ctx["covariates"] == ["age", "country_2", "country_3"]
+    traces, _ = parse_output(done.stdout)
+    assert "did not build (country_1)" in traces[0].note
+
+
+def test_a_transformed_column_is_not_taken_for_a_dummy(workdir: Path) -> None:
+    code = (
+        "def apply(df, ctx):\n    df['age_log'] = df['age'] * 0.5\n"
+        "    ctx['covariates'] = ['age_sq']\n    return df\n"
     )
     error = parse_error(run(workdir, code).stdout)
-    assert error is not None and "['country_1']" in error
-    assert "has ['country_2', 'country_3']" in error and "drop_first=True" in error
+    assert error is not None and "['age_sq']" in error

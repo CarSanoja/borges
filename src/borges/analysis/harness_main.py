@@ -132,7 +132,7 @@ __FINGERPRINT__
         _check_missing_cuts(df, out)
         _check_kept_rows(out, rows_before)
         _check_ctx(ctx)
-        _check_ctx_columns(ctx, out)
+        _check_ctx_columns(ctx, out, trace)
         _os.makedirs("state", exist_ok=True)
         out.to_parquet(state_df)
         with open(state_ctx, "w") as handle:

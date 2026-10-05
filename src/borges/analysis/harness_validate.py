@@ -39,7 +39,7 @@ VALIDATE_SOURCE = """
                 span + " does not contain the estimate " + _num(est)
             )
 
-    def _check_ctx_columns(ctx, out):
+    def _check_ctx_columns(ctx, out, trace):
         named = ctx.get("covariates")
         if not isinstance(named, list) or not all(isinstance(c, str) for c in named):
             return
@@ -60,6 +60,26 @@ VALIDATE_SOURCE = """
         bases = sorted({b for c in missing for b in columns if c.startswith(b + "_")})
         prefixes = tuple(b + "_" for b in bases)
         present = [c for c in columns if c not in bases and c.startswith(prefixes)]
+        owner = {c: next((b for b in bases if c.startswith(b + "_")), None) for c in missing}
+        def _dummy(column):
+            values = set(out[column].dropna().unique().tolist())
+            return bool(values) and values <= {0, 1, True, False}
+
+        groups = {b: [c for c in present if c.startswith(b + "_") and _dummy(c)] for b in bases}
+        if all(owner.values()) and all(groups[b] for b in set(owner.values())):
+            kept = []
+            for name in named:
+                for column in groups[owner[name]] if name in owner else [name]:
+                    if column not in kept:
+                        kept.append(column)
+            ctx["covariates"] = kept
+            note = (
+                "ctx['covariates'] named dummies get_dummies did not build (" + ", ".join(missing)
+                + "); the ones it built are listed instead (" + ", ".join(kept) + "): the"
+                + " reference level does not change the exposure's estimate"
+            )
+            trace["note"] = (note + "; " + trace["note"] if trace["note"] else note)[:500]
+            return
         have = (
             " the returned DataFrame has " + repr(present[:12])
             + " (get_dummies with drop_first=True drops the first level), so list those, or"
