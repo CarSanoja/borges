@@ -16,6 +16,7 @@ from borges.armor.report import ArmorReport
 from borges.config import Settings
 from borges.fleet.models import RunAgents
 from borges.garden.aliased import aliased_caveats, tangled_caveats
+from borges.garden.covariate_sample import covariate_sample_caveats
 from borges.garden.executor import GardenExecutor
 from borges.garden.failed_caveat import failed_caveat
 from borges.garden.influence import build_report
@@ -197,6 +198,7 @@ class Pipeline:
                 *aliased_caveats(self.garden),
                 *tangled_caveats(self.garden),
                 *scaled_outcome_caveats(self.garden),
+                *covariate_sample_caveats(plan, self.garden),
             ]
         )
         note = scale_note(self.garden)
