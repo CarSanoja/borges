@@ -10,8 +10,6 @@ REVERSES = re.compile(
     r"\b(?:flipped|flips? (?:the|its) (?:verdict|conclusion)|revers\w*|overturn\w*)\b", re.I
 )
 AGREES = re.compile(r"\b(?:agree\w*|support\w*|consistent|robust\w*|same verdict)\b", re.I)
-REEXECUTION = re.compile(r"re-?execut|reproduc", re.I)
-METHOD = re.compile(r"\bbeam\b|\bagreement rate\b|\bexplored region\b|\badversar", re.I)
 
 
 def robustness_sentence(report: Report) -> str | None:
@@ -63,20 +61,6 @@ def robustness_problems(report: Report, narrative: str) -> list[str]:
 def drop_inverted_sentences(report: Report, narrative: str) -> str:
     kept = [s for s in SENTENCE_END.split(narrative.strip()) if not inverted_shares(report, s)]
     return " ".join(kept)
-
-
-def kept_caveats(report: Report, caveats: list[str]) -> list[str]:
-    """The deterministic robustness sentence and caveats state the basis of the share and what the
-    adversary added; a narrator caveat that describes the search method or the adversary again,
-    inverts a share, or talks about re-execution when there is no flip to re-execute, is dropped."""
-    no_flip = report.minimal_flip is None
-    return [
-        c
-        for c in caveats
-        if not METHOD.search(c)
-        and not inverted_shares(report, c)
-        and not (no_flip and REEXECUTION.search(c))
-    ]
 
 
 BEAM = re.compile(r"\bbeam\b", re.IGNORECASE)

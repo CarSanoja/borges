@@ -4,7 +4,6 @@ from borges.analysis.models import AnalysisResult
 from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
     drop_method_sentences,
-    kept_caveats,
     robustness_problems,
     robustness_sentence,
 )
@@ -51,25 +50,6 @@ def test_an_agreeing_share_read_as_flips_is_rejected_and_dropped() -> None:
 def test_a_correct_narrative_passes() -> None:
     text = f"The verdict holds. {robustness_sentence(report())} 31% of explored universes flip."
     assert robustness_problems(report(), text) == []
-
-
-def test_narrator_caveats_on_the_search_method_or_with_inverted_shares_are_dropped() -> None:
-    caveats = [
-        "The beam search sampled universes closest to flipping; the 100% agreement rate reflects "
-        "the explored region, not the full grid.",
-        "69% of the explored universes reversed the conclusion.",
-        "The adversary proposals that entered the garden all yielded the same verdict.",
-        "Square-root transformation changes the outcome scale.",
-    ]
-    assert kept_caveats(report(), caveats) == [
-        "Square-root transformation changes the outcome scale."
-    ]
-
-
-def test_a_caveat_about_re_execution_is_dropped_when_no_flip_was_found() -> None:
-    caveats = ["No independent re-execution was performed because no flip was found.", "Kept."]
-    assert report().minimal_flip is None
-    assert kept_caveats(report(), caveats) == ["Kept."]
 
 
 def test_method_talk_and_another_robustness_headline_are_dropped() -> None:

@@ -181,7 +181,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
     ):
         if scenario.narrate_error:
             raise scenario.narrate_error
-        return "story", ["caveat"]
+        return "story"
 
     patches: list[tuple[Any, str, Any]] = [
         (pipeline, "plan_analysis", plan_analysis),

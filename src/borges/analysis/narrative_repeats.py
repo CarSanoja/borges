@@ -5,13 +5,8 @@ import re
 SENTENCE = re.compile(r"(?<=[.!?])\s+")
 NUMBER = re.compile(r"-?\d+(?:\.\d+)?%?")
 WORD = re.compile(r"[a-z]{3,}")
-CONTENT = re.compile(r"[a-z]{4,}")
 OVERLAP = 0.5
-RESTATED = 0.6
-MIN_SHARED = 4
-QUOTED = re.compile(r"'([^']{3,})'")
 RESTATED_OPENING = re.compile(r"([^()]{1,60}) \(\1 \(")
-STOP = frozenset({"that", "this", "with", "from", "were", "have", "been", "they", "their", "which"})
 
 
 def _numbers(sentence: str) -> list[str]:
@@ -38,22 +33,6 @@ def drop_repeated_sentences(narrative: str) -> str:
         if not any(_repeats(sentence, earlier) for earlier in kept):
             kept.append(sentence)
     return " ".join(kept)
-
-
-def _content(text: str) -> set[str]:
-    return {w.rstrip("s") for w in CONTENT.findall(text.lower().replace("-", " "))} - STOP
-
-
-def restates_any(text: str, earlier: list[str]) -> bool:
-    words, quoted = _content(text), QUOTED.findall(text)
-    for other in earlier:
-        if not all(q in other for q in quoted):
-            continue
-        before = _content(other)
-        shared = len(words & before)
-        if shared >= MIN_SHARED and shared / (min(len(words), len(before)) or 1) >= RESTATED:
-            return True
-    return False
 
 
 def drop_prompt_echoes(narrative: str, rules: tuple[str, ...]) -> str:

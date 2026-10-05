@@ -17,13 +17,14 @@ estimate; the minimal flip (the fewest defensible changes that reverse the verdi
 each change is defensible, or say clearly that no flip was found; when a flip was found, \
 whether it was reproduced by an independent re-execution; and the share of explored universes \
 that agree with the original verdict (robustness). When no flip was found there is nothing to \
-re-execute: do not mention re-execution or reproducibility, in the summary or in the caveats.
+re-execute: do not mention re-execution or reproducibility.
 
 Do not overclaim causality: the influence figures describe how sensitive the analysis is to \
 analyst choices, not effects in the world. Say what each change does, and never explain why the \
 estimate moved with a statistical mechanism (overdispersion, confounding, outliers, leverage) \
 unless the garden has a universe that changes only that and shows it. Use only numbers present \
-in the report. No headings, no preamble. Also return 0 to 4 short caveats.
+in the report. No headings, no preamble. Return an empty caveats list: Borges computes every \
+caveat from the garden itself.
 
 Return only JSON matching the requested schema."""
 

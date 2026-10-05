@@ -11,7 +11,7 @@ from tests.analysis.fakes import FakeLLM, make_plan
 from tests.analysis.test_narrative_flip import checkout_plan, checkout_report
 
 
-async def test_narrate_returns_text_and_caveats() -> None:
+async def test_narrate_returns_the_summary() -> None:
     result = AnalysisResult(estimate=0.4, ci_low=0.1, ci_high=0.7, p_value=0.01, n=100)
     report = Report(
         question="Q?",
@@ -29,9 +29,8 @@ async def test_narrate_returns_text_and_caveats() -> None:
     first = original_sentence(report)
     out = NarratorOutput(narrative=f"  {first} Plain text. {robust}  ", caveats=["c1"])
     llm = FakeLLM({"narrator": out})
-    narrative, caveats = await narrate(llm, make_plan(), report)
+    narrative = await narrate(llm, make_plan(), report)
     assert narrative == f"{first} Plain text. {robust}"
-    assert caveats == ["c1"]
     call = llm.calls[0]
     assert call.role is Role.NARRATOR and call.key == "narrator" and call.max_tokens == 1200
     content = call.messages[1]["content"]
@@ -50,8 +49,8 @@ ORIGINAL = original_sentence(checkout_report())
 async def test_flip_sentence_is_requested_verbatim_and_a_faithful_narrative_is_kept() -> None:
     good = f"{ORIGINAL} {SENTENCE} {ROBUST}"
     llm = FakeLLM({"narrator": NarratorOutput(narrative=good, caveats=["c"])})
-    narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative == good and caveats == ["c"]
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
+    assert narrative == good
     assert llm.keys() == ["narrator"]
     assert SENTENCE in llm.calls[0].messages[1]["content"]
     assert "verbatim" in llm.calls[0].messages[1]["content"]
@@ -66,8 +65,8 @@ async def test_checkout_narrative_naming_the_wrong_option_is_retried() -> None:
             "narrator:retry": NarratorOutput(narrative=fixed, caveats=["new"]),
         }
     )
-    narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
-    assert narrative == fixed and caveats == ["new"]
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
+    assert narrative == fixed
     assert llm.keys() == ["narrator", "narrator:retry"]
     retry = llm.calls[1].messages[1]["content"]
     assert "rejected" in retry and "bot-like" in retry
@@ -81,16 +80,15 @@ async def test_missing_sentence_after_the_retry_is_inserted_as_second_sentence()
             "narrator:retry": NarratorOutput(narrative=bad),
         }
     )
-    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
 
 
 async def test_failed_retry_falls_back_to_insertion() -> None:
     bad = f"{ORIGINAL} This flip excludes internal and bot-like sessions."
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=["k"])})
-    narrative, caveats = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
-    assert caveats == ["k"]
     assert llm.keys() == ["narrator", "narrator:retry"]
 
 
@@ -101,14 +99,14 @@ async def test_retry_that_repairs_only_the_label_still_gets_the_sentence() -> No
             "narrator:retry": NarratorOutput(narrative=f"{ORIGINAL} {SENTENCE} Second. {ROBUST}"),
         }
     )
-    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"{ORIGINAL} {SENTENCE} Second. {ROBUST}"
 
 
 async def test_fallback_removes_sentences_that_name_another_option_of_the_flipped_step() -> None:
     bad = f"{ORIGINAL} The flip comes from excluding internal and bot-like sessions. {ROBUST}"
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad)})
-    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
     assert "bot-like" not in narrative
 
@@ -133,7 +131,7 @@ async def test_an_estimate_on_the_log_scale_is_never_read_as_additional_units() 
     )
     llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=[])})
     scaled = garden({"kind": "log1p", "column": "alldeaths"})
-    narrative, _ = await narrate(llm, make_plan(), report, scaled)
+    narrative = await narrate(llm, make_plan(), report, scaled)
     assert llm.keys() == ["narrator", "narrator:retry"]
     assert (
         "Scale of the estimate: The original analysis is a model of log1p(alldeaths)"
@@ -147,7 +145,7 @@ async def test_an_instruction_copied_next_to_a_verbatim_sentence_is_dropped() ->
 
     echoed = f"{ORIGINAL} {ORIGINAL_RULE} {SENTENCE} {ROBUST} {ROBUST_RULE}"
     llm = FakeLLM({"narrator": NarratorOutput(narrative=echoed, caveats=[])})
-    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == f"{ORIGINAL} {SENTENCE} {ROBUST}"
     prompt = llm.calls[0].messages[1]["content"]
     assert f"{ROBUST_RULE} Include the sentence below verbatim" in prompt
@@ -161,7 +159,7 @@ async def test_a_correct_draft_that_leaves_out_a_required_sentence_is_kept_and_c
         f"{SENTENCE} Only the filter moves the estimate."
     )
     llm = FakeLLM({"narrator": NarratorOutput(narrative=draft, caveats=[])})
-    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert llm.keys() == ["narrator"]
     assert narrative == f"{draft} {ROBUST}"
 
@@ -172,5 +170,5 @@ async def test_another_option_of_the_flipped_step_told_with_its_own_result_is_ke
         f"{ROBUST}"
     )
     llm = FakeLLM({"narrator": NarratorOutput(narrative=draft, caveats=[])})
-    narrative, _ = await narrate(llm, checkout_plan(), checkout_report())
+    narrative = await narrate(llm, checkout_plan(), checkout_report())
     assert narrative == draft and llm.keys() == ["narrator"]

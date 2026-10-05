@@ -16,7 +16,6 @@ from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
     drop_method_sentences,
     inverted_shares,
-    kept_caveats,
     robustness_sentence,
 )
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
@@ -110,11 +109,11 @@ async def narrate(
     report: Report,
     garden: Garden | None = None,
     judged: JudgedLedger | None = None,
-) -> tuple[str, list[str]]:
+) -> str:
     sentence = flip_sentence(plan, report)
     scale = scale_note(garden) if garden is not None else None
     out = await _ask(llm, plan, report, sentence, "narrator", None, garden, judged, scale)
-    narrative, caveats = _clean(report, out.narrative), out.caveats
+    narrative = _clean(report, out.narrative)
     issues = _issues(plan, report, narrative, scale)
     if issues:
         try:
@@ -125,9 +124,9 @@ async def narrate(
             retry = None
         second = _clean(report, retry.narrative) if retry is not None else ""
         if retry is not None and not _issues(plan, report, second, scale) and NUMBER.search(second):
-            narrative, caveats = second, retry.caveats
+            narrative = second
         else:
             narrative = drop_inverted_sentences(
                 report, drop_wrong_sentences(plan, report, narrative)
             )
-    return _complete(plan, report, narrative, sentence, scale), kept_caveats(report, caveats)
+    return _complete(plan, report, narrative, sentence, scale)

@@ -66,14 +66,14 @@ async def test_non_reproduced_flip_adds_a_caveat(tmp_path: Path, scenario: Scena
     assert any("did not reproduce" in c for c in snapshot.report.caveats)
 
 
-async def test_pipeline_caveats_survive_narrator_caveats(
+async def test_every_caveat_is_computed_and_the_narrator_writes_the_summary_only(
     tmp_path: Path, scenario: Scenario
 ) -> None:
     scenario.reproduced = False
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
     assert snapshot.report is not None
-    assert "caveat" in snapshot.report.caveats
+    assert snapshot.report.narrative == "story"
     assert any("did not reproduce" in c for c in snapshot.report.caveats)
 
 
