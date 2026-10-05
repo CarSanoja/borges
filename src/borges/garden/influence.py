@@ -3,6 +3,7 @@ from __future__ import annotations
 from borges.analysis.models import AnalysisPlan
 from borges.garden.duplicates import duplicate_options
 from borges.garden.estimand import estimand_changes
+from borges.garden.exposure_spread import exposure_spread_notes
 from borges.garden.flips import contaminated_flips
 from borges.garden.models import DecisionInfluence, Flip, Garden, Report
 from borges.garden.noop import noop_options
@@ -101,5 +102,6 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         caveats=[
             *reversal_caveats(garden),
             *figure_caveats(plan, len(finished), figures, noops, flip, tainted, duplicates),
+            *exposure_spread_notes(plan, garden),
         ],
     )

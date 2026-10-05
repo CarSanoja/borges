@@ -167,6 +167,7 @@ DESIGN_SOURCE = """
                     "exposure_binary": bool(set(_np.unique(x[:, found])) <= {0.0, 1.0})
                     if hit
                     else None,
+                    "exposure_sd": float(_np.std(x[:, found])) if hit else None,
                     "names": [str(n) for n in names][:60],
                 }
             )
