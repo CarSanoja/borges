@@ -19,6 +19,8 @@ def design_terms(universe: Universe) -> set[str] | None:
 
 
 UNNAMED = re.compile(r"x\d+")
+UNADJUSTED = "adjusted versus unadjusted answers a different question"
+OTHER_SET = "adjusting for another set of covariates answers a different conditional question"
 MIN_STEM = 4
 
 
@@ -125,9 +127,8 @@ def _count_detail(baseline: Universe, universe: Universe, before: int, after: in
     if before == after:
         return None
     return (
-        f"changes the number of {what} of the model from {before} to {after}: adjusted versus "
-        "unadjusted answers a different question, so this is an estimand change, not a "
-        "re-analysis of the same quantity"
+        f"changes the number of {what} of the model from {before} to {after}: {OTHER_SET}, so "
+        "this is an estimand change, not a re-analysis of the same quantity"
     )
 
 
@@ -143,8 +144,10 @@ def estimand_detail(
     if scale is not None:
         return scale
     before, after = design_terms(baseline), design_terms(universe)
+    floor = 1
     if reported_term(baseline) is not None and reported_term(universe) is not None:
         before, after = _covariate_terms(baseline), _covariate_terms(universe)
+        floor = 0
     if before is None or after is None or before == after:
         return None
     if any(UNNAMED.fullmatch(t) for t in before | after):
@@ -157,10 +160,10 @@ def estimand_detail(
         parts.append("adds " + ", ".join(added))
     if removed:
         parts.append("removes " + ", ".join(removed))
+    why = UNADJUSTED if min(len(before), len(after)) <= floor else OTHER_SET
     return (
-        "changes the covariates of the model (" + "; ".join(parts) + "): adjusted versus "
-        "unadjusted answers a different question, so this is an estimand change, not a "
-        "re-analysis of the same quantity"
+        "changes the covariates of the model (" + "; ".join(parts) + f"): {why}, so this is an "
+        "estimand change, not a re-analysis of the same quantity"
     )
 
 

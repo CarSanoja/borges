@@ -35,3 +35,12 @@ def test_the_same_scale_falls_through_to_the_covariate_check() -> None:
     assert estimand_detail(universe(LOG1P), universe(LOG1P)) is None
     changed = estimand_detail(universe(LOG1P), universe(LOG1P, ("x", "wind")))
     assert changed is not None and changed.startswith("changes the covariates of the model")
+
+
+def test_the_reason_says_unadjusted_only_when_one_side_has_no_covariates() -> None:
+    bare = estimand_detail(universe(None), universe(None, ("x", "wind")))
+    assert bare is not None and "adjusted versus unadjusted" in bare
+    more = estimand_detail(universe(None, ("x", "age")), universe(None, ("x", "age", "ses")))
+    assert more is not None and "(adds ses)" in more
+    assert "another set of covariates answers a different conditional question" in more
+    assert "unadjusted" not in more
