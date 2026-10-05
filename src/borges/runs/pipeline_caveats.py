@@ -45,11 +45,15 @@ UNTESTED = (
 )
 
 
-def report_caveats(report: Report, flip: Flip | None, threshold: float) -> list[str]:
+def report_caveats(
+    report: Report, flip: Flip | None, threshold: float, failed: str | None = None
+) -> list[str]:
     caveats: list[str] = []
     if flip is None and report.n_universes <= 1:
         caveats.append(UNTESTED)
-    if report.n_failed:
+    if failed is not None:
+        caveats.append(failed)
+    elif report.n_failed:
         caveats.append(
             f"{report.n_failed} universes could not run and are left out of the robustness figure."
         )

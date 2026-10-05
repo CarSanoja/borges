@@ -4,6 +4,7 @@ import re
 
 from borges.analysis.models import AnalysisPlan
 from borges.analysis.narrative_counts import drop_wrong_counts
+from borges.analysis.narrative_failures import restate_failures
 from borges.analysis.narrative_flip import (
     drop_wrong_sentences,
     flip_sentence,
@@ -102,6 +103,7 @@ def _complete(
 ) -> str:
     units = unit_readings(report, narrative, scale)
     narrative = rewrite_claimed_flips(report, drop_unit_readings(report, narrative, scale))
+    narrative = restate_failures(report, narrative)
     kept = with_original(plan, report, narrative)
     if sentence is not None and not has_sentence(kept, sentence):
         kept = insert_sentence(kept, sentence)
