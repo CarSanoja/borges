@@ -152,3 +152,23 @@ def test_a_flip_that_reports_another_exposure_is_an_estimand_change() -> None:
     garden.baseline.traces = [model("skin_tone", True)]
     flip = minimal_flip(plan, garden)
     assert flip is not None and flip.estimand_change is None
+
+
+def test_a_flip_that_models_another_outcome_column_is_an_estimand_change() -> None:
+    plan = plan_of(
+        step_of("rows", "filter", option("keep", True), option("drop")),
+        step_of("model", "model", option("plain", True), option("adjusted")),
+        notes={"wb_overall": "overall well-being", "wb_social": "social well-being"},
+    )
+
+    def model(outcome: str):
+        return trace("model", terms=["x"], outcome=outcome, deficient=False)
+
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(0.01, p=0.2), traces=[model("wb_overall")]),
+        universe(plan, {"model": "adjusted"}, result(0.03), traces=[model("wb_social")]),
+    )
+    flip = minimal_flip(plan, garden)
+    assert flip is not None and flip.estimand_change is not None
+    assert flip.estimand_change.startswith("models another outcome (wb_social instead of")

@@ -200,3 +200,4 @@ def test_the_design_names_the_term_whose_coefficient_is_reported(workdir: Path) 
     traces, _ = parse_output(done.stdout)
     assert traces[0].design is not None and traces[0].design["exposure"] == "x"
     assert traces[0].design["exposure_binary"] is False
+    assert traces[0].design["outcome"] == "y"

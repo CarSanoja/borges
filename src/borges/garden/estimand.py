@@ -73,6 +73,27 @@ def exposure_detail(baseline: Universe, universe: Universe, columns: set[str] | 
     )
 
 
+def _outcome(universe: Universe) -> str | None:
+    for trace in universe.traces:
+        if trace.design and isinstance(trace.design.get("outcome"), str):
+            return str(trace.design["outcome"])
+    return None
+
+
+def outcome_detail(baseline: Universe, universe: Universe, columns: set[str] | None) -> str | None:
+    """Another column of the data modelled as the outcome: a marp_norms flip replaced overall
+    well-being with its social subscale and was reported as a re-analysis (597c38e)."""
+    before, after = _outcome(baseline), _outcome(universe)
+    if before is None or after is None or before == after or columns is None:
+        return None
+    if not {before, after} <= columns:
+        return None
+    return (
+        f"models another outcome ({after} instead of {before}): another outcome answers "
+        "another question, so this is an estimand change, not a re-analysis of the same quantity"
+    )
+
+
 def _covariate_terms(universe: Universe) -> set[str] | None:
     terms, exposure = design_terms(universe), reported_term(universe)
     if terms is None or exposure is None:
@@ -83,7 +104,11 @@ def _covariate_terms(universe: Universe) -> set[str] | None:
 def estimand_detail(
     baseline: Universe, universe: Universe, columns: set[str] | None = None
 ) -> str | None:
-    scale = scale_detail(baseline, universe) or exposure_detail(baseline, universe, columns)
+    scale = (
+        scale_detail(baseline, universe)
+        or outcome_detail(baseline, universe, columns)
+        or exposure_detail(baseline, universe, columns)
+    )
     if scale is not None:
         return scale
     before, after = design_terms(baseline), design_terms(universe)

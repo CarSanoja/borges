@@ -45,17 +45,27 @@ OUTCOME_SOURCE = """
                         return kind, str(column)
         return None
 
-    def _outcome_scale(frame, estimate):
+    def _reporting_models(estimate):
         if not isinstance(estimate, (int, float)):
-            return None
+            return
         for name, _, _, model_id in reversed(_designs):
             if model_id in _helpers:
                 continue
             params = _fits.get(model_id)
-            if params is None or not any(
+            if params is not None and any(
                 abs(p - estimate) <= 1e-6 * max(1.0, abs(estimate)) for p in params
             ):
-                continue
+                yield name, model_id
+
+    def _outcome_name(frame, estimate):
+        for _, model_id in _reporting_models(estimate):
+            endog, _ = _model_endog(_endogs.get(model_id))
+            name = getattr(endog, "name", None)
+            return str(name) if name is not None and name in frame.columns else None
+        return None
+
+    def _outcome_scale(frame, estimate):
+        for name, model_id in _reporting_models(estimate):
             endog, link = _model_endog(_endogs.get(model_id))
             logged = _logged_column(endog, frame) if endog is not None else None
             if logged is not None:
