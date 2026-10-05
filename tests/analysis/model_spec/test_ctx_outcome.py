@@ -5,7 +5,13 @@ import pandas as pd
 import pytest
 
 from borges.analysis import coder_checks
-from borges.analysis.model_spec.ctx_outcome import candidate_specs, ctx_outcome_names, pin_outcome
+from borges.analysis.model_spec.ctx_outcome import (
+    candidate_specs,
+    ctx_outcome_names,
+    pin_outcome,
+    read_ctx_outcome,
+)
+from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.models import AnalysisPlan, ColumnProfile, Step
 from tests.analysis.fakes import make_option
@@ -81,3 +87,24 @@ def test_a_standardised_outcome_follows_the_candidate() -> None:
     other = spec.model_copy(update={"outcome": "wellbeing", "standardize": ["wellbeing"]})
     pinned = pin_outcome(other, names)
     assert pinned.outcome == "wb_overall" and pinned.standardize == ["wb_overall"]
+
+
+def test_the_scaled_outcome_note_names_the_outcome_read_at_run_time() -> None:
+    spec = ModelSpecOutput.model_validate(
+        {
+            "supported": True,
+            "family": "ols",
+            "outcome": "outcome",
+            "exposure": "score",
+            "standardize": ["outcome", "score"],
+        }
+    )
+    code = read_ctx_outcome(render_code(spec), "outcome")
+    rng = np.random.default_rng(1)
+    frame = pd.DataFrame({"score": rng.normal(size=120)})
+    frame["outcome"] = frame["score"] + rng.normal(size=120)
+    frame["outcome2"] = -frame["score"] + rng.normal(size=120)
+    namespace: dict = {}
+    exec(code, namespace)
+    note = namespace["estimate"](frame, {"outcome": "outcome2"})["note"]
+    assert note.endswith("outcome z-scored with the predictors: outcome2")

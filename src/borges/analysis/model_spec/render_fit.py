@@ -101,7 +101,7 @@ def fit_lines(spec: ModelSpecOutput) -> list[str]:
     else:
         lines += _count_lines(spec, arguments)
     if spec.outcome in spec.standardize:
-        lines.append(f"    note += ('; ' if note else '') + {SCALED_OUTCOME + str(spec.outcome)!r}")
+        lines.append(f"    note += ('; ' if note else '') + {SCALED_OUTCOME!r} + {spec.outcome!r}")
     return lines
 
 
