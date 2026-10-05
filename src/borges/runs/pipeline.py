@@ -20,6 +20,7 @@ from borges.garden.covariate_sample import baseline_sample_caveats, covariate_sa
 from borges.garden.discrete_quantile import discrete_quantile_caveats
 from borges.garden.executor import GardenExecutor
 from borges.garden.failed_caveat import failed_caveat
+from borges.garden.hc_variant import hc_variant_caveats
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary
 from borges.garden.outcome_scale import scale_note
@@ -202,6 +203,7 @@ class Pipeline:
                 *baseline_sample_caveats(plan, self.garden),
                 *covariate_sample_caveats(plan, self.garden),
                 *discrete_quantile_caveats(self.garden, self.flip and self.flip.universe_id),
+                *hc_variant_caveats(self.garden),
             ]
         )
         note = scale_note(self.garden)

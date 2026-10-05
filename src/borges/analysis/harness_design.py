@@ -17,6 +17,7 @@ DESIGN_SOURCE = """
     _designs = []
     _fits = {}
     _offsets = {}
+    _results = {}
     _helpers = set()
 
     def _inside_another(model):
@@ -52,6 +53,7 @@ DESIGN_SOURCE = """
             results(self, model, params, *args, **kwargs)
             try:
                 _fits[id(model)] = _np.asarray(params, dtype=float).ravel()
+                _results[id(model)] = self
                 _offsets[id(model)] = any(
                     getattr(model, name, None) is not None for name in ("offset", "exposure")
                 )
@@ -175,6 +177,7 @@ DESIGN_SOURCE = """
                     "offset": _offsets.get(model_id),
                     "family": type(getattr(_endogs.get(model_id), "family", None)).__name__,
                     "endog_levels": _endog_levels(model_id),
+                    "cov_type": str(getattr(_results.get(model_id), "cov_type", "") or "") or None,
                     "names": [str(n) for n in names][:60],
                 }
             )
