@@ -31,7 +31,9 @@ FLIP_SENTENCE = (
     'The minimal flip changes Measure skin tone from "Mean of both raters" to "Rater 2 only" '
     'and Choose which dyads to keep from "Rated players only" to '
     '"Rated players, referees with 22+ dyads" and Adjust for context from "No covariates" '
-    'to "Physique plus league country".'
+    'to "Physique plus league country". This flip changes the covariates of the model (adds 16 '
+    "unnamed columns): adjusted versus unadjusted answers a different question, so this is an "
+    "estimand change, not a re-analysis of the same quantity."
 )
 REFERENCE_LABEL = "29 human research teams (Silberzahn et al., 2018)"
 
