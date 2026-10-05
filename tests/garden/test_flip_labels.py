@@ -98,3 +98,32 @@ def test_excluding_more_rows_is_not_contamination() -> None:
     )
     flip = minimal_flip(plan, garden)
     assert flip is not None and not flip.contaminated
+
+
+def test_every_contaminated_flip_with_its_own_change_is_reported() -> None:
+    from borges.garden.flips import contaminated_flips
+    from borges.garden.influence import build_report
+
+    plan = internal_plan()
+    plan.step("traffic").options.append(option("bots_only", label="Exclude bots only"))
+    rows = {"keep_all": (1000, 1.0), "bots_only": (950, 1.2)}
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(0.4, p=0.4), traces=[trace("traffic", rows_after=900)]),
+        *(
+            universe(plan, {"traffic": o}, result(e), traces=[trace("traffic", rows_after=n)])
+            for o, (n, e) in rows.items()
+        ),
+        universe(
+            plan,
+            {"traffic": "keep_all", "model": "n"},
+            result(1.1),
+            traces=[trace("traffic", rows_after=1000)],
+        ),
+    )
+    found = contaminated_flips(plan, garden)
+    assert sorted(f.changes[0].to_option for f in found) == ["bots_only", "keep_all"]
+    report = build_report(plan, garden, None)
+    assert len(report.contaminated_flips) == 2
+    [note] = [c for c in report.caveats if "none is the headline" in c]
+    assert note.startswith("2 flips were found") and "re-includes 50 rows" in note

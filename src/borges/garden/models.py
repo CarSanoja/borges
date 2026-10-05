@@ -113,6 +113,7 @@ class Report(BaseModel):
     duplicate_options: list[DuplicateOption] = Field(default_factory=list)
     estimand_changes: list[EstimandChange] = Field(default_factory=list)
     contaminated_flip: Flip | None = None
+    contaminated_flips: list[Flip] = Field(default_factory=list)
     narrator_input_tokens: int | None = None
     narrative: str = ""
     caveats: list[str] = Field(default_factory=list)

@@ -16,7 +16,7 @@ def figure_caveats(
     figures: RobustnessFigures,
     noops: list[NoopOption],
     flip: Flip | None,
-    contaminated: Flip | None,
+    contaminated: list[Flip],
     duplicates: list[DuplicateOption] | None = None,
 ) -> list[str]:
     duplicates = duplicates or []
@@ -43,8 +43,11 @@ def figure_caveats(
         )
     if flip is not None and flip.estimand_change:
         notes.append(f"The minimal flip {flip.estimand_change}.")
-    if contaminated is not None:
+    if len(contaminated) == 1:
         notes.append(
-            f"A flip was found but is not the headline: {contaminated.contamination_reason}."
+            f"A flip was found but is not the headline: {contaminated[0].contamination_reason}."
         )
+    elif contaminated:
+        reasons = "; ".join(str(f.contamination_reason) for f in contaminated)
+        notes.append(f"{len(contaminated)} flips were found and none is the headline: {reasons}.")
     return notes

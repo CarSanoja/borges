@@ -97,3 +97,21 @@ def ranked_flips(plan: AnalysisPlan, garden: Garden) -> list[Flip]:
         )
         scored.append((key, flip))
     return [flip for _, flip in sorted(scored, key=lambda item: item[0])]
+
+
+MAX_CONTAMINATED = 5
+
+
+def contaminated_flips(plan: AnalysisPlan, garden: Garden) -> list[Flip]:
+    """Every contaminated flip whose changes contain no other one's, smallest first.
+
+    A checkout garden had two: re-including every session and re-including internal sessions only;
+    the report named the first, and the summary called it the only flip and described the second
+    as an accepted alternative (b4e2f4e)."""
+    kept: list[Flip] = []
+    found = [f for f in ranked_flips(plan, garden) if f.contaminated]
+    for flip in sorted(found, key=lambda f: len(f.changes)):
+        moves = {(c.step_id, c.to_option) for c in flip.changes}
+        if not any({(c.step_id, c.to_option) for c in k.changes} <= moves for k in kept):
+            kept.append(flip)
+    return kept[:MAX_CONTAMINATED]
