@@ -16,6 +16,7 @@ DESIGN_WIDE_COLUMNS = 500
 DESIGN_SOURCE = """
     _designs = []
     _fits = {}
+    _offsets = {}
     _helpers = set()
 
     def _inside_another(model):
@@ -51,6 +52,9 @@ DESIGN_SOURCE = """
             results(self, model, params, *args, **kwargs)
             try:
                 _fits[id(model)] = _np.asarray(params, dtype=float).ravel()
+                _offsets[id(model)] = any(
+                    getattr(model, name, None) is not None for name in ("offset", "exposure")
+                )
             except Exception:
                 pass
 
@@ -168,6 +172,7 @@ DESIGN_SOURCE = """
                     if hit
                     else None,
                     "exposure_sd": float(_np.std(x[:, found])) if hit else None,
+                    "offset": _offsets.get(model_id),
                     "names": [str(n) for n in names][:60],
                 }
             )

@@ -170,6 +170,13 @@ __FINGERPRINT__
                     raise ValueError(_design_error(design))
                 if __DESIGN_CHECK__ and design["no_intercept"]:
                     raise ValueError(_intercept_error(design))
+                if __DESIGN_CHECK__ and __OFFSET__ and design.get("offset") is False:
+                    raise ValueError(
+                        "the option's spec fits an offset (for example offset=np.log(games)),"
+                        + " but the " + str(design["model"]) + " that reports the estimate has"
+                        + " none, so it models counts per row instead of a rate: pass"
+                        + " offset=np.log(df[...]) (or exposure=) to the model"
+                    )
                 ignored = _ignored_covariates(design, ctx, df, trace["note"])
                 if __DESIGN_CHECK__ and ignored:
                     raise ValueError(_ignored_error(ignored, design))

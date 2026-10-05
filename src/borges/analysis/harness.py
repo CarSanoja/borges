@@ -10,6 +10,7 @@ from borges.analysis.harness_effects import EffectTrace
 from borges.analysis.harness_main import MAIN_TEMPLATE
 from borges.analysis.harness_missing_cut import compared_names, imputes, read_names
 from borges.analysis.models import AnalysisResult, Option, Step, StepTrace
+from borges.analysis.offset_intent import wants_offset
 from borges.analysis.path_scrub import scrub_paths
 
 DATA_FILE = "data.parquet"
@@ -75,6 +76,7 @@ def render_step(
         .replace("__READS__", repr(read_names(option.code)))
         .replace("__IMPUTES__", repr(imputes(option)))
         .replace("__COMPARED__", repr(compared_names(option.code)))
+        .replace("__OFFSET__", repr(wants_offset(option)))
     )
     return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 
