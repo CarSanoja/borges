@@ -6,7 +6,10 @@ reported was the filter that removed them (597c38e). After a data step, a new 0/
 splits the known values of a numeric column at a cut, while the rows where that column is
 missing all take one value, fails the step. So does a new column that takes one value on every
 row where all the columns the step reads are missing, as (rater1.fillna(0) + rater2.fillna(0)) / 2
-does for unrated players (597c38e), unless the option says that it imputes them.
+does for unrated players (597c38e), unless the option says that it imputes them. A model step
+that compares a column with a value fails when it reports more rows than that column has known
+values: a red_cards Poisson GLM built dark_skin = skin_tone >= 0.5 inside estimate() and fitted
+146,028 rows where 124,621 had a rating (8520d7a).
 """
 
 from __future__ import annotations
@@ -31,6 +34,32 @@ def read_names(code: str) -> list[str]:
             and node.value.isidentifier()
         }
     )
+
+
+CUT_METHODS = frozenset({"gt", "ge", "lt", "le", "between"})
+
+
+def compared_names(code: str) -> list[str]:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        operands: list[ast.AST] = []
+        if isinstance(node, ast.Compare):
+            operands = [node.left, *node.comparators]
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            operands = [node.func.value] if node.func.attr in CUT_METHODS else []
+        for operand in operands:
+            found.update(
+                sub.slice.value
+                for sub in ast.walk(operand)
+                if isinstance(sub, ast.Subscript)
+                and isinstance(sub.slice, ast.Constant)
+                and isinstance(sub.slice.value, str)
+            )
+    return sorted(found)
 
 
 def imputes(option: Option) -> bool:
@@ -118,4 +147,23 @@ MISSING_CUT_SOURCE = """
                 + "] = (out[" + repr(str(other)) + "] >= cut).astype(float).where(out["
                 + repr(str(other)) + "].notna())"
             )
+
+    def _check_model_cuts(df, result):
+        n = result.get("n")
+        if __IMPUTES__ or not isinstance(n, (int, float)):
+            return
+        for name in __COMPARED__:
+            if name not in df.columns:
+                continue
+            known = int(df[name].notna().sum())
+            if known < len(df) and n > known:
+                raise ValueError(
+                    "the model reports n = " + str(int(n)) + ", more than the " + str(known)
+                    + " rows where " + repr(name) + ", which it compares with a value, is known:"
+                    + " rows with a missing " + repr(name) + " entered the model (a comparison"
+                    + " with a missing value is False, so they joined the 0 group), or n counts"
+                    + " rows the model did not fit. Drop them first, data = df.dropna(subset=["
+                    + repr(name) + ", ...]), build anything from " + repr(name) + " on data,"
+                    + " and report n as the rows fitted"
+                )
 """

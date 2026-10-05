@@ -62,7 +62,9 @@ comparison with a missing value is False and fillna invents a value, so `(x >= c
 puts every missing row in group 0. Build the column, then blank those rows: \
 `out.loc[out[["a", "b"]].isna().all(axis=1), "new"] = float("nan")`. numpy reductions \
 (np.cov, np.median, np.mean) return NaN when a value is missing: compute them on the complete \
-rows only. Fill missing values only when the option says it imputes them.
+rows only. Fill missing values only when the option says it imputes them. In a model step, \
+drop the rows where a column you compare or transform is missing before building anything from \
+it, and report n as the rows fitted.
 - Keys built at run time, such as `df[col + "_z"]` or `df[f"{col}_z"]`, are allowed only on \
 the data frame itself (named df, out, data or frame); on any other object the code guard \
 rejects them, so write the key as a plain string literal there, or build new columns with \

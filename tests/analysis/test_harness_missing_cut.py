@@ -92,3 +92,39 @@ def test_the_error_names_the_line_that_blanks_the_missing_rows(workdir: Path) ->
     error = parse_error(run(workdir, CUT).stdout)
     assert error is not None
     assert "out.loc[out[['skin_tone']].isna().all(axis=1), 'dark'] = float('nan')" in error
+
+
+MODEL_CUT = """
+import numpy as np
+import statsmodels.api as sm
+
+def estimate(df, ctx):
+    data = df.copy()
+    data["dark"] = (data["skin_tone"] >= 0.5).astype(int)
+    fit = sm.GLM(data["y"], sm.add_constant(data[["dark"]]), family=sm.families.Poisson()).fit()
+    low, high = fit.conf_int().loc["dark"]
+    return {"estimate": float(fit.params["dark"]), "ci_low": float(low), "ci_high": float(high),
+            "p_value": float(fit.pvalues["dark"]), "n": int(fit.nobs)}
+"""
+
+
+def run_model(workdir: Path, code: str) -> subprocess.CompletedProcess:
+    option = Option(id="o", label="Poisson", rationale="r", spec="s", is_default=True, code=code)
+    step = Step(id="m", title="t", kind="model", description="d", options=[option])
+    path = workdir / "step.py"
+    path.write_text(render_step(step, option))
+    return subprocess.run(
+        [sys.executable, str(path)], cwd=workdir, capture_output=True, text=True, timeout=120
+    )
+
+
+def test_a_model_that_cuts_a_column_with_missing_values_fails(workdir: Path) -> None:
+    error = parse_error(run_model(workdir, MODEL_CUT).stdout)
+    assert error is not None
+    assert "the model reports n = 200, more than the 170 rows where 'skin_tone'" in error
+
+
+def test_a_model_that_drops_the_missing_rows_first_passes(workdir: Path) -> None:
+    code = MODEL_CUT.replace("data = df.copy()", 'data = df.dropna(subset=["skin_tone"]).copy()')
+    done = run_model(workdir, code)
+    assert done.returncode == 0, done.stdout
