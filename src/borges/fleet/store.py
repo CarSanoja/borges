@@ -101,6 +101,47 @@ class RegistryStore:
                 )
         return list(folded.values())
 
+    def import_records(self, records: list[VersionRecord]) -> None:
+        events: list[dict[str, Any]] = []
+        for record in records:
+            first = record.history[0]
+            events.append(
+                {
+                    "event": PUBLISHED,
+                    "agent_id": record.agent_id,
+                    "version": record.version,
+                    "definition_sha": record.definition_sha,
+                    "descriptor": record.descriptor,
+                    "bump": record.bump,
+                    "changelog": record.changelog,
+                    "state": first.state,
+                    "by": record.published_by,
+                }
+            )
+            state = first.state
+            for step in record.history[1:]:
+                if step.state not in ALLOWED[state]:
+                    raise TransitionError(
+                        f"{record.agent_id} {record.version} is {state}; cannot become {step.state}"
+                    )
+                events.append(
+                    {
+                        "event": STATE_CHANGED,
+                        "agent_id": record.agent_id,
+                        "version": record.version,
+                        "from": state,
+                        "to": step.state,
+                        "by": step.by,
+                        "reason": step.reason,
+                    }
+                )
+                state = step.state
+        if events:
+            try:
+                self._chain.append_many(events)
+            except ChainBroken as broken:
+                raise RegistryTampered(broken.path, broken.line, broken.reason) from broken
+
     def versions_of(self, agent_id: str) -> list[VersionRecord]:
         found = [r for r in self.records() if r.agent_id == agent_id]
         return sorted(found, key=lambda r: parse_version(r.version))

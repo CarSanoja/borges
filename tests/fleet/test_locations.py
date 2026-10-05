@@ -60,3 +60,12 @@ def test_open_store_anchors_the_registry_and_catches_truncation(settings: Settin
     lines = store.path.read_text().splitlines()
     store.path.write_text("\n".join(lines[:-1]) + "\n")
     assert not home_store(settings).verify().ok
+
+
+def test_the_seed_imports_in_one_pass_with_its_history(tmp_path) -> None:
+    store = RegistryStore(tmp_path / "registry.jsonl", key="k" * 32, anchored=True, legacy=True)
+    seed = seed_store()
+    assert import_seed(store, seed) == len(seed.records())
+    states = {(r.agent_id, r.version): [t.state for t in r.history] for r in store.records()}
+    assert states == {(r.agent_id, r.version): [t.state for t in r.history] for r in seed.records()}
+    assert store.verify().ok and import_seed(store, seed) == 0

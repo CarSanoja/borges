@@ -156,35 +156,41 @@ class ChainedJsonl:
         return self._cache[2]
 
     def append(self, event: dict[str, Any]) -> dict[str, Any]:
+        return self.append_many([event])[-1]
+
+    def append_many(self, events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Chain several events under one lock and one read: importing the 560-record fleet seed
+        one append at a time re-verified the whole file each time and took 8 s at 16f02e7."""
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        written: list[dict[str, Any]] = []
         with self.path.open("a+", encoding="utf-8") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX)
             handle.seek(0)
             raw = handle.read()
             complete, torn = split_torn(raw)
-            events, status = self._load(complete, pending_ok=True)
-            self._check_anchor(events)
-            self._high_water.check(self.path, events)
+            loaded, status = self._load(complete, pending_ok=True)
+            self._check_anchor(loaded)
+            self._high_water.check(self.path, loaded)
             if torn:
                 with self.path.with_name(self.path.name + ".torn").open("a", encoding="utf-8") as q:
                     q.write(torn + "\n")
                 handle.truncate(len(complete.encode("utf-8")))
             elif raw and not raw.endswith("\n"):
                 handle.write("\n")
-            body = {"seq": len(events) + 1, "ts": time.time(), **event}
-            if status.legacy and len(events) == status.legacy:
-                body["legacy_digest"] = sha256_json(events)
-            record = {
-                **body,
-                "prev_hash": status.head_hash,
-                "hash": link_hash(body, status.head_hash, self._chain_key),
-            }
-            handle.write(canonical_json(record) + "\n")
+            head, count = status.head_hash, len(loaded)
+            for event in events:
+                body = {"seq": count + 1, "ts": time.time(), **event}
+                if status.legacy and count == status.legacy == len(loaded):
+                    body["legacy_digest"] = sha256_json(loaded)
+                record = {**body, "prev_hash": head, "hash": link_hash(body, head, self._chain_key)}
+                handle.write(canonical_json(record) + "\n")
+                head, count = record["hash"], count + 1
+                written.append(record)
             handle.flush()
-            if self.anchor_path is not None:
-                record_anchor(self.anchor_path, self._anchor_key, body["seq"], record["hash"])
+            if self.anchor_path is not None and written:
+                record_anchor(self.anchor_path, self._anchor_key, count, head)
         self._cache = None
-        return record
+        return written
 
     def attest_legacy(self) -> bool:
         if not self.path.is_file():

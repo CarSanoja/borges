@@ -20,27 +20,16 @@ def store_path(settings: Settings) -> Path:
 
 
 def import_seed(store: RegistryStore, seed: RegistryStore) -> int:
-    imported = 0
     known = {(r.agent_id, r.definition_sha) for r in store.records()}
     taken = {(r.agent_id, r.version) for r in store.records()}
-    for record in seed.records():
-        key = (record.agent_id, record.definition_sha)
-        if key in known or (record.agent_id, record.version) in taken:
-            continue
-        store.publish(
-            record.agent_id,
-            record.version,
-            record.definition_sha,
-            record.descriptor,
-            record.bump,
-            record.changelog,
-            record.published_by,
-            state=record.history[0].state,
-        )
-        for step in record.history[1:]:
-            store.transition(record.agent_id, record.version, step.state, step.by, step.reason)
-        imported += 1
-    return imported
+    fresh = [
+        record
+        for record in seed.records()
+        if (record.agent_id, record.definition_sha) not in known
+        and (record.agent_id, record.version) not in taken
+    ]
+    store.import_records(fresh)
+    return len(fresh)
 
 
 def home_store(settings: Settings) -> RegistryStore:
