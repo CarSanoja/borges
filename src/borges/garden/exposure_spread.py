@@ -28,10 +28,15 @@ def _ratio(values: list[float]) -> float:
 def _scale_step(plan: AnalysisPlan, sds: dict[str, float], garden: Garden) -> str | None:
     for step in plan.decision_steps:
         by_option: dict[str, list[float]] = {}
+        rows: dict[str, set[int]] = {}
         for universe in garden.finished():
-            if universe.id in sds:
-                by_option.setdefault(universe.choices[step.id], []).append(sds[universe.id])
+            if universe.id in sds and universe.result is not None:
+                option = universe.choices[step.id]
+                by_option.setdefault(option, []).append(sds[universe.id])
+                rows.setdefault(option, set()).add(universe.result.n)
         if len(by_option) < 2 or any(_ratio(v) > SAME_SCALE for v in by_option.values()):
+            continue
+        if len({frozenset(n) for n in rows.values()}) > 1:
             continue
         means = {o: sum(v) / len(v) for o, v in by_option.items()}
         if _ratio(list(means.values())) < SPREAD_RATIO:
@@ -52,11 +57,4 @@ def exposure_spread_notes(plan: AnalysisPlan, garden: Garden) -> list[str]:
     if len(sds) < 2 or _ratio(list(sds.values())) < SPREAD_RATIO:
         return []
     named = _scale_step(plan, sds, garden)
-    if named is not None:
-        return [named]
-    low, high = min(sds.values()), max(sds.values())
-    return [
-        f"The exposure's standard deviation ranges from {low:.3g} to {high:.3g} across universes: "
-        "an estimate is per unit of the exposure, so estimates, ranges and influences differ "
-        "partly by scale; compare verdicts, not sizes."
-    ]
+    return [named] if named is not None else []

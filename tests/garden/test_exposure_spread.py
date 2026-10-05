@@ -48,3 +48,13 @@ def test_one_scale_or_a_binary_exposure_gives_no_note() -> None:
     )
     assert exposure_spread_notes(plan, same) == []
     assert exposure_spread_notes(plan, binary) == []
+
+
+def test_options_that_change_the_rows_are_another_sample_not_another_scale() -> None:
+    plan = scale_plan()
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(0.09, n=7842), traces=[model_trace(1.57)]),
+        universe(plan, {"scale": "pca"}, result(0.08, n=45211), traces=[model_trace(3.1)]),
+    )
+    assert exposure_spread_notes(plan, garden) == []
