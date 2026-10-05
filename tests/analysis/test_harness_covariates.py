@@ -81,3 +81,28 @@ def test_a_covariate_with_one_value_in_the_frame_is_not_required(workdir: Path) 
     frame.to_parquet(workdir / "state" / "df.parquet")
     done = run(workdir, DUMMIFY_ALL)
     assert done.returncode == 0, done.stdout
+
+
+LEVEL_NAMED = """
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+
+
+def estimate(df, ctx):
+    dummies = pd.get_dummies(df["job"], drop_first=True, dtype=float)
+    exog = sm.add_constant(pd.concat([df[["x"]], dummies], axis=1))
+    fit = sm.OLS(df["y"], exog).fit()
+    ci = fit.conf_int().loc["x"]
+    return {"estimate": float(fit.params["x"]), "ci_low": float(ci[0]),
+            "ci_high": float(ci[1]), "p_value": float(fit.pvalues["x"]), "n": int(fit.nobs)}
+"""
+
+
+def test_dummies_named_by_the_levels_of_the_covariate_count_as_adjusting_for_it(
+    workdir: Path,
+) -> None:
+    done = run(workdir, LEVEL_NAMED)
+    assert done.returncode == 0, done.stdout
+    dropped = LEVEL_NAMED.replace('pd.concat([df[["x"]], dummies], axis=1)', 'df[["x"]]')
+    assert run(workdir, dropped).returncode == 1
