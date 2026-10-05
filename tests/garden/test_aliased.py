@@ -5,8 +5,11 @@ from borges.garden.aliased import aliased_caveats, tangled_caveats
 from borges.garden.models import Garden, Universe
 
 
-def universe(uid: str, note: str) -> Universe:
-    trace = StepTrace(step_id="m", option_id="o", rows_before=9, rows_after=9, note=note)
+def universe(uid: str, note: str, names: list[str] | None = None) -> Universe:
+    design = {"names": names} if names else None
+    trace = StepTrace(
+        step_id="m", option_id="o", rows_before=9, rows_after=9, note=note, design=design
+    )
     return Universe(id=uid, choices={}, kind="single", traces=[trace])
 
 
@@ -39,3 +42,12 @@ def test_covariates_that_rebuild_the_exposure_get_their_own_caveat() -> None:
     [tangled] = tangled_caveats(garden)
     assert "(rater2)" in aliased and "rater1" not in aliased
     assert tangled.startswith("In 1 universes the covariates rater1 were also dropped")
+
+
+def test_a_covariate_put_in_the_design_twice_is_named_as_a_second_copy() -> None:
+    garden = Garden()
+    names = ["const", "product", "age", "age", "ses", "region_b"]
+    garden.add(universe("u1", "aliased covariates dropped: age, region_b", names))
+    repeated, combined = aliased_caveats(garden)
+    assert "put age in its design twice" in repeated and "adjusted for once" in repeated
+    assert "(region_b)" in combined and "age" not in combined
