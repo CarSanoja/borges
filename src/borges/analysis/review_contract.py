@@ -22,20 +22,17 @@ RATIO_DEMAND = re.compile(
 IGNORED = "review point dropped: it asks for a unit conversion that the code contract forbids"
 
 
-def _demand(rule: DecisionRule | None, template: bool) -> re.Pattern[str]:
-    """A ratio asked of a template under a rule on a difference is the scale the template was
-    validated to leave: a hurricanes negative binomial reported additional deaths, as its rule
-    asks, the reviewer wanted the IRR its spec named, and the option was lost in the recode
-    (597c38e)."""
-    if template and rule is not None and (is_difference_rule(rule) or is_proportion_rule(rule)):
+def _demand(rule: DecisionRule | None) -> re.Pattern[str]:
+    """Under a rule on a difference the result check refuses a ratio, so a reviewer who asks for
+    one can only lose the option: a hurricanes negative binomial template (597c38e) and a Poisson
+    GLM in free code (2327203) were recoded to the IRR their specs named and then failed."""
+    if rule is not None and (is_difference_rule(rule) or is_proportion_rule(rule)):
         return re.compile(f"{UNIT_DEMAND.pattern}|{RATIO_DEMAND.pattern}", re.IGNORECASE)
     return UNIT_DEMAND
 
 
-def apply_unit_contract(
-    verdict: ReviewVerdict, rule: DecisionRule | None = None, template: bool = False
-) -> ReviewVerdict:
-    demand = _demand(rule, template)
+def apply_unit_contract(verdict: ReviewVerdict, rule: DecisionRule | None = None) -> ReviewVerdict:
+    demand = _demand(rule)
     if verdict.faithful or not verdict.problem or not demand.search(verdict.problem):
         return verdict
     kept: list[str] = []

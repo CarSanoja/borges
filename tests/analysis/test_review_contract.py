@@ -59,7 +59,7 @@ def test_a_follow_up_after_a_real_problem_is_kept() -> None:
     assert apply_unit_contract(verdict(problem)).problem == problem
 
 
-def test_a_ratio_asked_of_a_template_under_a_difference_rule_is_dropped() -> None:
+def test_a_ratio_asked_under_a_difference_rule_is_dropped() -> None:
     from borges.analysis.models import Comparator, DecisionRule
 
     rule = DecisionRule(
@@ -74,7 +74,6 @@ def test_a_ratio_asked_of_a_template_under_a_difference_rule_is_dropped() -> Non
         "The spec requires storing the exponentiated coefficient (IRR) for masfem as 'est', but "
         "the code computes and returns a marginal effect instead of exp(slope)."
     )
-    assert apply_unit_contract(verdict(problem), rule, template=True).faithful
-    assert apply_unit_contract(verdict(problem), rule, template=False) == verdict(problem)
+    assert apply_unit_contract(verdict(problem), rule).faithful
     ratio = rule.model_copy(update={"metric": "rate ratio of deaths", "threshold": 1.0})
-    assert apply_unit_contract(verdict(problem), ratio, template=True) == verdict(problem)
+    assert apply_unit_contract(verdict(problem), ratio) == verdict(problem)
