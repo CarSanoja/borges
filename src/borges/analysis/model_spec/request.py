@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from borges.analysis.code_guard_ctx import varying_ctx_keys
-from borges.analysis.code_guard_estimator import weighted_intent
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.model_spec.assigned_covariates import (
@@ -29,6 +28,7 @@ from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.report_for_rule import report_for_rule
 from borges.analysis.model_spec.schema import ModelSpecOutput
+from borges.analysis.model_spec.unfit_family import unfit_reason
 from borges.analysis.model_spec.validate import validate_spec
 from borges.analysis.model_spec.validate_ctx import ctx_problems
 from borges.analysis.model_spec.validate_marked_exposure import marked_exposure_problems
@@ -120,9 +120,6 @@ def _problems(
     ]
 
 
-WEIGHTED_SKIP = "the option weights the observations, which a template cannot express"
-
-
 async def request_template(
     llm: LLMClient,
     plan: AnalysisPlan,
@@ -140,8 +137,9 @@ async def request_template(
             skipped, f"the model must read {keys}, chosen by an earlier step, and a template cannot"
         )
         return None
-    if weighted_intent(option_intent(option)):
-        _skip(skipped, WEIGHTED_SKIP)
+    unfit = unfit_reason(option_intent(option))
+    if unfit is not None:
+        _skip(skipped, unfit)
         return None
     unbuilt = unbuilt_covariates(option, available)
     if unbuilt:
