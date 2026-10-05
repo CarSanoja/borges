@@ -146,3 +146,13 @@ def test_a_singular_count_model_with_large_covariates_gets_the_rescaling_hint(
     )
     error = parse_error(done.stdout)
     assert error is not None and "covariates with large values (damage up to 7.5e+04)" in error
+
+
+def test_a_name_read_letter_by_letter_gets_the_list_hint(tmp_path: Path) -> None:
+    code = (
+        "def estimate(df, ctx):\n"
+        "    x = df[list(ctx['exposure'])]\n"
+        "    return {'estimate': 0.0, 'ci_low': -1.0, 'ci_high': 1.0, 'p_value': 0.5, 'n': 1}\n"
+    )
+    error = _run_model(tmp_path, code, {"exposure": "job"})
+    assert error is not None and "the missing keys are the letters of 'job'" in error

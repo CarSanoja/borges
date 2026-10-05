@@ -83,4 +83,24 @@ HINTS_SOURCE = """
             + " (x - x.mean()) / x.std(), before fitting; the"
             + " exposure's coefficient does not change"
         )
+
+    def _spelled_hint(exc, seen):
+        if not isinstance(exc, KeyError) or not seen:
+            return ""
+        import re as _re
+
+        listed = _re.search(r"\[((?:'[^']*'(?:,\s*)?)+)\]", str(exc))
+        letters = _re.findall(r"'([^']*)'", listed.group(1)) if listed else []
+        if len(letters) < 3 or any(len(letter) != 1 for letter in letters):
+            return ""
+        names = list(seen.get("columns", [])) + list(seen.get("ctx", []))
+        found = [n for n in dict.fromkeys(map(str, names)) if set(n) == set(letters)]
+        if not found:
+            return ""
+        return (
+            " | the missing keys are the letters of " + repr(found[0]) + ": a single name was"
+            + " used where a list of names is expected, so pandas read it letter by letter;"
+            + " wrap it in a list, df[[" + repr(found[0]) + "]], or when it comes from ctx,"
+            + " [ctx[" + repr(found[0]) + "]] if isinstance(ctx[" + repr(found[0]) + "], str)"
+        )
 """

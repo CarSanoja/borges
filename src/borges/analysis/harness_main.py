@@ -227,6 +227,7 @@ __FINGERPRINT__
                     + _encoding_hint(exc, seen, kind)
                     + _fit_key_hint(exc)
                     + _singular_hint(exc, seen, kind)
+                    + _spelled_hint(exc, seen)
                 ),
                 "where": _clean("\\n".join(lines[-6:])),
             },
