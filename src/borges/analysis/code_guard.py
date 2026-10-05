@@ -3,7 +3,11 @@ from __future__ import annotations
 import ast
 
 from borges.analysis.code_guard_estimator import estimator_violations
-from borges.analysis.code_guard_fallback import fallback_violations
+from borges.analysis.code_guard_fallback import (
+    fallback_violations,
+    share_p_value_violations,
+    substituted_value_violations,
+)
 from borges.analysis.code_guard_formula import formula_error, needs_formula_check
 from borges.analysis.code_guard_introspection import (
     attribute_violations as introspection_attribute_violations,
@@ -180,7 +184,13 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
     violations.extend(row_filter_violations(func))
     violations.extend(statsmodels_violations(func, intent))
     violations.extend(se_label_violations(func, intent))
-    return violations + estimator_violations(func, intent) + fallback_violations(func)
+    return [
+        *violations,
+        *estimator_violations(func, intent),
+        *fallback_violations(func),
+        *substituted_value_violations(func),
+        *share_p_value_violations(func),
+    ]
 
 
 def check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
