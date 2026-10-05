@@ -12,6 +12,7 @@ from borges.analysis.harness_domain import DOMAIN_SOURCE
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE, RESTORED_NOTE
 from borges.analysis.harness_fingerprint import FINGERPRINT_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
+from borges.analysis.harness_missing_cut import MISSING_CUT_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
 from borges.analysis.harness_outcome import LOG_LINK_MODELS, OUTCOME_MAX_ROWS, OUTCOME_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
@@ -111,6 +112,7 @@ __NORMALISE__
 
 __SPLIT_HALF_CHECK__
 __CHECKS__
+__MISSING_CUT__
 
 __DOMAIN__
 __EFFECTS__
@@ -160,6 +162,7 @@ __FINGERPRINT__
             )
             if design is not None:
                 trace["design"] = design
+                design["outcome"] = _outcome_name(df, reported)
                 scale = _outcome_scale(df, reported)
                 if scale is not None:
                     design["outcome_log"] = scale
@@ -191,6 +194,7 @@ __FINGERPRINT__
         _check_columns(seen["columns"], rows_before, out, kind)
         _check_domain(out, finite_before, domain)
         _check_produces(out, ctx, df)
+        _check_missing_cuts(df, out)
         _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)
         out.to_parquet(state_df)
@@ -230,6 +234,7 @@ MAIN_TEMPLATE = (
     _TEMPLATE.replace("__NORMALISE__", NORMALISE_SOURCE.strip("\n"))
     .replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
     .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
+    .replace("__MISSING_CUT__", MISSING_CUT_SOURCE.strip("\n"))
     .replace("__DOMAIN__", DOMAIN_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
     .replace("__HINTS__", HINTS_SOURCE.strip("\n"))
