@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 
 from borges.analysis.covariate_ids import listed_identifiers
-from borges.analysis.models import DatasetProfile
+from borges.analysis.models import DatasetProfile, DecisionRule
+from borges.analysis.planner_measure import linear_odds_shortfall
 from borges.analysis.planner_products import renamed_products, renamed_shortfall
 from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
@@ -32,7 +33,9 @@ def reads_the_result(steps: list[PlannedStep]) -> list[str]:
     ]
 
 
-def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[str]:
+def plan_shortfalls(
+    steps: list[PlannedStep], profile: DatasetProfile, rule: DecisionRule | None = None
+) -> list[str]:
     problems: list[str] = []
     if not any(s.kind == "model" for s in steps):
         problems.append(
@@ -72,6 +75,9 @@ def plan_shortfalls(steps: list[PlannedStep], profile: DatasetProfile) -> list[s
             "column names or ctx keys that every option of the step creates, under the same "
             f"name and meaning: {', '.join(missing)}."
         )
+    linear = linear_odds_shortfall(steps, rule)
+    if linear is not None:
+        problems.append(linear)
     renamed = renamed_shortfall(renamed_products(steps, profile), steps)
     if renamed is not None:
         problems.append(renamed)

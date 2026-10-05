@@ -128,9 +128,13 @@ async def _ask(llm: LLMClient, messages: list[dict[str, str]], key: str) -> Plan
 
 
 async def _broaden(
-    llm: LLMClient, messages: list[dict[str, str]], out: PlannerOutput, profile: DatasetProfile
+    llm: LLMClient,
+    messages: list[dict[str, str]],
+    out: PlannerOutput,
+    profile: DatasetProfile,
+    rule: DecisionRule,
 ) -> PlannerOutput:
-    problems = plan_shortfalls(out.steps, profile)
+    problems = plan_shortfalls(out.steps, profile, rule)
     if not problems:
         return out
     try:
@@ -143,7 +147,7 @@ async def plan_analysis(
     llm: LLMClient, profile: DatasetProfile, question: str, rule: DecisionRule
 ) -> AnalysisPlan:
     messages = build_messages(profile, question, rule)
-    out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile)
+    out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile, rule)
     taken: set[str] = set()
     planned = drop_renamed(drop_level_columns(out.steps, profile), profile)
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(planned)]
