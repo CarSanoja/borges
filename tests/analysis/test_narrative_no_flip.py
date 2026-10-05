@@ -69,5 +69,5 @@ def test_a_no_flip_sentence_is_not_a_claim() -> None:
 def test_the_robustness_sentence_says_invalid_rows_are_left_out() -> None:
     sentence = robustness_sentence(report(True))
     assert sentence is not None
-    assert sentence.endswith("are left out of it.")
+    assert "0% reverses it, leaving out the universes that re-include rows" in sentence
     assert robustness_sentence(report(False)).endswith("0% reverses it.")
