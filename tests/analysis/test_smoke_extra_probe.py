@@ -81,3 +81,39 @@ async def test_an_adversary_option_that_breaks_another_model_option_is_refused(
     outcome = await smoke_extra_option(cfg, no_repair, plan.step("c1"), option, plan.steps)
     assert outcome is not None and outcome.status == "failed"
     assert outcome.error is not None and "this model cannot use extra" in outcome.error
+
+
+PICKY = MODEL.replace(
+    "def estimate(df, ctx):\n",
+    "def estimate(df, ctx):\n    if 'outcome' in ctx.get('covariates', []):\n"
+    "        raise ValueError('this model cannot adjust for outcome')\n",
+    1,
+).replace("m = float(sub['outcome'].mean())", "m = float(sub['outcome'].mean()) + 2.0")
+
+
+async def test_an_adversary_model_that_fails_after_another_upstream_option_is_refused(
+    tmp_path: Path,
+) -> None:
+    cfg, plan = await smoked(tmp_path)
+    option = make_option("adv_picky", code=PICKY)
+    outcome = await smoke_extra_option(cfg, no_repair, plan.step("m1"), option, plan.steps)
+    assert outcome is not None and outcome.status == "failed"
+    assert outcome.error is not None and "The model option" in outcome.error
+    assert "this model cannot adjust for outcome" in outcome.error
+
+
+async def test_an_adversary_model_repaired_for_every_upstream_option_is_kept(
+    tmp_path: Path,
+) -> None:
+    cfg, plan = await smoked(tmp_path)
+    fixed = MODEL.replace(
+        "m = float(sub['outcome'].mean())", "m = float(sub['outcome'].mean()) + 2.0"
+    )
+
+    async def repair(*_: object) -> tuple[str, str | None, str]:
+        return fixed, None, "model"
+
+    option = make_option("adv_picky", code=PICKY)
+    outcome = await smoke_extra_option(cfg, repair, plan.step("m1"), option, plan.steps)
+    assert outcome is not None and outcome.status == "repaired"
+    assert outcome.option.code == fixed
