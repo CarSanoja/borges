@@ -90,3 +90,23 @@ def failed_caveat(plan: AnalysisPlan, garden: Garden) -> str | None:
     if shared and count > 1:
         text += f". Every one of them uses {' and '.join(shared)}"
     return text + "."
+
+
+def untested_decision_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
+    """A bank_marketing_calls run at 568a627 failed in every universe that handled missing values
+    another way: its covariate option listed indicators only the default option creates. The
+    robustness figure then said nothing about that decision, and the narrative said it had been
+    explored."""
+    universes = [u for u in garden.universes.values() if u.kind != "verification"]
+    notes = []
+    for step in plan.decision_steps:
+        tried = [u for u in universes if u.choices.get(step.id, step.default.id) != step.default.id]
+        if not tried or any(u.status == "done" for u in tried):
+            continue
+        used = {u.choices[step.id] for u in tried}
+        labels = ", ".join(f"'{o.label}'" for o in step.options if o.id in used)
+        notes.append(
+            f"The decision '{step.title}' was not tested: every universe with one of its "
+            f"alternatives ({labels}) failed, so the robustness figure says nothing about it."
+        )
+    return notes

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from borges.garden.failed_caveat import failed_caveat
+from borges.garden.failed_caveat import failed_caveat, untested_decision_caveats
 from tests.garden.synthetic import garden_of, option, plan_of, result, step_of, universe
 
 PLAN = plan_of(
@@ -48,3 +48,15 @@ def test_one_failure_and_excluded_universes() -> None:
         "'label half' (KeyError: 'x')."
     )
     assert failed_caveat(PLAN, garden_of(PLAN, universe(PLAN, {}, result(0.3)))) is None
+
+
+def test_a_decision_whose_alternatives_all_failed_is_named_as_untested() -> None:
+    garden = garden_of(
+        PLAN,
+        universe(PLAN, {}, result(0.3)),
+        universe(PLAN, {"m": "pois"}, result(0.2)),
+        failed({"tone": "half"}, "cov/min: ValueError: ctx['covariates'] names columns"),
+        failed({"tone": "half", "m": "pois"}, "cov/min: ValueError: ctx['covariates'] names"),
+    )
+    [note] = untested_decision_caveats(PLAN, garden)
+    assert note.startswith("The decision 'Step tone' was not tested") and "'label half'" in note
