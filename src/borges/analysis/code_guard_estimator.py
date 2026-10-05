@@ -22,6 +22,13 @@ PENALISED = re.compile(
     re.IGNORECASE,
 )
 PENALTY_NAMES = re.compile(r"fit_regularized|firth|penal|jeffreys", re.IGNORECASE)
+ROBUST_FIT = re.compile(
+    r"\bRLM\b|\bM{1,2}[- ]?estimat\w*|\bHuber(?:'s)?\s+(?:M[- ]?estimat\w*|loss|weights?|T\b|norm)|"
+    r"\bTukey(?:'s)?\s+(?:biweight|bisquare)|bisquare|biweight|\brobust (?:linear )?regression\b|"
+    r"quantile regression|\bLAD\b|median regression|least absolute deviation",
+    re.IGNORECASE,
+)
+ROBUST_CLASSES = frozenset({"RLM", "rlm", "QuantReg", "quantreg"})
 MODEL_NAMES = NEGBIN_CLASSES | POISSON_CLASSES | LOGIT_CLASSES | {"OLS", "ols", "GLM", "glm"}
 
 
@@ -80,11 +87,26 @@ def _penalty_problem(names: set[str], intent: str) -> list[str]:
     ]
 
 
+def _robust_problem(names: set[str], intent: str) -> list[str]:
+    """A marp_religiosity adversary option at 1ecb614, "Use MM-estimation robust regression", was
+    fitted by OLS and gave the OLS estimate; among 741 recorded model options it was the only one
+    that named a robust or quantile fit and fitted neither (Huber-robust standard errors are a
+    sandwich, not a robust fit, and do not count)."""
+    if not ROBUST_FIT.search(intent) or names & ROBUST_CLASSES:
+        return []
+    return [
+        "the option names a robust or quantile regression (M- or MM-estimation, Huber or Tukey "
+        "weights, LAD) but the code fits ordinary least squares; fit it with "
+        "statsmodels.api.RLM (or QuantReg for quantiles), or let the option fail"
+    ]
+
+
 def estimator_violations(tree: ast.AST, intent: str) -> list[str]:
     family = named_family(intent) if intent else None
     names = _identifiers(tree)
     if not names & MODEL_NAMES:
         return []
     penalty = _penalty_problem(names, intent) if intent else []
+    robust = _robust_problem(names, intent) if intent else []
     problem = _problem(family, names, tree) if family is not None else None
-    return [*penalty, *([problem] if problem else [])]
+    return [*penalty, *robust, *([problem] if problem else [])]
