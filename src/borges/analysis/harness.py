@@ -62,6 +62,7 @@ def render_step(
     policy_audit_path: str | None = None,
     split_half: bool = False,
     design_check: bool = True,
+    standardised: bool = False,
 ) -> str:
     if option.code is None:
         raise ValueError(f"option '{option.id}' of step '{step.id}' has no code")
@@ -72,6 +73,7 @@ def render_step(
         .replace("__RESULT_KEYS__", repr(RESULT_KEYS))
         .replace("__SPLIT_HALF__", repr(split_half))
         .replace("__DESIGN_CHECK__", repr(design_check))
+        .replace("__STANDARDISED__", repr(standardised))
         .replace("__PRODUCES__", repr(list(step.produces)))
         .replace("__ADJUSTS__", repr(not UNADJUSTED.search(option_intent(option))))
         .replace("__READS__", repr(read_names(option.code)))

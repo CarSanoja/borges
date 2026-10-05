@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 
 from borges.analysis import harness
+from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.runs.models import RunSnapshot
 
 SCRIPT_TEMPLATE = '''#!/usr/bin/env python3
@@ -95,7 +96,9 @@ def build_script(snapshot: RunSnapshot, universe_id: str, filename: str) -> str:
                 "id": step.id,
                 "option": option.id,
                 "filename": harness.step_filename(step.id, option.id),
-                "source": harness.render_step(step, option),
+                "source": harness.render_step(
+                    step, option, standardised=reads_standardised(plan.decision_rule.metric)
+                ),
             }
         )
     recorded = (

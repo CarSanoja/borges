@@ -9,6 +9,10 @@ STANDARDISED = re.compile(r"\bstandardi[sz]ed\b", re.IGNORECASE)
 MEAN_DIFFERENCE = re.compile(r"\bmean difference\b|\bcohen", re.IGNORECASE)
 
 
+def reads_standardised(metric: str) -> bool:
+    return STANDARDISED.search(metric) is not None
+
+
 def _missing(spec: ModelSpecOutput, rule: DecisionRule | None) -> list[str]:
     if rule is None or spec.family != "ols" or not STANDARDISED.search(rule.metric):
         return []

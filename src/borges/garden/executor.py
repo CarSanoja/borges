@@ -7,6 +7,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from borges.analysis import harness
+from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
 from borges.garden.executor_checks import screen_result
 from borges.garden.executor_errors import failure_detail
@@ -92,7 +93,10 @@ class GardenExecutor:
         option = step.option(option_id)
         files = {
             harness.step_filename(step_id, option_id): harness.render_step(
-                step, option, design_check=self.design_check
+                step,
+                option,
+                design_check=self.design_check,
+                standardised=reads_standardised(self.plan.decision_rule.metric),
             ).encode()
         }
         command = harness.step_command(step_id, option_id)

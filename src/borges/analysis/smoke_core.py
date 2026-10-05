@@ -8,6 +8,7 @@ import pandas as pd
 
 from borges.analysis import harness
 from borges.analysis.model_spec.render_design import INPUT_FAULT
+from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.analysis.models import Option, Step
 from borges.analysis.path_scrub import scrub_paths
 from borges.analysis.result_scale import convert
@@ -68,7 +69,7 @@ def _trace_effects(stdout: str) -> dict[str, Any] | None:
 async def execute(config: SmokeConfig, parent: Checkpoint, step: Step, option: Option) -> Executed:
     files = {
         harness.step_filename(step.id, option.id): harness.render_step(
-            step, option, split_half=True
+            step, option, split_half=True, standardised=reads_standardised(config.metric)
         ).encode()
     }
     try:

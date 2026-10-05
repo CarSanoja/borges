@@ -155,6 +155,7 @@ class Pipeline:
             on_replan=replan_callback(self.emitter),
             result_check=scale_check(plan.decision_rule),
             result_scale=plan.result_scale,
+            metric=plan.decision_rule.metric,
         )
         self.smoke = smoke
         async with self.stage("coding"):

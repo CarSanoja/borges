@@ -16,6 +16,7 @@ from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_missing_cut import MISSING_CUT_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
 from borges.analysis.harness_outcome import LOG_LINK_MODELS, OUTCOME_MAX_ROWS, OUTCOME_SOURCE
+from borges.analysis.harness_result_checks import RESULT_CHECKS_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 from borges.analysis.harness_validate import VALIDATE_SOURCE
 from borges.analysis.model_spec.render_design import ALIAS_NOTE
@@ -108,6 +109,8 @@ __FINGERPRINT__
                     alias = __ALIAS_NOTE__ + ", ".join(design["aliased"])
                     trace["note"] = (alias + "; " + trace["note"] if trace["note"] else alias)[:500]
             result = _validate(raw_result)
+            _check_standardised_outcome(reported)
+            _use_model_rows(df, reported, result, trace)
             _check_model_cuts(df, result)
             if __SPLIT_HALF__:
                 _check_split_half(df, ctx, result)
@@ -188,6 +191,7 @@ MAIN_TEMPLATE = (
                 DESIGN_CHECKS_SOURCE,
                 COVARIATES_SOURCE,
                 OUTCOME_SOURCE,
+                RESULT_CHECKS_SOURCE,
             )
         ),
     )
