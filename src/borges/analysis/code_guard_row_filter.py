@@ -7,8 +7,10 @@ customers never contacted before, 82% of the data, under the label of a winsoriz
 frame the option returns may lose rows only when the spec says so, in words or in code. Among
 1679 recorded option codes the rule found four more: two other winsorizing options that dropped
 rows, a red_cards one that capped in its spec and dropped in its code, and a checkout one whose
-spec was "Return the full dataframe unchanged" and whose code excluded internal sessions. The
-other hits were hand-built scripted fixtures, which are not checked.
+spec was "Return the full dataframe unchanged" and whose code excluded internal sessions.
+Dropping the rows that miss a value the code itself transforms into a new column is the complete
+case of that transform and is allowed: the scripted marp scaling options drop rows missing wb, rel
+or norm before z-scoring them, and the model would drop those rows anyway.
 """
 
 from __future__ import annotations
@@ -51,6 +53,53 @@ def _removes_rows(value: ast.AST) -> bool:
     return False
 
 
+def _strings(node: ast.AST, names: dict[str, ast.AST]) -> set[str]:
+    if isinstance(node, ast.Name) and node.id in names:
+        node = names[node.id]
+    return {
+        n.value for n in ast.walk(node) if isinstance(n, ast.Constant) and isinstance(n.value, str)
+    }
+
+
+def _writes_column(node: ast.AST) -> bool:
+    return isinstance(node, ast.Assign) and any(isinstance(t, ast.Subscript) for t in node.targets)
+
+
+def _transformed(tree: ast.AST) -> set[str]:
+    read: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For) and any(_writes_column(n) for n in ast.walk(node)):
+            read |= _strings(node.iter, {})
+        if _writes_column(node):
+            read |= {
+                n.slice.value
+                for n in ast.walk(node.value)
+                if isinstance(n, ast.Subscript)
+                and isinstance(n.slice, ast.Constant)
+                and isinstance(n.slice.value, str)
+            }
+    return read
+
+
+def _complete_case(value: ast.AST, tree: ast.AST) -> bool:
+    if not (isinstance(value, ast.Call) and isinstance(value.func, ast.Attribute)):
+        return False
+    if value.func.attr != "dropna":
+        return False
+    subset = next((k.value for k in value.keywords if k.arg == "subset"), None)
+    if subset is None:
+        return False
+    names = {
+        t.id: node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        for t in node.targets
+        if isinstance(t, ast.Name)
+    }
+    columns = _strings(subset, names)
+    return bool(columns) and columns <= _transformed(tree)
+
+
 def _returned(tree: ast.AST) -> set[str]:
     return {
         node.value.id
@@ -74,4 +123,5 @@ def row_filter_violations(code: str, spec: str) -> list[str]:
         if isinstance(node, ast.Assign)
         and any(isinstance(t, ast.Name) and t.id in returned for t in node.targets)
         and _removes_rows(node.value)
+        and not _complete_case(node.value, tree)
     ]

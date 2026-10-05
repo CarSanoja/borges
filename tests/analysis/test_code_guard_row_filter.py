@@ -56,3 +56,41 @@ def test_a_mask_used_for_a_statistic_is_not_a_removal() -> None:
         "    df['games'] = df['games'].clip(upper=cap)\n    return df\n"
     )
     assert row_filter_violations(code, "Cap games at the 95th percentile of positive games.") == []
+
+
+SCALE = """import pandas as pd
+
+
+def apply(df, ctx):
+    out = df.copy()
+    columns = [c for c in ("wb", "rel", "norm") if c in out.columns]
+    out = out.dropna(subset=columns)
+    out["y"] = (out["wb"] - out["wb"].mean()) / out["wb"].std()
+    out["x"] = (out["rel"] - out["rel"].mean()) / out["rel"].std()
+    if "norm" in out.columns:
+        out["m"] = (out["norm"] - out["norm"].mean()) / out["norm"].std()
+    return out
+"""
+
+
+def test_dropping_rows_missing_a_transformed_value_is_allowed() -> None:
+    assert row_filter_violations(SCALE, "y, x (and m) = global z-scores.") == []
+
+
+def test_dropping_rows_missing_an_untouched_value_is_flagged() -> None:
+    code = SCALE.replace('("wb", "rel", "norm")', '("wb", "rel", "contact")')
+    assert row_filter_violations(code, "y, x (and m) = global z-scores.")
+
+
+def test_dropping_rows_missing_a_value_transformed_in_a_loop_is_allowed() -> None:
+    code = """import pandas as pd
+
+
+def apply(df, ctx):
+    out = df.dropna(subset=["wb", "rel"])
+    for source, target in (("wb", "y"), ("rel", "x")):
+        centred = out[source] - out.groupby("country")[source].transform("mean")
+        out[target] = centred / centred.std()
+    return out
+"""
+    assert row_filter_violations(code, "y and x centred on their country mean and scaled.") == []
