@@ -24,6 +24,7 @@ from borges.analysis.narrative_robustness import (
     robustness_sentence,
 )
 from borges.analysis.narrative_scale import drop_unit_readings, unit_readings
+from borges.analysis.narrative_singles import restate_single_counts
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
 from borges.analysis.prompts.narrator import RULES, SCALE_LABEL, build_messages
 from borges.analysis.schemas import NarratorOutput
@@ -146,4 +147,5 @@ async def narrate(
                 report, drop_wrong_sentences(plan, report, narrative)
             )
     fitted = reported_measure(garden.baseline) if garden and garden.baseline else None
-    return name_original_measure(_complete(plan, report, narrative, sentence, scale), fitted)
+    done = name_original_measure(_complete(plan, report, narrative, sentence, scale), fitted)
+    return restate_single_counts(report, garden, done)
