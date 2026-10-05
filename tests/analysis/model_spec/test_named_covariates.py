@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from borges.analysis.model_spec.named_covariates import with_named_covariates
+from borges.analysis.model_spec.named_covariates import with_labelled_effects, with_named_covariates
+from borges.analysis.model_spec.schema import ModelSpecOutput
 from tests.analysis.model_spec.data import make_spec
 
 COLUMNS = ["redCards", "dark_skin", "games", "leagueCountry", "position", "refNum", "meanIAT"]
@@ -24,3 +25,19 @@ def test_an_option_without_other_predictors_is_left_alone() -> None:
     listed = make_spec("poisson", outcome="redCards", exposure="dark_skin", covariates=["meanIAT"])
     fixed = with_named_covariates(listed, MINIMAL.replace("position", "meanIAT"), COLUMNS, None)
     assert fixed.covariates == ["meanIAT", "leagueCountry"]
+
+
+def test_a_column_the_label_names_as_fixed_effects_is_added() -> None:
+    spec = ModelSpecOutput.model_validate(
+        {
+            "supported": True,
+            "family": "logit",
+            "outcome": "y",
+            "exposure": "campaign",
+            "covariates_from_ctx": True,
+        }
+    )
+    columns = ["y", "campaign", "month", "job"]
+    found = with_labelled_effects(spec, "Logistic regression with month fixed effects", columns)
+    assert found.covariates == ["month"]
+    assert with_labelled_effects(spec, "Logistic regression", columns).covariates == []

@@ -15,7 +15,9 @@ from borges.analysis.model_spec.ctx_outcome import (
     read_ctx_outcome,
 )
 from borges.analysis.model_spec.interaction import SKIP, ignored_interaction
+from borges.analysis.model_spec.named_covariates import with_labelled_effects
 from borges.analysis.model_spec.normalise import normalise_spec
+from borges.analysis.model_spec.produced_outcome import produced_before, with_produced_outcome
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.report_for_rule import report_for_rule
@@ -138,6 +140,8 @@ async def request_template(
         found = normalise_spec(found, option.spec, available, plan.dataset)
         listed = {*ctx_covariate_names(plan, step, available), *stored_names(plan, step)}
         found = without_ctx_listed(found, listed, available)
+        found = with_labelled_effects(found, option.label, available)
+        found = with_produced_outcome(found, option.spec, produced_before(plan, step))
         found = report_for_rule(standardize_for_rule(found, plan.decision_rule), plan.decision_rule)
         return pin_outcome(found, outcomes) if outcomes else found
 
