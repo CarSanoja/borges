@@ -12,6 +12,7 @@ ALLOWED_IMPORTS = frozenset(
         "statsmodels",
         "statsmodels.api",
         "statsmodels.formula.api",
+        "statsmodels.stats.proportion",
         "statsmodels.stats.sandwich_covariance",
     }
 )
