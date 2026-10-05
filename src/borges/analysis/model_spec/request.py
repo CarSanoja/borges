@@ -22,6 +22,7 @@ from borges.analysis.model_spec.ctx_outcome import (
 from borges.analysis.model_spec.interaction import SKIP, ignored_interaction
 from borges.analysis.model_spec.named_covariates import with_labelled_effects
 from borges.analysis.model_spec.normalise import normalise_spec
+from borges.analysis.model_spec.percent_outcome import percent_outcome
 from borges.analysis.model_spec.produced_outcome import produced_before, with_produced_outcome
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
@@ -147,6 +148,7 @@ async def request_template(
 
     def tidy(found: ModelSpecOutput) -> ModelSpecOutput:
         found = normalise_spec(found, option.spec, available, plan.dataset)
+        found = percent_outcome(found, plan.decision_rule, available)
         listed = {*ctx_covariate_names(plan, step, available), *stored_names(plan, step)}
         found = without_ctx_listed(found, listed, available)
         found = with_labelled_effects(found, option.label, available)
