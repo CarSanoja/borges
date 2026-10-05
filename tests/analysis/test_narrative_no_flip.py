@@ -81,3 +81,10 @@ def test_report_field_echoes_are_dropped() -> None:
     assert rewrite_claimed_flips(report(False), text) == (
         "No change reversed this verdict. Robustness: 100%."
     )
+
+
+def test_an_absent_minimal_flip_is_dropped() -> None:
+    text = "The search found no change that reversed the verdict; the minimal flip is absent."
+    assert rewrite_claimed_flips(report(False), text) == (
+        "The search found no change that reversed the verdict."
+    )

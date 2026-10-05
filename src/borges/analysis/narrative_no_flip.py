@@ -5,7 +5,8 @@ only flips re-included rows the plan's notes mark as invalid, so the report name
 sentences called the same flip contaminated. With no minimal flip in the report, the claim is
 rewritten to say the flip found is contaminated, or dropped when the report has no flip at all. A
 bank summary at a491fe1 echoed the report field ("the minimal flip is null") and added "there is
-no re-execution to report"; both are dropped.
+no re-execution to report"; both are dropped, as is "the minimal flip is absent" (red_cards at
+027d581).
 """
 
 from __future__ import annotations
@@ -21,7 +22,8 @@ CLAIM = re.compile(
 )
 CONTAMINATED = "The only flip found is contaminated"
 NULL_FLIP = re.compile(
-    r"[;,]?\s*(?:and\s+)?the\s+minimal\s+flip\s+is\s+(?:null|none|empty)\b", re.IGNORECASE
+    r"[;,]?\s*(?:and\s+)?the\s+minimal\s+flip\s+is\s+(?:null|none|empty|absent|missing)\b",
+    re.IGNORECASE,
 )
 NOTHING_TO_REPORT = re.compile(r"\bno\s+re-?execution\s+to\s+report\b", re.IGNORECASE)
 
