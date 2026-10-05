@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 
 from borges.analysis.models import CodingSummary, Option, Step
-from borges.analysis.smoke_default_encoding import repair_default, text_fault
+from borges.analysis.smoke_default_encoding import model_fault, repair_default
 from borges.analysis.smoke_model_input import Fault, ModelInput, model_inputs
 from borges.analysis.smoke_model_repair import handle_model
 from borges.analysis.smoke_types import Repair, SmokeConfig
@@ -53,10 +53,14 @@ async def probe_model(
         for option, error in zip(others, errors[1:], strict=True):
             if error is not None:
                 faults.setdefault(option.id, []).append((item, steps[item.index], error))
-    text = [(item, error) for item, error in culprits.values() if text_fault(error)]
+    text = [
+        (item, error)
+        for item, error in culprits.values()
+        if model_fault(error, item.outcome.option)
+    ]
     failures: list[Fault] = [(item, steps[item.index], error) for item, error in text]
     if failures and await repair_default(config, repair, model, failures, summary):
-        culprits = {k: v for k, v in culprits.items() if not text_fault(v[1])}
+        culprits = {k: v for k, v in culprits.items() if not model_fault(v[1], v[0].outcome.option)}
         again = await asyncio.gather(*(_run(config, repair, model, others, i) for i, _ in text))
         for (item, _), errors in zip(text, again, strict=True):
             for option, error in zip(others, errors, strict=True):

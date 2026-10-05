@@ -12,6 +12,11 @@ model could not find is a dummy of a column the data has, and the upstream optio
 dummy prefix, the model indexed the data by its own dummy names, and it is repaired first too. A
 marp_religiosity covariate option at the same commit listed f'country_{i}' in ctx and returned the
 data unchanged: that option names the prefix, and it is the one repaired or dropped.
+
+A red_cards default model at 1ecb614 wrote 'outcome ~ skintone' with outcome a Series of the whole
+frame and fitted it on the complete cases: the covariate option whose columns have missing values
+failed with a patsy row mismatch and was dropped. A model that aligns objects of different lengths
+or indexes fails only on its own code, so that is the model's fault too.
 """
 
 from __future__ import annotations
@@ -26,6 +31,10 @@ from borges.analysis.smoke_types import Repair, SmokeConfig
 from borges.analysis.smoke_upstream import _short
 
 TEXT_FAULTS = ("non-numeric columns among the model inputs", "could not convert string to float")
+ALIGNMENT_FAULTS = (
+    "Number of rows mismatch between data argument and",
+    "Can only compare identically-labeled Series objects",
+)
 MISSING_KEYS = re.compile(r"\[([^\]]*)\]\s*\|\s*columns available \(\d+\): \[([^\]]*)\]")
 NAME = re.compile(r"'([^']*)'")
 
@@ -49,7 +58,9 @@ def dummy_key_fault(error: str, upstream: str) -> bool:
 
 
 def model_fault(error: str, upstream: Option) -> bool:
-    return text_fault(error) or dummy_key_fault(error, f"{upstream.spec}\n{upstream.code or ''}")
+    if text_fault(error) or any(marker in error for marker in ALIGNMENT_FAULTS):
+        return True
+    return dummy_key_fault(error, f"{upstream.spec}\n{upstream.code or ''}")
 
 
 async def repair_default(

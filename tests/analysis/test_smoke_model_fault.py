@@ -30,3 +30,13 @@ def test_a_column_the_data_lacks_is_the_upstream_option_s_fault() -> None:
 
 def test_text_columns_stay_the_model_s_fault() -> None:
     assert model_fault("ValueError: could not convert string to float: 'England'", option(""))
+
+
+def test_a_model_that_aligns_unequal_objects_is_at_fault() -> None:
+    patsy = (
+        "PatsyError: Number of rows mismatch between data argument and outcome (1580 versus 1688)"
+    )
+    assert model_fault(patsy, option(""))
+    assert model_fault(
+        "ValueError: Can only compare identically-labeled Series objects", option("")
+    )
