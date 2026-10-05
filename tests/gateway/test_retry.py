@@ -59,3 +59,22 @@ def test_jitter_only_shortens_within_its_fraction() -> None:
     assert backoff_delay(POLICY, 2, lambda: 1.0) == pytest.approx(1.0 * 0.75)
     for sample in (0.0, 0.3, 0.99):
         assert 0.75 <= backoff_delay(POLICY, 2, lambda s=sample: s) <= 1.0
+
+
+def test_a_transient_error_wrapped_by_the_provider_is_still_transient() -> None:
+    class LLMError(Exception):
+        pass
+
+    def wrapped(cause: BaseException) -> BaseException:
+        try:
+            try:
+                raise cause
+            except Exception as exc:
+                raise LLMError("Nebius request failed") from exc
+        except LLMError as outer:
+            return outer
+
+    assert is_transient(wrapped(ConnectionError("Connection error.")))
+    assert is_transient(wrapped(Status(503)))
+    assert not is_transient(wrapped(Status(400)))
+    assert not is_transient(wrapped(ValueError("invalid output")))

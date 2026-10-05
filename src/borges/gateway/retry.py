@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 from borges.gateway.policy_models import RetryPolicy
 
+MAX_CAUSE_DEPTH = 8
 TRANSIENT_NAMES = frozenset(
     {
         "APITimeoutError",
@@ -30,15 +31,28 @@ def _status_of(exc: BaseException) -> int | None:
     return status if isinstance(status, int) else None
 
 
-def is_transient(exc: BaseException) -> bool:
-    if isinstance(exc, asyncio.CancelledError):
-        return False
+def _transient_one(exc: BaseException) -> bool:
     if isinstance(exc, TimeoutError | ConnectionError):
         return True
     status = _status_of(exc)
     if status is not None:
         return status >= 500 or status in (408, 429)
     return any(cls.__name__ in TRANSIENT_NAMES for cls in type(exc).__mro__)
+
+
+def is_transient(exc: BaseException) -> bool:
+    """The provider wraps the SDK's error in an LLMError raised from it, so the chain of causes
+    is read too: a Nebius connection error at 70a6102 failed a bank recording on its first try."""
+    if isinstance(exc, asyncio.CancelledError):
+        return False
+    current: BaseException | None = exc
+    for _ in range(MAX_CAUSE_DEPTH):
+        if current is None:
+            return False
+        if _transient_one(current):
+            return True
+        current = current.__cause__
+    return False
 
 
 def backoff_delay(
