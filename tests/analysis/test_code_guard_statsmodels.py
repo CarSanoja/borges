@@ -139,3 +139,35 @@ def test_a_link_class_instead_of_an_instance_is_refused() -> None:
     found = check_code(body.format(call=""), "model")
     assert any("link= takes an instance" in v for v in found)
     assert not any("link=" in v for v in check_code(body.format(call="()"), "model"))
+
+
+def test_the_link_hint_names_the_class_the_code_used() -> None:
+    body = (
+        "import statsmodels.api as sm\n\n\n"
+        "def estimate(df, ctx):\n"
+        "    fam = sm.families.Binomial(link=sm.families.links.CLogLog)\n"
+        "    fit = sm.GLM(df['y'], df[['x']], family=fam).fit()\n"
+        "    return float(fit.params['x'])\n"
+    )
+    found = check_code(body, "model")
+    assert any("write link=sm.families.links.CLogLog()" in v for v in found)
+
+
+@pytest.mark.parametrize(
+    ("intent", "robust"),
+    [
+        ("Logistic regression with cluster-robust SEs", True),
+        (
+            "Logistic regression with model-based SEs Same as opt_logit but use default "
+            "(model-based) covariance instead of cluster-robust. (opt_logit: Use HC0 "
+            "cluster-robust covariance.)",
+            False,
+        ),
+        ("Logit with HC3 robust standard errors rather than model-based ones", True),
+        ("OLS clustered by country: same regression but cluster standard errors", True),
+    ],
+)
+def test_robust_errors_are_read_from_the_option_own_words(intent: str, robust: bool) -> None:
+    from borges.analysis.code_guard_statsmodels import robust_intended
+
+    assert robust_intended(intent) is robust

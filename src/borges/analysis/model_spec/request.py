@@ -13,6 +13,7 @@ from borges.analysis.model_spec.ctx_outcome import (
     pin_outcome,
     read_ctx_outcome,
 )
+from borges.analysis.model_spec.interaction import SKIP, ignored_interaction
 from borges.analysis.model_spec.normalise import normalise_spec
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
@@ -138,6 +139,9 @@ async def request_template(
     if spec is None:
         return None
     spec = tidy(spec)
+    if ignored_interaction(spec, option):
+        _skip(skipped, SKIP)
+        return None
     problems = _problems(plan, step, option, spec, outcomes)
     if problems:
         _skip(skipped, "; ".join(problems))
