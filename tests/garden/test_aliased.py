@@ -51,3 +51,19 @@ def test_a_covariate_put_in_the_design_twice_is_named_as_a_second_copy() -> None
     repeated, combined = aliased_caveats(garden)
     assert "put age in its design twice" in repeated and "adjusted for once" in repeated
     assert "(region_b)" in combined and "age" not in combined
+
+
+def test_a_renamed_repeat_is_named_by_its_column() -> None:
+    garden = Garden()
+    names = [
+        "const",
+        "campaign",
+        "contact_missing",
+        "contact_missing_repeat1",
+        "education_tertiary",
+    ]
+    note = "aliased covariates dropped: contact_missing_repeat1, education_tertiary"
+    garden.add(universe("u1", note, names))
+    repeated, combined = aliased_caveats(garden)
+    assert "put contact_missing in its design twice" in repeated and "_repeat" not in repeated
+    assert "(education_tertiary)" in combined and "contact_missing" not in combined

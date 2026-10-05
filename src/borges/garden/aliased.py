@@ -1,13 +1,26 @@
 from __future__ import annotations
 
+import re
+
 from borges.analysis.model_spec.render_design import ALIAS_NOTE, TANGLED_NOTE
 from borges.analysis.models import StepTrace
 from borges.garden.models import Garden
 
+REPEAT = re.compile(r"(.+)_repeat\d+")
+
+
+def _base(name: str) -> str:
+    """The template renames a column the design holds twice to name_repeat1 (bank at 1698258
+    showed contact_missing_repeat1 in a caveat); the reader sees the column's own name."""
+    found = REPEAT.fullmatch(name)
+    return found.group(1) if found else name
+
 
 def _repeated(trace: StepTrace, name: str) -> bool:
     names = (trace.design or {}).get("names")
-    return isinstance(names, list) and names.count(name) >= 2
+    if not isinstance(names, list):
+        return False
+    return names.count(name) >= 2 or (_base(name) != name and _base(name) in names)
 
 
 def aliased_covariates(garden: Garden, repeated: bool) -> tuple[int, list[str]]:
@@ -23,7 +36,7 @@ def aliased_covariates(garden: Garden, repeated: bool) -> tuple[int, list[str]]:
         ]
         if dropped:
             universes += 1
-            names.update(dropped)
+            names.update(_base(name) for name in dropped)
     return universes, sorted(names)
 
 
