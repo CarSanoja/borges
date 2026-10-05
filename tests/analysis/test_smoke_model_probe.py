@@ -257,3 +257,32 @@ async def test_a_default_model_that_cannot_read_a_text_covariate_is_repaired_fir
     event = [e for e in recorder.events if e[1] == "ols"][-1]
     assert event[2] == "repaired" and "could not convert string to float" in event[4]
     assert cfg.state.notes == [] and summary.failed == 0
+
+
+ADDS_KIND = (
+    "def apply(df, ctx):\n    ctx['covariates'] = ['kind']\n"
+    "    return df.assign(kind=['a', 'b'] * (len(df) // 2) + ['a'] * (len(df) % 2))"
+)
+DUMMY_KEYS = MODEL.replace(
+    "    sub = df[",
+    "    import pandas as pd\n"
+    "    wide = pd.get_dummies(df[cols], drop_first=True) if cols else df[[]]\n"
+    "    df.dropna(subset=list(wide.columns))\n"
+    "    sub = df[",
+)
+
+
+async def test_a_default_model_that_indexes_by_its_own_dummies_is_repaired_first(
+    tmp_path: Path,
+) -> None:
+    llm = FakeLLM(
+        scripted(ADDS_KIND, OTHER, **{"coder:m1.ols": DUMMY_KEYS, "coder:m1.ols:smoke1": MODEL})
+    )
+    recorder, summary = Recorder(), CodingSummary()
+    cfg = config(tmp_path, recorder)
+    coded = await code_plan(llm, plan(True), smoke=cfg, summary=summary)
+    assert [o.id for o in coded.step("c1").options] == ["none", "alt0"]
+    assert coded.step("m1").default.code == MODEL
+    event = [e for e in recorder.events if e[1] == "ols"][-1]
+    assert event[2] == "repaired" and "kind_b" in event[4]
+    assert cfg.state.notes == [] and summary.failed == 0
