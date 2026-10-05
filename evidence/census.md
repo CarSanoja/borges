@@ -38,3 +38,42 @@ From the cecf187 batch itself: an array-API model that never dropped incomplete 
 covariate options (hurricanes). Fixed in `ddbac77` (planner), `0e68ecd` (adversary retry),
 `fa16861` (narrator) and `616f648` (complete cases); the fleet seed was published once more
 (`9fbd2e3`) and the recordings were made again at that commit.
+
+Reading the `9fbd2e3` recordings found four more: the narrator copied the rules around a
+sentence it was told to quote into 27 of the 35 cecf187 summaries (found by replaying their cache)
+and kept a caveat about re-execution when no flip was found; a Poisson option asked for
+additional deaths computed them from the exponentiated intercept (an estimate of 1e45) because
+count models reported only a rate ratio; an alternative that failed its smoke run disappeared
+without a note. Fixed in `9c25a70`, `43adc84`, `784299a` (average marginal effect of a count
+model with a delta-method interval, matching statsmodels to 1e-6) and `688a661`. The first
+recording at `f6b1ee7` showed the narrator retrying a good first draft only because it phrased
+the original estimate in its own words, and the retry was poorer; the narrator now retries only
+for errors and adds a missing required sentence itself (`a67072d`, replayed offline on the 35
+cecf187 first drafts: no false alarm).
+
+The `2a2d925` recordings found two more. The model options were coded at the same time as the
+steps before them, so the check that a model reads what an earlier step stores in ctx saw only
+those steps' specs, and a spec in prose names no value: a template that ignored the outcome
+choice passed, and the outcome decision had no effect (marp_norms). Fixed by coding model options
+after the others (`b89daa7`). In bank, a model option asked for the coefficient of `campaign_w`,
+a column the default of the earlier step does not build; the model spec then reported the
+coefficient of `contact`, while the clustered option reported `campaign`, so the original verdict
+came from the wrong exposure (odds ratio 1.30 against 0.89) and the "flip" was a change of
+exposure. A spec is now refused when its exposure is not the column the dataset notes mark as the
+exposure of interest, or not the column the option names, a suffixed name no step builds counting
+as its source column (`d46c024`). The seed was published at `4323c97` and the six recordings
+were made again at that commit.
+
+The `4323c97` recordings confirmed both fixes (the outcome choice now moves the marp_norms
+estimate and gives its flip; every bank universe reports `campaign`) and found three more. The
+default bank model was free code that one-hot encoded the whole frame and then kept the columns
+named in `ctx['covariates']`; the categorical covariates had become `job_admin.` and so on, so the
+default analysis ran unadjusted while the report said it adjusted for six covariates. The harness
+now fails a model step when a covariate the earlier step lists, with more than one value, is in no
+term of the fitted model and not in the step's note (`9b825a3`); replayed on the recorded
+universes, it marks the 10 bank universes of that option and none of the other five cases. The
+narrator rule against naming another option of the flipped step marked true sentences about that
+option's own result, and the retry kept only the required sentences (marp_norms); it now applies
+to sentences about the flip only (`edda188`, retries on the 35 cecf187 first drafts down from 6 to
+2, both real). A summary repeated the robustness headline with the beam-search caveat, and three
+cecf187 summaries described the beam search, one wrongly; such sentences are dropped (`a8ca74b`).
