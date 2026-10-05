@@ -52,7 +52,7 @@ def _values(report: Report) -> list[float]:
     return [r.estimate, r.ci_low, r.ci_high, r.p_value]
 
 
-def _carries_estimate(report: Report, sentence: str) -> bool:
+def carries_estimate(report: Report, sentence: str) -> bool:
     estimate = report.original_result.estimate
     return any(_matches(t, estimate) for t in DECIMAL.findall(sentence))
 
@@ -91,6 +91,6 @@ def with_original(plan: AnalysisPlan, report: Report, narrative: str) -> str:
     kept = [
         s for s in _SENTENCE_END.split(narrative.strip()) if s and not _unfounded(plan, report, s)
     ]
-    if kept and _carries_estimate(report, kept[0]):
+    if kept and carries_estimate(report, kept[0]):
         return " ".join(kept)
     return " ".join([original_sentence(report), *kept])

@@ -19,6 +19,7 @@ from borges.analysis.narrative_robustness import (
     inverted_shares,
     robustness_sentence,
 )
+from borges.analysis.narrative_scale import drop_unit_readings, unit_readings
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
 from borges.analysis.prompts.narrator import RULES, SCALE_LABEL, build_messages
 from borges.analysis.schemas import NarratorOutput
@@ -81,7 +82,9 @@ def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | Non
         *(p for p in problems(plan, report, narrative) if not p.startswith(MISSING_FLIP)),
         *inverted_shares(report, narrative),
     ]
-    if scale is not None and not mentions_log_scale(narrative):
+    if scale is not None and (
+        unit_readings(report, narrative, scale) or not mentions_log_scale(narrative)
+    ):
         found.append(f"it reads the estimate as additional units of the outcome, but {scale}")
     return found
 
@@ -94,13 +97,14 @@ def _clean(report: Report, text: str) -> str:
 def _complete(
     plan: AnalysisPlan, report: Report, narrative: str, sentence: str | None, scale: str | None
 ) -> str:
-    kept = with_original(plan, report, narrative)
+    units = unit_readings(report, narrative, scale)
+    kept = with_original(plan, report, drop_unit_readings(report, narrative, scale))
     if sentence is not None and not has_sentence(kept, sentence):
         kept = insert_sentence(kept, sentence)
     robust = robustness_sentence(report)
     if robust is not None and not has_sentence(kept, robust):
         kept = f"{kept} {robust}"
-    if scale is not None and not mentions_log_scale(kept):
+    if scale is not None and (units or not mentions_log_scale(kept)):
         kept = insert_sentence(kept, scale)
     return kept
 

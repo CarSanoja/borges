@@ -140,6 +140,33 @@ async def test_an_estimate_on_the_log_scale_is_never_read_as_additional_units() 
     assert "on the log scale: about 3.0% more alldeaths" in narrative
 
 
+async def test_a_units_reading_beside_another_log_mention_is_still_replaced() -> None:
+    from tests.garden.test_outcome_scale import garden
+
+    result = AnalysisResult(estimate=0.0243, ci_low=-0.05, ci_high=0.1, p_value=0.53, n=94)
+    report = Report(
+        question="Q?",
+        original_verdict="NO CLEAR EVIDENCE",
+        original_result=result,
+        minimal_flip=None,
+        influences=[],
+        robustness=1.0,
+        n_universes=3,
+        n_flipped=0,
+    )
+    bad = (
+        "The original analysis estimated that femininity is associated with 0.024 additional "
+        "expected deaths. Switching to the baseline log-linear model keeps the verdict. "
+        f"{robustness_sentence(report)}"
+    )
+    llm = FakeLLM({"narrator": NarratorOutput(narrative=bad, caveats=[])})
+    narrative = await narrate(llm, make_plan(), report, garden({"kind": "log1p", "column": "d"}))
+    assert llm.keys() == ["narrator", "narrator:retry"]
+    assert "additional expected deaths" not in narrative
+    assert narrative.startswith("The original analysis estimated 0.0243 (95% CI")
+    assert "is on the log scale: about" in narrative and "more d per unit" in narrative
+
+
 async def test_an_instruction_copied_next_to_a_verbatim_sentence_is_dropped() -> None:
     from borges.analysis.prompts.narrator import ORIGINAL_RULE, ROBUST_RULE
 
