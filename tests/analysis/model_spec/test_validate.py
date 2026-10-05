@@ -177,3 +177,8 @@ def test_the_offset_column_may_also_be_a_covariate() -> None:
         report="rate_ratio",
     )
     assert validate_spec(spec, ["redCards", "games", "skin_tone"]) == []
+
+
+def test_clustering_on_the_exposure_is_refused() -> None:
+    spec = make_spec("logit", report="odds_ratio", cov_type="cluster", cluster="x")
+    assert any("not a group" in p and "HC1" in p for p in problems(spec))

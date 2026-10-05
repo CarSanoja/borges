@@ -79,6 +79,12 @@ def _role_problems(spec: ModelSpecOutput) -> list[str]:
         )
     if spec.moderator is not None and spec.moderator in (spec.exposure, spec.outcome):
         problems.append("moderator must differ from exposure and outcome")
+    if spec.cluster is not None and spec.cluster in (spec.exposure, spec.outcome, spec.moderator):
+        problems.append(
+            f"'{spec.cluster}' is a variable of the model, not a group: clustering on it treats "
+            "every value as a cluster; cluster on the grouping column the option names, or use "
+            "HC1 for a Huber-White sandwich"
+        )
     literal = {spec.outcome, spec.exposure, spec.moderator, *spec.covariates}
     problems += [
         f"standardize column '{name}' is not the outcome, exposure, moderator or a covariate"

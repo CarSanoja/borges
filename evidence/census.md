@@ -77,3 +77,18 @@ option's own result, and the retry kept only the required sentences (marp_norms)
 to sentences about the flip only (`edda188`, retries on the 35 cecf187 first drafts down from 6 to
 2, both real). A summary repeated the robustness headline with the beam-search caveat, and three
 cecf187 summaries described the beam search, one wrongly; such sentences are dropped (`a8ca74b`).
+
+The six recordings at `b4e2f4e` were read the same way. In the checkout case
+two single-change flips both re-included rows the plan marks invalid; the report named the first,
+and the summary called it the only flip and described the second as an accepted alternative.
+Every contaminated flip is now reported (`af75806`). In red_cards the planner cut the skin tone
+inside the model (`dark = 1 if skin_tone >= 0.5`); the template read the cut as the exact level
+0.5, and a repaired free-code option counted a missing skin tone as light (n 146,028 against
+124,621); the flip between them was labelled a change of covariates. The templates now take a
+threshold exposure and drop missing values before the cut, refuse an exact level of a fractional
+column, and a flip whose reported coefficient belongs to another quantity is labelled an estimand
+change (`35335ce`). In the bank case a winsorising option and an adversary cap wrote copies
+(`campaign_w`, `campaign_capped`) that no later step reads, so both were no-ops in every universe;
+the planner and the adversary are now asked to change the column in place. In hurricanes the
+headline flip changed the outcome scale and the caveat said so, but the summary did not; the
+required flip sentence now carries the estimand change (`eee7b36`).
