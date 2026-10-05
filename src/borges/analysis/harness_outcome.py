@@ -6,6 +6,9 @@ The report then says so, instead of reading the estimate as additional units of 
 The outcome is named by the first column of the data it equals: a marp_religiosity flip at 508fe2e
 copied physical well-being into the column 'wellbeing' that the baseline filled with overall
 well-being, and was reported as a re-analysis of the same outcome.
+A marp_norms Gamma GLM at 0b92e6c passed `sm.families.links.log()`, the lower-case class statsmodels
+keeps as a deprecated alias, and its log-scale coefficient was read under a standardised rule with
+no note; the link is matched whatever its case (2 of 207 recorded model codes use that class).
 """
 
 from __future__ import annotations
@@ -26,6 +29,14 @@ OUTCOME_SOURCE = """
             return getattr(getattr(model, "data", None), "orig_endog", None), link
         except Exception:
             return None, ""
+
+    def _endog_levels(model_id):
+        try:
+            endog, _ = _model_endog(_endogs.get(model_id))
+            values = _np.asarray(endog, dtype=float).ravel()
+            return int(_np.unique(values[_np.isfinite(values)]).size)
+        except Exception:
+            return None
 
     def _logged_column(endog, frame):
         try:
@@ -94,7 +105,7 @@ OUTCOME_SOURCE = """
             logged = _logged_column(endog, frame) if endog is not None else None
             if logged is not None:
                 return {"kind": logged[0], "column": logged[1]}
-            if name in __LOG_LINK_MODELS__ or link == "Log":
+            if name in __LOG_LINK_MODELS__ or link.lower() == "log":
                 return {"kind": "log link", "column": str(getattr(endog, "name", "") or "outcome")}
         return None
 """

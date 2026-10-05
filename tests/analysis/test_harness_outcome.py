@@ -43,6 +43,15 @@ POISSON = (
     + RESULT
 )
 
+GAMMA_LOWER_CASE_LOG = (
+    HEADER
+    + """
+    family = sm.families.Gamma(link=sm.families.links.log())
+    fit = sm.GLM(df["deaths"] + 1.0, sm.add_constant(df[["x"]]), family=family).fit()
+"""
+    + RESULT
+)
+
 
 @pytest.fixture
 def workdir(tmp_path: Path) -> Path:
@@ -60,6 +69,7 @@ def workdir(tmp_path: Path) -> Path:
         (LOG1P, {"kind": "log1p", "column": "deaths"}),
         (LOG_COLUMN, {"kind": "log1p", "column": "deaths"}),
         (POISSON, {"kind": "log link", "column": "deaths"}),
+        (GAMMA_LOWER_CASE_LOG, {"kind": "log link", "column": "deaths"}),
         (RAW, None),
     ],
 )
