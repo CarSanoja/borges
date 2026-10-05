@@ -10,7 +10,7 @@ from borges.analysis import harness
 from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
 from borges.garden.executor_checks import screen_result
-from borges.garden.executor_errors import failure_detail
+from borges.garden.executor_errors import SANDBOX_FAILED, failure_detail
 from borges.garden.executor_ids import universe_id
 from borges.garden.executor_output import read_step_output
 from borges.garden.models import Universe, UniverseKind
@@ -105,7 +105,8 @@ class GardenExecutor:
                 parent, command, files=files, timeout_s=self.step_timeout_s
             )
         except Exception as exc:
-            return PrefixNode(None, error=f"{step_id}/{option_id}: {exc}", cacheable=False)
+            error = f"{step_id}/{option_id}: {SANDBOX_FAILED}: {exc}"
+            return PrefixNode(None, error=error, cacheable=False)
         if not run.ok:
             detail, deterministic = failure_detail(run)
             return PrefixNode(

@@ -15,6 +15,7 @@ INSTALL_TIMEOUT_S = 900.0
 CHECK_TIMEOUT_S = 120.0
 STDERR_TAIL_CHARS = 400
 TRANSIENT_WAITS_S = (1.0, 4.0)
+EXPIRED_FILES = "Files not found or expired"
 
 
 def _remote_files(files: Mapping[str, bytes] | None) -> dict[str, bytes]:
@@ -166,13 +167,21 @@ class ContreeBackend:
 
 
 async def _run_with_retries(base: Any, **arguments: Any) -> Any:
-    """A run is a pure function of its parent image, so a transport failure is safe to retry."""
-    from contree_sdk.sdk.exceptions import ApiTimeoutError, ContreeTransportError
+    """A run is a pure function of its parent image, so a transport failure is safe to retry.
+
+    So is an upload the service let expire between the client's lookup by hash and the run: at
+    d29a189 seven marp_norms universes failed within one second with "Files not found or
+    expired", and the same universes ran when the search came back to them."""
+    from contree_sdk.sdk.exceptions import ApiTimeoutError, ContreeTransportError, NotFoundError
 
     for wait in TRANSIENT_WAITS_S:
         try:
             return await base.run(**arguments)
         except (ApiTimeoutError, ContreeTransportError):
+            await asyncio.sleep(wait)
+        except NotFoundError as exc:
+            if EXPIRED_FILES not in str(exc):
+                raise
             await asyncio.sleep(wait)
     return await base.run(**arguments)
 

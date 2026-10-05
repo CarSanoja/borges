@@ -5,9 +5,11 @@ from collections.abc import Sequence
 from borges.analysis.coder import repair_option
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.garden.executor import GardenExecutor, universe_id
+from borges.garden.executor_errors import sandbox_failed
 from borges.garden.models import Garden, Universe, UniverseKind
 from borges.llm.client import BudgetExceeded, LLMClient
 from borges.llm.gather import gather_cancelling
+from borges.runs.adversary_review import review_verdict
 from borges.runs.emitter import RunEmitter
 from borges.runs.events import OptionCodedData
 from borges.runs.universe_tracing import run_universe_traced
@@ -95,10 +97,21 @@ class UniverseRunner:
             raise
         except Exception:
             return None
-        if repaired.code == option.code:
+        if repaired.code == option.code or not await self._faithful(step, repaired):
             return None
         await self._swap(step, repaired)
         return {**universe.choices, step.id: repaired.id}, step, option
+
+    async def _faithful(self, step: Step, option: Option) -> bool:
+        """A repair answers a failure further down the universe, so it can bend the option to fit.
+
+        At d29a189 the bank repair of an option whose spec said "Do not create missing indicator
+        columns" created them so that a later covariate step found its columns, and the option
+        became a no-op. The repaired code is reviewed against its spec before it replaces the old.
+        """
+        key = f"reviewer:repair:{step.id}:{option.id}"
+        verdict = await review_verdict(self.llm, self.plan, self.emitter, step, option, key)
+        return verdict is None or (verdict.faithful and not verdict.changes_estimand)
 
     def _restore(self, universe_id: str) -> Universe:
         assert self.restored is not None
@@ -124,7 +137,9 @@ class UniverseRunner:
         self.running.append(full)
         try:
             universe = await run_universe_traced(self.executor, choices, kind)
-            if universe.status == "failed":
+            if universe.status == "failed" and sandbox_failed(universe.error):
+                universe = await run_universe_traced(self.executor, choices, kind)
+            if universe.status == "failed" and not sandbox_failed(universe.error):
                 repaired = await self._repair(universe, kind, full)
                 if repaired is not None:
                     retried = await run_universe_traced(self.executor, repaired[0], kind)

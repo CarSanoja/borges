@@ -111,3 +111,25 @@ async def test_stderr_fallback_carries_no_host_paths() -> None:
     universe = await executor.run_universe({**plan.default_choices(), "s2": "y"}, "single")
     assert "KeyError" in (universe.error or "")
     assert "/Users/" not in (universe.error or "")
+
+
+async def test_a_sandbox_that_raises_is_marked_apart_from_a_code_error() -> None:
+    from borges.garden.executor_errors import sandbox_failed
+    from borges.sandbox.backend import SandboxError
+
+    plan = make_plan()
+    backend = FakeBackend(plan)
+    real_run = backend.run
+
+    async def expires(parent: Any, command: Any, **kwargs: Any) -> Any:
+        if command[-1] == "s2:y":
+            raise SandboxError("contree run failed: Files not found or expired: 7335ad59")
+        return await real_run(parent, command, **kwargs)
+
+    backend.run = expires
+    executor = GardenExecutor(backend, plan, b"d")
+    await executor.setup()
+    universe = await executor.run_universe({**plan.default_choices(), "s2": "y"}, "single")
+    assert universe.status == "failed" and sandbox_failed(universe.error)
+    assert not sandbox_failed("s2/y: ValueError: the sandbox failed to parse")
+    assert not sandbox_failed(None) and not sandbox_failed("")

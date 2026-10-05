@@ -233,3 +233,41 @@ async def test_a_transport_timeout_is_retried_twice(
     else:
         with pytest.raises(SandboxError, match="contree run failed"):
             await backend.run(root, ["python", "-c", "pass"])
+
+
+class ExpiringImage(FakeImage):
+    def __init__(self, store: FakeStore, failures: int, error: str) -> None:
+        super().__init__("expiring", store)
+        self.failures = failures
+        self.error = error
+
+    def run(self, **kwargs: Any) -> Any:
+        from contree_sdk.sdk.exceptions import NotFoundError
+
+        async def fail() -> FakeImage:
+            raise NotFoundError(error=self.error)
+
+        if self.failures > 0:
+            self.failures -= 1
+            return fail()
+        return super().run(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("error", "survives"),
+    [("Files not found or expired: 7335ad59", True), ("Image not found: 896e3283", False)],
+)
+async def test_only_an_expired_upload_is_retried(
+    backend: ContreeBackend, monkeypatch: pytest.MonkeyPatch, error: str, survives: bool
+) -> None:
+    from borges.sandbox import contree_backend
+
+    monkeypatch.setattr(contree_backend, "TRANSIENT_WAITS_S", (0.0, 0.0))
+    root = await backend.root({})
+    backend._images[root.id] = ExpiringImage(backend._runner.store, 1, error)
+    if survives:
+        result = await backend.run(root, ["python", "-c", "pass"])
+        assert result.ok
+    else:
+        with pytest.raises(SandboxError, match="Image not found"):
+            await backend.run(root, ["python", "-c", "pass"])

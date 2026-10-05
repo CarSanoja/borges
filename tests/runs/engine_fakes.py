@@ -104,6 +104,9 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
             raise RuntimeError("cannot repair")
         return option.model_copy(update={"code": "fixed"})
 
+    async def review_verdict(*args: Any) -> None:
+        return None
+
     async def propose_options(llm: Any, plan: AnalysisPlan, baseline: Universe):
         scenario.calls.append("propose")
         if scenario.propose_error:
@@ -196,6 +199,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         (pipeline, "build_report", build_report),
         (pipeline_finish, "narrate", narrate),
         (runner, "repair_option", repair_option),
+        (runner, "review_verdict", review_verdict),
         (adversary_round, "propose_options", propose_options),
         (adversary_round, "judge_option", judge_option),
         (plan_judging, "judge_option", judge_planner_option),

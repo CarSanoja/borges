@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import pytest
 
 from borges.analysis.models import AnalysisPlan, Option, Step
+from borges.analysis.schemas import ReviewVerdict
 from borges.garden.executor import universe_id
 from borges.garden.models import Garden, Universe
 from borges.runs.runner import UniverseRunner
@@ -55,12 +57,19 @@ def with_codes(b: str) -> AnalysisPlan:
     return plan
 
 
-def patch_repair(monkeypatch: pytest.MonkeyPatch, code: str, calls: list[str]) -> None:
+def patch_repair(
+    monkeypatch: pytest.MonkeyPatch, code: str, calls: list[str], faithful: bool = True
+) -> None:
     async def repair(llm: Any, plan: AnalysisPlan, step: Step, option: Option, error: str):
         calls.append(f"{step.id}.{option.id}")
         return option.model_copy(update={"code": code})
 
+    async def review(llm: Any, plan: AnalysisPlan, emitter: Any, step: Step, option: Option, key):
+        calls.append(f"review:{option.code}")
+        return ReviewVerdict(option_id=option.id, faithful=faithful, problem="")
+
     monkeypatch.setattr("borges.runs.runner.repair_option", repair)
+    monkeypatch.setattr("borges.runs.runner.review_verdict", review)
 
 
 async def test_a_fresh_option_is_repaired_and_the_universe_rerun(
@@ -71,7 +80,7 @@ async def test_a_fresh_option_is_repaired_and_the_universe_rerun(
     plan = with_codes("broken")
     runner, emitter = runner_for(plan)
     universe = await runner.run({"s1": "b"}, "single")
-    assert calls == ["s1.b"] and universe.status == "done"
+    assert calls == ["s1.b", "review:fixed"] and universe.status == "done"
     assert plan.step("s1").option("b").code == "fixed"
     assert emitter.events == ["option.coded", "plan.ready"]
 
@@ -100,6 +109,41 @@ async def test_a_repair_that_returns_the_same_code_changes_nothing(
     assert calls == ["s1.b"] and universe.status == "failed" and emitter.events == []
 
 
+async def test_a_repair_the_reviewer_finds_unfaithful_to_its_spec_is_not_kept(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    patch_repair(monkeypatch, "fixed", calls, faithful=False)
+    plan = with_codes("broken")
+    runner, emitter = runner_for(plan)
+    universe = await runner.run({"s1": "b"}, "single")
+    assert calls == ["s1.b", "review:fixed"] and universe.status == "failed"
+    assert plan.step("s1").option("b").code == "broken" and emitter.events == []
+
+
+async def test_a_sandbox_failure_is_retried_without_rewriting_the_code(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    patch_repair(monkeypatch, "fixed", calls)
+    plan = with_codes("code-b")
+    attempts: list[int] = []
+
+    class Expires(CodeExecutor):
+        async def run_universe(self, choices: dict[str, str], kind: str) -> Universe:
+            universe = await super().run_universe(choices, kind)
+            attempts.append(1)
+            if len(attempts) == 1:
+                error = "s1/b: the sandbox failed: contree run failed: Files not found or expired"
+                return universe.model_copy(update={"status": "failed", "error": error})
+            return universe
+
+    runner = UniverseRunner(None, plan, Expires(plan), Garden(), Emitter(), 20)
+    universe = await runner.run({"s1": "b"}, "single")
+    assert universe.status == "done" and len(attempts) == 2 and calls == []
+    assert plan.step("s1").option("b").code == "code-b"
+
+
 async def test_a_repair_whose_rerun_fails_restores_the_previous_code(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -111,6 +155,7 @@ async def test_a_repair_whose_rerun_fails_restores_the_previous_code(
         return option.model_copy(update={"code": "still broken"})
 
     monkeypatch.setattr("borges.runs.runner.repair_option", repair)
+    monkeypatch.setattr("borges.runs.runner.review_verdict", lambda *a: asyncio.sleep(0))
 
     class StillFails(CodeExecutor):
         async def run_universe(self, choices: dict[str, str], kind: str) -> Universe:
