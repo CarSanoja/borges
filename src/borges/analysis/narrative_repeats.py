@@ -8,6 +8,8 @@ WORD = re.compile(r"[a-z]{3,}")
 OVERLAP = 0.5
 SAME_WORDS = 0.85
 RESTATED_OPENING = re.compile(r"([^()]{1,60}) \(\1 \(")
+REEXECUTION = re.compile(r"\bre-?execut\w*|\breproduc\w*", re.IGNORECASE)
+SHORT = 16
 
 
 def _numbers(sentence: str) -> list[str]:
@@ -33,9 +35,18 @@ def drop_repeated_sentences(narrative: str) -> str:
     kept: list[str] = []
     narrative = RESTATED_OPENING.sub(r"\1 (", narrative)
     for sentence in SENTENCE.split(narrative.strip()):
-        if not any(_repeats(sentence, earlier) for earlier in kept):
+        if not any(_repeats(sentence, earlier) for earlier in kept) and not _restated_reproduction(
+            sentence, kept
+        ):
             kept.append(sentence)
     return " ".join(kept)
+
+
+def _restated_reproduction(sentence: str, kept: list[str]) -> bool:
+    """A marp_norms summary at 9b95d04 said the flip was reproduced twice, in other words."""
+    if not REEXECUTION.search(sentence) or _numbers(sentence) or len(sentence.split()) > SHORT:
+        return False
+    return any(REEXECUTION.search(earlier) for earlier in kept)
 
 
 def drop_prompt_echoes(narrative: str, rules: tuple[str, ...], labels: tuple[str, ...] = ()) -> str:

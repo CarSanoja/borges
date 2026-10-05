@@ -16,14 +16,19 @@ def robustness_sentence(report: Report) -> str | None:
     if report.n_universes == 0:
         return None
     agree = round(report.robustness * 100)
+    left_out = (
+        " Universes that re-include rows the plan's notes mark as invalid are left out of it."
+        if report.contaminated_flip is not None or report.contaminated_flips
+        else ""
+    )
     if report.robustness_basis == "design_weighted":
         return (
             f"Robustness: {agree}% of the analysis grid agrees with the original verdict and "
-            f"{100 - agree}% reverses it."
+            f"{100 - agree}% reverses it.{left_out}"
         )
     return (
         f"Robustness: {agree}% of the distinct results agree with the original verdict and "
-        f"{100 - agree}% reverse it."
+        f"{100 - agree}% reverse it.{left_out}"
     )
 
 

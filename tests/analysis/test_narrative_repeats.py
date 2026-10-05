@@ -56,3 +56,13 @@ def test_a_copied_instruction_and_its_label_are_removed() -> None:
         text, ("Describe every estimate on that scale.",), ("Scale of the estimate: ",)
     )
     assert out == "The original analysis is a model of log1p(alldeaths). Robustness: 100% agree."
+
+
+def test_a_reproduction_said_twice_in_other_words_is_dropped() -> None:
+    text = (
+        "An independent re-execution reproduced this flip. The covariates move the estimate. "
+        "The minimal flip was reproduced by an independent re-execution."
+    )
+    assert drop_repeated_sentences(text) == (
+        "An independent re-execution reproduced this flip. The covariates move the estimate."
+    )

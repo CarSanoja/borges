@@ -11,6 +11,8 @@ from borges.analysis.narrative_flip import (
     insert_sentence,
     problems,
 )
+from borges.analysis.narrative_ids import drop_option_ids
+from borges.analysis.narrative_no_flip import no_flip_problems, rewrite_claimed_flips
 from borges.analysis.narrative_original import original_problems, with_original
 from borges.analysis.narrative_repeats import drop_prompt_echoes, drop_repeated_sentences
 from borges.analysis.narrative_robustness import (
@@ -81,6 +83,7 @@ def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | Non
         *original_problems(plan, report, narrative),
         *(p for p in problems(plan, report, narrative) if not p.startswith(MISSING_FLIP)),
         *inverted_shares(report, narrative),
+        *no_flip_problems(report, narrative),
     ]
     if scale is not None and (
         unit_readings(report, narrative, scale) or not mentions_log_scale(narrative)
@@ -89,8 +92,8 @@ def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | Non
     return found
 
 
-def _clean(report: Report, text: str) -> str:
-    echoes = drop_prompt_echoes(text, RULES, (SCALE_LABEL,))
+def _clean(plan: AnalysisPlan, report: Report, text: str) -> str:
+    echoes = drop_option_ids(plan, drop_prompt_echoes(text, RULES, (SCALE_LABEL,)))
     return drop_wrong_counts(report, drop_method_sentences(report, drop_repeated_sentences(echoes)))
 
 
@@ -98,12 +101,15 @@ def _complete(
     plan: AnalysisPlan, report: Report, narrative: str, sentence: str | None, scale: str | None
 ) -> str:
     units = unit_readings(report, narrative, scale)
-    kept = with_original(plan, report, drop_unit_readings(report, narrative, scale))
+    narrative = rewrite_claimed_flips(report, drop_unit_readings(report, narrative, scale))
+    kept = with_original(plan, report, narrative)
     if sentence is not None and not has_sentence(kept, sentence):
         kept = insert_sentence(kept, sentence)
     robust = robustness_sentence(report)
     if robust is not None and not has_sentence(kept, robust):
-        kept = f"{kept} {robust}"
+        head = robust.split(". ", 1)[0] + "."
+        flat = " ".join(kept.split())
+        kept = flat.replace(head, robust) if head != robust and head in flat else f"{kept} {robust}"
     if scale is not None and (units or not mentions_log_scale(kept)):
         kept = insert_sentence(kept, scale)
     return kept
@@ -119,7 +125,7 @@ async def narrate(
     sentence = flip_sentence(plan, report)
     scale = scale_note(garden) if garden is not None else None
     out = await _ask(llm, plan, report, sentence, "narrator", None, garden, judged, scale)
-    narrative = _clean(report, out.narrative)
+    narrative = _clean(plan, report, out.narrative)
     issues = _issues(plan, report, narrative, scale)
     if issues:
         try:
@@ -128,7 +134,7 @@ async def narrate(
             )
         except LLMError:
             retry = None
-        second = _clean(report, retry.narrative) if retry is not None else ""
+        second = _clean(plan, report, retry.narrative) if retry is not None else ""
         if retry is not None and not _issues(plan, report, second, scale) and NUMBER.search(second):
             narrative = second
         else:
