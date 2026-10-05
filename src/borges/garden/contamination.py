@@ -13,7 +13,7 @@ INVALID_ROWS = re.compile(
 )
 
 
-def _default_text(plan: AnalysisPlan, step_id: str) -> str:
+def default_text(plan: AnalysisPlan, step_id: str) -> str:
     default = plan.step(step_id).default
     notes = [
         column.note
@@ -47,7 +47,7 @@ def contamination_reason(
         rows = _rows_after(garden, change, flip_universe_id)
         if rows is None or rows[1] <= rows[0]:
             continue
-        words = sorted({m.lower() for m in INVALID_ROWS.findall(_default_text(plan, step.id))})
+        words = sorted({m.lower() for m in INVALID_ROWS.findall(default_text(plan, step.id))})
         if not words:
             continue
         return (
