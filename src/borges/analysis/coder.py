@@ -7,7 +7,7 @@ from borges.analysis.coder_armor import armor_refusal
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_order import code_in_order
-from borges.analysis.coder_recode import fresh_recode, make_rewrite
+from borges.analysis.coder_recode import CODE_TOKENS, fresh_recode, make_rewrite
 from borges.analysis.coder_replan import make_replan
 from borges.analysis.coder_rescue import promote_sibling, replan_uncoded_step
 from borges.analysis.coder_smoke import SmokeConfig, smoke_plan
@@ -38,7 +38,7 @@ async def _request_code(
         build_messages(plan, step, option, error),
         key=key,
         schema=CoderOutput,
-        max_tokens=1500,
+        max_tokens=CODE_TOKENS,
     )
     if models is not None:
         models.append(response.usage.model)

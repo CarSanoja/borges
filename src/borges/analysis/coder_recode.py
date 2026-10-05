@@ -10,6 +10,8 @@ from borges.analysis.prompts.coder_collision import rewrite_instruction
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, Role
 
+CODE_TOKENS = 2500
+
 
 async def _request(
     llm: LLMClient,
@@ -20,7 +22,7 @@ async def _request(
     key: str,
 ) -> tuple[str, str | None, str]:
     response = await llm.complete(
-        Role.REPAIRER, messages, key=key, schema=CoderOutput, max_tokens=1500
+        Role.REPAIRER, messages, key=key, schema=CoderOutput, max_tokens=CODE_TOKENS
     )
     code, _ = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)
     code, _ = add_missing_imports(code)

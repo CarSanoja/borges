@@ -29,7 +29,7 @@ async def test_code_option_key_and_prompt() -> None:
     step = plan.step("m1")
     assert await code_option(llm, plan, step, step.option("welch")) == "X"
     call = llm.calls[0]
-    assert call.role is Role.CODER and call.max_tokens == 1500 and call.schema is CoderOutput
+    assert call.role is Role.CODER and call.max_tokens == 2500 and call.schema is CoderOutput
     content = call.messages[1]["content"]
     assert "outcome" in content and "float64" in content
     assert "Spec for keep on outcome" in content and "Spec for trim on outcome" in content
