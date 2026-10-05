@@ -3,7 +3,9 @@
 A checkout summary at 9b95d04 opened its second sentence with "A minimal flip was found" when the
 only flips re-included rows the plan's notes mark as invalid, so the report named none, and later
 sentences called the same flip contaminated. With no minimal flip in the report, the claim is
-rewritten to say the flip found is contaminated, or dropped when the report has no flip at all.
+rewritten to say the flip found is contaminated, or dropped when the report has no flip at all. A
+bank summary at a491fe1 echoed the report field ("the minimal flip is null") and added "there is
+no re-execution to report"; both are dropped.
 """
 
 from __future__ import annotations
@@ -18,6 +20,10 @@ CLAIM = re.compile(
     re.IGNORECASE,
 )
 CONTAMINATED = "The only flip found is contaminated"
+NULL_FLIP = re.compile(
+    r"[;,]?\s*(?:and\s+)?the\s+minimal\s+flip\s+is\s+(?:null|none|empty)\b", re.IGNORECASE
+)
+NOTHING_TO_REPORT = re.compile(r"\bno\s+re-?execution\s+to\s+report\b", re.IGNORECASE)
 
 
 def _contaminated(report: Report) -> bool:
@@ -45,6 +51,8 @@ def no_flip_problems(report: Report, narrative: str) -> list[str]:
 def rewrite_claimed_flips(report: Report, narrative: str) -> str:
     kept: list[str] = []
     for sentence in _SENTENCE_END.split(narrative.strip()):
+        if report.minimal_flip is None:
+            sentence = "" if NOTHING_TO_REPORT.search(sentence) else NULL_FLIP.sub("", sentence)
         if sentence and sentence in claimed_flips(report, sentence):
             if not _contaminated(report):
                 continue

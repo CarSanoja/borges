@@ -71,3 +71,13 @@ def test_the_robustness_sentence_says_invalid_rows_are_left_out() -> None:
     assert sentence is not None
     assert "0% reverses it, leaving out the universes that re-include rows" in sentence
     assert robustness_sentence(report(False)).endswith("0% reverses it.")
+
+
+def test_report_field_echoes_are_dropped() -> None:
+    text = (
+        "No change reversed this verdict; the minimal flip is null. Because no flip was found, "
+        "there is no re-execution to report. Robustness: 100%."
+    )
+    assert rewrite_claimed_flips(report(False), text) == (
+        "No change reversed this verdict. Robustness: 100%."
+    )

@@ -35,3 +35,9 @@ def test_a_column_name_in_parentheses_is_kept() -> None:
 def test_a_parenthesised_universe_id_is_dropped() -> None:
     text = "The flipped universe (u_c8af06a403) estimates -0.0178."
     assert drop_option_ids(plan(), text) == "The flipped universe estimates -0.0178."
+
+
+def test_a_universe_id_inside_or_outside_parentheses_is_dropped() -> None:
+    text = "With B (u_12c11039f3, estimate 3.74). The flipped universe u_145df22797 estimates 6.4."
+    want = "With B (estimate 3.74). The flipped universe estimates 6.4."
+    assert drop_option_ids(plan(), text) == want
