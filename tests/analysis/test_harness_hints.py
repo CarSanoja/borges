@@ -104,3 +104,21 @@ def test_a_decimal_put_into_an_integer_column_gets_the_cast_hint(tmp_path: Path)
     assert done.returncode == 1 and error is not None
     assert "for dtype 'int64'" in error
     assert "convert the column first, for example df[col] = df[col].astype(float)" in error
+
+
+def test_a_term_missing_from_the_fitted_model_is_named_as_such(tmp_path: Path) -> None:
+    code = (
+        "import statsmodels.formula.api as smf\n\n"
+        "def estimate(df, ctx):\n"
+        "    covariates = ctx.get('covariates', [])\n"
+        "    formula = 'x ~ age + ' + ' + '.join(covariates) if covariates else 'x ~ 1'\n"
+        "    fit = smf.ols(formula, data=df).fit()\n"
+        "    return {'estimate': float(fit.params['age']), 'ci_low': -1.0, 'ci_high': 1.0,"
+        " 'p_value': 0.5, 'n': len(df)}\n"
+    )
+    error = _run_model(tmp_path, code, {})
+    assert error is not None
+    assert (
+        "'age' is not a column lookup that failed but a term missing from the fitted model" in error
+    )
+    assert "fit, whose terms are ['Intercept']" in error

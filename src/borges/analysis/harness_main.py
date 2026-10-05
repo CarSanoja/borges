@@ -221,7 +221,9 @@ __FINGERPRINT__
             "BORGES_ERROR ",
             {
                 "type": type(exc).__name__,
-                "message": _clean(_explain(exc, seen) + _encoding_hint(exc, seen, kind)),
+                "message": _clean(
+                    _explain(exc, seen) + _encoding_hint(exc, seen, kind) + _fit_key_hint(exc)
+                ),
                 "where": _clean("\\n".join(lines[-6:])),
             },
         )

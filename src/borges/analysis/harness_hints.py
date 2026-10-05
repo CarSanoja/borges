@@ -27,4 +27,37 @@ HINTS_SOURCE = """
             + "; encode them with pd.get_dummies(..., drop_first=True, dtype=float) before"
             + " fitting, including every categorical covariate that comes from a ctx list"
         )
+
+    def _fit_key_hint(exc):
+        if not isinstance(exc, KeyError) or not exc.args or not isinstance(exc.args[0], str):
+            return ""
+        key = exc.args[0]
+        tb, frames = exc.__traceback__, []
+        while tb is not None:
+            frames.append((tb.tb_frame, tb.tb_lineno))
+            tb = tb.tb_next
+        import linecache as _linecache
+
+        for frame, lineno in reversed(frames):
+            fitted = [
+                (name, value)
+                for name, value in list(frame.f_locals.items())
+                if hasattr(value, "bse") and hasattr(getattr(value, "params", None), "index")
+            ]
+            if not fitted:
+                continue
+            line = _linecache.getline(frame.f_code.co_filename, lineno)
+            named = [(n, v) for n, v in fitted if n + "." in line]
+            name, value = (named or fitted)[-1]
+            terms = [str(t) for t in value.params.index]
+            if key in terms:
+                return ""
+            return (
+                " | " + repr(key) + " is not a column lookup that failed but a term missing from"
+                + " the fitted model " + name + ", whose terms are " + repr(terms[:20]) + ": the"
+                + " formula or design that was fitted does not include " + repr(key) + ". Check"
+                + " every branch that builds the formula (with and without covariates); the"
+                + " exposure must be in all of them"
+            )
+        return ""
 """
