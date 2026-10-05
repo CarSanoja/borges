@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from borges.garden.noop import FINGERPRINT_REASON, RESULT_REASON, noop_options
+from borges.garden.noop import FINGERPRINT_REASON, RESULT_REASON, UNIT_REASON, noop_options
 from tests.garden.synthetic import (
     garden_of,
     option,
@@ -87,3 +87,31 @@ def test_noop_options_are_excluded_from_flips_and_combinations() -> None:
     assert minimal_flip(plan, garden) is None
     pairs = combination_flip_choices(plan, garden, 2, 10)
     assert pairs and all(p["rows"] == "keep" for p in pairs)
+
+
+def test_an_option_that_only_divides_the_result_by_100_is_a_unit_noop() -> None:
+    plan = plan_of(
+        step_of("unit", "transform", option("pp", True), option("binary")),
+        step_of("cov", "feature", option("none", True), option("platform")),
+    )
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(-0.1336, half=0.36, p=0.46)),
+        universe(plan, {"unit": "binary"}, result(-0.001336, half=0.0036, p=0.46)),
+        universe(plan, {"cov": "platform"}, result(-0.1331, half=0.36, p=0.47)),
+        universe(plan, {"unit": "binary", "cov": "platform"}, result(-0.001331, 0.0036, 0.47)),
+    )
+    found = noop_options(plan, garden)
+    assert [(n.option_id, n.reason) for n in found] == [
+        ("binary", UNIT_REASON.format(how="divided"))
+    ]
+
+
+def test_a_hundredfold_estimate_with_another_p_value_is_a_different_analysis() -> None:
+    plan = plan_of(step_of("unit", "transform", option("pp", True), option("other")))
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(-0.1336, half=0.36, p=0.46)),
+        universe(plan, {"unit": "other"}, result(-0.001336, half=0.0036, p=0.2)),
+    )
+    assert noop_options(plan, garden) == []
