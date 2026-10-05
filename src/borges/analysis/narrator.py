@@ -19,7 +19,7 @@ from borges.analysis.narrative_robustness import (
     robustness_sentence,
 )
 from borges.analysis.narrator_garden import estimate_tokens, garden_digest
-from borges.analysis.prompts.narrator import RULES, build_messages
+from borges.analysis.prompts.narrator import RULES, SCALE_LABEL, build_messages
 from borges.analysis.schemas import NarratorOutput
 from borges.garden.models import Garden, Report
 from borges.garden.outcome_scale import mentions_log_scale, scale_note
@@ -86,7 +86,9 @@ def _issues(plan: AnalysisPlan, report: Report, narrative: str, scale: str | Non
 
 
 def _clean(report: Report, text: str) -> str:
-    return drop_method_sentences(report, drop_repeated_sentences(drop_prompt_echoes(text, RULES)))
+    return drop_method_sentences(
+        report, drop_repeated_sentences(drop_prompt_echoes(text, RULES, (SCALE_LABEL,)))
+    )
 
 
 def _complete(

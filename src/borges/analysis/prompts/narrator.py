@@ -24,7 +24,8 @@ analyst choices, not effects in the world. Say what each change does, and never 
 estimate moved with a statistical mechanism (overdispersion, confounding, outliers, leverage) \
 unless the garden has a universe that changes only that and shows it. Use only numbers present \
 in the report. No headings, no preamble. Return an empty caveats list: Borges computes every \
-caveat from the garden itself.
+caveat from the garden itself and shows them under the summary, so mention a caveat only when it \
+changes how the verdict reads, once, and never copy an instruction of this prompt.
 
 Return only JSON matching the requested schema."""
 
@@ -36,7 +37,9 @@ FLIP_RULE = "Name no other option of that step as part of the flip."
 ROBUST_RULE = (
     "A share in the report's robustness fields is the share that AGREES with the original verdict."
 )
-RULES = (ORIGINAL_RULE, FLIP_RULE, ROBUST_RULE)
+SCALE_RULE = "Describe every estimate on that scale."
+SCALE_LABEL = "Scale of the estimate: "
+RULES = (ORIGINAL_RULE, FLIP_RULE, ROBUST_RULE, SCALE_RULE)
 
 
 def build_messages(
@@ -61,7 +64,7 @@ def build_messages(
         f"{original_sentence(report)}\n"
     )
     if scale is not None:
-        user += f"\nScale of the estimate: {scale} Describe every estimate on that scale."
+        user += f"\n{SCALE_LABEL}{scale} {SCALE_RULE}"
     if flip_sentence is not None:
         user += (
             f"\n{FLIP_RULE} Include the sentence below verbatim in the summary, as its second "

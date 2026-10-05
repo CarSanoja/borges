@@ -6,6 +6,7 @@ SENTENCE = re.compile(r"(?<=[.!?])\s+")
 NUMBER = re.compile(r"-?\d+(?:\.\d+)?%?")
 WORD = re.compile(r"[a-z]{3,}")
 OVERLAP = 0.5
+SAME_WORDS = 0.85
 RESTATED_OPENING = re.compile(r"([^()]{1,60}) \(\1 \(")
 
 
@@ -18,12 +19,14 @@ def _words(sentence: str) -> set[str]:
 
 
 def _repeats(sentence: str, earlier: str) -> bool:
+    """Same figures and half the words, or no figures and nearly all the words: the hurricanes
+    summary at 2327203 said twice that one filter decision had no effect."""
     numbers = _numbers(sentence)
-    if not numbers or numbers != _numbers(earlier):
+    if numbers != _numbers(earlier):
         return False
     words, before = _words(sentence), _words(earlier)
     shorter = min(len(words), len(before)) or 1
-    return len(words & before) / shorter >= OVERLAP
+    return len(words & before) / shorter >= (OVERLAP if numbers else SAME_WORDS)
 
 
 def drop_repeated_sentences(narrative: str) -> str:
@@ -35,7 +38,15 @@ def drop_repeated_sentences(narrative: str) -> str:
     return " ".join(kept)
 
 
-def drop_prompt_echoes(narrative: str, rules: tuple[str, ...]) -> str:
-    """A model told to copy a sentence sometimes copies the instruction next to it as well."""
-    kept = [s for s in SENTENCE.split(narrative.strip()) if s.strip() not in rules]
+def drop_prompt_echoes(narrative: str, rules: tuple[str, ...], labels: tuple[str, ...] = ()) -> str:
+    """A model told to copy a sentence sometimes copies the instruction next to it as well, or
+    the label the prompt put before it."""
+    kept = []
+    for sentence in SENTENCE.split(narrative.strip()):
+        if sentence.strip() in rules:
+            continue
+        for label in labels:
+            if sentence.startswith(label):
+                sentence = sentence[len(label)].upper() + sentence[len(label) + 1 :]
+        kept.append(sentence)
     return " ".join(kept)
