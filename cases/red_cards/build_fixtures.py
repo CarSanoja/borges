@@ -99,7 +99,8 @@ def narrate(info: dict[str, Any]) -> tuple[NarratorOutput, str]:
     ]
     story = (
         f"Twenty-nine teams analysed this dataset and disagreed on whether referees card "
-        f"dark-skinned players more. The default analysis gives {fmt(base)}: bias detected. "
+        f"dark-skinned players more. In the scripted replay, the default analysis gives "
+        f"{fmt(base)}: bias detected. "
         f"No single analytic choice reverses that and no pair does; it takes three together, "
         f"such as a full covariate set, frequent referees only and player-clustered errors, "
         f"to land on no clear evidence (OR {t_lo:.2f} to {t_hi:.2f}). The one single flip "

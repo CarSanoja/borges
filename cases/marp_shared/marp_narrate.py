@@ -106,7 +106,8 @@ def story(snapshot: RunSnapshot, rq: int, teams: dict[str, float]) -> str:
     n, k = int(teams["n_teams"]), int(teams["n_significant"])
     lead = (
         f"{n} research teams analysed this dataset; {k} found that {RQ_CLAIM[rq]} with an "
-        f"interval above zero. The default analysis gives {fmt_result(rq, report.original_result)}."
+        "interval above zero. In the scripted replay, the default analysis gives "
+        f"{fmt_result(rq, report.original_result)}."
     )
     if report.minimal_flip is None:
         return f"{lead} Borges found no defensible flip in {report.n_universes} universes."

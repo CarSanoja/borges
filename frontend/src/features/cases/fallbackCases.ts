@@ -39,7 +39,7 @@ export const FALLBACK_CASES: CaseCard[] = [
     has_recording: true,
     reference_label: "29 human research teams (Silberzahn et al., 2018)",
     reference: [],
-    story: "Twenty-nine teams analysed this dataset and disagreed on whether referees card dark-skinned players more. The default analysis gives OR 1.34 (95% CI 1.13 to 1.58): bias detected. No single analytic choice reverses that and no pair does; it takes three together, such as a full covariate set, frequent referees only and player-clustered errors, to land on no clear evidence (OR 1.20 to 1.25). The one single flip that existed, restricting to low-bias referees, is not defensible.",
+    story: "Twenty-nine teams analysed this dataset and disagreed on whether referees card dark-skinned players more. In the scripted replay, the default analysis gives OR 1.34 (95% CI 1.13 to 1.58): bias detected. No single analytic choice reverses that and no pair does; it takes three together, such as a full covariate set, frequent referees only and player-clustered errors, to land on no clear evidence (OR 1.20 to 1.25). The one single flip that existed, restricting to low-bias referees, is not defensible.",
   },
   {
     id: "marp_norms",
@@ -59,7 +59,7 @@ export const FALLBACK_CASES: CaseCard[] = [
     has_recording: true,
     reference_label: "105 of 120 research teams that reported a standardised effect (Hoogeveen, Sarafoglou et al., 2022)",
     reference: [],
-    story: "105 research teams analysed this dataset; 68 found that the religiosity-well-being relation grows with perceived cultural norms with an interval above zero. The default analysis gives interaction beta = 0.045 (95% CI 0.026 to 0.063), p < 0.001, n = 10,535. The verdict changes in 1 of 15 universes; the nearest is Pooled OLS, robust errors: interaction beta = 0.018 (95% CI -0.000 to 0.037), p = 0.056, n = 10,535.",
+    story: "105 research teams analysed this dataset; 68 found that the religiosity-well-being relation grows with perceived cultural norms with an interval above zero. In the scripted replay, the default analysis gives interaction beta = 0.045 (95% CI 0.026 to 0.063), p < 0.001, n = 10,535. The verdict changes in 1 of 15 universes; the nearest is Pooled OLS, robust errors: interaction beta = 0.018 (95% CI -0.000 to 0.037), p = 0.056, n = 10,535.",
   },
   {
     id: "marp_religiosity",
@@ -79,7 +79,7 @@ export const FALLBACK_CASES: CaseCard[] = [
     has_recording: true,
     reference_label: "110 of 120 research teams that reported a standardised effect (Hoogeveen, Sarafoglou et al., 2022)",
     reference: [],
-    story: "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. The default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 40 universes.",
+    story: "110 research teams analysed this dataset; 110 found that religiosity goes with higher well-being with an interval above zero. In the scripted replay, the default analysis gives beta = 0.140 (95% CI 0.119 to 0.160), p < 0.001, n = 10,535. Borges found no defensible flip in 40 universes.",
   },
   {
     id: "hurricanes",

@@ -753,7 +753,7 @@
       "significant": true
     }
   ],
-  "story": "105 research teams analysed this dataset; 68 found that the religiosity-well-being relation grows with perceived cultural norms with an interval above zero. The default analysis gives interaction beta = 0.045 (95% CI 0.026 to 0.063), p < 0.001, n = 10,535. The verdict changes in 1 of 25 universes; the nearest is Pooled OLS, robust errors: interaction beta = 0.018 (95% CI -0.000 to 0.037), p = 0.056, n = 10,535.",
+  "story": "105 research teams analysed this dataset; 68 found that the religiosity-well-being relation grows with perceived cultural norms with an interval above zero. In the scripted replay, the default analysis gives interaction beta = 0.045 (95% CI 0.026 to 0.063), p < 0.001, n = 10,535. The verdict changes in 1 of 25 universes; the nearest is Pooled OLS, robust errors: interaction beta = 0.018 (95% CI -0.000 to 0.037), p = 0.056, n = 10,535.",
   "column_notes": {
     "country": "country of the respondent (24 countries); one of the 24 countries of the MARP survey",
     "rel_1": "religiosity questionnaire item 1 of 9; the nine rel_* items form the religiosity scale",
