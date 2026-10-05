@@ -73,3 +73,22 @@ def test_a_fill_that_turns_missing_ratings_into_a_score_fails_unless_the_option_
     error = parse_error(run(workdir, filled).stdout)
     assert error is not None and "'tone' is 0.0 on the 30 rows" in error
     assert run(workdir, filled, label="Impute missing tones as 0").returncode == 0
+
+
+def test_a_cut_at_a_numpy_threshold_over_missing_values_fails_as_constant(workdir: Path) -> None:
+    code = CUT.replace(">= 0.5", '>= np.mean(out["skin_tone"].to_numpy())').replace(
+        "def apply", "import numpy as np\n\n\ndef apply"
+    )
+    error = parse_error(run(workdir, code).stdout)
+    assert error is not None and "'dark' has the same value in every row" in error
+
+
+def test_a_constant_column_that_is_not_a_cut_passes(workdir: Path) -> None:
+    code = CUT.replace('(out["skin_tone"] >= 0.5).astype(int)', "1.0")
+    assert run(workdir, code).returncode == 0
+
+
+def test_the_error_names_the_line_that_blanks_the_missing_rows(workdir: Path) -> None:
+    error = parse_error(run(workdir, CUT).stdout)
+    assert error is not None
+    assert "out.loc[out[['skin_tone']].isna().all(axis=1), 'dark'] = float('nan')" in error

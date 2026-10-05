@@ -68,16 +68,33 @@ MISSING_CUT_SOURCE = """
                 continue
             if any((values == flag).all() for flag in indicators):
                 continue
-            if _pd.Series(values[gap]).nunique() == 1 and _pd.Series(values[~gap]).nunique() > 1:
-                rows, verb = str(int(gap.sum())), " are" if len(reads) > 1 else " is"
+            known = _pd.Series(values[~gap])
+            varying = any(before.loc[~gap, c].nunique() > 1 for c in reads)
+            constant = known.nunique() < 2
+            if _pd.Series(values[gap]).nunique() != 1 or (
+                constant and (not varying or values[gap][0] != 0)
+            ):
+                continue
+            rows, verb = str(int(gap.sum())), " are" if len(reads) > 1 else " is"
+            blank = (
+                "out.loc[out[" + repr(reads) + "].isna().all(axis=1), " + repr(str(name))
+                + "] = float('nan')"
+            )
+            if constant:
                 raise ValueError(
-                    repr(str(name)) + " is " + str(values[gap][0]) + " on the " + rows
-                    + " rows where " + ", ".join(map(repr, reads)) + verb
-                    + " missing: a missing input became a value of the result, so "
-                    + "those rows join a group they may not belong to (fillna, or a comparison "
-                    + "with a missing value, which is False). Leave them missing (NaN) unless the "
-                    + "option says that it imputes them"
+                    repr(str(name)) + " has the same value in every row although "
+                    + ", ".join(map(repr, reads)) + " vary: a numpy computation over a missing "
+                    + "value (np.cov, np.median, np.mean) returns NaN and every comparison with "
+                    + "it is False. Compute it on the complete rows only, then " + blank
                 )
+            raise ValueError(
+                repr(str(name)) + " is " + str(values[gap][0]) + " on the " + rows
+                + " rows where " + ", ".join(map(repr, reads)) + verb
+                + " missing: a missing input became a value of the result (fillna, or a "
+                + "comparison with a missing value, which is False). Keep the rest of the code "
+                + "and add, before returning: " + blank
+                + " (unless the option says that it imputes them)"
+            )
 
     def _check_missing_cuts(before, out):
         new = [c for c in out.columns if c not in before.columns]
