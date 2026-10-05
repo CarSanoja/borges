@@ -156,6 +156,11 @@ def test_allowed_from_imports_still_pass() -> None:
     assert check_code(code, "filter") == []
 
 
+def test_the_sandwich_covariance_module_sm_stats_already_exposes_is_allowed() -> None:
+    code = "from statsmodels.stats.sandwich_covariance import cov_cluster\n" + VALID_APPLY
+    assert check_code(code, "filter") == []
+
+
 @pytest.mark.parametrize(
     "body",
     [
