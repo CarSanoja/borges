@@ -8,7 +8,7 @@ from borges.analysis.code_guard_fallback import (
     share_p_value_violations,
     substituted_value_violations,
 )
-from borges.analysis.code_guard_formula import formula_error, needs_formula_check
+from borges.analysis.code_guard_formula import formula_error, needs_formula_check, probe_constants
 from borges.analysis.code_guard_introspection import (
     attribute_violations as introspection_attribute_violations,
 )
@@ -97,12 +97,12 @@ def _name_violations(node: ast.Name) -> list[str]:
     return []
 
 
-def _constant_violations(node: ast.Constant) -> list[str]:
+def _constant_violations(node: ast.Constant, probe: bool) -> list[str]:
     if not isinstance(node.value, str):
         return []
     if "__" in node.value or "@" in node.value:
         return [f"line {node.lineno}: string constants may not contain '__' or '@'"]
-    return _formula_violations(node)
+    return [] if probe else _formula_violations(node)
 
 
 def _formula_violations(node: ast.Constant) -> list[str]:
@@ -116,6 +116,7 @@ def _formula_violations(node: ast.Constant) -> list[str]:
 
 def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
     violations: list[str] = []
+    probes = probe_constants(func)
     for node in ast.walk(func):
         if isinstance(node, ast.Import | ast.ImportFrom):
             violations.extend(_import_violations(node))
@@ -128,7 +129,7 @@ def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
         elif isinstance(node, ast.Subscript):
             violations.extend(subscript_violations(node))
         elif isinstance(node, ast.Constant):
-            violations.extend(_constant_violations(node))
+            violations.extend(_constant_violations(node, id(node) in probes))
     return violations
 
 

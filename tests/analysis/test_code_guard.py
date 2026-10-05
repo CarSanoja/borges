@@ -235,6 +235,35 @@ def test_reject_split_formula_call() -> None:
     assert check_code(code, "model")
 
 
+def estimate_code(body: str) -> str:
+    return f"import statsmodels.formula.api as smf\n\n\ndef estimate(df, ctx):\n{body}\n"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        "    if t.startswith('C(') and t.endswith(', drop_first=True)'):\n        return 1",
+        "    if t.startswith(('C(', 'np.log(')) or 'I(' in t:\n        return 1",
+        '    f = "y ~ x + C(g) + " + " + ".join(ctx["covariates"])\n    return f',
+    ],
+)
+def test_accept_constants_that_are_probes_or_end_in_an_operator(body: str) -> None:
+    assert check_code(estimate_code(body), "model") == []
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        '    return "y ~ I(x + "',
+        "    p = 'C('\n    return t.startswith(p)",
+        '    return "y ~ x + os.system(1) + "',
+        "    return t.startswith('__')",
+    ],
+)
+def test_refuse_open_calls_outside_probes(body: str) -> None:
+    assert check_code(estimate_code(body), "model")
+
+
 def test_accept_plain_formulas() -> None:
     code = (
         "import statsmodels.formula.api as smf\n\n\n"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 
 from borges.analysis.code_guard_rules import (
@@ -22,6 +23,7 @@ INDEXED_TERM = (
     "and read the level coefficient as params['C(x)[T.level]']"
 )
 BINARY_OPERATORS = frozenset({"+", "-", "*", "/", ":", "**", "|"})
+PROBES = frozenset({"startswith", "endswith"})
 
 
 class FormulaError(ValueError):
@@ -160,10 +162,29 @@ def formula_error(text: str) -> str | None:
         text = LEVEL_LABEL.sub("", text)
     try:
         for side in text.split("~"):
-            parser = _Parser(_tokenize(side))
+            parser = _Parser(_tokenize(side.rstrip().rstrip("+-*/:|")))
             parser.expression(allow_empty=True)
             if not parser.at_end():
                 raise FormulaError(f"unexpected '{parser.take()[1]}'")
     except FormulaError as exc:
         return str(exc)
     return None
+
+
+def _strings(node: ast.expr) -> list[ast.expr]:
+    return list(node.elts) if isinstance(node, ast.Tuple) else [node]
+
+
+def probe_constants(tree: ast.AST) -> set[int]:
+    """Red_cards model code at 44a43e5 tested term.startswith('C(') and built "y ~ x + C(g) + "
+    before joining the covariates; both constants were read as unfinished formulas and every
+    model option failed. A constant only matched against, or ending in an operator at the top
+    level, is not a formula; an unclosed call split across constants is still refused."""
+    found: set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if node.func.attr in PROBES and node.args:
+                found.update(id(n) for n in _strings(node.args[0]))
+        elif isinstance(node, ast.Compare) and isinstance(node.ops[0], ast.In | ast.NotIn):
+            found.add(id(node.left))
+    return found
