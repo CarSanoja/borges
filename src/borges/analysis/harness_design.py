@@ -184,7 +184,7 @@ DESIGN_SOURCE = """
         bad = next((m for m in own if m["deficient"]), None)
         main = bad or (reported or own)[-1]
         no_intercept = next((m["model"] for m in own if not m["intercept"]), None)
-        aliased = sorted({n for m in models for n in m["aliased"]})
+        aliased = sorted({n for m in own for n in m["aliased"]})
         return {
             **main,
             "aliased": aliased,
