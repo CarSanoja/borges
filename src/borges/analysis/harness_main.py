@@ -7,6 +7,7 @@ from borges.analysis.harness_design import (
     DESIGN_SOURCE,
     DESIGN_WIDE_COLUMNS,
 )
+from borges.analysis.harness_design_checks import DESIGN_CHECKS_SOURCE, PRODUCT_MAX_COLUMNS
 from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
 from borges.analysis.harness_domain import DOMAIN_SOURCE
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE, RESTORED_NOTE
@@ -98,13 +99,8 @@ __FINGERPRINT__
                     raise ValueError(_design_error(design))
                 if __DESIGN_CHECK__ and design["no_intercept"]:
                     raise ValueError(_intercept_error(design))
-                if __DESIGN_CHECK__ and __OFFSET__ and design.get("offset") is False:
-                    raise ValueError(
-                        "the option's spec fits an offset (for example offset=np.log(games)),"
-                        + " but the " + str(design["model"]) + " that reports the estimate has"
-                        + " none, so it models counts per row instead of a rate: pass"
-                        + " offset=np.log(df[...]) (or exposure=) to the model"
-                    )
+                _check_offset(design)
+                _check_main_effects(df, reported)
                 ignored = _ignored_covariates(design, ctx, df, trace["note"])
                 if __DESIGN_CHECK__ and ignored:
                     raise ValueError(_ignored_error(ignored, design))
@@ -186,11 +182,18 @@ MAIN_TEMPLATE = (
         "__DESIGN__",
         "\n\n".join(
             x.strip("\n")
-            for x in (DESIGN_SOURCE, DESIGN_ERRORS_SOURCE, COVARIATES_SOURCE, OUTCOME_SOURCE)
+            for x in (
+                DESIGN_SOURCE,
+                DESIGN_ERRORS_SOURCE,
+                DESIGN_CHECKS_SOURCE,
+                COVARIATES_SOURCE,
+                OUTCOME_SOURCE,
+            )
         ),
     )
     .replace("__OUTCOME_MAX_ROWS__", repr(OUTCOME_MAX_ROWS))
     .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))
+    .replace("__PRODUCT_MAX_COLUMNS__", repr(PRODUCT_MAX_COLUMNS))
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
