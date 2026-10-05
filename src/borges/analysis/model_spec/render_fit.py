@@ -1,8 +1,13 @@
-"""The negative binomial dispersion is fitted by maximum likelihood, profiling the GLM's exact
-log-likelihood over log(alpha), and the model is fitted at that alpha, as R's glm.nb does. A moment
-estimator used until 4cf0663 gave alpha 0.23 for the hurricanes flip at a491fe1 where maximum
-likelihood gives 1.67, and the flip was significant only at the smaller alpha. One GLM is refitted
-per trial alpha, so the harness's design probe records one model, not one per trial.
+"""The negative binomial dispersion is fitted by maximum likelihood as R's glm.nb does, and the
+model is then fitted at that alpha. The derivative of the profile log-likelihood in theta =
+1/alpha is the score of theta at the means of the GLM fitted at that theta, so its root is found
+with Brent's method, each step a warm-started GLM fit; when the score is still positive at alpha
+= exp(-10) there is no overdispersion and alpha stays at that bound. A moment estimator used
+until 4cf0663 gave alpha 0.23 for the hurricanes flip at a491fe1 where maximum likelihood gives
+1.67, and the flip was significant only at the smaller alpha. Maximising the profile likelihood
+by its values took about 30 cold fits and timed out in ConTree on 115,000 red_cards rows at
+7ec07d9, and the values are flat to rounding near the optimum, which stalled a glm.nb-style
+alternation.
 """
 
 from __future__ import annotations
@@ -12,7 +17,10 @@ from borges.analysis.model_spec.render_design import design_term
 from borges.analysis.model_spec.schema import GEE_FAMILIES, GROUPED, ModelSpecOutput
 
 SCALED_OUTCOME = "outcome z-scored with the predictors: "
-NB_UNCONVERGED = "the negative binomial dispersion did not converge by maximum likelihood"
+NB_UNCONVERGED = (
+    "the negative binomial dispersion has no maximum-likelihood estimate in the range searched, "
+    "up to an alpha of about 148: the counts are more dispersed than the model can describe"
+)
 ALPHA_BOUNDS = (-10.0, 5.0)
 AT_BOUND = ", at the lower bound: no overdispersion, so the model is in effect a Poisson model"
 
@@ -32,22 +40,31 @@ def _count_lines(spec: ModelSpecOutput, arguments: str) -> list[str]:
             f"    fit = model.fit({scale}{arguments})",
         ]
     return [
-        "    from scipy.optimize import minimize_scalar",
-        f"    nb = sm.GLM(endog, exog, family=sm.families.NegativeBinomial(){offset})",
+        "    from scipy.optimize import brentq",
+        "    from scipy.special import digamma",
         "",
-        "    def profile(log_alpha):",
-        "        nb.family = sm.families.NegativeBinomial(alpha=float(np.exp(log_alpha)))",
-        "        return -nb.fit().llf",
+        "    def slope(log_theta):",
+        "        theta = float(np.exp(log_theta))",
+        "        nb.family = sm.families.NegativeBinomial(alpha=1.0 / theta)",
+        "        pilot = nb.fit(start_params=warm['start'])",
+        "        warm['start'] = pilot.params",
+        "        mu = np.asarray(pilot.mu)",
+        "        terms = digamma(counts + theta) - digamma(theta) + np.log(theta / (theta + mu))",
+        "        return float((terms + (mu - counts) / (theta + mu)).sum())",
         "",
+        "    counts = np.asarray(endog, dtype=float)",
+        "    warm = {'start': None}",
+        f"    nb = sm.GLM(endog, exog, family=sm.families.NegativeBinomial(alpha=1.0){offset})",
         f"    bounds = {ALPHA_BOUNDS!r}",
-        "    best = minimize_scalar(",
-        "        profile, bounds=bounds, method='bounded', options={'xatol': 1e-8}",
-        "    )",
-        "    if not best.success or not np.isfinite(best.fun):",
+        "    if slope(-bounds[0]) > 0:",
+        "        log_alpha = bounds[0]",
+        "    elif slope(-bounds[1]) < 0:",
         f"        raise ValueError({NB_UNCONVERGED!r})",
-        "    alpha = float(np.exp(best.x))",
+        "    else:",
+        "        log_alpha = -brentq(slope, -bounds[1], -bounds[0], xtol=1e-10)",
+        "    alpha = float(np.exp(log_alpha))",
         "    fitted = f'negative binomial alpha {alpha:.4g} by maximum likelihood'",
-        "    if best.x < bounds[0] + 0.1:",
+        "    if log_alpha < bounds[0] + 0.1:",
         f"        fitted += {AT_BOUND!r}",
         "    note += ('; ' if note else '') + fitted",
         "    family = sm.families.NegativeBinomial(alpha=alpha)",
