@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from borges.analysis.coder_replan import Generate, OnCoded, make_replan
-from borges.analysis.models import AnalysisPlan, CodingSummary, Step
+from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
 from borges.analysis.smoke_types import OnReplan, Outcome
 from borges.llm.client import LLMClient, LLMError
 
@@ -15,6 +17,7 @@ async def replan_uncoded_step(
     on_coded: OnCoded | None,
     summary: CodingSummary | None,
     on_replan: OnReplan | None,
+    refused: Callable[[str, Option], bool] | None = None,
 ) -> bool:
     outcomes = [
         Outcome(
@@ -27,7 +30,8 @@ async def replan_uncoded_step(
         )
         for option in step.options
     ]
-    replanned = await make_replan(llm, coded, generate, on_coded, summary)(step, outcomes)
+    replan = make_replan(llm, coded, generate, on_coded, summary, refused)
+    replanned = await replan(step, outcomes)
     if replanned is None or not replanned.options:
         return False
     coded.step(step.id).options = replanned.options

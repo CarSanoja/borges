@@ -69,6 +69,7 @@ class SmokeConfig:
     rewrite: Rewrite | None = None
     metric: str = ""
     state: SmokeState = field(default_factory=SmokeState)
+    refused: Callable[[str, Option], bool] | None = None
 
 
 @dataclass

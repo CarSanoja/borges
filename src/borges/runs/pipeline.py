@@ -159,6 +159,7 @@ class Pipeline:
             result_check=scale_check(plan.decision_rule),
             result_scale=plan.result_scale,
             metric=plan.decision_rule.metric,
+            refused=self.judged.refused,
         )
         self.smoke = smoke
         async with self.stage("coding"):

@@ -165,8 +165,9 @@ async def code_plan(
             errors = {o: v for (s, o), v in failures.items() if s == step_id}
             on_replan = smoke.on_replan if smoke is not None else None
             step = plan.step(step_id)
+            refused = smoke.refused if smoke is not None else None
             rescued = await replan_uncoded_step(
-                llm, coded, step, errors, generate_checked, on_coded, summary, on_replan
+                llm, coded, step, errors, generate_checked, on_coded, summary, on_replan, refused
             )
             if rescued:
                 continue
@@ -188,7 +189,7 @@ async def code_plan(
         return await fresh_recode(llm, coded, step, option, errors)
 
     rewrite = make_rewrite(llm, coded)
-    replan = make_replan(llm, coded, generate_checked, on_coded, summary)
+    replan = make_replan(llm, coded, generate_checked, on_coded, summary, smoke.refused)
     return await smoke_plan(smoke, coded, repair, summary, concurrency, recode, replan, rewrite)
 
 

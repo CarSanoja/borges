@@ -23,9 +23,12 @@ def make_replan(
     generate: Generate,
     on_coded: OnCoded | None,
     summary: CodingSummary | None,
+    refused: Callable[[str, Option], bool] | None = None,
 ) -> Replan:
     async def replan(step: Step, outcomes: list[Outcome]) -> Replanned | None:
         proposed = await propose_options(llm, plan, step, outcomes)
+        if proposed is not None and refused is not None:
+            proposed = [o for o in proposed if not refused(step.id, o)] or None
         if proposed is None:
             return None
         candidate = step.model_copy(update={"options": proposed})
