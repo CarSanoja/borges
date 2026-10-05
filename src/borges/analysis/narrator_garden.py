@@ -64,7 +64,10 @@ def _judge_rows(plan: AnalysisPlan, judged: JudgedLedger | None) -> list[dict[st
     rows = []
     for step_id, entries in judged.entries.items():
         title = plan.step(step_id).title
+        kept = {o.id for o in plan.step(step_id).options}
         for entry in entries:
+            if entry.judgement.accepted and entry.option.id not in kept:
+                continue
             rows.append(
                 {
                     "step": title,

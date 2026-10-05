@@ -99,3 +99,16 @@ async def test_narrate_without_a_garden_keeps_the_report_only_prompt() -> None:
 def test_the_narrator_prompt_asks_for_the_whole_garden() -> None:
     text = " ".join(SYSTEM.split())
     assert "the whole garden" in text and "every universe" in text
+
+
+def test_an_accepted_option_that_never_ran_is_not_listed_as_a_judge_verdict() -> None:
+    plan, garden, judged = fixtures()
+    for label, accepted in (("MICE", True), ("Drop everything", False)):
+        judged.record(
+            "rows",
+            option(label.lower().replace(" ", "_"), label=label),
+            Judgement(defensibility=0.7 if accepted else 0.2, accepted=accepted, reason="r"),
+        )
+    digest, _ = garden_digest(plan, garden, judged, [])
+    listed = [row["option"] for row in digest["judge_verdicts"]]
+    assert "MICE" not in listed and "Drop everything" in listed
