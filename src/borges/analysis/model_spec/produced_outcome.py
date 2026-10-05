@@ -6,6 +6,11 @@ ctx['covariates']". The translated spec modelled alldeaths, so the transform dec
 and the log-scale option reported deaths. When the option names as its regressand a column an
 earlier step produces, that column is the outcome. Among 551 recorded template model codes this
 was the only one whose named, produced regressand differed from the modelled outcome.
+
+At d29a189 the option said `y = df['outcome']` instead, the template modelled alldeaths again and
+the log and square-root transforms gave the same estimate. Over the recorded plans, every model spec
+that assigns `y` or `endog` from a column an earlier step produces (14 of 1,315 model options)
+names the outcome that step builds.
 """
 
 from __future__ import annotations
@@ -19,6 +24,7 @@ REGRESSAND = (
     re.compile(r"\bregress(?:es|ing)?\s+(?:the\s+)?([A-Za-z_]\w*)\s+on\b", re.IGNORECASE),
     re.compile(r"\b([A-Za-z_]\w*)\s*~"),
     re.compile(r"\bdependent variable\s*(?:is|:|=)?\s*([A-Za-z_]\w*)", re.IGNORECASE),
+    re.compile(r"\b(?:y|endog)\s*=\s*(?:df|data)\[\s*['\"]([A-Za-z_]\w*)['\"]\s*\]"),
 )
 
 
