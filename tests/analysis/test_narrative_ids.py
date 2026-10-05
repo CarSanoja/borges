@@ -30,3 +30,8 @@ def test_an_exact_id_becomes_the_label_or_the_title() -> None:
 def test_a_column_name_in_parentheses_is_kept() -> None:
     text = "The outcome (wb_psych_mean) moves the estimate."
     assert drop_option_ids(plan(), text) == text
+
+
+def test_a_parenthesised_universe_id_is_dropped() -> None:
+    text = "The flipped universe (u_c8af06a403) estimates -0.0178."
+    assert drop_option_ids(plan(), text) == "The flipped universe estimates -0.0178."
