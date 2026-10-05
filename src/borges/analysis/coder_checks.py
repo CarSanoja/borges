@@ -10,6 +10,7 @@ from borges.analysis.code_guard_ctx_spec import (
     positional_dummy_violations,
     spec_ctx_write_violations,
 )
+from borges.analysis.code_guard_interval import interval_level_violations
 from borges.analysis.code_guard_missing import missing_violations
 from borges.analysis.code_guard_mode import empty_mode_violations
 from borges.analysis.code_guard_produces import products_read_violations, unused_products
@@ -49,4 +50,5 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
         *complete_case_violations(code, plan.dataset),
         *ctx_read_violations(code, varying_ctx_keys(plan, step), intent),
         *products_read_violations(code, unused_products(plan, step)),
+        *interval_level_violations(code),
     ]
