@@ -223,7 +223,10 @@ __FINGERPRINT__
             {
                 "type": type(exc).__name__,
                 "message": _clean(
-                    _explain(exc, seen) + _encoding_hint(exc, seen, kind) + _fit_key_hint(exc)
+                    _explain(exc, seen)
+                    + _encoding_hint(exc, seen, kind)
+                    + _fit_key_hint(exc)
+                    + _singular_hint(exc, seen, kind)
                 ),
                 "where": _clean("\\n".join(lines[-6:])),
             },

@@ -122,3 +122,27 @@ def test_a_term_missing_from_the_fitted_model_is_named_as_such(tmp_path: Path) -
         "'age' is not a column lookup that failed but a term missing from the fitted model" in error
     )
     assert "fit, whose terms are ['Intercept']" in error
+
+
+def test_a_singular_count_model_with_large_covariates_gets_the_rescaling_hint(
+    tmp_path: Path,
+) -> None:
+    code = (
+        "import numpy as np\n\n"
+        "def estimate(df, ctx):\n"
+        "    raise np.linalg.LinAlgError('Singular matrix')\n"
+    )
+    frame_ctx = {"covariates": ["age", "damage"]}
+    frame = pd.DataFrame(
+        {"x": [1.0, 2.0, 3.0, 4.0], "age": [1, 2, 3, 4], "damage": [10.0, 75000.0, 3.0, 9.0]}
+    )
+    frame.to_parquet(tmp_path / "data.parquet")
+    (tmp_path / "state").mkdir()
+    (tmp_path / "state" / "ctx.json").write_text(json.dumps(frame_ctx))
+    step, option = make("model", code)
+    (tmp_path / "step.py").write_text(render_step(step, option, split_half=False))
+    done = subprocess.run(
+        [sys.executable, "step.py"], cwd=tmp_path, capture_output=True, text=True, timeout=120
+    )
+    error = parse_error(done.stdout)
+    assert error is not None and "covariates with large values (damage up to 7.5e+04)" in error

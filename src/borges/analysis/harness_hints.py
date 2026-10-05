@@ -60,4 +60,27 @@ HINTS_SOURCE = """
                 + " exposure must be in all of them"
             )
         return ""
+
+    def _singular_hint(exc, seen, kind):
+        text = str(exc).lower()
+        if kind != "model" or not seen or not ("singular matrix" in text or "finite" in text):
+            return ""
+        frame = seen.get("frame")
+        if frame is None:
+            return ""
+        large = []
+        for name in dict.fromkeys(seen.get("ctx_lists", [])):
+            if name in frame.columns and _pd.api.types.is_numeric_dtype(frame[name]):
+                top = float(frame[name].abs().max())
+                if top >= 1000:
+                    large.append(name + " up to " + format(top, ".3g"))
+        if not large:
+            return ""
+        return (
+            " | covariates with large values (" + ", ".join(large[:10]) + ") leave the"
+            + " maximum-likelihood solver with a singular Hessian or no finite interval:"
+            + " rescale each numeric covariate that is not the exposure,"
+            + " (x - x.mean()) / x.std(), before fitting; the"
+            + " exposure's coefficient does not change"
+        )
 """

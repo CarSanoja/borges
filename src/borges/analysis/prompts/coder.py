@@ -65,6 +65,10 @@ puts every missing row in group 0. Build the column, then blank those rows: \
 rows only. Fill missing values only when the option says it imputes them. In a model step, \
 drop the rows where a column you compare or transform is missing before building anything from \
 it, and report n as the rows fitted.
+- For a model fitted by maximum likelihood (logit, Poisson, negative binomial), rescale each \
+numeric covariate that is not the exposure and reaches the thousands, (x - x.mean()) / x.std(), \
+before fitting: the exposure's coefficient does not change, and the solver no longer meets a \
+singular Hessian.
 - Keys built at run time, such as `df[col + "_z"]` or `df[f"{col}_z"]`, are allowed only on \
 the data frame itself (named df, out, data or frame); on any other object the code guard \
 rejects them, so write the key as a plain string literal there, or build new columns with \
