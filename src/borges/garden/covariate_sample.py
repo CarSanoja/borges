@@ -9,9 +9,16 @@ the rows their twins with the step's default keep is reported as a change of sam
 At 1ecb614 the bank covariate option kept every row under the encoding that made missing values a
 category and 8,182 under the ordinal encoding: when only some of its universes lose rows, the note
 counts them and names the choice they share that the others lack.
+
+At 7885ab7 the bank baseline itself listed pdays among its covariates and fitted 8,252 of the 45,211
+rows that reached its model, with no note: when the original analysis fits less than 80% of the
+rows its model step receives, the report says so and names the columns it reads that are missing
+in that many rows.
 """
 
 from __future__ import annotations
+
+import re
 
 from borges.analysis.models import AnalysisPlan
 from borges.garden.models import Garden, Universe
@@ -76,3 +83,38 @@ def covariate_sample_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
                 "and its estimates describe that subset."
             )
     return notes
+
+
+def _read_columns(plan: AnalysisPlan, garden: Garden) -> str:
+    baseline = garden.baseline
+    return " ".join(
+        f"{o.spec} {o.code or ''}"
+        for s in plan.steps
+        for o in s.options
+        if baseline is not None and baseline.choices.get(s.id, s.default.id) == o.id
+    )
+
+
+def baseline_sample_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
+    baseline = garden.baseline
+    if baseline is None or baseline.result is None or not baseline.traces:
+        return []
+    rows, fitted = baseline.traces[-1].rows_before, baseline.result.n
+    if not rows or fitted >= SHARE * rows:
+        return []
+    text = _read_columns(plan, garden)
+    lost = rows - fitted
+    missing = [
+        c.name
+        for c in plan.dataset.columns
+        if c.n_missing >= 0.5 * lost and re.search(rf"\b{re.escape(c.name)}\b", text)
+    ]
+    where = (
+        f"the rows where {', '.join(missing)} {'is' if len(missing) == 1 else 'are'} missing"
+        if missing
+        else "the rows with missing values in its inputs"
+    )
+    return [
+        f"The original analysis fits {fitted:,} of the {rows:,} rows that reach its model: the "
+        f"model drops {where}, so the verdict describes that subset, not every row."
+    ]
