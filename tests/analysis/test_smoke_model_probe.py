@@ -236,3 +236,24 @@ async def test_an_upstream_filter_that_empties_the_sample_is_not_blamed(tmp_path
     assert cfg.state.notes == []
     used = llm.keys()
     assert not [k for k in used if ":smoke" in k]
+
+
+ADDS_TEXT = "def apply(df, ctx):\n    ctx['covariates'] = ['kind']\n    return df.assign(kind='a')"
+TEXTY = MODEL.replace("    m = float", "    sub.astype(float)\n    m = float")
+
+
+async def test_a_default_model_that_cannot_read_a_text_covariate_is_repaired_first(
+    tmp_path: Path,
+) -> None:
+    llm = FakeLLM(
+        scripted(ADDS_TEXT, OTHER, **{"coder:m1.ols": TEXTY, "coder:m1.ols:smoke1": MODEL})
+    )
+    recorder, summary = Recorder(), CodingSummary()
+    cfg = config(tmp_path, recorder)
+    coded = await code_plan(llm, plan(True), smoke=cfg, summary=summary)
+    assert [o.id for o in coded.step("c1").options] == ["none", "alt0"]
+    assert coded.step("m1").default.code == MODEL
+    assert cfg.state.defaults["m1"].option.code == MODEL
+    event = [e for e in recorder.events if e[1] == "ols"][-1]
+    assert event[2] == "repaired" and "could not convert string to float" in event[4]
+    assert cfg.state.notes == [] and summary.failed == 0

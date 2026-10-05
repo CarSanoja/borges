@@ -18,7 +18,8 @@ from borges.analysis.smoke_replan import has_survivor
 from borges.analysis.smoke_review import review_step
 from borges.analysis.smoke_settle import Tools, settle
 from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
-from borges.analysis.smoke_upstream import _short, probe_upstream
+from borges.analysis.smoke_upstream import _short
+from borges.analysis.smoke_upstream_probe import probe_upstream
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 from borges.telemetry.scopes import option_span

@@ -164,25 +164,3 @@ async def _handle(
         await config.on_smoke(
             previous.id, option.id, "failed", outcome.attempts, note, outcome.models
         )
-
-
-async def probe_upstream(
-    config: SmokeConfig,
-    repair: Repair,
-    previous: Step,
-    model: Step,
-    summary: CodingSummary | None,
-) -> None:
-    if model.id not in config.state.defaults or previous.id not in config.state.parents:
-        return
-    default_id = previous.default.id
-    alternatives = [
-        o
-        for o in config.state.outcomes.get(previous.id, [])
-        if o.status != "failed" and o.checkpoint is not None and o.option.id != default_id
-    ][:MAX_PROBED]
-    errors = await asyncio.gather(*(_probe(config, repair, model, o) for o in alternatives))
-    failing = [(o, e) for o, e in zip(alternatives, errors, strict=True) if e is not None]
-    await asyncio.gather(
-        *(_handle(config, repair, previous, model, o, e, summary) for o, e in failing)
-    )
