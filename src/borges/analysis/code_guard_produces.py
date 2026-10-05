@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from borges.analysis.code_guard_ctx import COLUMN_KEYS, CTX_WRITE, ctx_read_pattern
+from borges.analysis.code_guard_overwrite import overwritten
 from borges.analysis.models import AnalysisPlan, Step
 
 PRODUCING = frozenset({"transform", "feature"})
@@ -87,6 +88,15 @@ def products_read_violations(code: str, products: Products) -> list[str]:
     touches neither the product nor the columns it is built from simply does not use it."""
     problems = []
     for title, (names, carriers, sources) in sorted(products.items()):
+        rebuilt = overwritten(code, names)
+        if rebuilt:
+            listed = ", ".join(f"'{name}'" for name in rebuilt)
+            problems.append(
+                f"the earlier step '{title}' builds {listed} in different ways, but this code "
+                f"assigns {listed} itself, so it replaces what that step built and the choice has "
+                "no effect in this option; read the column as the earlier step left it"
+            )
+            continue
         if any(_quoted(name).search(code) for name in names):
             continue
         if any(ctx_read_pattern(key).search(code) for key in carriers):
