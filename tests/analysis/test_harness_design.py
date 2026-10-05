@@ -201,3 +201,13 @@ def test_the_design_names_the_term_whose_coefficient_is_reported(workdir: Path) 
     assert traces[0].design is not None and traces[0].design["exposure"] == "x"
     assert traces[0].design["exposure_binary"] is False
     assert traces[0].design["outcome"] == "y"
+
+
+def test_an_outcome_copied_from_a_column_is_named_by_that_column(workdir: Path) -> None:
+    copied = FULL_RANK.replace(
+        'fit = sm.OLS(df["y"]', 'df = df.assign(wb=df["y"])\n    fit = sm.OLS(df["wb"]'
+    )
+    done = run_model(workdir, copied)
+    assert done.returncode == 0, done.stdout
+    traces, _ = parse_output(done.stdout)
+    assert traces[0].design is not None and traces[0].design["outcome"] == "y"

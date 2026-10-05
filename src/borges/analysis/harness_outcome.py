@@ -3,6 +3,9 @@
 It tells whether the reported estimate is on a log scale of the outcome: the model's outcome is
 log() or log1p() of a column of the data, or a log-link count model reports its raw coefficient.
 The report then says so, instead of reading the estimate as additional units of the outcome.
+The outcome is named by the first column of the data it equals: a marp_religiosity flip at 508fe2e
+copied physical well-being into the column 'wellbeing' that the baseline filled with overall
+well-being, and was reported as a re-analysis of the same outcome.
 """
 
 from __future__ import annotations
@@ -57,11 +60,32 @@ OUTCOME_SOURCE = """
             ):
                 yield name, model_id
 
+    def _first_equal_column(endog, frame):
+        try:
+            values = _pd.Series(_np.asarray(endog, dtype=float).ravel(), index=endog.index)
+            rows = frame.loc[values.index]
+        except Exception:
+            return None
+        step = max(1, int(_math.ceil(len(values) / __OUTCOME_MAX_ROWS__)))
+        values, rows = values.iloc[::step], rows.iloc[::step]
+        if values.nunique() < 3:
+            return None
+        for column in rows.columns:
+            if not _pd.api.types.is_numeric_dtype(rows[column]):
+                continue
+            raw = rows[column].to_numpy(dtype=float)
+            if _np.allclose(values.to_numpy(), raw, rtol=1e-12, atol=0.0, equal_nan=True):
+                return str(column)
+        return None
+
     def _outcome_name(frame, estimate):
         for _, model_id in _reporting_models(estimate):
             endog, _ = _model_endog(_endogs.get(model_id))
             name = getattr(endog, "name", None)
-            return str(name) if name is not None and name in frame.columns else None
+            copied = _first_equal_column(endog, frame) if endog is not None else None
+            if copied is not None or name is None or name not in frame.columns:
+                return copied
+            return str(name)
         return None
 
     def _outcome_scale(frame, estimate):
