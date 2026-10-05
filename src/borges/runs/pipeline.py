@@ -17,6 +17,7 @@ from borges.config import Settings
 from borges.fleet.models import RunAgents
 from borges.garden.aliased import aliased_caveats, tangled_caveats
 from borges.garden.covariate_sample import baseline_sample_caveats, covariate_sample_caveats
+from borges.garden.discrete_quantile import discrete_quantile_caveats
 from borges.garden.executor import GardenExecutor
 from borges.garden.failed_caveat import failed_caveat
 from borges.garden.influence import build_report
@@ -200,6 +201,7 @@ class Pipeline:
                 *scaled_outcome_caveats(self.garden),
                 *baseline_sample_caveats(plan, self.garden),
                 *covariate_sample_caveats(plan, self.garden),
+                *discrete_quantile_caveats(self.garden, self.flip and self.flip.universe_id),
             ]
         )
         note = scale_note(self.garden)
