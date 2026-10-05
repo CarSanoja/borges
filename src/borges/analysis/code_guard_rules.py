@@ -6,6 +6,7 @@ ALLOWED_IMPORTS = frozenset(
         "numpy",
         "math",
         "scipy",
+        "scipy.optimize",
         "scipy.stats",
         "statsmodels",
         "statsmodels.api",

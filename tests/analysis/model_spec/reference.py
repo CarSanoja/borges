@@ -30,12 +30,10 @@ def _fit(spec: ModelSpecOutput, y, x, offset, d: pd.DataFrame):
         return sm.OLS(y, x).fit(**kwargs)
     if spec.family == "logit":
         return sm.Logit(y, x).fit(disp=0, **kwargs)
-    pilot = sm.GLM(y, x, family=sm.families.Poisson(), **extra).fit()
     if spec.family == "poisson":
         return sm.GLM(y, x, family=sm.families.Poisson(), **extra).fit(**kwargs)
-    mu = np.asarray(pilot.mu)
-    alpha = max(float((((y - mu) ** 2 - y).sum()) / (mu**2).sum()), 1e-4)
-    family = sm.families.NegativeBinomial(alpha=alpha)
+    nb2 = sm.NegativeBinomial(y, x, **extra).fit(method="newton", tol=1e-12, maxiter=500, disp=0)
+    family = sm.families.NegativeBinomial(alpha=float(np.asarray(nb2.params)[-1]))
     return sm.GLM(y, x, family=family, **extra).fit(**kwargs)
 
 
