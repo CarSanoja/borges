@@ -29,7 +29,11 @@ proportions, is faithful even when the spec mentions a raw coefficient. Equally,
 returns the fitted coefficient is faithful when the spec asks to convert it into a rate ratio, a \
 percent change, a marginal effect or additional units: Borges does that conversion. Dropping a \
 covariate that is an exact linear combination of earlier columns (an aliased column, as R's lm \
-does) is faithful too: it leaves the fitted model unchanged. The names listed under "Every option \
+does) is faithful too: it leaves the fitted model unchanged. So is dummy coding as pandas does \
+it: get_dummies(drop_first=True) drops the first level in sorted order, and the exposure's \
+estimate does not depend on which level is the reference, so code that builds the dummies \
+get_dummies makes is faithful even when the spec names another reference level or lists a dummy \
+of the dropped level. The names listed under "Every option \
 must create" override a spec as well: an option whose spec says it changes nothing or adds no \
 column is faithful when it writes those names as an unchanged copy of the column they are built \
 from, or as 0 for an indicator that none of its rows has.

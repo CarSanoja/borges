@@ -12,6 +12,7 @@ from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.analysis.models import Option, Step
 from borges.analysis.path_scrub import scrub_paths
 from borges.analysis.result_scale import convert
+from borges.analysis.review_dummies import DUMMY_NOTE
 from borges.analysis.smoke_larger import is_singular_error
 from borges.analysis.smoke_sample import sample_frame
 from borges.analysis.smoke_types import Check, Outcome, Repair, SmokeConfig
@@ -48,6 +49,7 @@ def _error_text(run_stdout: str, run_stderr: str, exit_code: int) -> str:
 def _trace_effects(stdout: str) -> dict[str, Any] | None:
     effects = None
     fingerprint = None
+    dummies = None
     for line in stdout.splitlines():
         if not line.startswith(harness.TRACE_PREFIX):
             continue
@@ -61,9 +63,13 @@ def _trace_effects(stdout: str) -> dict[str, Any] | None:
             effects = payload["effects"]
         if isinstance(payload.get("fingerprint"), str):
             fingerprint = payload["fingerprint"]
-    if fingerprint is None:
+        if isinstance(payload.get("note"), str) and DUMMY_NOTE in payload["note"]:
+            dummies = payload["note"]
+    extra = {"fingerprint": fingerprint, "harness_note": dummies}
+    extra = {k: v for k, v in extra.items() if v is not None}
+    if not extra:
         return effects
-    return {**(effects or {}), "fingerprint": fingerprint}
+    return {**(effects or {}), **extra}
 
 
 async def execute(config: SmokeConfig, parent: Checkpoint, step: Step, option: Option) -> Executed:

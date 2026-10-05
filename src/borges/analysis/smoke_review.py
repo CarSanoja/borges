@@ -5,7 +5,7 @@ from typing import Any
 
 from borges.analysis.models import AnalysisPlan, CodingSummary, Step
 from borges.analysis.prompts.reviewer import build_messages
-from borges.analysis.review_contract import apply_unit_contract
+from borges.analysis.review_dummies import apply_contracts
 from borges.analysis.schemas import ReviewerOutput, ReviewVerdict
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_orientation import (
@@ -70,7 +70,8 @@ def llm_reviewer(llm: LLMClient, plan: AnalysisPlan) -> Reviewer:
         except LLMError:
             return None
         out = ReviewerOutput.model_validate(response.parsed)
-        verdicts = [apply_unit_contract(v, plan.decision_rule) for v in out.verdicts]
+        notes = {e.option.id: (e.effects or {}).get("harness_note") for e in entries}
+        verdicts = apply_contracts(out.verdicts, notes, plan.decision_rule)
         return ReviewResult(verdicts, response.usage.model)
 
     return review
