@@ -47,3 +47,19 @@ def test_a_flip_to_another_measure_is_an_estimand_change() -> None:
     detail = estimand_detail(baseline, pois)
     assert detail is not None and detail.startswith("reports a rate ratio where")
     assert reported_measure(universe(PLAN, {}, ratio(0.9))) is None
+
+
+def test_a_rule_stated_as_an_odds_ratio_over_a_rate_ratio_is_named() -> None:
+    from borges.analysis.models import DecisionRule
+    from borges.garden.measure import rule_measure_caveats
+
+    stated = PLAN.model_copy(
+        update={"decision_rule": DecisionRule(metric="odds ratio of a red card per game")}
+    )
+    pois = garden_of(
+        stated,
+        universe(stated, {}, ratio(1.14), traces=[trace("m", model="GLM", family="Poisson")]),
+    )
+    [caveat] = rule_measure_caveats(stated, pois)
+    assert caveat.startswith("The decision rule is stated as an odds ratio, but the original")
+    assert rule_measure_caveats(PLAN, garden()) == []

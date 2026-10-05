@@ -8,6 +8,8 @@ odds ratio is partly the change of measure.
 
 from __future__ import annotations
 
+import re
+
 from borges.analysis.models import AnalysisPlan
 from borges.analysis.scale_check import ratio_shaped
 from borges.garden.models import Garden, Universe
@@ -70,3 +72,27 @@ def measure_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
                     "partly the change of measure, not only of the analysis."
                 )
     return found
+
+
+STATED = (
+    ("odds ratio", re.compile(r"\bodds\s+ratio", re.IGNORECASE)),
+    ("rate ratio", re.compile(r"\b(?:incidence\s+)?rate\s+ratio", re.IGNORECASE)),
+)
+
+
+def stated_measure(plan: AnalysisPlan) -> str | None:
+    """red_cards states an odds ratio of a red card per game; the planner often fits a Poisson."""
+    found = [name for name, pattern in STATED if pattern.search(plan.decision_rule.metric)]
+    return found[0] if len(found) == 1 else None
+
+
+def rule_measure_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
+    stated = stated_measure(plan)
+    fitted = reported_measure(garden.baseline) if garden.baseline is not None else None
+    if stated is None or fitted is None or stated == fitted:
+        return []
+    return [
+        f"The decision rule is stated as {_a(stated)}, but the original analysis fits a model "
+        f"that reports {_a(fitted)}: the verdict applies the rule's threshold to {_a(fitted)}, "
+        "another measure of the association."
+    ]
