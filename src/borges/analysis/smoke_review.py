@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
+from borges.analysis.model_spec.render import is_rendered
 from borges.analysis.models import AnalysisPlan, CodingSummary, Step
 from borges.analysis.prompts.reviewer import build_messages
 from borges.analysis.review_contract import apply_unit_contract
@@ -70,7 +71,11 @@ def llm_reviewer(llm: LLMClient, plan: AnalysisPlan) -> Reviewer:
         except LLMError:
             return None
         out = ReviewerOutput.model_validate(response.parsed)
-        verdicts = [apply_unit_contract(v) for v in out.verdicts]
+        rendered = {e.option.id for e in entries if is_rendered(e.option.code)}
+        verdicts = [
+            apply_unit_contract(v, plan.decision_rule, v.option_id in rendered)
+            for v in out.verdicts
+        ]
         return ReviewResult(verdicts, response.usage.model)
 
     return review
