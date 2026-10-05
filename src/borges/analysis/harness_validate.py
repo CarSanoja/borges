@@ -39,6 +39,28 @@ VALIDATE_SOURCE = """
                 span + " does not contain the estimate " + _num(est)
             )
 
+    def _check_ctx_columns(ctx, out):
+        named = ctx.get("covariates")
+        if not isinstance(named, list) or not all(isinstance(c, str) for c in named):
+            return
+        columns = list(map(str, out.columns))
+        missing = [c for c in named if c not in columns]
+        if not missing:
+            return
+        bases = sorted({b for c in missing for b in columns if c.startswith(b + "_")})
+        hint = (
+            " they look like dummies of " + ", ".join(map(repr, bases)) + ": list "
+            + ("that column" if len(bases) == 1 else "those columns")
+            + " itself, the model encodes categorical covariates;"
+            if bases
+            else ""
+        )
+        raise ValueError(
+            "ctx['covariates'] names columns the returned DataFrame does not have: "
+            + repr(missing[:12]) + ";" + hint
+            + " every covariate must be a column of the DataFrame this step returns"
+        )
+
     def _check_ctx(ctx):
         bad = []
         for key, value in ctx.items():

@@ -21,11 +21,11 @@ AGGREGATE = (
     '    return out.rename_axis("bucket").reset_index()'
 )
 NO_COVARIATES = "def apply(df, ctx):\n    ctx['covariates'] = []\n    return df.copy()"
-NAMES_GROUP = "def apply(df, ctx):\n    ctx['covariates'] = ['group']\n    return df.copy()"
+NAMES_GROUP = "def apply(df, ctx):\n    ctx['columns'] = ['group']\n    return df.copy()"
 NAMES_OUTCOME = "def apply(df, ctx):\n    ctx['covariates'] = ['outcome']\n    return df.copy()"
 MODEL = (
     "def estimate(df, ctx):\n"
-    "    cols = list(ctx.get('covariates', []))\n"
+    "    cols = list(ctx.get('covariates', [])) + list(ctx.get('columns', []))\n"
     "    sub = df[list(dict.fromkeys(cols + ['outcome']))]\n"
     "    m = float(sub['outcome'].mean())\n"
     '    return {"estimate": m, "ci_low": m - 1.0, "ci_high": m + 1.0, "p_value": 0.5, '
@@ -144,7 +144,7 @@ async def test_a_singular_probe_error_is_not_blamed_on_the_upstream_option(
 ) -> None:
     singular = MODEL.replace(
         "    cols =",
-        "    if 'group' in ctx.get('covariates', []):\n"
+        "    if 'group' in ctx.get('columns', []):\n"
         "        raise ValueError('Singular matrix')\n"
         "    cols =",
     )
@@ -158,7 +158,7 @@ async def test_a_singular_probe_error_is_not_blamed_on_the_upstream_option(
 
 def score_code(covariates: str, sign: str = "") -> str:
     return (
-        f"def apply(df, ctx):\n    ctx['covariates'] = {covariates}\n    out = df.copy()\n"
+        f"def apply(df, ctx):\n    ctx['columns'] = {covariates}\n    out = df.copy()\n"
         f"    out['score'] = {sign}out['outcome']\n    return out"
     )
 
