@@ -5,24 +5,15 @@ interface Props {
   change: Change;
 }
 
-function isLink(source: string): boolean {
-  return /^https?:\/\//i.test(source);
-}
-
 export function ChangeItem({ change }: Props) {
   return (
     <li className="vc-change">
       <p className="vc-change__label">{change.to_label}</p>
       <span className="eyebrow vc-change__step">{change.step_title}</span>
       <p className="vc-change__why">{change.rationale}</p>
-      {change.source &&
-        (isLink(change.source) ? (
-          <a className="vc-change__source" href={change.source} target="_blank" rel="noreferrer noopener">
-            Source
-          </a>
-        ) : (
-          <span className="vc-change__source">Source: {change.source}</span>
-        ))}
+      {change.source && (
+        <span className="vc-change__source">Cited by the model, not checked: {change.source}</span>
+      )}
       <DefensibilityMeter value={change.defensibility} />
     </li>
   );

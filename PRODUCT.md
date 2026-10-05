@@ -291,7 +291,11 @@ often a model gets these right.
 - **Enterprise fleet:** the same server reports seven controls (agent registry, runtime queue, memory bank,
   identity, gateway, armor, observability) at `GET /api/platform` and on the `/platform` page, each with the
   command that verifies it. The README maps them to the enterprise brief.
-- **Tavily (optional):** grounds an alternative's justification in methodological sources.
+- **Citations are not checked.** An option's source is a citation the planner, adversary or
+  judge wrote; nothing retrieves or verifies it, and the CLI and web app label it "cited by the
+  model, not checked". In the final red_cards recording the judge attached a DOI of an
+  unrelated neuroinflammation paper to the flip's games filter. `TAVILY_API_KEY` is read from the
+  environment but no retrieval is implemented.
 
 ## Goal of the hackathon build (definition of done)
 

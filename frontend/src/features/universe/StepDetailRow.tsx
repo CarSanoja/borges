@@ -29,9 +29,15 @@ export function StepDetailRow({ detail, index }: { detail: UniverseStepDetail; i
           <dd className="mono">{defensibilityText(option)}</dd>
         </div>
         <div>
-          <dt>Source</dt>
-          <dd>{option.source ?? option.origin}</dd>
+          <dt>Proposed by</dt>
+          <dd>{option.origin}</dd>
         </div>
+        {option.source && (
+          <div>
+            <dt>Cited by the model, not checked</dt>
+            <dd>{option.source}</dd>
+          </div>
+        )}
         {trace && (
           <div>
             <dt>Rows</dt>

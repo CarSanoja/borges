@@ -31,7 +31,7 @@ def flip_lines(flip: Flip) -> list[str]:
         lines.append(f"  - {change.step_title}: {change.from_option} -> {change.to_label}")
         lines.append(f"      why: {change.rationale}")
         if change.source:
-            lines.append(f"      source: {change.source}")
+            lines.append(f"      cited by the model, not checked: {change.source}")
     if flip.estimand_change:
         lines.append(f"  estimand change: this flip {flip.estimand_change}")
     lines.append(f"  flipped result: {result_line(flip.flipped_result)}")

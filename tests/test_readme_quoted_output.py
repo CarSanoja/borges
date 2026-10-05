@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 import sys
@@ -8,7 +9,14 @@ from pathlib import Path
 from borges.config import REPO_ROOT
 
 README = REPO_ROOT / "README.md"
+CHECKOUT_LIVE = REPO_ROOT / "cases" / "checkout_ab" / "recorded-live" / "events.jsonl"
 TAIL_LINES = 2
+
+
+def recorded_flip_universe() -> str:
+    events = [json.loads(line) for line in CHECKOUT_LIVE.read_text(encoding="utf-8").splitlines()]
+    report = [e for e in events if e["type"] == "report.ready"][-1]["data"]["report"]
+    return report["minimal_flip"]["universe_id"]
 
 
 def readme_lines() -> set[str]:
@@ -35,7 +43,7 @@ def test_readme_names_the_same_first_commands_the_test_runs() -> None:
     text = README.read_text(encoding="utf-8")
     assert "uv run borges run --case marp_norms --llm scripted" in text
     reproduce = "uv run borges reproduce --case checkout_ab --source live"
-    assert f"{reproduce} --universe u_2daf3a388e" in text
+    assert f"{reproduce} --universe {recorded_flip_universe()}" in text
 
 
 def test_readme_makes_no_unprompted_discovery_claim() -> None:
