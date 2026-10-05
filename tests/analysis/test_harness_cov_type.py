@@ -34,3 +34,31 @@ def test_the_design_reports_the_covariance_the_fit_asked_for(tmp_path: Path) -> 
     traces, _ = parse_output(done.stdout)
     assert traces[0].design is not None
     assert traces[0].design["model"] == "Logit" and traces[0].design["cov_type"] == "HC3"
+
+
+CLOGLOG = (
+    HEADER
+    + """
+    x = sm.add_constant(df[["x"]].to_numpy())
+    family = sm.families.Binomial(link=sm.families.links.CLogLog())
+    fit = sm.GLM(df["y"].to_numpy(), x, family=family).fit()
+    low, high = np.exp(fit.conf_int()[1])
+    return {"estimate": float(np.exp(fit.params[1])), "ci_low": float(low), "ci_high": float(high),
+            "p_value": float(fit.pvalues[1]), "n": int(fit.nobs)}
+"""
+)
+
+
+def test_the_design_reports_the_link_of_a_glm(tmp_path: Path) -> None:
+    rng = np.random.default_rng(6)
+    frame = pd.DataFrame({"x": rng.normal(size=400)})
+    frame["y"] = (rng.random(400) < 1 / (1 + np.exp(-0.5 * frame["x"]))).astype(int)
+    frame.to_parquet(tmp_path / "data.parquet")
+    (tmp_path / "state").mkdir()
+    frame.to_parquet(tmp_path / "state" / "df.parquet")
+    (tmp_path / "state" / "ctx.json").write_text(json.dumps({"covariates": []}))
+    done = run_model(tmp_path, CLOGLOG)
+    assert done.returncode == 0, done.stdout
+    traces, _ = parse_output(done.stdout)
+    assert traces[0].design is not None
+    assert traces[0].design["family"] == "Binomial" and traces[0].design["link"] == "CLogLog"

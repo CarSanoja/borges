@@ -3,7 +3,9 @@
 A bank summary at 508fe2e put a Poisson option's 0.896 in one range with the logit's odds ratios
 (0.854 to 0.907), and red_cards compares a Poisson rate ratio with a logit odds ratio. On a binary
 outcome a rate ratio is a risk ratio, another measure of the association, so its distance from an
-odds ratio is partly the change of measure.
+odds ratio is partly the change of measure. A binomial GLM is read with its link: a bank option at
+6525b47 fitted a complementary log-log link, whose exponentiated coefficient is a hazard ratio,
+and was reported as an odds ratio because only the family was read.
 """
 
 from __future__ import annotations
@@ -24,6 +26,23 @@ RATIO_MEASURES = {
     "GeneralizedPoisson": "rate ratio",
 }
 FAMILY_MODELS = ("GLM", "GEE")
+LINK_MEASURES = {
+    ("Binomial", "Logit"): "odds ratio",
+    ("Binomial", "Log"): "risk ratio",
+    ("Binomial", "CLogLog"): "hazard ratio (complementary log-log link)",
+    ("Poisson", "Log"): "rate ratio",
+    ("NegativeBinomial", "Log"): "rate ratio",
+}
+
+
+def _measure(design: dict[str, object]) -> str | None:
+    model = str(design["model"])
+    if model not in FAMILY_MODELS:
+        return RATIO_MEASURES.get(model)
+    family, link = str(design.get("family")), design.get("link")
+    if link is None or link == "NoneType":
+        return RATIO_MEASURES.get(family)
+    return LINK_MEASURES.get((family, str(link)))
 
 
 def reported_measure(universe: Universe) -> str | None:
@@ -33,9 +52,7 @@ def reported_measure(universe: Universe) -> str | None:
     for trace in reversed(universe.traces):
         design = trace.design
         if design and design.get("model"):
-            model = design["model"]
-            name = design.get("family") if model in FAMILY_MODELS else model
-            return RATIO_MEASURES.get(str(name))
+            return _measure(design)
     return None
 
 

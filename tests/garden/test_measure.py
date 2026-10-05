@@ -78,3 +78,16 @@ def test_a_measure_is_shared_only_when_every_universe_reports_it() -> None:
     )
     assert shared_measure(counts) == "rate ratio"
     assert shared_measure(garden()) is None
+
+
+def test_a_binomial_glm_is_read_with_its_link() -> None:
+    def measured(**design: object) -> str | None:
+        return reported_measure(universe(PLAN, {}, ratio(0.88), traces=[trace("m", **design)]))
+
+    assert measured(model="GLM", family="Binomial", link="Logit") == "odds ratio"
+    assert measured(model="GLM", family="Binomial", link="CLogLog") == (
+        "hazard ratio (complementary log-log link)"
+    )
+    assert measured(model="GLM", family="Binomial", link="Log") == "risk ratio"
+    assert measured(model="GLM", family="Binomial", link="Probit") is None
+    assert measured(model="GLM", family="Binomial") == "odds ratio"

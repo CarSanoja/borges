@@ -153,6 +153,7 @@ DESIGN_SOURCE = """
             )
             found = _exposure_index(_fits.get(model_id), estimate, x.shape[1])
             hit = found is not None
+            family = getattr(_endogs.get(model_id), "family", None)
             models.append(
                 {
                     "reported": hit,
@@ -175,7 +176,8 @@ DESIGN_SOURCE = """
                     else None,
                     "exposure_sd": float(_np.std(x[:, found])) if hit else None,
                     "offset": _offsets.get(model_id),
-                    "family": type(getattr(_endogs.get(model_id), "family", None)).__name__,
+                    "family": type(family).__name__,
+                    "link": type(getattr(family, "link", None)).__name__,
                     "endog_levels": _endog_levels(model_id),
                     "cov_type": str(getattr(_results.get(model_id), "cov_type", "") or "") or None,
                     "names": [str(n) for n in names][:60],
