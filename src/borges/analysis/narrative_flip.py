@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from borges.analysis.models import AnalysisPlan
+from borges.analysis.narrative_original import carries_value, result_phrase
 from borges.garden.models import Change, Report
 
 _TOKEN = re.compile(r"[a-z0-9]+")
@@ -115,3 +116,30 @@ def drop_wrong_sentences(plan: AnalysisPlan, report: Report, narrative: str) -> 
         if not wrong_labels(plan, report, sentence)
     ]
     return " ".join(kept)
+
+
+def flipped_sentence(report: Report) -> str | None:
+    """A hurricanes narrative at 795bfb5 named the flip and then wrote "The flipped result
+    exceeds the mean.", never giving the flipped estimate; the report states it when the
+    narrative does not."""
+    flip = report.minimal_flip
+    if flip is None or not flip.changes:
+        return None
+    return (
+        f"The flipped analysis estimated {result_phrase(flip.flipped_result)} and returned the "
+        f"verdict {flip.flipped_verdict}."
+    )
+
+
+def with_flipped(report: Report, narrative: str, sentence: str | None) -> str:
+    flipped = flipped_sentence(report)
+    flip = report.minimal_flip
+    if flipped is None or flip is None or carries_value(narrative, flip.flipped_result.estimate):
+        return narrative
+    flat = " ".join(narrative.split())
+    anchor = " ".join(sentence.split()) if sentence else ""
+    at = flat.find(anchor) if anchor else -1
+    if at < 0:
+        return f"{flat} {flipped}"
+    end = at + len(anchor)
+    return f"{flat[:end]} {flipped}{flat[end:]}"

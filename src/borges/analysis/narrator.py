@@ -11,6 +11,7 @@ from borges.analysis.narrative_flip import (
     has_sentence,
     insert_sentence,
     problems,
+    with_flipped,
 )
 from borges.analysis.narrative_ids import drop_option_ids
 from borges.analysis.narrative_measure import name_every_measure, name_original_measure
@@ -110,6 +111,7 @@ def _complete(
     kept = with_original(plan, report, narrative)
     if sentence is not None and not has_sentence(kept, sentence):
         kept = insert_sentence(kept, sentence)
+    kept = with_flipped(report, kept, sentence)
     robust = robustness_sentence(report)
     if robust is not None and not has_sentence(kept, robust):
         head = robust.split(", leaving out", 1)[0] + "."

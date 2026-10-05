@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 
 from borges.analysis.models import AnalysisPlan
-from borges.garden.models import Report
+from borges.garden.models import AnalysisResult, Report
 
 _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 ORIGINAL = re.compile(
@@ -33,13 +33,22 @@ def _p(value: float) -> str:
     return "p < 0.001" if value < 0.001 else f"p = {value:.2g}"
 
 
-def original_sentence(report: Report) -> str:
-    r = report.original_result
+def result_phrase(r: AnalysisResult) -> str:
     return (
-        f"The original analysis estimated {_num(r.estimate)} (95% CI {_num(r.ci_low)} to "
-        f"{_num(r.ci_high)}, {_p(r.p_value)}, n = {r.n:,}) and returned the verdict "
-        f"{report.original_verdict}."
+        f"{_num(r.estimate)} (95% CI {_num(r.ci_low)} to {_num(r.ci_high)}, {_p(r.p_value)}, "
+        f"n = {r.n:,})"
     )
+
+
+def original_sentence(report: Report) -> str:
+    return (
+        f"The original analysis estimated {result_phrase(report.original_result)} and returned "
+        f"the verdict {report.original_verdict}."
+    )
+
+
+def carries_value(text: str, value: float) -> bool:
+    return any(_matches(t, value) for t in DECIMAL.findall(text))
 
 
 def _matches(token: str, value: float) -> bool:
@@ -53,8 +62,7 @@ def _values(report: Report) -> list[float]:
 
 
 def carries_estimate(report: Report, sentence: str) -> bool:
-    estimate = report.original_result.estimate
-    return any(_matches(t, estimate) for t in DECIMAL.findall(sentence))
+    return carries_value(sentence, report.original_result.estimate)
 
 
 def _contradicts(report: Report, sentence: str) -> bool:
