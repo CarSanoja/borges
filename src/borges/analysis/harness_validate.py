@@ -123,6 +123,21 @@ __NORMALISE__
                 + " option returns the data unchanged, so remove every filter from it"
             )
 
+    def _group_counts(df):
+        key = __GROUP_BY__
+        if key is None or key not in df.columns:
+            return None
+        return {int(df[key].nunique()), int(df[key].nunique(dropna=False))}
+
+    def _check_grouped_rows(counts, out, rows_before):
+        if counts is not None and len(out) < rows_before and len(out) not in counts:
+            raise ValueError(
+                "the option groups by " + repr(__GROUP_BY__) + ", which has "
+                + str(min(counts)) + " distinct values, but its code returns " + str(len(out))
+                + " rows: apply() receives the whole DataFrame, not one group, so aggregate"
+                + " with df.groupby(" + repr(__GROUP_BY__) + ")"
+            )
+
     def _validate(payload):
         payload = _normalise_result(payload)
         keys = __RESULT_KEYS__

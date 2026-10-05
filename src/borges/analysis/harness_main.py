@@ -119,6 +119,7 @@ __FINGERPRINT__
             return
         ctx_before = set(ctx)
         before = df.copy() if __SPLIT_HALF__ else None
+        groups = _group_counts(df)
         out, finite_before, domain = _apply_watching_domain(df, ctx)
         if not isinstance(out, _pd.DataFrame):
             raise TypeError("apply() must return a DataFrame, got " + type(out).__name__)
@@ -131,6 +132,7 @@ __FINGERPRINT__
         _check_produces(out, ctx, df)
         _check_missing_cuts(df, out)
         _check_kept_rows(out, rows_before)
+        _check_grouped_rows(groups, out, rows_before)
         _check_ctx(ctx)
         _check_ctx_columns(ctx, out, trace)
         _os.makedirs("state", exist_ok=True)
