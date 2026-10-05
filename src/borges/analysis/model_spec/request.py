@@ -6,6 +6,7 @@ from borges.analysis.code_guard_ctx import varying_ctx_keys
 from borges.analysis.code_guard_statsmodels import option_intent
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
+from borges.analysis.model_spec.ctx_listed import stored_names, without_ctx_listed
 from borges.analysis.model_spec.ctx_outcome import (
     candidate_specs,
     ctx_outcome_names,
@@ -17,11 +18,13 @@ from borges.analysis.model_spec.interaction import SKIP, ignored_interaction
 from borges.analysis.model_spec.normalise import normalise_spec
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
 from borges.analysis.model_spec.render import render_code
+from borges.analysis.model_spec.report_for_rule import report_for_rule
 from borges.analysis.model_spec.schema import ModelSpecOutput
 from borges.analysis.model_spec.validate import validate_spec
 from borges.analysis.model_spec.validate_ctx import ctx_problems
 from borges.analysis.model_spec.validate_marked_exposure import marked_exposure_problems
 from borges.analysis.model_spec.validate_named_exposure import named_exposure_problems
+from borges.analysis.model_spec.validate_standardized import standardize_for_rule
 from borges.analysis.models import AnalysisPlan, Option, Step
 from borges.analysis.prompts.coder import _available_columns
 from borges.llm.client import LLMClient, LLMError, Role
@@ -133,6 +136,9 @@ async def request_template(
 
     def tidy(found: ModelSpecOutput) -> ModelSpecOutput:
         found = normalise_spec(found, option.spec, available, plan.dataset)
+        listed = {*ctx_covariate_names(plan, step, available), *stored_names(plan, step)}
+        found = without_ctx_listed(found, listed, available)
+        found = report_for_rule(standardize_for_rule(found, plan.decision_rule), plan.decision_rule)
         return pin_outcome(found, outcomes) if outcomes else found
 
     spec = await _ask(llm, messages, key, models, skipped)

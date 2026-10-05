@@ -32,3 +32,14 @@ def test_other_metrics_and_families_are_left_alone() -> None:
     smd = DecisionRule(metric="standardised mean difference", comparator=Comparator.GT)
     only_y = make_spec("ols", outcome="y_cont", exposure="x", standardize=["y_cont"])
     assert standardized_problems(only_y, smd) == []
+
+
+def test_the_missing_columns_are_added_to_standardize() -> None:
+    from borges.analysis.model_spec.validate_standardized import standardize_for_rule
+
+    spec = make_spec("ols", outcome="y_cont", exposure="x", moderator="m", standardize=["x", "m"])
+    fixed = standardize_for_rule(spec, BETA)
+    assert fixed.standardize == ["x", "m", "y_cont"]
+    assert standardized_problems(fixed, BETA) == []
+    raw = DecisionRule(metric="additional deaths", comparator=Comparator.GT, threshold=0.0)
+    assert standardize_for_rule(spec, raw) is spec
