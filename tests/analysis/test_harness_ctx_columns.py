@@ -16,6 +16,11 @@ PROMISES_DUMMIES = (
     "    return df\n"
 )
 NAMES_COLUMNS = "def apply(df, ctx):\n    ctx['covariates'] = ['age', 'country']\n    return df\n"
+NAMES_TERMS = (
+    "def apply(df, ctx):\n    ctx['covariates'] = ['C(country)', 'np.log(age)', 'age:country']\n"
+    "    return df\n"
+)
+NAMES_UNKNOWN_TERM = "def apply(df, ctx):\n    ctx['covariates'] = ['C(region)']\n    return df\n"
 
 
 @pytest.fixture
@@ -45,3 +50,13 @@ def test_covariates_that_are_not_columns_fail_the_step(workdir: Path) -> None:
 
 def test_covariates_that_are_columns_pass(workdir: Path) -> None:
     assert run(workdir, NAMES_COLUMNS).returncode == 0
+
+
+def test_formula_terms_over_columns_pass(workdir: Path) -> None:
+    assert run(workdir, NAMES_TERMS).returncode == 0
+
+
+def test_a_formula_term_over_no_column_fails(workdir: Path) -> None:
+    done = run(workdir, NAMES_UNKNOWN_TERM)
+    error = parse_error(done.stdout)
+    assert done.returncode == 1 and error is not None and "['C(region)']" in error

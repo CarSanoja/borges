@@ -43,8 +43,18 @@ VALIDATE_SOURCE = """
         named = ctx.get("covariates")
         if not isinstance(named, list) or not all(isinstance(c, str) for c in named):
             return
+        import re as _re
+
         columns = list(map(str, out.columns))
-        missing = [c for c in named if c not in columns]
+
+        def _term_ok(term):
+            if term in columns:
+                return True
+            if not _re.search(r"[():*]", term):
+                return False
+            return any(name in columns for name in _re.findall(r"[A-Za-z_][A-Za-z0-9_]*", term))
+
+        missing = [c for c in named if not _term_ok(c)]
         if not missing:
             return
         bases = sorted({b for c in missing for b in columns if c.startswith(b + "_")})
