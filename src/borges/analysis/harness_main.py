@@ -131,6 +131,7 @@ __FINGERPRINT__
         _check_domain(out, finite_before, domain)
         _check_produces(out, ctx, df)
         _check_missing_cuts(df, out)
+        _check_kept_rows(out, rows_before)
         _check_ctx(ctx)
         _os.makedirs("state", exist_ok=True)
         out.to_parquet(state_df)

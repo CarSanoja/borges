@@ -55,6 +55,14 @@ VALIDATE_SOURCE = """
 
 __NORMALISE__
 
+    def _check_kept_rows(out, rows_before):
+        if __KEEPS_ROWS__ and len(out) < rows_before:
+            raise ValueError(
+                "the option says it keeps every row, but its code drops "
+                + str(rows_before - len(out)) + " of " + str(rows_before) + " rows: a 'keep all'"
+                + " option returns the data unchanged, so remove every filter from it"
+            )
+
     def _validate(payload):
         payload = _normalise_result(payload)
         keys = __RESULT_KEYS__
