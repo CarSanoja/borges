@@ -5,10 +5,11 @@ from borges.garden.estimand import estimand_detail
 from borges.garden.models import Universe
 
 
-def _universe(terms: list[str]) -> Universe:
-    trace = StepTrace(
-        step_id="model", option_id="o", rows_before=1, rows_after=1, design={"terms": terms}
-    )
+def _universe(terms: list[str], columns: int | None = None) -> Universe:
+    design: dict[str, object] = {"terms": terms}
+    if columns is not None:
+        design["columns"] = columns
+    trace = StepTrace(step_id="model", option_id="o", rows_before=1, rows_after=1, design=design)
     return Universe(id="u", choices={}, kind="single", traces=[trace])
 
 
@@ -42,3 +43,11 @@ def test_one_derived_variable_named_differently_is_not_a_covariate_change() -> N
     assert swapped is not None and "adds income_log" in swapped
     dropped = estimand_detail(_universe(["age", "relig_z"]), _universe(["relig_z"]), columns)
     assert dropped is not None and "removes age" in dropped
+
+
+def test_generic_terms_on_a_design_of_the_same_width_are_the_same_covariates() -> None:
+    ols = _universe(["age", "education", "gender", "ses"], columns=7)
+    quantile = _universe(["x2", "x3", "x4", "x5", "x6"], columns=7)
+    assert estimand_detail(ols, quantile) is None
+    wider = estimand_detail(ols, _universe(["x2", "x3", "x4", "x5", "x6", "x7", "x8"], columns=9))
+    assert wider is not None and "number of columns of the model from 7 to 9" in wider

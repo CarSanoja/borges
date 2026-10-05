@@ -102,6 +102,35 @@ def _covariate_terms(universe: Universe) -> set[str] | None:
     return terms - {exposure[0]}
 
 
+def design_width(universe: Universe) -> int | None:
+    for trace in universe.traces:
+        if trace.design and isinstance(trace.design.get("columns"), int):
+            return int(trace.design["columns"])
+    return None
+
+
+def _count_detail(baseline: Universe, universe: Universe, before: int, after: int) -> str | None:
+    """Unnamed terms (a model fitted on numpy arrays) cannot be matched to covariates by name.
+
+    Named dummies collapse into the column they encode and unnamed ones cannot, so counting terms
+    told a marp_religiosity quantile regression at 0b92e6c, fitted on the same seven design
+    columns as the OLS baseline, apart as a change from 5 to 6 covariates and its flip as an
+    estimand change. When both designs report their width, the widths are compared.
+    """
+    widths = design_width(baseline), design_width(universe)
+    what = "covariates"
+    if None not in widths:
+        before, after = widths[0] or 0, widths[1] or 0
+        what = "columns"
+    if before == after:
+        return None
+    return (
+        f"changes the number of {what} of the model from {before} to {after}: adjusted versus "
+        "unadjusted answers a different question, so this is an estimand change, not a "
+        "re-analysis of the same quantity"
+    )
+
+
 def estimand_detail(
     baseline: Universe, universe: Universe, columns: set[str] | None = None
 ) -> str | None:
@@ -119,13 +148,7 @@ def estimand_detail(
     if before is None or after is None or before == after:
         return None
     if any(UNNAMED.fullmatch(t) for t in before | after):
-        if len(before) == len(after):
-            return None
-        return (
-            f"changes the number of covariates of the model from {len(before)} to "
-            f"{len(after)}: adjusted versus unadjusted answers a different question, so this "
-            "is an estimand change, not a re-analysis of the same quantity"
-        )
+        return _count_detail(baseline, universe, len(before), len(after))
     added, removed = sorted(after - before), sorted(before - after)
     if columns is not None and _renamed(added, removed, columns):
         return None
