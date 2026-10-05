@@ -86,7 +86,8 @@ def test_a_step_whose_alternatives_are_all_noops_is_named_as_without_effect() ->
     )
     report = build_report(plan, garden, None)
     assert any(
-        "covariate decision 'Covariate set' had no effect on the model" in c for c in report.caveats
+        "covariate decision 'Covariate set' had no effect on the result" in c
+        for c in report.caveats
     )
 
 

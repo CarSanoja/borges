@@ -12,11 +12,15 @@ def dead_step_notes(plan: AnalysisPlan, noops: list[NoopOption]) -> list[str]:
         if not all((step.id, o.id) in dead for o in alternatives):
             continue
         what = "covariate decision" if step.kind == "feature" else "decision"
+        why = (
+            "on this data the alternatives give the same estimate and interval as the default"
+            if step.kind == "model"
+            else "the model ignores or always includes what this step changes"
+        )
         notes.append(
-            f"The {what} '{step.title}' had no effect on the model: every alternative gave the "
-            "same result as the default, so the model ignores or always includes what this step "
-            "changes. Its options are excluded from the robustness share, which must not be "
-            "read as evidence of robustness to this decision."
+            f"The {what} '{step.title}' had no effect on the result: every alternative gave the "
+            f"same result as the default, so {why}. Its options are excluded from the robustness "
+            "share, which must not be read as evidence of robustness to this decision."
         )
     return notes
 
