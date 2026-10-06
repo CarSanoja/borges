@@ -1,0 +1,35 @@
+{
+  "id": "fertility_religiosity",
+  "title": "Fertility and religiosity: does the effect depend on relationship status?",
+  "subtitle": "Real survey data, nothing planted. A published finding, tested blind.",
+  "question": "Does the difference in religiosity between women at high and at low fertility depend on relationship status, such that women in committed relationships are more religious at high fertility and single women less (a fertility by relationship status interaction)?",
+  "decision_rule": {
+    "metric": "fertility by relationship status interaction on mean religiosity (1-9): the high minus low fertility difference among women in committed relationships minus the same difference among single women",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "FERTILITY SHIFTS RELIGIOSITY",
+    "negative_label": "NO CLEAR EVIDENCE"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "fertility_religiosity_study1",
+  "provenance": "Real data, ODC-By 1.0",
+  "max_universes": 40,
+  "reference_label": null,
+  "reference": [],
+  "story": "275 women rated their religiosity and reported the start dates of their last two menstrual periods, their usual cycle length and their relationship status. A published study used these data to report that fertility pushes religiosity in opposite directions for single and partnered women. Real data, nothing planted; a live run only.",
+  "live_only": true,
+  "column_notes": {
+    "WorkerID": "the unique identifier of a participant",
+    "Rel1": "'How much do you believe in God?' 1-9",
+    "Rel2": "'I see myself as a religiously oriented person.' 1-9; has missing values",
+    "Rel3": "'I believe that God or a Higher Power is responsible for my existence.' 1-9; has missing values",
+    "Sure1": "in reference to StartDateofLastPeriod, 'How sure are you about that date?' 1-9",
+    "Sure2": "in reference to StartDateofPeriodBeforeLast, 'How sure are you about that date?' 1-9",
+    "Relationship": "answer to 'What is your current romantic relationship status?' (1) not dating/romantically involved with anyone, (2) dating or involved with only one partner, (3) engaged or living with my partner, (4) married",
+    "ReportedCycleLength": "answer to 'How many days long are your menstrual cycles? (for most women, the range is between 25-35 days) Keep in mind this is the number of days from the start of one menstrual period to the start of the next menstrual period and NOT the length of your menstrual bleeding.'; has missing values",
+    "DateTesting": "date the participant filled in the questionnaire",
+    "StartDateofLastPeriod": "the participant's best estimate of the date she started her last period",
+    "StartDateofPeriodBeforeLast": "the participant's best estimate of the date she started the period before her last period"
+  }
+}

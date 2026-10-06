@@ -63,6 +63,13 @@ async def test_single_option_steps_trigger_one_reask_naming_them() -> None:
     assert [len(s.options) for s in plan.steps] == [2, 2, 2]
 
 
+async def test_a_retry_that_is_still_short_is_reasked_once_more() -> None:
+    llm = FakeLLM({"planner": narrow(), "planner:retry": narrow(), "planner:retry2": broad()})
+    plan = await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))
+    assert llm.keys() == ["planner", "planner:retry", "planner:retry2"]
+    assert [len(s.options) for s in plan.steps] == [2, 2, 2]
+
+
 async def test_broad_plan_is_not_reasked() -> None:
     llm = FakeLLM({"planner": broad()})
     await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))

@@ -31,11 +31,28 @@ less of what its items measure, flips a sign, swaps the groups) only flips the s
 result: set accepted=false with reason "reverses a variable's direction". Reverse-coding \
 negatively worded items so that all items point the same way is not a reversal.
 
+When the option under review is itself the conventional option of its step, judge whether it \
+is a correct and standard way to carry out that step for this question: a construct defined \
+against its published definition (observations assigned to the wrong category, a window or \
+cut-off the field does not use for it) is indefensible even as the conventional choice.
+
+Cluster-robust standard errors are defensible only on a sampling or design unit that repeats \
+across rows (participants measured repeatedly, instructors with several courses, schools, \
+players) and with at least 30 distinct clusters. Clustering on a date, a time, a variable \
+computed in the analysis, or fewer than 30 groups is indefensible: with few clusters the \
+interval is too narrow.
+
 Penalise any option that changes the question or the estimand, leaks the outcome, or looks \
 chosen to produce a result. Set accepted=true only when defensibility is at least 0.6. Give a \
 one or two sentence reason and, when one exists, a short source for the practice.
 
 Return only JSON matching the requested schema."""
+
+
+def _under_review(option: Option) -> str:
+    if option.is_default:
+        return "Option under review (it is the conventional option of this step)"
+    return "Option under review"
 
 
 def build_messages(
@@ -49,7 +66,7 @@ def build_messages(
         f"{'; '.join(o.label for o in step.options if o.is_default) or 'none'}\n"
         f"Conventional spec: "
         f"{'; '.join(o.spec for o in step.options if o.is_default) or 'none'}\n"
-        f"Option under review {option.id}: {option.label}\n"
+        f"{_under_review(option)} {option.id}: {option.label}\n"
         f"Rationale: {option.rationale}\nSpec: {option.spec}"
         f"{notes_block}"
     )

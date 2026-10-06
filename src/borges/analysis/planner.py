@@ -33,6 +33,7 @@ def produced_name(raw: str) -> str:
 
 
 BARE_CTX = frozenset({"ctx", "context"})
+PLAN_RETRIES = 2
 
 
 def step_produces(planned: PlannedStep) -> list[str]:
@@ -134,13 +135,16 @@ async def _broaden(
     profile: DatasetProfile,
     rule: DecisionRule,
 ) -> PlannerOutput:
-    problems = plan_shortfalls(out.steps, profile, rule)
-    if not problems:
-        return out
-    try:
-        return await _ask(llm, build_retry_messages(messages, out, problems), "planner:retry")
-    except LLMError:
-        return out
+    for attempt in range(PLAN_RETRIES):
+        problems = plan_shortfalls(out.steps, profile, rule)
+        if not problems:
+            return out
+        key = "planner:retry" if attempt == 0 else f"planner:retry{attempt + 1}"
+        try:
+            out = await _ask(llm, build_retry_messages(messages, out, problems), key)
+        except LLMError:
+            return out
+    return out
 
 
 async def plan_analysis(

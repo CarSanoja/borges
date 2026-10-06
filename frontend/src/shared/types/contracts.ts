@@ -140,6 +140,8 @@ export interface CodingSummary {
   repaired_after_smoke: number;
   failed: number;
   options_dropped_by_judge?: number;
+  defaults_replaced?: string[];
+  defaults_disputed?: string[];
   options_dropped_by_armor?: number;
 }
 

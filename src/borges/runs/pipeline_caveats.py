@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.models import CodingSummary
 from borges.garden.models import Flip, Report
 from borges.garden.plausibility import IMPLAUSIBLE_REASON
 
@@ -68,3 +69,17 @@ def report_caveats(
     if mirrored:
         caveats.append(mirrored)
     return caveats
+
+
+def judge_caveats(coding: CodingSummary) -> list[str]:
+    replaced = [
+        f"The defensibility judge rejected a conventional option and the original analysis uses "
+        f"the best accepted alternative instead ({item})."
+        for item in coding.defaults_replaced
+    ]
+    disputed = [
+        f"The defensibility judge disputes a conventional option that had no accepted "
+        f"replacement, so it was kept; read the original result with care ({item})."
+        for item in coding.defaults_disputed
+    ]
+    return replaced + disputed

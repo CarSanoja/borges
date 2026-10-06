@@ -32,7 +32,7 @@ from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
 from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.pipeline_callbacks import coding_callbacks, replan_callback
-from borges.runs.pipeline_caveats import merge_caveats, report_caveats
+from borges.runs.pipeline_caveats import judge_caveats, merge_caveats, report_caveats
 from borges.runs.pipeline_data import load_dataframe
 from borges.runs.pipeline_finish import narrate_stage, verify_stage
 from borges.runs.pipeline_memory import finish_memory, prefill_code, recall_profile
@@ -196,6 +196,7 @@ class Pipeline:
         failed = failed_caveat(plan, self.garden)
         threshold = plan.decision_rule.threshold
         self.caveats.extend(report_caveats(self.report, self.flip, threshold, failed))
+        self.caveats.extend(judge_caveats(self.coding))
         self.caveats.extend(
             [
                 *aliased_caveats(self.garden),

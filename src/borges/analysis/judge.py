@@ -11,12 +11,12 @@ from borges.llm.client import LLMClient, Role
 from borges.telemetry import hooks
 
 ACCEPT_THRESHOLD = 0.6
-JudgeOrigin = Literal["planner", "adversary"]
+JudgeOrigin = Literal["planner", "adversary", "default"]
 
 
 def judge_key(step: Step, option: Option, origin: JudgeOrigin) -> str:
-    prefix = "judge:planner:" if origin == "planner" else "judge:"
-    return f"{prefix}{step.id}.{option.id}"
+    prefixes = {"planner": "judge:planner:", "default": "judge:default:"}
+    return f"{prefixes.get(origin, 'judge:')}{step.id}.{option.id}"
 
 
 async def judge_option(
@@ -26,7 +26,7 @@ async def judge_option(
     option: Option,
     origin: JudgeOrigin = "adversary",
 ) -> Judgement:
-    duplicate = equivalence_reason(step, option)
+    duplicate = None if option.is_default else equivalence_reason(step, option)
     if duplicate is not None:
         hooks.audit(
             "judge.duplicate",

@@ -16,6 +16,10 @@ from borges.analysis.code_guard_introspection import (
     name_violations as introspection_name_violations,
 )
 from borges.analysis.code_guard_introspection import subscript_violations
+from borges.analysis.code_guard_literal import (
+    literal_result_violations,
+    widened_interval_violations,
+)
 from borges.analysis.code_guard_nan import component_sign_violations, nan_threshold_violations
 from borges.analysis.code_guard_rows import row_filter_violations
 from borges.analysis.code_guard_rules import (
@@ -191,6 +195,8 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
         *fallback_violations(func),
         *substituted_value_violations(func),
         *share_p_value_violations(func),
+        *literal_result_violations(func),
+        *widened_interval_violations(func),
     ]
 
 
