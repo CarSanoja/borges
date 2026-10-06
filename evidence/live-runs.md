@@ -96,6 +96,24 @@ and the number of distinct results with the share.
 - One run per case is one sample of a model. The repeats in `evidence/repeats.md` measure how
   stable the verdict and the flip are across runs.
 
+## An uploaded dataset, end to end
+
+On 6 October 2026 (00:10 UTC) the server at `b5c9510` (ConTree backend, registry enforced) took
+a CSV it had never seen: the public teaching-ratings data (463 course evaluations, 13 columns,
+from the BLADE benchmark). The question was "Do instructors rated as more beautiful get higher
+teaching evaluations?", with BEAUTY PREMIUM if the change in evaluation score per unit of beauty
+is above 0 at p < 0.05.
+
+- As anonymous demo access, the upload card says before submitting that an upload needs an API
+  key with `uploads:write`, and the button is disabled. The server refuses the upload with the
+  same reason.
+- With a 12-hour local key holding that scope, `POST /api/uploads` profiled the file (no personal
+  data found) and `POST /api/runs` started a live run, `r_20261006T001048_abd03c`.
+- It completed in 148 s: BEAUTY PREMIUM, 0.141 [0.076, 0.206], p 2.3e-5, n 463, 18 universes,
+  none failed, no flip, robustness 100% on a 12-draw grid sample. 23 calls, $0.0162. Hamermesh and
+  Parker (2005) report a coefficient of about 0.13 on these data.
+- The key was revoked afterwards. The run is not committed as a recording.
+
 ## BLADE benchmark
 
 `evidence/blade/2026-10-04/summary.md` (commit `a5252e3`, 24 of 24 runs with analyses, $0.3582)

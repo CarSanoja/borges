@@ -320,8 +320,10 @@ live on Nemotron" (the button says why when it is disabled). The landing page ha
 enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
 the `contree` backend or `BORGES_ALLOW_UNTRUSTED_LOCAL=true`) and otherwise shows the exact
 reason. The same flow is available over the API (`POST /api/uploads`, CSV or parquet, then
-`POST /api/runs` with `upload_id`). Uploaded data always needs a live run; the upload path
-has not been exercised with a live model, only the six curated cases have.
+`POST /api/runs` with `upload_id`). Uploaded data always needs a live run and an API key with
+the `uploads:write` scope; anonymous demo access cannot upload, and the card says so before you
+submit. One upload has run live end to end: the public teaching-ratings data (463 rows) gave
+BEAUTY PREMIUM, 0.141 [0.076, 0.206], in 148 s for $0.016 (`evidence/live-runs.md`).
 
 ### Reproduce any universe
 

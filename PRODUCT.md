@@ -338,7 +338,9 @@ Borges is finished when all of these hold, on a clean clone:
 
 Uploading your own dataset (CSV or parquet) works from the landing page card and over the API
 (`POST /api/uploads`, then `POST /api/runs` with `upload_id`). The card is enabled only when
-`/api/health` reports `uploads_available`, and otherwise states why. Uploaded datasets need live mode
+`/api/health` reports `uploads_available`, and otherwise states why. Uploading needs an API key with
+the `uploads:write` scope; the card says so before submit when the caller lacks it. One upload ran
+live end to end on 6 October (`evidence/live-runs.md`). Uploaded datasets need live mode
 (`llm=nebius` with `NEBIUS_API_KEY`), because there are no recorded responses for them. On
 a public instance they should run only on isolated sandboxes (`BORGES_BACKEND=contree`),
 and `BORGES_LIVE_TOKEN` should be set so that only callers who know the token can start
