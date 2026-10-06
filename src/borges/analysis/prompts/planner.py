@@ -94,6 +94,11 @@ options keep and exclude those rows.
 - Cluster-robust errors are an option only on a sampling or design unit that repeats across \
 rows (a participant, instructor, school or player with several rows) and with at least 30 \
 distinct units; never cluster on a date, a time or a variable computed in the analysis.
+- Elapsed time since an event (days since a period, age, tenure, time since treatment) is \
+counted up to the date the outcome was measured when the data has such a column (a testing, \
+survey or visit date); the gap between two earlier events is a duration, not elapsed time.
+- A feature or transform writes one value per row as a column of the data frame; ctx holds only \
+run-level values such as the covariate list, never a per-row quantity.
 - Every option must change the analysis. Do not offer an option that reproduces the default on \
 these data (a filter that removes nothing because the default already removes it, the default \
 restated under another name, or a rescaling that cannot change a standardised result).
