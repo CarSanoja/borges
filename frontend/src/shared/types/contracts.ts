@@ -242,6 +242,8 @@ export interface CaseCard {
   decision_rule: DecisionRule;
   n_rows: number;
   has_recording: boolean;
+  has_scripted_recording?: boolean;
+  has_live_recording?: boolean;
   reference_label: string | null;
   reference: ReferenceEstimate[];
   story: string;
