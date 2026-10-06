@@ -171,3 +171,16 @@ async def test_a_repair_whose_rerun_fails_restores_the_previous_code(
     assert universe.status == "failed" and universe.error == "KeyError: 'day'"
     assert plan.step("s1").option("b").code == "broken"
     assert emitter.events == ["option.coded", "plan.ready", "option.coded", "plan.ready"]
+
+
+async def test_a_pinned_option_is_never_rewritten_by_a_repair(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+    patch_repair(monkeypatch, "fixed", calls)
+    plan = with_codes("broken")
+    plan.step("s1").options[1] = plan.step("s1").option("b").model_copy(update={"origin": "pinned"})
+    runner, emitter = runner_for(plan)
+    universe = await runner.run({"s1": "b"}, "single")
+    assert calls == [] and universe.status == "failed"
+    assert plan.step("s1").option("b").code == "broken" and emitter.events == []

@@ -7,6 +7,7 @@ import pandas as pd
 from pandas.api import types as pdt
 
 from borges.analysis.models import ColumnProfile, DatasetProfile
+from borges.analysis.repeated_units import detect_repeated_units
 
 TOP_VALUES = 5
 
@@ -79,6 +80,7 @@ def profile_dataframe(
         n_rows=int(len(df)),
         columns=columns,
         sample_rows=_sample_rows(df, sample),
+        repeated_units=detect_repeated_units(df),
     )
 
 

@@ -95,3 +95,35 @@ def test_a_flip_names_its_changes_and_its_universe(tmp_path: Path) -> None:
     row = module.load(write(tmp_path, flip))
     assert row["ids"] == ["u_base", "u_near"]
     assert "Exclude bots: 0.6 [-0.4, 1.6], p 0.2, n 100, DON'T SHIP" in module.render([row])
+
+
+def interval(estimate: float, half: float) -> dict[str, Any]:
+    return {
+        "estimate": estimate,
+        "ci_low": estimate - half,
+        "ci_high": estimate + half,
+        "p_value": 0.2,
+        "n": 100,
+    }
+
+
+def test_farthest_is_chosen_on_z_not_on_the_raw_estimate() -> None:
+    module = load()
+    baseline = {"id": "u_base", "status": "done", "result": interval(0.01, 0.08)}
+    in_deaths = {"id": "u_deaths", "status": "done", "result": interval(3.0, 3.5)}
+    in_logs = {"id": "u_log", "status": "done", "result": interval(0.12, 0.02)}
+    assert module._farthest([baseline, in_deaths, in_logs], baseline)["id"] == "u_log"
+
+
+def test_a_ratio_measure_is_compared_with_its_threshold_on_the_log_scale() -> None:
+    module = load()
+    above = module.z_score(interval(2.0, 0.5), 1.0)
+    below = module.z_score(interval(0.5, 0.125), 1.0)
+    assert above > 0 > below
+    assert module.z_score(interval(1.0, 0.5), 1.0) == 0.0
+
+
+def test_the_table_names_the_measure_that_picks_the_farthest_universe(tmp_path: Path) -> None:
+    module = load()
+    text = module.render([module.load(write(tmp_path, None))])
+    assert "the largest change in z = (estimate - decision threshold) / standard error" in text

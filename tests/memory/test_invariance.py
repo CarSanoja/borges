@@ -13,7 +13,7 @@ pytestmark = pytest.mark.timeout(900)
 
 CASES = {
     "checkout_ab": (15, 5),
-    "red_cards": (39, 5),
+    "red_cards": (41, 5),
     "marp_norms": (27, 1),
     "marp_religiosity": (40, 0),
 }

@@ -3,6 +3,7 @@ import { CodeBlock } from "./CodeBlock";
 
 export function defensibilityText(option: Option): string {
   if (option.defensibility !== null) return `${option.defensibility.toFixed(2)} (judged)`;
+  if (option.origin === "pinned") return "seeded by Borges, not judged";
   return option.origin === "adversary" ? "not judged" : "planner option, not judged";
 }
 

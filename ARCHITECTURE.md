@@ -117,6 +117,18 @@ universes share every checkpoint before the step they change.
 5. verification of the smallest flip found: re-execution from the root with no prefix cache, and
    the result must match exactly.
 
+**Repeated units and seeded options.** The profile step records every identifier-like column
+whose values repeat across rows (name reads as an id, code, num, key or short; at least 30
+distinct values; at least 2 rows per value on average; see `analysis/repeated_units.py`). After
+coding, each unit adds a pinned option "Cluster the errors by <unit>" to the model step, whatever
+the planner proposed (`analysis/seeded_options.py`). It carries the default model's own code and
+the unit's name in `Option.cluster_by`; the harness (`analysis/harness_cluster.py`) then fits every
+statsmodels OLS, WLS, GLM, Logit, Probit, Poisson or NegativeBinomial of that step with
+cluster-robust errors, and fails the universe when it cannot, instead of reporting unclustered
+errors. A pinned option needs no judge and no coder, and a failing one is not repaired by a model.
+The report carries "rows repeat N <unit> values; errors not clustered by <unit> may be too narrow"
+when the original analysis is not clustered.
+
 **Smallest flip found** = the flipped universe with the fewest changes among those the capped search (ten combinations per level, `MAX_COMBINATIONS_PER_LEVEL`) explored; it is not a proven minimum. Ties go to the higher
 minimum defensibility, then to the larger move of the estimate.
 
