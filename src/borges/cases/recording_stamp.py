@@ -24,6 +24,7 @@ class RecordingStamp(BaseModel):
     registry_sha: str | None = None
     cost_usd: float | None = None
     n_universes: int | None = None
+    n_failed: int | None = None
     verdict: str | None = None
     flipped_verdict: str | None = None
 
@@ -64,6 +65,7 @@ def stamp_from_meta(
         registry_sha=sha,
         cost_usd=meta.get("cost_usd"),
         n_universes=meta.get("n_universes"),
+        n_failed=meta.get("n_failed"),
         verdict=meta.get("verdict"),
         flipped_verdict=meta.get("flipped_verdict"),
     )

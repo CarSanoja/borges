@@ -159,7 +159,7 @@ the conclusion, and each universe can be re-executed with `borges reproduce`. Th
 similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
 sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
 5,000 real model runs and a published study, while Borges has six live recordings (one per
-case, $0.0225 to $0.0408 each). We have not run their pipeline: it needs a live LLM API plus
+case, an estimated $0.0225 to $0.0408 each from list prices). We have not run their pipeline: it needs a live LLM API plus
 Docker and an Inspect set-up that we did not build. The
 measurable part, a fixed full grid over the same seeded options, was run offline (see
 "What a statistician would object to" and `evidence/grid_vs_search.md`); a head-to-head
@@ -285,7 +285,7 @@ of how often a model gets these right, with wide intervals.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
 - **Status:** six cases ran live on Nemotron through Token Factory on 5 October 2026
-  (238 calls, $0.026 to $0.056 per case; `evidence/live-runs.md`). Each recorded universe
+  (238 calls, an estimated $0.026 to $0.056 per case from token counts and list prices; `evidence/live-runs.md`). Each recorded universe
   re-executes with `borges reproduce --source live`, and every headline was refitted
   independently from the specs and the raw data (`evidence/refit.md`). The scripted replays remain as
   the offline path, hand-built and labelled as such. Still missing: a public URL, and any outside user.
@@ -313,7 +313,7 @@ Borges is finished when all of these hold, on a clean clone:
    way against 110 and 105 teams. A live-only real business case, `bank_marketing_calls` (UCI Bank Marketing,
    CC BY 4.0), has no scripted fixtures and runs only with `llm=nebius`; its recording is live.
 3. With `NEBIUS_API_KEY` set, the curated cases run **live on Nemotron via Token Factory**,
-   under a hard spend cap, with the token and dollar cost shown. Live runs on a curated case
+   under a hard spend cap, with the token count and an estimated dollar cost (list prices) shown. Live runs on a curated case
    use its own question and decision rule.
 4. `make serve` opens the web app:
    - pick a case;

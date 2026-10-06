@@ -27,6 +27,8 @@ class Store:
 class Card:
     id = "demo"
     has_recording = True
+    has_scripted_recording = True
+    has_live_recording = False
     live_recording = None
 
 

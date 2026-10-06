@@ -9,6 +9,7 @@
   "registry_sha": "18cccaf3288852220358255247fad38ea682f0b9eebfc1dc4000c1c194841053",
   "cost_usd": 0.030605380000000005,
   "n_universes": 22,
+  "n_failed": 0,
   "verdict": "BIAS DETECTED",
   "flipped_verdict": "NO CLEAR EVIDENCE"
 }

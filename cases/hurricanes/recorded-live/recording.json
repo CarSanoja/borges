@@ -9,6 +9,7 @@
   "registry_sha": "75787cb42fabd082e7401d23da8a0ecd9bcfc46c3378ec0947c8bddaa454a7e2",
   "cost_usd": 0.0303704,
   "n_universes": 18,
+  "n_failed": 0,
   "verdict": "NO CLEAR EVIDENCE",
   "flipped_verdict": null
 }

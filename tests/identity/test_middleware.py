@@ -163,6 +163,34 @@ async def test_unknown_api_paths_are_a_plain_404(env: Env) -> None:
         assert (await client.get("/api/nothing")).status_code == 404
 
 
+UNKNOWN_PATHS = [
+    "/api/nothing",
+    "/api/cases/checkout_ab/nothing",
+    "/api/runs/r1/nothing/deeper",
+    "/api/health/extra",
+    "/api",
+    "/api/",
+]
+METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+
+
+@pytest.mark.parametrize("path", UNKNOWN_PATHS)
+async def test_every_method_on_an_unknown_api_path_is_the_same_404(env: Env, path: str) -> None:
+    async with env.client() as client:
+        responses = [await client.request(method, path) for method in METHODS]
+        keyed = await client.get(path, headers=bearer("bk_aaaa_bad"))
+    assert [r.status_code for r in responses] == [404] * len(METHODS)
+    assert keyed.status_code == 404
+    bodies = {r.json()["detail"] for r in responses if r.request.method != "HEAD"}
+    assert bodies == {"Not found."}
+
+
+async def test_known_routes_keep_their_status_codes(env: Env) -> None:
+    async with env.client() as client:
+        assert (await client.get("/api/health")).status_code == 200
+        assert (await client.get("/api/audit")).status_code == 403
+
+
 async def test_a_broken_key_store_gives_503_for_keys_and_leaves_anonymous_routes_alone(
     env: Env,
 ) -> None:

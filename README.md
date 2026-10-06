@@ -32,7 +32,7 @@ smallest flip it found.**
 >
 > The second re-executes the flipping universe from the live Nemotron recording of the checkout
 > case and prints `MATCH` when the result equals the recording. Six cases were recorded live on
-> 5 October 2026 on ConTree sandboxes from an empty cache, for $0.026 to $0.056 each; the web
+> 5 October 2026 on ConTree sandboxes from an empty cache, for an estimated $0.026 to $0.056 each (token counts times list prices, not billed amounts); the web
 > app plays those recordings by default. The status table below says what is and is not live.
 >
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
@@ -64,7 +64,7 @@ Be clear about this before reading further. The source of truth for every live n
 
 | | State today |
 |---|---|
-| Nemotron through Token Factory | **Six cases ran live on 5 October 2026 (UTC)**, each from an empty model cache: four at commit `16f02e7`, red_cards at `5070877` and bank at `6317040` (the changes between them are listed in `evidence/live-runs.md`). 238 calls in all, $0.026 to $0.056 per case ($0.21 for the six). Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks |
+| Nemotron through Token Factory | **Six cases ran live on 5 October 2026 (UTC)**, each from an empty model cache: four at commit `16f02e7`, red_cards at `5070877` and bank at `6317040` (the changes between them are listed in `evidence/live-runs.md`). 238 calls in all, an estimated $0.026 to $0.056 per case ($0.21 for the six), computed from token counts and list prices, not from invoices. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks |
 | ConTree sandboxes | **All six recordings ran on ConTree** (`backend: contree` in each `recording.json`). Earlier, on 2 October 2026, `tests/sandbox/test_contree_live.py` passed in 41.8 s |
 | What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". Each recording also has `spans.jsonl`, `audit.jsonl` and `recording.json`. A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
@@ -228,7 +228,7 @@ whether each extra call to a customer lowers the chance of a term-deposit subscr
 Nothing is planted. It has no scripted fixtures, so it runs only with `llm=nebius`, and a
 scripted run is refused with a clear message. Its only recording is the live one. Plain
 logistic regressions by the author gave an odds ratio of 0.86 to 0.93 per extra call in nine
-specifications. The final live run (33 calls, $0.0257) gave OR 0.8716 per call [0.8573, 0.8862],
+specifications. The final live run (33 calls, an estimated $0.0257) gave OR 0.8716 per call [0.8573, 0.8862],
 CAP THE CALLS, and found no flip in 12 universes. An independent refit agrees to 3e-15. See
 `cases/bank_marketing_calls/README.md`.
 
@@ -327,7 +327,7 @@ reason. The same flow is available over the API (`POST /api/uploads`, CSV or par
 `POST /api/runs` with `upload_id`). Uploaded data always needs a live run and an API key with
 the `uploads:write` scope; anonymous demo access cannot upload, and the card says so before you
 submit. One upload has run live end to end: the public teaching-ratings data (463 rows) gave
-BEAUTY PREMIUM, 0.141 [0.076, 0.206], in 148 s for $0.016 (`evidence/live-runs.md`).
+BEAUTY PREMIUM, 0.141 [0.076, 0.206], in 148 s for an estimated $0.016 (`evidence/live-runs.md`).
 
 ### Reproduce any universe
 
@@ -369,8 +369,9 @@ content leaking when thinking is disabled. `make record-live` runs the cases liv
 `cases/<case>/recorded-live/`. It never overwrites the scripted recordings in
 `cases/<case>/recorded/`. A single case can also be run with
 `uv run borges run --case checkout_ab --llm nebius --record`. A complete live run of one case
-cost between $0.026 and $0.056 on 5 October 2026.
+cost an estimated $0.026 to $0.056 on 5 October 2026 (token counts times list prices, not a billed amount).
 
+Costs in Borges are estimates from token counts times list prices.
 Spend is capped twice, per run (`BORGES_RUN_CAP_USD`, default $0.50) and in total
 (`BORGES_SPEND_CAP_USD`, default $5). When the total is used up, the web app disables the
 live button and says so. Each call reserves its worst-case cost before it is

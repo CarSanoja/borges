@@ -102,7 +102,7 @@ describe("landing", () => {
     const { rerender } = render(
       <CaseCardView card={withLive} liveAvailable={false} onOpenRun={() => undefined} onOpenReplay={() => undefined} />,
     );
-    expect(screen.getByTestId("live-badge")).toHaveTextContent("Live run recorded · $0.0070");
+    expect(screen.getByTestId("live-badge")).toHaveTextContent("Live run recorded · est. $0.0070");
     rerender(<CaseCardView card={checkout} liveAvailable={false} onOpenRun={() => undefined} onOpenReplay={() => undefined} />);
     expect(screen.queryByTestId("live-badge")).toBeNull();
   });

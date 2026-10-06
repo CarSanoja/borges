@@ -122,6 +122,13 @@ def test_local_run_names_the_model_and_prints_real_tokens(captured) -> None:
     assert request.llm == "local" and record is True
 
 
+def test_live_run_labels_its_cost_as_an_estimate(captured) -> None:
+    captured.install(_completed().model_copy(update={"llm": "nebius"}))
+    result = runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--llm", "nebius"])
+    assert "estimated cost: $0.0100" in result.output
+    assert "list prices, not a billed amount" in result.output
+
+
 def test_run_json_output(captured) -> None:
     captured.install(_completed())
     result = runner.invoke(cli.app, ["run", "--case", "checkout_ab", "--json"])
@@ -157,7 +164,15 @@ def test_run_rejects_unknown_llm(captured) -> None:
 def test_cases_lists_cards(monkeypatch: pytest.MonkeyPatch) -> None:
     from types import SimpleNamespace
 
-    cards = [SimpleNamespace(id="checkout_ab", title="Checkout", n_rows=500, has_recording=True)]
+    cards = [
+        SimpleNamespace(
+            id="checkout_ab",
+            title="Checkout",
+            n_rows=500,
+            has_scripted_recording=True,
+            has_live_recording=False,
+        )
+    ]
     monkeypatch.setattr(cli_runtime, "list_cases", lambda settings: cards)
     result = runner.invoke(cli.app, ["cases"])
     assert result.exit_code == 0

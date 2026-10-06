@@ -49,6 +49,7 @@ def new_run_meta(
         "backend": backend,
         "cost_usd": 0.0,
         "n_universes": 0,
+        "n_failed": 0,
         "verdict": None,
         "flipped_verdict": None,
         **owner_fields(),
@@ -62,6 +63,7 @@ def outcome_meta(pipeline: Pipeline) -> dict[str, object]:
     return {
         "cost_usd": pipeline.llm.totals.cost_usd,
         "n_universes": len(pipeline.garden.universes),
+        "n_failed": sum(1 for u in pipeline.garden.universes.values() if u.status == "failed"),
         "verdict": report.original_verdict if report else None,
         "flipped_verdict": flip.flipped_verdict if flip else None,
     }

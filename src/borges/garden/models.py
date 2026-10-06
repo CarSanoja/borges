@@ -117,6 +117,7 @@ class Report(BaseModel):
     narrator_input_tokens: int | None = None
     narrative: str = ""
     caveats: list[str] = Field(default_factory=list)
+    n_attempted: int = 0
     n_failed: int = 0
     failed: list[str] = Field(default_factory=list)
     search: SearchSummary | None = None

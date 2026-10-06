@@ -9,6 +9,7 @@
   "registry_sha": "75787cb42fabd082e7401d23da8a0ecd9bcfc46c3378ec0947c8bddaa454a7e2",
   "cost_usd": 0.03524788000000001,
   "n_universes": 12,
+  "n_failed": 0,
   "verdict": "POSITIVE ASSOCIATION",
   "flipped_verdict": null
 }

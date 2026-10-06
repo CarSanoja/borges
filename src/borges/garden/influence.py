@@ -100,11 +100,14 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         estimand_changes=estimands,
         contaminated_flip=contaminated,
         contaminated_flips=tainted,
+        n_attempted=len(finished) + len(failed),
         n_failed=len(failed),
         failed=failed,
         caveats=[
             *reversal_caveats(garden),
-            *figure_caveats(plan, len(finished), figures, noops, flip, tainted, duplicates),
+            *figure_caveats(
+                plan, len(finished), figures, noops, flip, tainted, duplicates, len(failed)
+            ),
             *exposure_spread_notes(plan, garden),
             *contaminated_notes(invalid),
             *rule_measure_caveats(plan, garden),

@@ -61,7 +61,7 @@ class BudgetBook:
                 raise GatewayBudgetExceeded(
                     "budget",
                     f"{label} would pass its cost limit of ${account.max_cost_usd:.2f} "
-                    f"(spent ${account.spent:.4f}, this call ~${estimate:.4f})",
+                    f"(estimated spend ${account.spent:.4f}, this call ~${estimate:.4f})",
                     agent_id,
                 )
         for account in accounts:

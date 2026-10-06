@@ -10,6 +10,15 @@ from borges.garden.report_duplicate_notes import (
 from borges.garden.robustness import RobustnessFigures
 
 
+def failed_tail(n_completed: int, n_failed: int) -> str:
+    if not n_failed:
+        return ""
+    return (
+        f" The share is over the {n_completed} universes that completed; {n_failed} more "
+        f"failed and are untested ({n_completed} of {n_completed + n_failed} attempted completed)."
+    )
+
+
 def figure_caveats(
     plan: AnalysisPlan,
     n_universes: int,
@@ -18,6 +27,7 @@ def figure_caveats(
     flip: Flip | None,
     contaminated: list[Flip],
     duplicates: list[DuplicateOption] | None = None,
+    n_failed: int = 0,
 ) -> list[str]:
     duplicates = duplicates or []
     notes: list[str] = []
@@ -40,6 +50,7 @@ def figure_caveats(
             f"original verdict ({figures.design_note}). Among the universes the search explored, "
             f"{figures.beam:.0%} agree, but the beam search samples the universes that are "
             "closest to flipping, so that share leans toward flips."
+            + failed_tail(n_universes, n_failed)
         )
     if flip is not None and flip.estimand_change:
         notes.append(f"The minimal flip {flip.estimand_change}.")

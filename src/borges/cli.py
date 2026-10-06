@@ -8,7 +8,7 @@ import typer
 from borges import cli_runtime
 from borges.bench.cli import bench_app
 from borges.cli_audit import audit_app
-from borges.cli_render import summary_lines, universe_lines
+from borges.cli_render import recording_label, summary_lines, universe_lines
 from borges.config import Settings, get_settings
 from borges.fleet.cli import agents_app
 from borges.fleet.enforcement import RegistryBlocked
@@ -77,7 +77,7 @@ def _run(
 def cases() -> None:
     """List the demo cases."""
     for card in cli_runtime.list_cases(get_settings()):
-        recording = "recorded" if card.has_recording else "no recording"
+        recording = recording_label(card.has_scripted_recording, card.has_live_recording)
         typer.echo(f"{card.id}\t{card.title}\t{card.n_rows} rows\t{recording}")
 
 

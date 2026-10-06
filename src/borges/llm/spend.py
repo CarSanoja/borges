@@ -32,7 +32,7 @@ class RunBudget:
         if self._total + self._reserved + estimate_usd > self.cap_usd:
             message = (
                 f"run budget ${self.cap_usd:.4f} would be exceeded "
-                f"(spent ${self._total:.4f}, next call ~${estimate_usd:.4f})"
+                f"(estimated spend ${self._total:.4f}, next call ~${estimate_usd:.4f})"
             )
             hooks.audit(
                 "policy.spend.refuse",
@@ -110,7 +110,7 @@ class SpendLedger:
         if total + reserved + estimate_usd > self.cap_usd:
             message = (
                 f"spend cap ${self.cap_usd:.2f} would be exceeded "
-                f"(spent ${total:.4f}, next call ~${estimate_usd:.4f})"
+                f"(estimated spend ${total:.4f}, next call ~${estimate_usd:.4f})"
             )
             hooks.audit(
                 "policy.spend.refuse",

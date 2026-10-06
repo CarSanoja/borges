@@ -13,6 +13,8 @@ def test_card_without_live_recording_has_no_summary(tmp_path: Path) -> None:
     card = registry.card("checkout_ab")
     assert card.live_recording is None
     assert card.has_recording is True
+    assert card.has_scripted_recording is True
+    assert card.has_live_recording is False
     assert registry.recording("checkout_ab", "live") is None
 
 
@@ -45,7 +47,9 @@ def test_live_only_case_with_a_live_recording_is_listed_with_summary(tmp_path: P
     registry = CaseRegistry(make_cases_dir(tmp_path, scripted=False, live_only=True))
     card = registry.list()[0]
     assert card.live_only is True
-    assert card.has_recording is False
+    assert card.has_scripted_recording is False
+    assert card.has_live_recording is True
+    assert card.has_recording is True
     assert card.live_recording is not None
 
 

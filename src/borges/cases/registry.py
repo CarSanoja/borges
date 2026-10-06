@@ -71,7 +71,10 @@ class CaseRegistry:
         spec = self.get(case_id)
         dataset = self._dir(case_id) / spec.dataset_file
         n_rows = pq.ParquetFile(dataset).metadata.num_rows
-        fields = spec.model_dump(include=set(CaseCard.model_fields) - {"n_rows", "has_recording"})
+        fields = spec.model_dump(
+            include=set(CaseCard.model_fields)
+            - {"n_rows", "has_recording", "has_scripted_recording", "has_live_recording"}
+        )
         live = self.recording(case_id, "live")
         traced = [
             source
@@ -83,12 +86,16 @@ class CaseRegistry:
             stamp = read_stamp(self.recording_dir(case_id, source))
             if stamp is not None:
                 stamps[source] = stamp
+        scripted_present = self._recording_path(case_id).is_file()
+        live_present = bool(live)
         return CaseCard(
             **fields,
             recording_meta=stamps,
             traced_sources=traced,
             n_rows=n_rows,
-            has_recording=self._recording_path(case_id).is_file(),
+            has_recording=scripted_present or live_present,
+            has_scripted_recording=scripted_present,
+            has_live_recording=live_present,
             live_recording=summarize_live(live) if live else None,
         )
 

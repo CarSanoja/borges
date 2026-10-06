@@ -12,6 +12,16 @@ REVERSES = re.compile(
 AGREES = re.compile(r"\b(?:agree\w*|support\w*|consistent|robust\w*|same verdict)\b", re.I)
 
 
+def failure_clause(report: Report) -> str:
+    if not report.n_failed:
+        return ""
+    return (
+        f"; {report.n_failed} more universe{'s' if report.n_failed != 1 else ''} failed and "
+        f"{'are' if report.n_failed != 1 else 'is'} untested "
+        f"({report.n_universes} of {report.n_universes + report.n_failed} attempted completed)"
+    )
+
+
 def robustness_sentence(report: Report) -> str | None:
     if report.n_universes == 0:
         return None
@@ -21,14 +31,15 @@ def robustness_sentence(report: Report) -> str | None:
         if report.contaminated_flip is not None or report.contaminated_flips
         else ""
     )
+    failed = failure_clause(report)
     if report.robustness_basis == "design_weighted":
         return (
             f"Robustness: {agree}% of the analysis grid agrees with the original verdict and "
-            f"{100 - agree}% reverses it{left_out}."
+            f"{100 - agree}% reverses it{left_out}{failed}."
         )
     return (
         f"Robustness: {agree}% of the distinct results agree with the original verdict and "
-        f"{100 - agree}% reverse it{left_out}."
+        f"{100 - agree}% reverse it{left_out}{failed}."
     )
 
 

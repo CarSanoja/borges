@@ -27,6 +27,7 @@ API_PREFIX = "/api"
 CATCH_ALL = "/{path:path}"
 DENY_AUDIT_INTERVAL_S = 10.0
 SAFE_METHODS = ("GET", "HEAD")
+NOT_FOUND = "Not found."
 
 
 class IdentityMiddleware:
@@ -81,12 +82,16 @@ class IdentityMiddleware:
         )
 
     def _serves(self, scope: Scope) -> bool:
+        alternate = dict(scope)
+        path = scope.get("path", "")
+        alternate["path"] = path[:-1] if path.endswith("/") else path + "/"
         for route in self.routes_of():
             if getattr(route, "path", None) == CATCH_ALL:
                 continue
-            match, _ = route.matches(scope)
-            if match != Match.NONE:
-                return True
+            for candidate in (scope, alternate):
+                match, _ = route.matches(candidate)
+                if match != Match.NONE:
+                    return True
         return False
 
     def _worth_auditing_deny(self, key: str) -> bool:
@@ -117,6 +122,9 @@ class IdentityMiddleware:
         if scope["type"] != "http" or not (path == API_PREFIX or path.startswith(API_PREFIX + "/")):
             await self.app(scope, receive, send)
             return
+        if not self._serves(scope):
+            await self._reject(send, 404, NOT_FOUND)
+            return
         if scope["method"] == "OPTIONS":
             await self.app(scope, receive, send)
             return
@@ -127,9 +135,6 @@ class IdentityMiddleware:
         requirement = matched[1] if matched else None
         if authentication.failure is not None:
             await self._bad_credentials(send, scope, route, requirement, authentication.failure)
-            return
-        if requirement is None and not self._serves(scope):
-            await self.app(scope, receive, send)
             return
         if requirement is None:
             reason = "route declares no required scope; failing closed"

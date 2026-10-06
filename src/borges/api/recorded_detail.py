@@ -12,7 +12,9 @@ SOURCES = ("live", "scripted")
 def recorded_origin(registry: Any, run_id: str) -> tuple[str, str] | None:
     for card in registry.list():
         for source in SOURCES:
-            available = card.live_recording is not None if source == "live" else card.has_recording
+            available = (
+                card.live_recording is not None if source == "live" else card.has_scripted_recording
+            )
             if not available:
                 continue
             events = registry.recording(card.id, source) or []

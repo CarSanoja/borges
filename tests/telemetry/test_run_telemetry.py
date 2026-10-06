@@ -62,7 +62,9 @@ def test_model_spans_carry_hashes_and_never_prompts(scripted_run: ScriptedRun) -
     assert len(calls) >= 20
     for call in calls:
         attrs = call["attributes"]
-        assert attrs["gen_ai.system"] == "nebius"
+        assert attrs["gen_ai.system"] == "scripted"
+        assert attrs["borges.llm.provider"] == "scripted"
+        assert attrs["gen_ai.request.model"] == "scripted"
         assert attrs["gen_ai.operation.name"] == "chat"
         assert {"gen_ai.request.model", "gen_ai.response.model"} <= attrs.keys()
         assert {"gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens"} <= attrs.keys()

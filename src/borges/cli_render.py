@@ -40,6 +40,14 @@ def flip_lines(flip: Flip) -> list[str]:
     return lines
 
 
+def recording_label(scripted: bool, live: bool) -> str:
+    if scripted and live:
+        return "recorded (scripted and live)"
+    if scripted:
+        return "recorded"
+    return "live recording only" if live else "no recording"
+
+
 BASIS_LABELS = {
     "design_weighted": "design-weighted",
     "distinct_results": "share of distinct results",
@@ -54,6 +62,11 @@ def robustness_line(report: Report) -> str:
         f"{report.n_universes} universes explored, {distinct} distinct results, "
         f"{report.n_flipped} flipped"
     )
+    if report.n_failed:
+        line += (
+            f"; {report.n_failed} more failed and are untested "
+            f"({report.n_universes} of {report.n_universes + report.n_failed} attempted completed)"
+        )
     if report.robustness_rating_reason:
         line += f"; not rated ({report.robustness_rating_reason})"
     return line
@@ -133,7 +146,9 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
         lines.append("Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)")
     else:
         lines.append(
-            f"Tokens: {usage.tokens_in} in / {usage.tokens_out} out, cost: ${usage.cost_usd:.4f}"
+            f"Tokens: {usage.tokens_in} in / {usage.tokens_out} out, "
+            f"estimated cost: ${usage.cost_usd:.4f} "
+            "(token counts x list prices, not a billed amount)"
         )
     if snapshot.error:
         lines.append(f"Error: {snapshot.error}")

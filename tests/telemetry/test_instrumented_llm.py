@@ -85,6 +85,21 @@ async def test_model_span_follows_genai_conventions(tmp_path: Path) -> None:
     assert len(attrs["borges.prompt.sha256"]) == 64 and len(attrs["borges.response.sha256"]) == 64
 
 
+async def test_scripted_client_is_not_reported_as_nebius(tmp_path: Path) -> None:
+    fake = FakeNebius()
+    fake.role_models = {}
+    telemetry = open_telemetry(tmp_path)
+    llm = InstrumentedLLM(fake)
+    with hooks.bound(telemetry), telemetry.span("run", "run r1"):
+        await call(llm)
+    telemetry.close()
+    span = next(
+        s for s in read_spans(tmp_path / "run" / "spans.jsonl") if s["kind"] == "model_call"
+    )
+    assert span["attributes"]["gen_ai.system"] == "scripted"
+    assert span["attributes"]["gen_ai.request.model"] == "scripted"
+
+
 async def test_no_raw_prompt_or_response_reaches_spans_or_audit(tmp_path: Path) -> None:
     telemetry = open_telemetry(tmp_path)
     llm = InstrumentedLLM(FakeNebius())

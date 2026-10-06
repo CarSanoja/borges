@@ -81,6 +81,7 @@ class RunSummary(BaseModel):
     backend: str
     cost_usd: float
     n_universes: int
+    n_failed: int = 0
     verdict: str | None
     flipped_verdict: str | None
 

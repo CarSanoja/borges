@@ -17,10 +17,14 @@ def registry() -> CaseRegistry:
     return CaseRegistry(CASES)
 
 
-def test_card_is_live_only_with_no_recording(registry: CaseRegistry) -> None:
+def test_card_is_live_only_with_a_live_recording_and_no_scripted_one(
+    registry: CaseRegistry,
+) -> None:
     card = registry.card(CASE_ID)
     assert card.live_only is True
-    assert card.has_recording is False
+    assert card.has_scripted_recording is False
+    assert card.has_live_recording is (CASES / CASE_ID / "recorded-live" / "events.jsonl").is_file()
+    assert card.has_recording is card.has_live_recording
     assert card.n_rows == 45211
     assert card.decision_rule.comparator.value == "lt"
     assert registry.recording(CASE_ID) is None

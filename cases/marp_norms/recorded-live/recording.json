@@ -9,6 +9,7 @@
   "registry_sha": "75787cb42fabd082e7401d23da8a0ecd9bcfc46c3378ec0947c8bddaa454a7e2",
   "cost_usd": 0.05642652,
   "n_universes": 35,
+  "n_failed": 6,
   "verdict": "DEPENDS ON NORMS",
   "flipped_verdict": null
 }

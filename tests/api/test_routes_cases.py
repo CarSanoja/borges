@@ -23,6 +23,7 @@ def card(case_id: str, recording: bool) -> CaseCard:
         decision_rule=DecisionRule(metric="m"),
         n_rows=10,
         has_recording=recording,
+        has_scripted_recording=recording,
     )
 
 

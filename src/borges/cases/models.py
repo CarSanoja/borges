@@ -68,6 +68,8 @@ class CaseCard(BaseModel):
     decision_rule: DecisionRule
     n_rows: int
     has_recording: bool
+    has_scripted_recording: bool = False
+    has_live_recording: bool = False
     reference_label: str | None = None
     reference: list[ReferenceEstimate] = Field(default_factory=list)
     story: str = ""

@@ -13,7 +13,7 @@ from borges.telemetry.caller import calling_as, current_caller
 from borges.telemetry.hashing import sha256_json, sha256_text
 from borges.telemetry.llm_routing import gateway_data, route_call
 
-GENAI_SYSTEM = "nebius"
+NEBIUS_SYSTEM = "nebius"
 SCRIPTED_MODEL = "scripted"
 
 
@@ -93,15 +93,16 @@ class InstrumentedLLM:
             {"messages": messages, "schema": schema.__name__ if schema else None}
         )
         caller = current_caller()
+        provider = SCRIPTED_MODEL if model == SCRIPTED_MODEL else NEBIUS_SYSTEM
         attributes = {
-            "gen_ai.system": GENAI_SYSTEM,
+            "gen_ai.system": provider,
             "gen_ai.operation.name": "chat",
             "gen_ai.request.model": model,
             "gen_ai.request.max_tokens": max_tokens,
             "gen_ai.request.temperature": temperature,
             "borges.agent.role": role.value,
             "borges.llm.key": key,
-            "borges.llm.provider": "scripted" if model == SCRIPTED_MODEL else "nebius",
+            "borges.llm.provider": provider,
             "borges.prompt.sha256": prompt_hash,
         }
         if caller.principal:

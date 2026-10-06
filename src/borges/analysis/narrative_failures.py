@@ -32,7 +32,7 @@ def restate_failures(report: Report, narrative: str) -> str:
     kept: list[str] = []
     replaced = False
     for sentence in _SENTENCE_END.split(narrative.strip()):
-        if not FAILURE.search(sentence):
+        if sentence.startswith("Robustness") or not FAILURE.search(sentence):
             kept.append(sentence)
         elif not replaced:
             kept.append(caveat[0].upper() + caveat[1:])

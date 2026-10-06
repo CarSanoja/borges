@@ -38,7 +38,7 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
       <p className="eyebrow">{card.subtitle}</p>
       {card.live_recording && (
         <p className="recording-badge" data-testid="live-badge">
-          Live run recorded · ${formatCost(card.live_recording.cost_usd)}
+          Live run recorded · est. ${formatCost(card.live_recording.cost_usd)}
         </p>
       )}
       {card.live_recording && card.recording_meta?.live && (

@@ -81,6 +81,8 @@ async def test_case_card_carries_the_live_summary(tmp_path: Path) -> None:
     async with client(tmp_path) as c:
         body = (await c.get("/api/cases/checkout_ab")).json()
     assert body["has_recording"] is True
+    assert body["has_scripted_recording"] is True
+    assert body["has_live_recording"] is True
     assert body["live_recording"]["llm_calls"] == 22
     assert body["live_recording"]["flip_kind"] == "direction"
 
