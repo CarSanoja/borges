@@ -23,6 +23,7 @@ class ModelSpecOutput(BaseModel):
     exposure_level: str | None = None
     exposure_threshold: float | None = None
     moderator: str | None = None
+    moderator_level: str | None = None
     covariates: list[str] = Field(default_factory=list)
     covariates_from_ctx: bool = False
     offset_log: str | None = None

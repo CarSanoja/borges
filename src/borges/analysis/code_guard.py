@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 
+from borges.analysis.code_guard_codes import category_code_violations
 from borges.analysis.code_guard_estimator import estimator_violations
 from borges.analysis.code_guard_fallback import (
     fallback_violations,
@@ -197,6 +198,7 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
         *share_p_value_violations(func),
         *literal_result_violations(func),
         *widened_interval_violations(func),
+        *category_code_violations(func),
     ]
 
 

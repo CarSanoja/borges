@@ -69,16 +69,25 @@ async def test_step_replanned_is_a_preparation_event(sleeps: list[float]) -> Non
     assert sleeps == [0.15, 1.5]
 
 
-async def test_every_live_recording_replays_within_a_second_at_the_skip_speed(
-    sleeps: list[float],
-) -> None:
+def live_recordings() -> list[tuple[str, list[Event]]]:
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2] / "cases"
-    paths = sorted(root.glob("*/recorded-live/events.jsonl"))
-    assert paths
-    for path in paths:
+    return [
+        (
+            path.parent.parent.name,
+            [Event.model_validate_json(line) for line in path.read_text().splitlines() if line],
+        )
+        for path in sorted(root.glob("*/recorded-live/events.jsonl"))
+    ]
+
+
+async def test_every_live_recording_replays_within_a_second_at_the_skip_speed(
+    sleeps: list[float],
+) -> None:
+    recordings = live_recordings()
+    assert recordings
+    for name, stored in recordings:
         sleeps.clear()
-        stored = [Event.model_validate_json(line) for line in path.read_text().splitlines() if line]
         assert len([e async for e in replay_events(stored, speed=10000)]) == len(stored)
-        assert sum(sleeps) < 1.0, path.parent.parent.name
+        assert sum(sleeps) < 1.0, name

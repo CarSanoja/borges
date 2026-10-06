@@ -33,6 +33,9 @@ the template codes 1 at or above it after dropping the rows where the column is 
 put a cut in exposure_level.
 - moderator: optional column; when set the estimate is the coefficient of the exposure x \
 moderator interaction and both main effects are included.
+- moderator_level: only when the moderator is a text column or the option names its levels: the \
+level coded 1, the group the estimand puts first ("committed minus single", or a term written \
+rel_status[T.committed], means level "committed"). Leave it null for a numeric moderator.
 - covariates: literal covariate columns; covariates_from_ctx: true when the option also uses the \
 list an earlier step stored in ctx["covariates"]. Never repeat a column of that list in \
 covariates: the covariate step chooses it, and a literal copy would keep it in every universe.

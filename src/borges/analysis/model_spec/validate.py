@@ -9,6 +9,7 @@ from borges.analysis.model_spec.schema import (
 from borges.analysis.model_spec.validate_exposure import (
     exposure_problems,
     is_text,
+    moderator_problems,
     profile_of,
 )
 from borges.analysis.model_spec.validate_standardized import standardized_problems
@@ -147,7 +148,9 @@ def _outcome_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> 
 
 
 def _numeric_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
-    numeric = [spec.moderator, spec.offset_log, *spec.standardize]
+    numeric = [spec.offset_log, *spec.standardize]
+    if spec.moderator_level is None:
+        numeric.append(spec.moderator)
     if spec.exposure_level is None:
         numeric.append(spec.exposure)
     return [
@@ -219,6 +222,7 @@ def validate_spec(
         *_consistency_problems(spec),
         *_outcome_problems(spec, profile),
         *exposure_problems(spec, profile),
+        *moderator_problems(spec, profile),
         *_numeric_problems(spec, profile),
         *_level_problems(spec, profile, ctx_covariates or []),
         *_scale_problems(spec, rule),

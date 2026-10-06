@@ -62,3 +62,22 @@ def exposure_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> 
     if level not in levels:
         return [f"exposure_level '{level}' is not a listed level of '{name}' ({levels})"]
     return []
+
+
+def moderator_problems(spec: ModelSpecOutput, profile: DatasetProfile | None) -> list[str]:
+    name, level = spec.moderator, spec.moderator_level
+    if name is None:
+        return ["moderator_level is set but there is no moderator"] if level is not None else []
+    column = profile_of(profile, name)
+    if column is None:
+        return []
+    if not is_text(column):
+        return (
+            [f"moderator '{name}' is numeric, so moderator_level must not be set"] if level else []
+        )
+    levels = column_levels(column)
+    if level is None:
+        return [f"moderator '{name}' is text: set moderator_level to the level coded 1 ({levels})"]
+    if level not in levels:
+        return [f"moderator_level '{level}' is not a listed level of '{name}' ({levels})"]
+    return []

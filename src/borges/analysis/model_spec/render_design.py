@@ -39,22 +39,23 @@ def covariate_lines(spec: ModelSpecOutput) -> list[str]:
 
 
 FRACTIONAL_LEVEL = (
-    "the exposure is coded 1 only where {column} equals {level} exactly, but {column} is a "
+    "the {role} is coded 1 only where {column} equals {level} exactly, but {column} is a "
     "numeric column with fractional values, so one value is not a group; to cut it, code 1 for "
     "values at or above the cut after dropping the rows where {column} is missing"
 )
 
 
-def _indicator_lines(column: str, level: str) -> list[str]:
+def _indicator_lines(column: str, level: str, role: str = "exposure") -> list[str]:
+    fractional = FRACTIONAL_LEVEL.format(role=role, level=level, column=column)
     return [
         f"    hit = data[{column!r}].astype(str) == {level!r}",
         f"    numeric = pd.api.types.is_numeric_dtype(data[{column!r}])",
         f"    binary = numeric and set(pd.unique(data[{column!r}])) <= {{0, 1}}",
         f"    if numeric and not binary and not (data[{column!r}] % 1 == 0).all():",
-        f"        raise ValueError({FRACTIONAL_LEVEL.format(level=level, column=column)!r})",
+        f"        raise ValueError({fractional!r})",
         "    if not hit.any() and not binary:",
         "        raise ValueError(",
-        f"            'the exposure level ' + {level!r} + ' is not a value of the column ' + "
+        f"            'the {role} level ' + {level!r} + ' is not a value of the column ' + "
         f"{column!r}",
         "        )",
         "    if hit.any():",
@@ -66,6 +67,21 @@ def _varies_lines(column: str) -> list[str]:
     return [
         f"    if len(data) and data[{column!r}].nunique() < 2:",
         f"        raise ValueError('the exposure ' + {column!r} + {CONSTANT_EXPOSURE!r})",
+    ]
+
+
+TEXT_MODERATOR = (
+    " is text and the order of its levels is arbitrary, so the spec must name moderator_level, "
+    "the level coded 1, the group the estimand puts first, as committed in committed minus "
+    "single. Never use category codes, whose alphabetical order can reverse the sign of the "
+    "interaction"
+)
+
+
+def _numeric_moderator_lines(column: str) -> list[str]:
+    return [
+        f"    if not pd.api.types.is_numeric_dtype(data[{column!r}]):",
+        f"        raise ValueError('the moderator ' + {column!r} + {TEXT_MODERATOR!r})",
     ]
 
 
@@ -84,6 +100,10 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
             f"(data[{column!r}].astype(float) >= {cut!r}).astype(float)}})"
         )
     lines += _varies_lines(str(spec.exposure))
+    if spec.moderator is not None and spec.moderator_level is not None:
+        lines += _indicator_lines(spec.moderator, spec.moderator_level, "moderator")
+    elif spec.moderator is not None:
+        lines += _numeric_moderator_lines(spec.moderator)
     if spec.standardize:
         lines += [
             f"    scaled = {spec.standardize!r}",
