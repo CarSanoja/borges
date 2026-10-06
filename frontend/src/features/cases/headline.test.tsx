@@ -66,7 +66,7 @@ describe("HeadlineResult", () => {
     expect(block).toHaveTextContent("Cluster errors by player");
     expect(block).toHaveTextContent("[1.140, 1.580]");
     expect(block).toHaveTextContent("Real data, CC0");
-    expect(block).toHaveTextContent("One recorded live run, not yet replicated");
+    expect(block).toHaveTextContent("One recorded live run. How often five more live runs found the same verdict and flip is in evidence/repeats.md.");
     await userEvent.click(screen.getByRole("button", { name: "Open the recorded run" }));
     expect(onOpen).toHaveBeenCalledWith("red_cards");
   });

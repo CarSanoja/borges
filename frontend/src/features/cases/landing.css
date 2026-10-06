@@ -309,3 +309,11 @@
   font-size: var(--text-sm);
   color: var(--paper-300);
 }
+
+.upload-scope {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--paper-100);
+  border-left: 2px solid var(--gold);
+  padding-left: var(--space-3);
+}

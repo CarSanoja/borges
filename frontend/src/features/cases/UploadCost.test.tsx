@@ -22,8 +22,15 @@ describe("UploadCost", () => {
     expect(note).toHaveTextContent("$1.23 of $5.00");
   });
 
-  it("says it is not billed when the server is scripted", () => {
+  it("says an upload is billable when replays are scripted but live models are available", () => {
     render(<UploadCard health={{ ...base, llm: "scripted" }} onOpenRun={() => undefined} />);
+    expect(screen.getByTestId("upload-cost")).toHaveTextContent("live and billable");
+  });
+
+  it("says it is not billed when the server has no live models", () => {
+    render(
+      <UploadCard health={{ ...base, llm: "scripted", llm_live_available: false }} onOpenRun={() => undefined} />,
+    );
     expect(screen.getByTestId("upload-cost")).toHaveTextContent("not billed here");
   });
 });

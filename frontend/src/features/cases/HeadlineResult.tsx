@@ -38,7 +38,7 @@ function Caveats({ card }: { card: CaseCard }) {
         </li>
       )}
       {live.estimand_change && <li data-testid="headline-estimand">Changes the estimand: {live.estimand_change}</li>}
-      <li>One recorded live run, not yet replicated.</li>
+      <li>One recorded live run. How often five more live runs found the same verdict and flip is in evidence/repeats.md.</li>
     </ul>
   );
 }

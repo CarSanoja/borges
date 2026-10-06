@@ -4,6 +4,7 @@ import type { Health } from "../../shared/types/contracts";
 import { UploadCost } from "./UploadCost";
 import { PiiSummary } from "./PiiSummary";
 import { buildRequest, EMPTY_FORM, validateForm, type UploadForm } from "./uploadRequest";
+import { UPLOAD_SCOPE, useUploadScope } from "./useUploadScope";
 
 const INSTEAD =
   "What the hosted demo can do instead: replay the recorded runs above, or run a curated case scripted on its own data.";
@@ -22,6 +23,7 @@ export function UploadCard({ health, onOpenRun }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<UploadResult | null>(null);
+  const scoped = useUploadScope();
 
   const field = (key: keyof UploadForm) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [key]: event.target.value }));
@@ -120,7 +122,14 @@ export function UploadCard({ health, onOpenRun }: Props) {
                 <input value={form.negativeLabel} onChange={field("negativeLabel")} />
               </label>
             </div>
-            <button type="submit" className="btn btn-primary">
+            {!scoped && (
+              <p className="upload-scope" data-testid="upload-scope">
+                Uploading needs an API key with the {UPLOAD_SCOPE} scope, because an upload starts a billable live run on
+                data the server has not seen. Paste one with "Use an API key" at the top. Anonymous demo access can watch
+                the recorded runs and start curated cases.
+              </p>
+            )}
+            <button type="submit" className="btn btn-primary" disabled={!scoped}>
               Start the analysis
             </button>
             {health && <UploadCost health={health} />}

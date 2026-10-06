@@ -5,7 +5,7 @@ function dollars(value: number): string {
 }
 
 export function UploadCost({ health }: { health: Health }) {
-  const live = health.llm === "nebius";
+  const live = health.llm === "nebius" || health.llm_live_available;
   return (
     <p className="upload-cost" data-testid="upload-cost">
       {live
