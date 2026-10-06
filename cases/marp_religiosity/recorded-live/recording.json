@@ -1,14 +1,14 @@
 {
-  "run_id": "r_20261004T021652_9b9a83",
+  "run_id": "r_20261005T225939_5d10af",
   "case_id": "marp_religiosity",
-  "recorded_at": "2026-10-04T02:16:53Z",
-  "commit": "36b2f77",
+  "recorded_at": "2026-10-05T22:59:39Z",
+  "commit": "16f02e7",
   "dirty": false,
   "llm": "nebius",
   "backend": "contree",
-  "registry_sha": "6b236c9459e13091955a220a6ee8457eed4e1ae559e46dc8955af968f14f437d",
-  "cost_usd": 0.022527099999999994,
-  "n_universes": 10,
+  "registry_sha": "75787cb42fabd082e7401d23da8a0ecd9bcfc46c3378ec0947c8bddaa454a7e2",
+  "cost_usd": 0.03524788000000001,
+  "n_universes": 12,
   "verdict": "POSITIVE ASSOCIATION",
   "flipped_verdict": null
 }

@@ -18,13 +18,14 @@ Factory with ConTree sandboxes.
 | `88040a6` | 31 of 35 | A numpy median of a column with missing values gave a NaN threshold and a constant exposure, and the re-plan failed before the earlier step's other options were tried (red_cards); a step that formats the model's output was placed after the model (red_cards); the ctx guard refused covariate lists and did not swap a standardised outcome (marp_religiosity); the products guard asked a model to read a winsorised column none of its options used (checkout blind). In completed runs: ConTree operation timeouts were not retried and one replaced the baseline default on the full data (bank, marp_norms); an outcome choice written in prose ("Write 'x' to ctx['outcome']") was not seen, so the model ignored it (marp_norms); an unoriented principal component flipped sign between the sample and the full data and its universes were excluded as reversed (marp_norms). | `7e528d0`, `715c289`, `60a7a33`, `4b68f49`, `36e0670` |
 | `efe1aa5` | 32 of 35 | The planner promised one column per level of an identifier (`user_id_17`) and the covariate step ran out of memory (checkout blind); an exposure marked as the one of interest was outranked by a list of independent variables and the template was refused (bank); a duplicated `job_missing` design column broke the model (bank). In completed runs: the options of an outcome transform built differently named columns, so the decision had no effect (hurricanes); a repair reversed a principal component's direction (marp_religiosity); a derived variable named differently was reported as a change of covariates; the cluster choice was split into ctx by an earlier step; a template spec dropped the covariates its option named (red_cards); an adversary covariate was probed only under the model's default, and a free-code option failed on it (checkout); `np.log1p` of negative balances left NaN and -inf and lost 9 of 14 universes (bank); the products guard refused a Poisson template on the raw count (hurricanes). | `ce3c2bc`, `d6d6140`, `a1b5133`, `bf2dc9d`, `30bfa3b`, `81c65dc`, `70d80d3`, `0708398`, `ee23905`, `32e050d`, `baef34e`, `83a8878` |
 | `cecf187` | 35 of 35 | No run failed. In completed runs: an option written as "Same regression as OLS-HC3" was not expanded and its template dropped every covariate (marp_norms); an option that says it uses no covariates was made to read the covariate list, and a Firth option was fitted by plain maximum likelihood (bank, checkout blind); an adversary filter left a column all missing and an unguarded mode lost 4 universes (bank); the gateway read a prose label listing columns as a table header and denied the judge (marp_religiosity); a repair passed a link class to statsmodels; narrator caveats restated the search method. | `441b72d`, `8ae0623`, `483e1ef`, `e95ba73`, `e20e0fb`, `5b7869e` |
+| `16f02e7`, red_cards `5070877`, bank `6317040` (final) | 34 of 35 | The failed red_cards run: its model option said "weighted" without naming a weight, the guard refused the unweighted code, and the re-plan's code was stopped by Armor (`__import__` read as dynamic code). In the recordings of the same round: a re-plan that brought back a rejected option (red_cards) and a model weighted by its own exposure (bank), both below | `05d0306`, `80d3ae6`; the vague "weighted" spec is open |
 
 The d187b02 batch was stopped after 25 runs because the causes it had found were already fixed;
 the next batch ran in full at the fixed commit.
 
-The raw run files of the last two batches are in `evidence/repeats/` (`efe1aa5.tar.gz`,
-`cecf187.tar.gz`); `evidence/repeats.md` is generated from the cecf187 batch and
-`evidence/adversary-ablation.md` from both.
+The raw run files of the last three batches are in `evidence/repeats/` (`efe1aa5.tar.gz`,
+`cecf187.tar.gz`, `final-2026-10-05.tar.gz`); `evidence/repeats.md` is generated from the final
+batch and `evidence/adversary-ablation.md` from all three.
 
 ## After the last batch
 
@@ -149,3 +150,155 @@ sentence named the log scale, so the check passed. A sentence that carries the o
 and speaks of additional or more units with no log scale or percentage is now an error, and the
 final summary drops it and states the scale (`9d33e01`); replayed on every summary of the last
 five rounds, it marks that sentence and nothing else.
+
+
+## From `9b95d04` to the final recordings
+
+From `9b95d04` to `6317040` the six recordings were made again in every round, each read universe by
+universe, and each defect was fixed with a test and replayed over the earlier rounds before the
+next recording. The defects, in the order they surfaced:
+
+- Option code that did not do what its spec said. A default "Keep all sessions" dropped internal
+  and short sessions unless a ctx flag was set (checkout, 1 of 22 "keep all" options); a
+  "Return the full dataframe unchanged" option excluded internal sessions, and winsorizing options
+  also dropped the 82% of bank customers never contacted (5 of 1,679 option codes); an i.i.d.
+  baseline fitted HC1 errors; a covariate option said "Set ctx['covariates']" and never wrote it,
+  and renamed `get_dummies` columns by position (6 of 1,616 codes); a PCA of nine items z-scored
+  each person across the items instead of each item across people (4 of 1,672 codes, the
+  marp_religiosity flip depended on it). Each is now a coder or harness check; the replay over
+  every recorded option code marks those cases and nothing else.
+- Templates that fitted another model than the option named. A model spec that read an outcome an
+  earlier step built (`log1p(alldeaths)`) modelled the raw column; a label "with month fixed
+  effects" left month out; an adversary option that assigned a covariate the data lacked fitted the
+  baseline under its label; an "MM-estimation robust regression" was fitted by OLS (1 of 740 model
+  options); a model reported the 97.5% interval as its 95% interval (2 of 740); the negative binomial dispersion was a moment estimate (the hurricanes
+  flip was significant only at alpha 0.23; the maximum-likelihood alpha is 1.67, found as the root
+  of the profile score). Each now follows the option, or goes to free code.
+- Free code on another scale. A marp_norms WLS z-scored the religiosity × norms product after
+  multiplying and left the outcome raw under a standardised rule: 0.0747 where the consistent
+  estimate is 0.034. The harness now fails a product term that is not the product of its main
+  effects' columns, a raw outcome under a standardised rule, and corrects an n that counts the rows
+  given instead of the rows fitted; replayed over 181 universes of two rounds, it marks that option
+  in its four universes and nothing else.
+- Lost options. A model that one-hot encoded and then indexed the data by the dummy names made the
+  upstream probe drop both red_cards covariate options with position (three universes left); the
+  model is now repaired first, as it is when a formula reads a whole-frame Series while fitting the
+  complete cases (a patsy row mismatch that dropped a red_cards option). A covariate option that listed `country_1..23` in ctx and returned
+  the data unchanged now fails its own smoke run with the column it should name.
+- Reports. "An odds ratio" for a Poisson rate ratio; an absent minimal flip described as "null" or
+  "absent"; a count of single-change flips that did not match the garden; universe ids in the
+  summary; a covariate option that cut the bank sample from 45,211 to 8,252 rows, now named in a
+  caveat (6 bank recordings of 114, all real).
+- Labels that named another model. A default called "OLS linear probability model" whose spec
+  exponentiated the linear coefficient was fitted as a logit under the OLS label (bank); the
+  planner now rejects a linear-probability option under an odds-ratio rule (2 of 126 plans, both
+  real). A median quantile regression rebuilt the religiosity score as the item mean, so its "PCA"
+  universes repeated the mean ones (1 of 331 model codes overwrite a column an earlier step built).
+  A model spec that assigned `y = df['outcome']` from the transform step was fitted on the raw
+  deaths, so the log and square-root transforms gave one estimate (14 of 1,315 model options assign
+  the outcome that way; all now model the produced column).
+- Repairs that answered the wrong failure. Seven marp_norms universes failed when the sandbox
+  service let an upload expire, and the runner rewrote six options' code in answer; a repair in
+  bank added the missing-value indicators its option's spec forbids, so the option became a no-op.
+  A sandbox failure is now retried without touching the code, and a runtime repair is reviewed
+  against its spec before it replaces the old code.
+- Reports. The original analysis of bank fitted 8,252 of the 45,211 rows that reach its model and
+  said nothing (3 of 126 plans now carry a caveat naming the columns whose missing values drop the
+  rows); 7 of 51 flip narratives never gave the flipped estimate; a dead model step was described
+  as one "the model ignores".
+
+- Checks that rejected sound code. Dummies named after their level (`gender_woman`, `country_France`)
+  did not count as built from their covariate, so "Add league and referee country" was dropped
+  from red_cards; a Gamma link written `"Log"` was not read as a log link; a covariate option that
+  listed `platform_android`, the level `get_dummies(drop_first=True)` drops, failed three repairs
+  in a row (4 options in all, both checkout); a model spec that wrote its outcome as
+  `converted * 100` to get percentage points lost the checkout default (Borges converts units
+  itself). Each now passes with what the code built, and a note says what was substituted.
+- Labels that named an interval the run did not compute. statsmodels 0.15 gives Logit, GLM and
+  count models the HC0 covariance whatever HC1, HC2 or HC3 is asked (the four standard errors are
+  equal); 33 model options in 25 recordings asked for one of them. Reports now say the interval
+  is HC0. An option that only divided the result by 100 (same p-value and n; 12 of 10,518 universe
+  pairs) is a unit change and treated as a no-op; a quantile regression on an outcome with few
+  values gets a caveat; covariates the model put in its design twice are named as a second copy,
+  not as dropped covariates (56 traces, all marp_norms).
+- Recordings of 5 October (rec33 to rec35, 18 runs). The reviewer was told a covariate option had
+  dropped its dummies and failed an option whose code was right (checkout lost "Adjust for platform
+  only"); the reviewer now reads the harness note on substituted dummies. A covariate change was
+  reported as a re-analysis of the same quantity; it now counts as an estimand change. A cloglog
+  link was reported as an odds ratio; links are read from the fitted family, and a complementary
+  log-log fit reports a hazard ratio. An option asking for weighted least squares ran unweighted;
+  code that drops the weights an option asks for is refused. A Gamma GLM and a probit were
+  templated as OLS; families the template does not fit go to free code. A narrator line read
+  "verdict:." when no flip existed; that sentence is removed. A transient connection error wrapped
+  in another exception ended a bank run; the retry walks the exception's causes. A column the
+  template renamed as the second copy of a covariate (`contact_missing_repeat1`) was named in a
+  caveat as a dropped covariate; it is now named by the column.
+- Recordings of 5 October (rec36 and rec37, 12 runs). The marp_norms headline of rec37 was fitted
+  on psychological well-being, not on overall well-being: the default outcome option built a
+  column and did not write ctx['outcome'] although its spec said "write to ctx['outcome']", its
+  sibling did, and the model fell back to the sibling's outcome. The guard that holds code to the
+  ctx keys its spec promises missed the phrase "write to"; it now reads it, and an option must write
+  ctx['outcome'] when the other options of its step do. A note that named the z-scored outcome by
+  the template's default name, not the outcome read at run time, is what showed it.
+  The reviewer called a square-root option unfaithful because the step's shared column was named
+  `log_alldeaths_plus1`, quoting a log1p the spec did not contain, and the repair then rewrote
+  the code as log1p (two hurricanes options lost). A review that calls an option unfaithful now
+  carries a quote, Borges checks that the option's spec contains it, asks once more if it does not,
+  and drops the point if the quote still does not match. A quasi-Poisson option fitted
+  `scale="X2"` with `cov_type="HC0"`, which statsmodels ignores under a sandwich covariance (the
+  interval equalled the Poisson HC0 one to 14 digits); the guard and the model spec now refuse that
+  pairing. When every universe with an alternative of one decision failed (bank: the covariate
+  option listed missing-value indicators only the default option creates), a caveat now says the
+  decision was not tested. `statsmodels.stats.proportion` is allowed in option code (a Wilson
+  interval option was lost to the import list twice in 326 recordings).
+- A made-up flip (rec38, 2415a4b). The bank run reported CAP THE CALLS reversed to NO CASE FOR A
+  CAP under the adversary's "Bayesian logistic regression". After a runtime repair, its code set the
+  coefficient to 0 and its variance to 1 whenever the fit was not finite, then returned OR 1.0 with
+  an interval [0.5, 2.0] and p 0.5 as a last resort: the flipped universe, OR 1.046 [0.15, 7.8],
+  p 0.5165, is exp(N(0, 1)) under seed 42. The same code divided the coefficient by the standard
+  deviation of a column it had not standardised and returned the share of draws above 1 as its
+  p-value; both reviews passed it. The model guard now refuses fixed numbers (or an identity
+  covariance) assigned in a branch that tests isfinite, isnan or isinf, or in an except clause,
+  unless the branch raises, and a p-value computed as the mean of a comparison. Over the 389
+  distinct model codes recorded, it flags only this option.
+- Prefixes read as broken formulas (fin10, 44a43e5). A red_cards repeat failed outright: every
+  model option and the re-plan were refused with "unexpected end of formula". The code tested
+  term.startswith('C(') to parse the plan's covariates and built "y ~ x + C(g) + " before joining
+  them; the guard read both constants as unfinished formulas. Across 25,145 cached LLM replies the
+  pattern appears three ways ('C(' 44 times). Accepting any truncated fragment would have reopened
+  a deliberate refusal (an unclosed I( call split across constants), so the guard now exempts only
+  constants used as startswith/endswith arguments or as the left side of in, and ignores a
+  trailing operator; nine of the sixteen refused codes from that run now pass and the other seven
+  have real faults.
+- An aggregation written for one group (rec40, 95200c8). The checkout recording failed: every
+  model option and the re-plan died on "the exposure level 'treatment' is not a value of the
+  column 'variant'". The cause was one step earlier: "Group by user_id; compute variant as the
+  first variant per user" was coded as if apply() received one user's rows, and returned a single
+  row. It passed its smoke run and the model was blamed. The harness now requires a transform or
+  feature option that says "group by X", and returns fewer rows than it received, to return one
+  row per distinct value of X; a per-group column that keeps every row is untouched. The six
+  distinct recorded checkout aggregations pass the new check on the real data.
+- A rejected option brought back by a re-plan (rec41, 16f02e7). The red_cards recording reported
+  BIAS DETECTED with OR 1.37 on a baseline the judge had rejected. One step's options had all
+  failed their smoke runs, the step was re-planned, and the planner proposed the same option the
+  judge had refused; the re-plan did not consult the judged ledger. Re-planned options the judge
+  already rejected are now dropped (`05d0306`), and red_cards was recorded again at `5070877`.
+  None of the other five recordings of that round made a re-plan.
+- A fleet seed imported one event at a time (`e295b8f`). Each imported record re-read and
+  re-verified the whole identity chain, so a fresh home took seconds per hundred records and the
+  runtime queue tests timed out under load. The import now verifies once, chains every event and
+  writes once, with the same chain and anchors.
+- A headline weighted by its own exposure (the independent refit of the final recordings). The
+  bank planner's default model said "weighted logistic regression" without naming a weight; the
+  guard that refuses code dropping the weights an option asks for pushed the coder to weight each
+  client by `campaign`, the exposure itself, as frequency weights. The recorded headline was OR
+  0.9067 [0.9013, 0.9122], p 2.5e-225; unweighted it is 0.8773 [0.8613, 0.8935], p 2.3e-44.
+  The verdict holds, the number and its interval did not. The harness now records the weights of
+  every statsmodels model and fails the step when the model that reports the estimate weights its
+  rows by the exposure column (`80d3ae6`). Of the 10 distinct recorded model codes that weight,
+  this is the only one that weights by the exposure; the others use inverse variances or another
+  column. bank was recorded again at `6317040`.
+- A citation nobody checks (the refit of red_cards). The judge attached a DOI of a
+  neuroinflammation paper to the flip's "at least 2 games together" option. Citations are written
+  by the planner, adversary or judge and nothing retrieves them; the CLI and the web app now label
+  them "cited by the model, not checked" and no longer link them (`43d913c`).

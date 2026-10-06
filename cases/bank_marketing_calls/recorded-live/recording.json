@@ -1,14 +1,14 @@
 {
-  "run_id": "r_20261004T022158_acad7c",
+  "run_id": "r_20261005T234748_d4616e",
   "case_id": "bank_marketing_calls",
-  "recorded_at": "2026-10-04T02:21:58Z",
-  "commit": "36b2f77",
+  "recorded_at": "2026-10-05T23:47:48Z",
+  "commit": "6317040",
   "dirty": false,
   "llm": "nebius",
   "backend": "contree",
-  "registry_sha": "6b236c9459e13091955a220a6ee8457eed4e1ae559e46dc8955af968f14f437d",
-  "cost_usd": 0.023289359999999995,
-  "n_universes": 7,
+  "registry_sha": "8e4181468aa11efaa59ded5e79b4ae416cbab3470580da95a77029ee998d3f56",
+  "cost_usd": 0.025682220000000002,
+  "n_universes": 12,
   "verdict": "CAP THE CALLS",
   "flipped_verdict": null
 }

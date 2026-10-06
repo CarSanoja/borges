@@ -1,14 +1,14 @@
 {
-  "run_id": "r_20261004T021145_b35c59",
+  "run_id": "r_20261005T224722_45a899",
   "case_id": "checkout_ab",
-  "recorded_at": "2026-10-04T02:11:45Z",
-  "commit": "36b2f77",
+  "recorded_at": "2026-10-05T22:47:22Z",
+  "commit": "16f02e7",
   "dirty": false,
   "llm": "nebius",
   "backend": "contree",
-  "registry_sha": "6b236c9459e13091955a220a6ee8457eed4e1ae559e46dc8955af968f14f437d",
-  "cost_usd": 0.0244157,
-  "n_universes": 10,
+  "registry_sha": "75787cb42fabd082e7401d23da8a0ecd9bcfc46c3378ec0947c8bddaa454a7e2",
+  "cost_usd": 0.02912408,
+  "n_universes": 16,
   "verdict": "SHIP",
   "flipped_verdict": "DON'T SHIP"
 }

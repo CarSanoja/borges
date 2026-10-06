@@ -1,14 +1,14 @@
 {
-  "run_id": "r_20261004T021401_f056a7",
+  "run_id": "r_20261005T233430_dece7c",
   "case_id": "red_cards",
-  "recorded_at": "2026-10-04T02:14:01Z",
-  "commit": "36b2f77",
+  "recorded_at": "2026-10-05T23:34:30Z",
+  "commit": "5070877",
   "dirty": false,
   "llm": "nebius",
   "backend": "contree",
-  "registry_sha": "6b236c9459e13091955a220a6ee8457eed4e1ae559e46dc8955af968f14f437d",
-  "cost_usd": 0.02966902,
-  "n_universes": 7,
-  "verdict": "NO CLEAR EVIDENCE",
-  "flipped_verdict": "BIAS DETECTED"
+  "registry_sha": "18cccaf3288852220358255247fad38ea682f0b9eebfc1dc4000c1c194841053",
+  "cost_usd": 0.030605380000000005,
+  "n_universes": 22,
+  "verdict": "BIAS DETECTED",
+  "flipped_verdict": "NO CLEAR EVIDENCE"
 }

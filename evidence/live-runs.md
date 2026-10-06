@@ -1,10 +1,17 @@
 # Live runs on Nemotron through Nebius Token Factory
 
-State at HEAD, 4 October 2026 (UTC). The six committed recordings were made on 4 October from an
-empty model cache, on Token Factory models and ConTree sandboxes, at commit `36b2f77`. Later
-commits changed the coder's model-spec validation (`a5252e3`) and added documents and evidence;
-they did not change a recording. The recordings of 2 October and the first ones of 3 October were
-replaced and are not kept. The 2 October failure table below is kept as history.
+State at `43d913c`, 5 October 2026 (UTC). The six committed recordings were made on 5 October from
+an empty model cache, on Token Factory models and ConTree sandboxes: four at `16f02e7`, red_cards
+at `5070877` and bank_marketing_calls at `6317040`. Between `16f02e7` and `43d913c` the code
+changed in four places: re-plans drop options the judge rejected (`05d0306`), the fleet seed
+imports in one pass (`e295b8f`), a model may not weight rows by its own exposure (`80d3ae6`), and
+model-written citations are labelled as unchecked (`43d913c`). None of the four `16f02e7`
+recordings made a re-plan or weights by the exposure, so none of these changes touches them.
+red_cards was recorded again because its `16f02e7` recording took a rejected option as its
+baseline through a re-plan. bank was recorded again because the independent refit
+(`evidence/refit.md`) found its `5070877` headline weighted by the exposure. The 4 October
+recordings were replaced. The defects each round of recordings exposed are in
+`evidence/census.md`.
 
 | Role | Model |
 |---|---|
@@ -25,63 +32,69 @@ re-executes a recorded universe from scratch and must match the recording exactl
 
 ## The six recordings
 
-| Case | Run | Calls (cached) | Tokens in / out | Cost | Universes (failed) |
-|---|---|---|---|---|---|
-| checkout_ab | r_20261004T021145_b35c59 | 29 (0) | 59,721 / 9,841 | $0.0244 | 10 (0) |
-| red_cards | r_20261004T021401_f056a7 | 40 (0) | 77,546 / 8,581 | $0.0297 | 7 (0) |
-| marp_religiosity | r_20261004T021652_9b9a83 | 23 (0) | 74,622 / 4,802 | $0.0225 | 10 (0) |
-| marp_norms | r_20261004T021841_a241e4 | 39 (0) | 131,782 / 9,665 | $0.0408 | 29 (0) |
-| bank_marketing_calls | r_20261004T022158_acad7c | 32 (0) | 63,783 / 7,797 | $0.0233 | 7 (0) |
-| hurricanes | r_20261004T023159_0d9d8d | 32 (0) | 59,226 / 5,578 | $0.0253 | 17 (0) |
+| Case | Run | Commit | Calls (cached) | Tokens in / out | Cost | Universes (failed) |
+|---|---|---|---|---|---|---|
+| checkout_ab | r_20261005T224722_45a899 | `16f02e7` | 41 (0) | 84,125 / 8,316 | $0.0291 | 16 (0) |
+| red_cards | r_20261005T233430_dece7c | `5070877` | 41 (0) | 91,006 / 9,408 | $0.0306 | 22 (0) |
+| marp_religiosity | r_20261005T225939_5d10af | `16f02e7` | 31 (0) | 109,730 / 7,543 | $0.0352 | 12 (0) |
+| marp_norms | r_20261005T230329_f634c9 | `16f02e7` | 53 (2) | 193,230 / 15,222 | $0.0564 | 29 (8) |
+| bank_marketing_calls | r_20261005T234748_d4616e | `6317040` | 33 (0) | 72,311 / 7,390 | $0.0257 | 12 (0) |
+| hurricanes | r_20261005T231651_d38583 | `16f02e7` | 39 (0) | 85,268 / 7,994 | $0.0304 | 18 (0) |
 
-Calls are the `llm_calls` of each recording's last `usage` event. The hurricanes `spans.jsonl`
-has 33 `model_call` spans: one is a judge call with status `GatewayDenied` that the gateway
-refused, so no model was called and no tokens were counted.
+Calls are the `llm_calls` of each recording's last `usage` event, $0.2073 for the six. The model
+cache was empty when each batch started. The two cached calls in marp_norms are the same runtime
+repair of `opt_pca_cnorm` asked twice inside that run (`borges.cache.hit` in `spans.jsonl`).
+marp_norms has 8 failed universes. Six of them are every universe with the PCA cultural-norms
+scale, whose step was stopped. The report says that decision was not tested.
 
 | Case | Original verdict | Smallest flip found | Reproduce |
 |---|---|---|---|
-| checkout_ab | SHIP: 0.5277 pp [0.107, 0.9484], p 0.014, n 29926 | Exclude internal sessions only: -0.1398 [-0.493, 0.2135], p 0.438, n 29587, DON'T SHIP (direction). Not marked contaminated | baseline u_d081a4f779 MATCH, flip u_2daf3a388e MATCH |
-| red_cards | NO CLEAR EVIDENCE: OR 1.134 [0.9493, 1.354], p 0.166, n 123868 | Negative binomial regression with robust SE: OR 1.254 [1.05, 1.498], p 0.0126, n 123868, BIAS DETECTED (significance) | baseline u_5da228aed5 MATCH, flip u_b11428d86a MATCH |
-| marp_religiosity | POSITIVE ASSOCIATION: 0.06064 [0.05006, 0.07122], p 2.76e-29, n 10503 | none | u_7e77454495 MATCH, u_8228635c7e MATCH |
-| marp_norms | DEPENDS ON NORMS: 0.02137 [0.0111, 0.03164], p 4.55e-05, n 10503 | none | u_77372ba4e4 MATCH, u_6b8631b9bb MATCH |
-| bank_marketing_calls | CAP THE CALLS: OR 0.8694 [0.8552, 0.8839], p 7.02e-62, n 45211 | none | u_4497380b21 MATCH, u_f695e88066 MATCH |
-| hurricanes | FEMININE NAMES DEADLIER: 1.098 [1.082, 1.114], p 1.14e-35, n 93 | Adjust for elapsed years plus Quasi-Poisson regression: 1.056 [0.9793, 1.14], p 0.156, n 92, NO CLEAR EVIDENCE (significance; labelled an estimand change) | baseline u_490c1df0e1 MATCH, flip u_1f1eec7c9f MATCH |
+| checkout_ab | SHIP: 0.8495 pp [0.1516, 1.547], p 0.017, n 16000 users | Exclude internal sessions: -0.1492 [-0.7987, 0.5004], p 0.653, n 15829, DON'T SHIP (direction). Not marked contaminated | baseline u_e929526ea4 MATCH, flip u_fb948f9bb7 MATCH |
+| red_cards | BIAS DETECTED: OR 1.17 [1.05, 1.305], p 0.0046, n 124621 | Keep dyads with at least 2 games together plus skin-tone threshold at 0.5: OR 1.123 [0.9812, 1.285], p 0.0922, n 61822, NO CLEAR EVIDENCE (significance) | baseline u_e493e6469a MATCH, flip u_0c4e209321 MATCH |
+| marp_religiosity | POSITIVE ASSOCIATION: 0.09313 [0.07574, 0.1105], p 8.61e-26, n 10170 | none | u_abc552de6d MATCH, u_0e615ae60a MISMATCH at the 7th digit (below) |
+| marp_norms | DEPENDS ON NORMS: 0.03518 [0.01825, 0.05212], p 4.67e-05, n 10503 | none | u_52d4b71a62 MATCH, u_23b24e6d08 MATCH |
+| bank_marketing_calls | CAP THE CALLS: OR 0.8716 [0.8573, 0.8862] per call, p 3.07e-59, n 45211 | none | u_df834e741d MATCH, u_c20f30a6a4 MATCH |
+| hurricanes | NO CLEAR EVIDENCE: 0.01066 on log1p(deaths) [-0.07266, 0.09399], p 0.802, n 93 | none | u_b4716afa30 MATCH, u_6ac18fdb4b MATCH |
 
-The lead ran the reproduce column: 12 of 12 MATCH. For the four cases without a flip, the two ids
-are the baseline and the last universe. The reproduce results are the lead's; this document did
-not re-run them.
+The reproduce column was run on 5 October on the local backend, at `5070877` and, for bank, at
+`6317040`. For the cases
+without a flip, the second id is the finished universe farthest from the baseline. 11 of 12
+MATCH. The twelfth is the adversary's median quantile regression in marp_religiosity. On macOS
+it gives 0.04461034 [0.03156106, 0.05765961]; the recording, on ConTree's Linux, gave
+0.04461015 [0.03156089, 0.05765941]. The relative difference is 4e-6, the p-value, n and verdict
+are equal, and the cause is the iterative solver of `QuantReg`. Reproduction is exact for the
+closed-form and IRLS fits, and within 1e-5 for the quantile regression across platforms.
+Every baseline and flip was also refitted by an auditor that did not read the code, from the
+specs and the raw data (`evidence/refit.md`). All agree to 2e-7 or better.
 
 Design-weighted robustness share in the recordings (`report.robustness`), with the universes
-explored: checkout_ab 0.5 (10), red_cards 0.33 (7), marp_religiosity 1.0 (10), marp_norms 1.0
-(29), bank_marketing_calls 1.0 (7), hurricanes 0.8 (17). The report rates a share only with
-enough distinct results; only marp_norms (1.0) and hurricanes (0.8) have a rating, the others
-say "too few to rate". For bank, the design note says one decision changed at a time and
-interactions between decisions are not covered.
+explored: checkout_ab 0.56 (16), red_cards 0.70 (22), marp_religiosity 1.0 (12), marp_norms 1.0
+(29), bank_marketing_calls 1.0 (12), hurricanes 1.0 (18). Each share comes from a uniform random
+sample of the analysis grid, independent of the beam search. The report states the sample size
+and the number of distinct results with the share.
 
 ## What the recordings show
 
-- **checkout_ab.** The data is synthetic (`cases/checkout_ab/generate.py`). The baseline is now
-  the naive default: keep all sessions, SHIP. The smallest flip excludes internal sessions and
-  gives DON'T SHIP. The recording's flip has `contaminated: false`: it is no longer the
-  direction the r6 jury criticised, where a plan that already excluded invalid rows flipped by
-  re-including them. The column notes still say internal sessions are not genuine customers, so
-  the model had that hint. The replication with the notes stripped is not done.
-- **One re-plan.** The checkout run made one live `step.replanned` event. The model step lost
-  both options (`model_ols_clustered`, `model_glm_robust`) and the planner replaced them with
-  `model_linear_platform_day`, `model_logit_robust_se` and `model_wls_platform_day`.
-- **red_cards.** The baseline is NO CLEAR EVIDENCE (OR 1.134, p 0.166). The smallest flip is
-  significance only, under a negative binomial model with robust SE. The 29 teams of Silberzahn
-  et al. (2018) reported ORs between 0.89 and 2.93. Seven universes is a narrow space; the
-  report does not rate the share.
-- **hurricanes.** The flip changes two decisions (elapsed years as a covariate, Quasi-Poisson)
-  and the recording labels it an estimand change: it adds a covariate, so it answers a
-  different question.
-- **bank_marketing_calls.** No flip in 7 universes. The significance-only flip of 2 October
-  (listwise deletion, robust SE) that the r6 jury disputed is not in the recording.
-- **MARP.** No flip in 10 universes (religiosity) and 29 (norms).
-- No universe failed in any of the six.
-- One run per case is one sample of a model. It is not a measure of how often Nemotron finds a
-  flip, and it is not a comparison with another tool.
+- **checkout_ab.** The data is synthetic (`cases/checkout_ab/generate.py`). The plan aggregates
+  sessions to users (16,000), keeps all sessions by default and says SHIP. Excluding the 171
+  internal sessions gives DON'T SHIP. That is the planted answer, reached through a model-written
+  plan. The column notes say internal sessions are not genuine customers, so the model had that
+  hint. The blind-notes repeats (`evidence/repeats.md`) measure how often it finds the exclusion
+  without them.
+- **red_cards.** The plan asks whether a player in the darker half of the skin-tone ratings has
+  higher odds of any red card. BIAS DETECTED with OR 1.17. The smallest flip needs two changes
+  (dyads with at least 2 games together, the 0.5 threshold) and crosses p = 0.05 only. The 29
+  teams of Silberzahn et al. (2018) reported ORs between 0.89 and 2.93, median 1.31.
+- **hurricanes.** The planner's only filter excludes the top 1% of deaths, which drops the
+  deadliest storm (1,833 deaths; 94 storms become 93) from every universe. No universe shows feminine names deadlier. That is the
+  outlier critique of the original study, and it is one plan's choice; the repeats show how often
+  the planner makes it.
+- **bank_marketing_calls.** No flip in 12 universes. OR 0.872 per extra call, unweighted. The
+  `5070877` recording had reported 0.907 from a model that weighted each client by the number of
+  calls; the refit caught it (`evidence/refit.md`).
+- **MARP.** No flip in 12 universes (religiosity) and 29 (norms).
+- One run per case is one sample of a model. The repeats in `evidence/repeats.md` measure how
+  stable the verdict and the flip are across runs.
 
 ## BLADE benchmark
 
@@ -97,7 +110,7 @@ metric is not computed. See `evidence/blade/README.md`.
 
 ## ConTree against the real service
 
-All six recordings above ran on ConTree. Earlier checks on 2 October 2026:
+All six recordings above ran on ConTree (`backend: contree` in each `recording.json`). Earlier checks on 2 October 2026:
 
 | Check | Result |
 |---|---|
@@ -130,6 +143,21 @@ test.
 | BLADE: matcher replies were `{}` for model and transform items, so scores were 0% | BLADE-style prompts with worked examples, a second look on empty replies, letter-based pair parsing and an offline re-score from cached replies | 6c5217f, 94fb417 |
 
 The coder default changed in `8895e4a`, with `BORGES_CODER_MODEL` added in `201d92b`.
+
+## 5 October: live failures and fixes
+
+The rounds of 5 October are described in full in `evidence/census.md`. The table lists those
+found while the final recordings were made.
+
+| Live failure (run) | Fix | Commit |
+|---|---|---|
+| bank (rec38): a flip to NO CASE FOR A CAP from a Bayesian logit whose repaired code returned the coefficient 0 and variance 1 when the fit failed, and a p-value computed as a share of draws | Fixed numbers or an identity covariance assigned in a branch that tests isfinite/isnan/isinf or in an except clause are refused unless the branch raises, and so is a p-value computed as the mean of a comparison | 072aac4 |
+| red_cards (fin10): `term.startswith('C(')` and `"y ~ x + "` read as unfinished formulas; every model option and the re-plan were refused | Constants used as startswith/endswith/in probes, or that end in an operator, are not parsed as formulas | e62ed6d |
+| checkout (rec40): "group by user_id" coded as if apply() saw one user, returning one row; the model was blamed | A transform that says "group by X" and returns fewer rows must return one row per value of X | 70292e4 |
+| red_cards (rec41): a re-plan brought back an option the judge had rejected, and it became the baseline (BIAS DETECTED, OR 1.37) | Re-planned options the judge already rejected are dropped | 05d0306 |
+| Runtime queue tests timed out under load: the fleet seed imported one event at a time and re-verified the chain each time | One verification and one write for the whole import | e295b8f |
+| bank (rec41, found by the independent refit): the default model weighted each client by `campaign`, the exposure, as frequency weights (OR 0.9067, interval three times too narrow) | A model whose weights equal the exposure column fails the step | 80d3ae6 |
+| red_cards (rec42, found by the refit): the judge's citation for the flip's games filter is a neuroinflammation DOI | Model citations are labelled "cited by the model, not checked" and no longer linked | 43d913c |
 
 ## 2 October: live failures and fixes (history)
 

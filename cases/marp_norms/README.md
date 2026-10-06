@@ -71,7 +71,7 @@ family.
 - `build_fixtures.py` writes `fixtures/` and `case.json`, runs the case once with the scripted
   provider, and builds the narrator from that run. `--grid` also rewrites `grid_summary.json`.
 - `recorded/events.jsonl` is `borges record-demo --case marp_norms --llm scripted`.
-- `recorded-live/events.jsonl` is the live Nemotron recording of 4 October 2026 (see
+- `recorded-live/events.jsonl` is the live Nemotron recording of 5 October 2026 (see
   `evidence/live-runs.md`); the web app plays it by default.
 
 The fixtures are hand-built, not model output: the usage they carry is zero and the model field reads `scripted-fixture`. Regenerate with

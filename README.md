@@ -18,7 +18,7 @@ smallest flip it found.**
 > ```bash
 > uv sync
 > uv run borges run --case marp_norms --llm scripted
-> uv run borges reproduce --case checkout_ab --source live --universe u_2daf3a388e
+> uv run borges reproduce --case checkout_ab --source live --universe u_fb948f9bb7
 > ```
 >
 > The first is an offline scripted replay: the data, the code and every statistic are real, no
@@ -32,7 +32,7 @@ smallest flip it found.**
 >
 > The second re-executes the flipping universe from the live Nemotron recording of the checkout
 > case and prints `MATCH` when the result equals the recording. Six cases were recorded live on
-> 4 October 2026 on ConTree sandboxes from an empty cache, for $0.0225 to $0.0408 each; the web
+> 5 October 2026 on ConTree sandboxes from an empty cache, for $0.026 to $0.056 each; the web
 > app plays those recordings by default. The status table below says what is and is not live.
 >
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
@@ -64,11 +64,11 @@ Be clear about this before reading further. The source of truth for every live n
 
 | | State today |
 |---|---|
-| Nemotron through Token Factory | **Six cases ran live on 4 October 2026 (UTC)**, from an empty model cache, at commit `36b2f77`: 195 calls in all (29, 40, 23, 39, 32, 32), $0.0225 to $0.0408 per case, 0 failed universes. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks |
+| Nemotron through Token Factory | **Six cases ran live on 5 October 2026 (UTC)**, each from an empty model cache: four at commit `16f02e7`, red_cards at `5070877` and bank at `6317040` (the changes between them are listed in `evidence/live-runs.md`). 238 calls in all, $0.026 to $0.056 per case ($0.21 for the six). Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks |
 | ConTree sandboxes | **All six recordings ran on ConTree** (`backend: contree` in each `recording.json`). Earlier, on 2 October 2026, `tests/sandbox/test_contree_live.py` passed in 41.8 s |
 | What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". Each recording also has `spans.jsonl`, `audit.jsonl` and `recording.json`. A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
-| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the last universe) of all six recordings: 12 of 12 MATCH, run by the project lead (MATCH proves the recorded code is deterministic, not that the statistics are correct) |
+| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the farthest universe) of all six recordings on macOS: 11 of 12 MATCH. The twelfth, a median regression recorded on ConTree's Linux, differs by 4e-6 relative, with the same p-value, n and verdict. MATCH proves the recorded code is deterministic. Correctness was checked separately: an auditor that did not read the code refitted every baseline and flip from the specs and the raw data, and all agree to 2e-7 (`evidence/refit.md`). That refit caught one wrong headline, bank's, which was fixed and recorded again |
 | BLADE benchmark | Ran live on 4 October: mean F1 over 12 datasets 0.468 (planner arm) and 0.480 (adversary arm), one repeat each. The 0.012 difference is smaller than the gap between the two committed tables, and one repeat cannot show it is more than noise (`evidence/blade/README.md`) |
 | Hosted public demo | **None yet**: no public URL, no video |
 | Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
@@ -81,38 +81,36 @@ the same event says `scripted`.
 
 | Case | Original verdict | Smallest flip found | Universes |
 |---|---|---|---|
-| checkout_ab | SHIP: +0.53 pp [0.11, 0.95], p 0.014 | Exclude internal sessions only: -0.14 pp, DON'T SHIP (direction) | 10 |
-| red_cards | NO CLEAR EVIDENCE: OR 1.134 [0.949, 1.354], p 0.166 | Negative binomial with robust SE: OR 1.254, BIAS DETECTED (significance only) | 7 |
-| marp_religiosity | POSITIVE ASSOCIATION: 0.061 [0.050, 0.071] | none | 10 |
-| marp_norms | DEPENDS ON NORMS: interaction 0.021 [0.011, 0.032] | none | 29 |
-| bank_marketing_calls | CAP THE CALLS: OR 0.869 [0.855, 0.884] per call | none | 7 |
-| hurricanes | FEMININE NAMES DEADLIER: 1.098 [1.082, 1.114], n 93 | Elapsed years plus Quasi-Poisson: 1.056 [0.979, 1.140], NO CLEAR EVIDENCE (significance; an estimand change) | 17 |
+| checkout_ab | SHIP: +0.85 pp [0.15, 1.55], p 0.017, n 16,000 users | Exclude the 171 internal sessions: -0.15 pp [-0.80, 0.50], DON'T SHIP (direction) | 16 |
+| red_cards | BIAS DETECTED: OR 1.17 [1.05, 1.30], p 0.0046 | Dyads with at least 2 games together plus the 0.5 skin-tone threshold: OR 1.12 [0.98, 1.29], p 0.092, NO CLEAR EVIDENCE (significance only) | 22 |
+| marp_religiosity | POSITIVE ASSOCIATION: 0.093 [0.076, 0.111] | none | 12 |
+| marp_norms | DEPENDS ON NORMS: interaction 0.035 [0.018, 0.052] | none | 29 (8 failed) |
+| bank_marketing_calls | CAP THE CALLS: OR 0.872 [0.857, 0.886] per call | none | 12 |
+| hurricanes | NO CLEAR EVIDENCE: 0.011 on log1p(deaths) [-0.073, 0.094], p 0.80, n 93 | none | 18 |
 
-(Numbers rounded to the digits shown from the full values in `evidence/live-runs.md`, which also
-has the run ids, tokens, costs and reproduce results.) A single live run per case is one sample
-of a model: it is not a measure of how often Nemotron finds a flip. What changed since the r6
-jury read the 2 October recordings:
+The numbers are rounded from the full values in `evidence/live-runs.md`, which also has the run
+ids, tokens, costs and reproduce results. One run per case is one sample of a model. How often the
+verdict and the flip recur is measured by five repeats per case in `evidence/repeats.md`. What the
+recordings show:
 
-- **The checkout flip is no longer the contaminated direction.** The run starts from the naive
-  default, keep all sessions, which gives SHIP. The smallest flip excludes internal sessions
-  and gives DON'T SHIP; the recording marks it `contaminated: false`. The column notes still
-  say internal sessions are not genuine customers, so the model had that hint. The
-  notes-stripped replication has not been done (see "Pending live numbers"). The run made one
-  live step re-plan: a model step lost both options and the planner replaced them.
-- **The bank flip the jury disputed is gone.** The new run found no flip in 7 universes. Its
-  extended-covariate options are labelled estimand changes. The 2 October flip (listwise
-  deletion, robust SE) is not in the recording.
-- **Red cards now starts from NO CLEAR EVIDENCE** and flips, on significance only, under a
-  negative binomial model. The space is still narrow: 7 universes, and the report does not
-  rate the robustness share (too few distinct results).
-- **Hurricanes' flip is labelled an estimand change** in the recording, because it adds a
-  covariate.
-- **Live and scripted replays differ on checkout.** The scripted replay is hand-built fixtures;
-  the live recording is a model run. Both are labelled in the web app.
+- **checkout.** The plan aggregates sessions to users and keeps every session by default, which
+  gives SHIP. Excluding the internal sessions gives DON'T SHIP, the planted answer, and the
+  recording does not mark it contaminated. The column notes say internal sessions are not
+  genuine customers, so the model had that hint. The blind runs, with the notes stripped, are in
+  the repeats.
+- **red cards.** BIAS DETECTED at OR 1.17, inside the 29 teams' range (0.89 to 2.93). The
+  smallest flip takes two changes and crosses p = 0.05 only; the robustness share is 70%.
+- **hurricanes.** The planner's only filter drops the deadliest storm (1,833 deaths). With it
+  out, no universe finds feminine names deadlier. That is the outlier critique of the original
+  study, and it came from one plan's choice.
+- **bank.** No flip in 12 universes. The `5070877` recording had reported OR 0.907 from a model
+  that weighted each client by the number of calls. The independent refit caught it, the harness
+  now refuses that model, and the case was recorded again.
+- **MARP.** No flip on either question.
 
 ### What the live runs taught us
 
-The live batches of 2, 3 and 4 October failed in ways the scripted demos could not show, and each
+The live batches of 2 to 5 October failed in ways the scripted demos could not show, and each
 failure became a safeguard with a test. The full tables, with run ids and commits, are in
 `evidence/live-runs.md`. In short:
 
@@ -127,7 +125,12 @@ failure became a safeguard with a test. The full tables, with run ids and commit
   (the code contract overrides the spec), Armor flagging Borges's own repair hint, a
   1,577-column dummy design (identifiers with hundreds of levels are refused), an offset used as
   the exposure, a four-level text exposure.
-- **A step that loses every option** is re-planned once instead of killing the run.
+- **A step that loses every option** is re-planned once instead of killing the run, and a
+  re-plan cannot bring back an option the judge rejected.
+- **A number can match to 14 digits and still be wrong.** `reproduce` proves determinism, not
+  correctness. The independent refit found bank's headline weighted by its own exposure, so the
+  harness now fails that model. It also found an unrelated paper cited for a flip, so citations
+  are now labelled as unchecked model output.
 - **Honest reports.** A run where only the default analysis ran says robustness was not tested.
   Each caveat is reported once.
 
@@ -222,8 +225,9 @@ whether each extra call to a customer lowers the chance of a term-deposit subscr
 Nothing is planted. It has no scripted fixtures, so it runs only with `llm=nebius`, and a
 scripted run is refused with a clear message. Its only recording is the live one. Plain
 logistic regressions by the author gave an odds ratio of 0.86 to 0.93 per extra call in nine
-specifications. The live run (32 calls, $0.0233) gave OR 0.8694 per call [0.8552, 0.8839], CAP
-THE CALLS, and found no flip in 7 universes. See `cases/bank_marketing_calls/README.md`.
+specifications. The final live run (33 calls, $0.0257) gave OR 0.8716 per call [0.8573, 0.8862],
+CAP THE CALLS, and found no flip in 12 universes. An independent refit agrees to 3e-15. See
+`cases/bank_marketing_calls/README.md`.
 
 ### Real, unplanted data: the MARP cases
 
@@ -264,16 +268,37 @@ red cards, checkout, MARP religiosity and MARP norms (27, 12, 204 and 424 s offl
 the same smallest flip as Borges in all four cases, or none in either. Borges used 30, 7, 40 and
 15 universes. The objections a statistician would raise, with answers, are in `PRODUCT.md`.
 
-## Pending live numbers
+## Repeats, blind runs and what is still pending
 
-Not done, and not claimed anywhere above: the checkout run with the column notes stripped over at
-least 5 seeds (below), repeats of each live case (every live number here is one run), and a
-head-to-head against another tool. The six cases were re-recorded and the BLADE benchmark ran
-live on 4 October (`evidence/live-runs.md`, `evidence/blade/`).
+Every case was run five more times live on 5 October, each from an empty cache
+(`evidence/repeats.md`). 34 of 35 runs completed; the failed one was a red_cards run whose
+model option asked for a "weighted" fit without naming the weight. The guard refused the code,
+and the run stopped instead of reporting a number. Flip rates, with 95% Wilson intervals:
 
-| Checkout, notes stripped | Seeds | Runs proposing the exclusion of internal and bot rows | Flip rate |
-|---|---|---|---|
-| PENDING (lead, live key) | PENDING | PENDING | PENDING |
+| Case | Verdicts over five runs | Runs that found a flip |
+|---|---|---|
+| checkout_ab | SHIP ×4, DON'T SHIP ×1 | 4/5 (0.38 to 0.96), each a direction flip from excluding internal sessions |
+| checkout, column notes stripped (`--blind-notes`) | SHIP ×3, DON'T SHIP ×2 | 3/5 (0.23 to 0.88), each a direction flip from excluding internal sessions |
+| red_cards | BIAS DETECTED ×3, NO CLEAR EVIDENCE ×1 (1 failed) | 0/4 |
+| hurricanes | NO CLEAR EVIDENCE ×5 | 2/5 |
+| bank_marketing_calls | CAP THE CALLS ×5 | 0/5 |
+| marp_religiosity | POSITIVE ASSOCIATION ×5 | 0/5 |
+| marp_norms | DEPENDS ON NORMS ×5 | 0/5 |
+
+In all ten checkout runs, with or without the notes, the internal sessions were excluded. In
+seven the plan started from keeping them (SHIP) and the smallest flip excluded them (DON'T
+SHIP). In the other three, the planner excluded them by default, so the run started at DON'T
+SHIP. The data has an `is_internal` column, so the column name alone is a hint; the blind runs
+show that the notes are not needed. The verdict
+itself varies between runs because the planner chooses the original analysis anew each time.
+red_cards is the clearest case: it says BIAS DETECTED in three runs and NO CLEAR EVIDENCE in one.
+
+Does the adversary add anything? `evidence/adversary-ablation.md` pairs every adversary universe
+with its planner twin over three censuses (101 completed runs). The adversary was the only source
+of a flip in 3 runs, and one of its options reversed the verdict by itself in 13. Mostly it
+re-finds forks the planner already lists.
+
+Still pending: a head-to-head against another tool, an outside user, and a hosted demo.
 
 ## Quickstart
 
@@ -306,13 +331,15 @@ the live recordings:
 ```bash
 uv sync   # once, from a fresh clone
 uv run borges reproduce --case red_cards --universe u_a64c6b99f5
-uv run borges reproduce --case checkout_ab --source live --universe u_2daf3a388e
+uv run borges reproduce --case checkout_ab --source live --universe u_fb948f9bb7
 ```
 
 `--source live` reads `cases/<case>/recorded-live/events.jsonl` instead of the scripted
-recording and re-executes that universe's code from scratch. It matched for all six cases
-(universe ids and results in `evidence/live-runs.md`); a MATCH proves the recorded code is
-deterministic, not that it is statistically correct.
+recording and re-executes that universe's code from scratch. It matched 11 of 12 universes
+across the six cases. The twelfth is a quantile regression that differs by 4e-6 between macOS and
+ConTree's Linux. Universe ids and results are in `evidence/live-runs.md`. A MATCH proves the
+recorded code is deterministic, not that it is statistically correct; `evidence/refit.md` checks
+correctness.
 
 (`uv run --no-sync` works too once `uv sync` has run.) It re-executes that universe's steps on the case dataset with the local backend, and prints
 `MATCH` only if estimate, interval, p-value, n and verdict equal the recording (exit 1 and
@@ -336,7 +363,7 @@ content leaking when thinking is disabled. `make record-live` runs the cases liv
 `cases/<case>/recorded-live/`. It never overwrites the scripted recordings in
 `cases/<case>/recorded/`. A single case can also be run with
 `uv run borges run --case checkout_ab --llm nebius --record`. A complete live run of one case
-cost between $0.0225 and $0.0408 on 4 October 2026.
+cost between $0.026 and $0.056 on 5 October 2026.
 
 Spend is capped twice, per run (`BORGES_RUN_CAP_USD`, default $0.50) and in total
 (`BORGES_SPEND_CAP_USD`, default $5). When the total is used up, the web app disables the

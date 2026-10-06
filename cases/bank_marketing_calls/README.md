@@ -2,7 +2,7 @@
 
 A live-only case: it has no scripted fixtures and no scripted recording, and it only runs with
 `llm=nebius` and a `NEBIUS_API_KEY`. Its recording, `recorded-live/events.jsonl`, was made
-live on Nemotron on 4 October 2026 (32 calls, $0.0233; see `evidence/live-runs.md`). Nothing
+live on Nemotron on 5 October 2026 (33 calls, $0.0257; see `evidence/live-runs.md`). Nothing
 else in this directory was produced by a model.
 
 ## The question and the rule

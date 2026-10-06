@@ -107,8 +107,9 @@ paths agree"), then the smallest flip found and its kind (direction or significa
   end today are many-analysts studies with real data and published team results.
 - **Product and growth teams shipping on A/B tests** are a plausible next audience, not a
   validated one. The only business-style cases are a synthetic checkout test (planted effect)
-  and a live-only real bank-telemarketing case (`bank_marketing_calls`, CC BY 4.0) that no one
-  has run yet. There is no business user or pilot behind this claim.
+  and a live-only real bank-telemarketing case (`bank_marketing_calls`, CC BY 4.0), recorded
+  live and repeated five times by the project. No business user or pilot stands behind this
+  claim.
 
 ## Related work
 
@@ -134,13 +135,12 @@ What exists, verified against the primary sources (September and October 2026):
    from a shared state.
    Borges's adversary reads the real row counts and estimates at a step, argues against the
    conclusion with code, and an independent judge scores how defensible each proposal is
-   before it enters the garden. Designed and tested with scripted models, then run live once
-   per case; the six recordings of 4 October 2026 are the current ones. The r6 jury showed that two
-   of the 2 October live flips did not stand as findings. In the 4 October recordings the
-   checkout flip is not marked contaminated (the run starts from keeping all sessions and the
-   flip excludes internal ones), though the column notes still hint at it, and the bank run
-   found no flip. Six recordings, one per case, are not a measure of how reliably the adversary
-   proposes good forks.
+   before it enters the garden. It was designed and tested with scripted models, then run live.
+   The six recordings of 5 October 2026 are the current ones, and each case was also repeated
+   five times (`evidence/repeats.md`). In the checkout recording the flip is not marked
+   contaminated: the run starts from keeping all sessions and the flip excludes the internal
+   ones, though the column notes hint at it. Whether the adversary's options change verdicts is
+   measured over the repeats in `evidence/adversary-ablation.md`.
 2. **The smallest defensible flip found.** It searches one change, then two, then three
    (at most 10 combinations per level) and re-executes the winner from scratch, so the output
    is a specific decision that turns yours around, not only a distribution. It is the
@@ -185,9 +185,9 @@ against their agents on the same dataset still does not exist.
 
 Written as a skeptical reviewer would put it, each with Borges's honest answer. Items 1 to 6
 were answered with offline, scripted studies. Items 7 to 10 were raised by the live Nemotron
-runs of 2 to 4 October 2026 (`evidence/live-runs.md`); each came from a real failure and each has
-a check that now catches it. One live recording per case is still not an estimate of how
-often a model gets these right.
+runs of 2 to 5 October 2026 (`evidence/live-runs.md`); each came from a real failure and each has
+a check that now catches it. Five repeats per case (`evidence/repeats.md`) are a first estimate
+of how often a model gets these right, with wide intervals.
 
 1. **"Your option space is seeded by hand or by a model. It is not exhaustive, so 'robust'
    means robust to what you listed."** Correct. The curated cases are seeded from published
@@ -280,13 +280,14 @@ often a model gets these right.
   `tests/sandbox/test_contree_live.py` passed in 41.8 s, a scripted `checkout_ab` run
   (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as
   the local backend, and a live `marp_religiosity` run on Nemotron plus ConTree
-  (`r_20261002T155440_0aa541`) completed 16 universes. The six live recordings of 4 October
+  (`r_20261002T155440_0aa541`) completed 16 universes. The six live recordings of 5 October
   ran on ConTree.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
-- **Status:** six cases ran live on Nemotron through Token Factory on 4 October 2026
-  (195 calls, $0.0225 to $0.0408 per case; `evidence/live-runs.md`), and each recorded
-  universe re-executes with `borges reproduce --source live`. The scripted replays remain as
+- **Status:** six cases ran live on Nemotron through Token Factory on 5 October 2026
+  (238 calls, $0.026 to $0.056 per case; `evidence/live-runs.md`). Each recorded universe
+  re-executes with `borges reproduce --source live`, and every headline was refitted
+  independently from the specs and the raw data (`evidence/refit.md`). The scripted replays remain as
   the offline path, hand-built and labelled as such. Still missing: a public URL, and any outside user.
 - **Enterprise fleet:** the same server reports seven controls (agent registry, runtime queue, memory bank,
   identity, gateway, armor, observability) at `GET /api/platform` and on the `/platform` page, each with the
@@ -320,7 +321,7 @@ Borges is finished when all of these hold, on a clean clone:
    - see the verdict card flip;
    - step into the flipping universe;
    - read the spec curve and the decision influence.
-   The web app plays the live Nemotron recordings by default (met on 4 October 2026, six
+   The web app plays the live Nemotron recordings by default (met on 5 October 2026, six
    cases). Scripted demo runs replay offline and cost nothing; they are hand-built, not live
    model runs, and are labelled as scripted replays. Live Nemotron runs stop when the spend
    cap is used up. Not yet met: there is no hosted demo.
