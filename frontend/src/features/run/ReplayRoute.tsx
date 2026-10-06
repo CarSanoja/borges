@@ -8,9 +8,9 @@ import { pickSource } from "../recording/recordingText";
 import { RunPage } from "./RunPage";
 import { prefersReducedMotion } from "./usePrefersReducedMotion";
 
-export const INSTANT_SPEED = 100;
+export const INSTANT_SPEED = 10000;
 export const ANIMATED_SPEED = 8;
-export const AUTOPLAY_LIMIT_MS = 4000;
+export const AUTOPLAY_LIMIT_MS = 3000;
 
 type Gate =
   | { kind: "loading" }

@@ -39,7 +39,7 @@ def get_case(case_id: str, registry: Registry) -> CaseCard:
 def case_recording(
     case_id: str,
     registry: Registry,
-    speed: Annotated[float, Query(gt=0, le=100)] = 4.0,
+    speed: Annotated[float, Query(gt=0, le=10000)] = 4.0,
     source: Annotated[Literal["live", "scripted"] | None, Query()] = None,
 ):
     card = _card_or_404(registry, case_id)
