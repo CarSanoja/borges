@@ -3,7 +3,7 @@ import { BackFace } from "./BackFace";
 import { FrontFace } from "./FrontFace";
 import { useTurnOver } from "./useTurnOver";
 import { WalkingState } from "./WalkingState";
-import { activeFlip, activeRule, exploredCount, originalVerdict } from "./verdictModel";
+import { activeFlip, activeRule, agreementShare, exploredCount, originalVerdict } from "./verdictModel";
 import "./verdict.css";
 import "./verdictBack.css";
 import "./verdictWalking.css";
@@ -16,6 +16,7 @@ export function VerdictCard({ snapshot }: Props) {
   const verdict = originalVerdict(snapshot);
   const flip = activeFlip(snapshot);
   const [turned, toggle] = useTurnOver(flip !== null);
+  const share = agreementShare(snapshot);
 
   if (verdict === null) {
     return (
@@ -27,6 +28,11 @@ export function VerdictCard({ snapshot }: Props) {
 
   return (
     <section className="vc" aria-label="Verdict" data-state={flip ? (turned ? "flipped" : "found") : "original"}>
+      {share && (
+        <p className="vc-agree" data-testid="vc-agree">
+          <span className="mono vc-agree__n">{share.agree}</span> of <span className="mono">{share.total}</span> paths agree
+        </p>
+      )}
       <div className="vc-inner" data-turned={flip !== null && turned}>
         <FrontFace snapshot={snapshot} verdict={verdict} hidden={turned && flip !== null} />
         {flip && <BackFace flip={flip} hidden={!turned} rule={activeRule(snapshot)} search={snapshot.report?.search} explored={exploredCount(snapshot)} />}

@@ -1,3 +1,4 @@
+import { localDate } from "./localTime";
 import type { FactProvenance, Pillar } from "./platformTypes";
 
 export interface ProvenanceBadge {
@@ -5,11 +6,6 @@ export interface ProvenanceBadge {
   kind: "live" | "measured";
   label: string;
   detail: string;
-}
-
-export function isoDate(epochSeconds: number | null | undefined): string | null {
-  if (typeof epochSeconds !== "number" || !Number.isFinite(epochSeconds)) return null;
-  return new Date(epochSeconds * 1000).toISOString().slice(0, 10);
 }
 
 function badge(key: string, entry: FactProvenance): ProvenanceBadge {
@@ -22,7 +18,7 @@ function badge(key: string, entry: FactProvenance): ProvenanceBadge {
       detail: [entry.value, entry.source].filter(Boolean).join(" - "),
     };
   }
-  const when = isoDate(entry.computed_at);
+  const when = localDate(entry.computed_at);
   return {
     key,
     kind: "live",
@@ -43,7 +39,7 @@ export function corpusNote(pillar: Pillar): string | null {
   if (pillar.id !== "armor") return null;
   const corpus = pillar.facts.corpus as { computed_at?: number | null } | undefined;
   const override = pillar.provenance?.overrides?.["facts.corpus"];
-  const date = isoDate(override?.computed_at ?? corpus?.computed_at);
+  const date = localDate(override?.computed_at ?? corpus?.computed_at);
   const when = date ? ` Corpus screened on ${date}.` : "";
   return `Own corpus, not independent: the authors wrote the attacks and the benign texts, so these numbers are not a third-party benchmark.${when}`;
 }

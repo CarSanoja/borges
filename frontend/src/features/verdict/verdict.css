@@ -186,3 +186,20 @@
   font-weight: 600;
 }
 
+
+.vc-agree {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  color: var(--paper-100);
+}
+
+.vc-agree__n {
+  color: var(--verdigris);
+}
+
+.vc--holding {
+  display: flex;
+  align-items: center;
+  min-height: 12rem;
+  color: var(--paper-500);
+}

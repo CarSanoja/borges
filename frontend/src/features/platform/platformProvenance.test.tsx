@@ -2,7 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { PlatformPage } from "./PlatformPage";
 import { samplePlatform } from "./platformFixture";
-import { corpusNote, isoDate, provenanceBadges } from "./platformProvenance";
+import { localDate } from "./localTime";
+import { corpusNote, provenanceBadges } from "./platformProvenance";
 import type { Pillar, PlatformStatus } from "./platformTypes";
 
 const COMPUTED_AT = Date.UTC(2026, 9, 3, 12) / 1000;
@@ -35,9 +36,9 @@ describe("platform provenance", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("formats epoch seconds as an ISO date and tolerates nulls", () => {
-    expect(isoDate(COMPUTED_AT)).toBe("2026-10-03");
-    expect(isoDate(null)).toBeNull();
-    expect(isoDate(undefined)).toBeNull();
+    expect(localDate(COMPUTED_AT)).toBe("2026-10-03");
+    expect(localDate(null)).toBeNull();
+    expect(localDate(undefined)).toBeNull();
   });
 
   it("separates live server state from fixed measurements", () => {

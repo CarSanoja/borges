@@ -22,7 +22,8 @@ describe("VerdictCard", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={snapshot} />);
     expect(screen.getByText(snapshot.report!.original_verdict)).toBeInTheDocument();
-    expect(screen.getByText(/paths agree with the baseline/)).toBeInTheDocument();
+    const { n_universes, n_flipped } = snapshot.report!;
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent(`${n_universes - n_flipped} of ${n_universes} paths agree`);
   });
 
   it("reveals the flip with changes and the reproduced badge", () => {
@@ -154,7 +155,7 @@ describe("VerdictCard search summary", () => {
     };
     render(<VerdictCard snapshot={clean} />);
     expect(screen.getByText(/No flip found: 7 explored of a 40-universe budget/)).toBeInTheDocument();
-    expect(screen.getByText("7 of 7 paths agree with the baseline")).toBeInTheDocument();
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 7 paths agree");
     expect(screen.queryByText(/within 40/)).toBeNull();
     expect(screen.queryByText(/found in 7 universes/)).toBeNull();
   });
@@ -191,5 +192,17 @@ describe("VerdictCard search summary", () => {
     render(<VerdictCard snapshot={foldEvents("t", events)} />);
     const front = document.querySelector(".vc-face--front")!;
     expect(front.firstElementChild?.classList.contains("vc-robust")).toBe(true);
+  });
+
+  it("states the agreement share on the card from the report fields, also with the flip showing", () => {
+    const snapshot = foldEvents("t", events);
+    const report = { ...snapshot.report!, n_universes: 12, n_flipped: 5 };
+    render(<VerdictCard snapshot={{ ...snapshot, report }} />);
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 12 paths agree");
+  });
+
+  it("shows no agreement line before the report", () => {
+    render(<VerdictCard snapshot={until("stage", "baseline")} />);
+    expect(screen.queryByTestId("vc-agree")).toBeNull();
   });
 });

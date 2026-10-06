@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -138,5 +139,7 @@ async def test_a_named_key_denial_lands_in_the_audit_log_and_shows_on_the_platfo
     [first, *_] = pillars["identity"]["facts"]["recent_denials"]
     assert first["principal"] == "caller://alice" and first["route"] == "/api/audit"
     assert "audit:read" in first["reason"]
+    stamp = datetime.fromisoformat(first["ts"])
+    assert stamp.tzinfo is not None and first["seq"] is not None
     audit = global_audit_path(env.app.state.settings).read_text()
     assert "caller://alice" in audit and "deny" in audit

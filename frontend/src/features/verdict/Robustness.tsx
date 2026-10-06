@@ -34,13 +34,12 @@ function Secondary({ report, range, plan }: Props) {
 
 export function Robustness({ report, range, plan = null }: Props) {
   const total = report.n_universes;
-  const agree = Math.max(0, total - report.n_flipped);
   if (report.robustness_rating === null) {
     return (
       <div className="vc-robust" data-testid="robustness-unrated">
         <span className="eyebrow">Robustness</span>
         <p className="vc-robust__headline">
-          Too few distinct paths ({total}) to rate robustness; {agree} of {total} agree with the baseline
+          Too few distinct paths ({total}) to rate robustness
         </p>
         <Secondary report={report} range={range} plan={plan} />
       </div>
@@ -56,9 +55,6 @@ export function Robustness({ report, range, plan = null }: Props) {
       <span className="vc-robust__track" aria-hidden="true">
         <span className="vc-robust__fill" style={{ width: formatPercent(shown) }} />
       </span>
-      <p className="vc-robust__headline">
-        {agree} of {total} paths agree with the baseline
-      </p>
       <Secondary report={report} range={range} plan={plan} />
     </div>
   );

@@ -24,13 +24,16 @@ interface Props {
   source: RunSource;
   onHome: () => void;
   replayControl?: ReactNode;
+  holdVerdict?: boolean;
 }
 
-export function RunPage({ source, onHome, replayControl = null }: Props) {
+export function RunPage({ source, onHome, replayControl = null, holdVerdict = false }: Props) {
   const snapshot = useRun(source);
   const card = useCaseCard(source.kind === "replay" ? source.caseId : snapshot.case_id);
   const [selected, setSelected] = useState<string | null>(null);
   const runId = source.kind === "mock" ? null : snapshot.run_id;
+  const running = snapshot.status === "running" || snapshot.status === "queued";
+  const holding = holdVerdict && running;
   const traceRunId = hasTrace(source, card, runId) ? runId : null;
 
   if (isNotFound(snapshot)) {
@@ -78,7 +81,13 @@ export function RunPage({ source, onHome, replayControl = null }: Props) {
           <Garden snapshot={snapshot} selectedUniverseId={selected} onSelectUniverse={setSelected} />
         </div>
         <aside className="run-side" id="verdict" tabIndex={-1} aria-label="Verdict panel">
-          <VerdictCard snapshot={snapshot} />
+          {holding ? (
+            <section className="vc vc--holding" aria-label="Verdict" data-testid="verdict-holding">
+              <span className="eyebrow">The verdict appears when the paths finish</span>
+            </section>
+          ) : (
+            <VerdictCard snapshot={snapshot} />
+          )}
         </aside>
       </section>
       <section className="run-below" aria-label="Evidence">

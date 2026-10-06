@@ -1,15 +1,16 @@
+import { localDateTime } from "./localTime";
+
 interface Denial {
   seq?: number | null;
-  ts?: number | null;
+  ts?: number | string | null;
   kind?: string | null;
   principal?: string | null;
   route?: string | null;
   reason?: string | null;
 }
 
-function when(ts: number | null | undefined): string {
-  if (typeof ts !== "number") return "unknown";
-  return new Date(ts * 1000).toISOString().replace("T", " ").slice(0, 19) + " UTC";
+function when(ts: number | string | null | undefined): string {
+  return localDateTime(ts) ?? "unknown";
 }
 
 export function denialsOf(facts: Record<string, unknown>): Denial[] {
