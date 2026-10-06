@@ -85,3 +85,11 @@ The refit also checked universes off the headline. What it found:
    search). bank's clustered standard errors use 12 job
    clusters with no small-sample correction, which is likely anti-conservative. Only
    non-headline universes use them.
+7. **red_cards: the standard errors are not clustered by player.** The data repeats 1,585
+   players across 124,621 dyads, and the recorded universes use HC3 errors (the adversary's
+   clustered option clusters by referee). Clustering by player widens the intervals by about
+   30% and changes no verdict. The original analysis stays BIAS DETECTED: OR 1.17 [1.02, 1.35],
+   p 0.028, where the recording gives [1.05, 1.30], p 0.0046. The flip stays NO CLEAR EVIDENCE:
+   OR 1.12 [0.95, 1.32], p 0.17, where the recording gives p 0.092.
+   `evidence/refit/red_cards_player_clusters.py` prints both. The metric label says "per game";
+   the outcome is whether the dyad had any red card, with games as a covariate.

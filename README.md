@@ -99,7 +99,10 @@ recordings show:
   genuine customers, so the model had that hint. The blind runs, with the notes stripped, are in
   the repeats.
 - **red cards.** BIAS DETECTED at OR 1.17, inside the 29 teams' range (0.89 to 2.93). The
-  smallest flip takes two changes and crosses p = 0.05 only; the robustness share is 70%.
+  smallest flip takes two changes and crosses p = 0.05 only; the robustness share is 70%. That
+  flip recurred in none of four repeats (BIAS DETECTED three times, NO CLEAR EVIDENCE once).
+  With standard errors clustered by player, the original verdict holds: OR 1.17 [1.02, 1.35],
+  p 0.028 (`evidence/refit.md`).
 - **hurricanes.** The planner's only filter drops the deadliest storm (1,833 deaths). With it
   out, no universe finds feminine names deadlier. That is the outlier critique of the original
   study, and it came from one plan's choice.
@@ -178,7 +181,7 @@ option spaces (the offline path). The live recordings above reached their own ve
 example SHIP flipping to DON'T SHIP for the checkout case, and are summarised in the status section and
 in `evidence/live-runs.md`.
 
-| | Checkout A/B test (synthetic, effect planted) | Red cards (real data, 146,028 dyads) |
+| Scripted replay | Checkout A/B test (synthetic, effect planted) | Red cards (real data, 146,028 dyads) |
 |---|---|---|
 | Question | Does the new checkout increase conversion? | Do referees give dark-skinned players more red cards? |
 | Default analysis | **SHIP**: +0.53 pp, 95% CI [0.14, 0.92], p = 0.008 | **BIAS DETECTED**: OR 1.34, 95% CI [1.13, 1.58], p = 0.0006 |
@@ -201,7 +204,7 @@ only, is rejected by the judge as an indefensible change of population.
 
 ### How wide is the curve, against the human teams
 
-| | Borges universes | Reference teams |
+| | Borges universes (scripted replay) | Reference teams |
 |---|---|---|
 | Red cards (odds ratio) | 30 universes: 1.20 to 1.36 | 29 teams: 0.89 to 2.93, median 1.31, 20 significant. Two teams (Tobit 2.88, Poisson 2.93) are the extremes; the next highest is 1.71. Ten teams fall inside Borges's range |
 | MARP religiosity (standardised beta) | 40 universes: 0.064 to 0.150; all 768 universes enumerated offline: 0.053 to 0.156 | 110 teams: 0.007 to 0.354, median 0.120, all 110 intervals above 0 |
@@ -258,7 +261,8 @@ The uncomfortable conclusion: on clean data with a large true effect the search 
 significance-only flip 16% of the time, and in 272 clean datasets it never reported a
 direction flip (95% upper bound about 1.4%). A flip label must say which kind it is. A
 significance flip is weak evidence (it is expected from noise near the threshold); a direction
-flip is specific. The red-cards flip (OR 1.34 to 1.20) is of the weak kind. No flip does not
+flip is specific. The red-cards flips, scripted (OR 1.34 to 1.20) and live (1.17 to 1.12), are of
+the weak kind. No flip does not
 prove no artefact: detection falls as the true effect grows (95%, 69%, 21%). The rates apply to
 this fixed menu, not to arbitrary datasets.
 
