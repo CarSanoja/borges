@@ -46,10 +46,14 @@ def judged(emitter: Emitter) -> dict[str, dict[str, Any]]:
     return {d["option_id"]: d for t, d in emitter.events if t == "option.judged"}
 
 
-async def test_defaults_are_never_judged(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_defaults_are_judged_as_conventional_options(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     seen = patch_judge(monkeypatch, set(), set())
-    await judge_plan_options(None, make_plan(), Emitter(), CodingSummary())
-    assert sorted(seen) == ["planner:s1.b", "planner:s2.y"]
+    emitter = Emitter()
+    await judge_plan_options(None, make_plan(), emitter, CodingSummary())
+    assert sorted(seen) == ["default:s1.a", "default:s2.x", "planner:s1.b", "planner:s2.y"]
+    assert judged(emitter)["a"]["origin"] == "default"
 
 
 async def test_rejected_alternative_is_dropped_and_flagged_planner(
@@ -122,12 +126,12 @@ async def test_rejected_alternative_is_never_coded_or_run(
     assert snapshot.report.coding.options_dropped_by_judge == 1
 
 
-async def test_accepted_alternative_runs_and_defaults_are_not_judged(
+async def test_accepted_alternative_runs_and_defaults_are_judged(
     tmp_path: Path, scenario: Scenario
 ) -> None:
     rig = make_rig(tmp_path)
     snapshot = await rig.orchestrator.execute("r_test", RunRequest(case_id="demo"))
-    assert sorted(scenario.planner_judged) == ["s1.b", "s2.y"]
+    assert sorted(scenario.planner_judged) == ["s1.a", "s1.b", "s2.x", "s2.y"]
     assert any(u.choices.get("s1") == "b" for u in snapshot.garden.universes.values())
     assert snapshot.report.coding.options_dropped_by_judge == 0
 
@@ -163,7 +167,7 @@ async def test_remembered_verdicts_skip_the_judge_and_new_ones_are_remembered(
 
     memory, emitter = Memory(), Emitter()
     await judge_plan_options(None, make_plan(), emitter, CodingSummary(), None, memory)
-    assert seen == ["planner:s2.y"]
-    assert memory.stored == ["y"]
+    assert sorted(seen) == ["default:s1.a", "default:s2.x", "planner:s2.y"]
+    assert sorted(memory.stored) == ["a", "x", "y"]
     assert judged(emitter)["b"]["reason"] == "remembered"
     assert judged(emitter)["b"]["accepted"] is True

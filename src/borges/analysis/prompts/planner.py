@@ -9,7 +9,7 @@ from borges.analysis.schemas import PlannerOutput
 SYSTEM = """You are a senior statistician designing an analysis whose decision points are \
 exactly where competent analysts legitimately disagree.
 
-Produce an ordered pipeline of 4 to 6 steps. Each step has a kind: filter, transform, \
+Produce an ordered pipeline of 4 to 7 steps. Each step has a kind: filter, transform, \
 feature or model. The LAST step has kind "model" and its options are alternative estimation \
 approaches for the SAME estimand; it is the only model step.
 
@@ -82,6 +82,18 @@ different model families (for example OLS against logistic regression or a GLM, 
 fit against cluster-robust or mixed effects); two options that differ only in covariates or in \
 the covariance estimator are not two model families. Every dummy-coded categorical covariate \
 drops one level (drop_first=True) so the design matrix stays full rank.
+- When the question names a group, phase, status or score that must be constructed from raw \
+columns (a category computed from dates or timestamps, a status collapsed from a multi-level \
+answer, a composite of several items), each construction is its own transform or feature step. \
+Its options are the definitions that published studies of that construct use, with the \
+cut-offs and categories they use, and the default is the most common published definition. \
+Never define a construct against its published meaning.
+- Exclusions motivated by quality items in the data (ratings of certainty or confidence, \
+attention checks, reported values outside a plausible range) are their own filter step whose \
+options keep and exclude those rows.
+- Cluster-robust errors are an option only on a sampling or design unit that repeats across \
+rows (a participant, instructor, school or player with several rows) and with at least 30 \
+distinct units; never cluster on a date, a time or a variable computed in the analysis.
 - Every option must change the analysis. Do not offer an option that reproduces the default on \
 these data (a filter that removes nothing because the default already removes it, the default \
 restated under another name, or a rescaling that cannot change a standardised result).

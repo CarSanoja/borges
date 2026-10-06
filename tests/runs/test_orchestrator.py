@@ -62,7 +62,7 @@ async def test_full_run_emits_ordered_events(tmp_path: Path, scenario: Scenario)
     order = types(rig, run_id)
     assert order.index("flip.found") < order.index("flip.verified") < order.index("report.ready")
     assert order.count("plan.ready") == 4
-    assert order.count("option.proposed") == 1 and order.count("option.judged") == 3
+    assert order.count("option.proposed") == 1 and order.count("option.judged") == 5
     assert "usage" in order
     assert snapshot.status == "completed"
     assert snapshot.report is not None and snapshot.report.narrative == "story"

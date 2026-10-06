@@ -1,0 +1,36 @@
+{
+  "id": "teaching_ratings",
+  "title": "Beauty and teaching evaluations",
+  "subtitle": "Real course data, nothing planted. A published finding, tested blind.",
+  "question": "Do instructors rated as better-looking receive higher course teaching evaluations?",
+  "decision_rule": {
+    "metric": "effect of the instructor's beauty rating on the course evaluation score (1-5 scale) per unit of the beauty rating",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "BEAUTY PREMIUM",
+    "negative_label": "NO CLEAR EVIDENCE"
+  },
+  "dataset_file": "data.parquet",
+  "dataset_name": "teaching_ratings_ut_austin",
+  "provenance": "Real data, ODC-By 1.0",
+  "max_universes": 40,
+  "reference_label": null,
+  "reference": [],
+  "story": "463 courses taught at the University of Texas at Austin in 2000-2002, with the average student evaluation of each course and a beauty rating of its instructor from a panel of six students. A published study reported that better-looking instructors get better evaluations. Real data, nothing planted; a live run only.",
+  "live_only": true,
+  "column_notes": {
+    "minority": "does the instructor belong to a minority (non-Caucasian)?",
+    "age": "the professor's age",
+    "gender": "the instructor's gender",
+    "credits": "is the course a single-credit elective (e.g., yoga, aerobics, dance)?",
+    "beauty": "rating of the instructor's physical appearance by a panel of six students, averaged across the six panelists, shifted to have a mean of zero; the exposure of interest",
+    "eval": "course overall teaching evaluation score, on a scale of 1 (very unsatisfactory) to 5 (excellent); the outcome",
+    "division": "is the course an upper or lower division course? (lower division courses are mainly large freshman and sophomore courses)",
+    "native": "is the instructor a native English speaker?",
+    "tenure": "is the instructor on tenure track?",
+    "students": "number of students that participated in the evaluation",
+    "allstudents": "number of students enrolled in the course",
+    "prof": "instructor identifier"
+  }
+}

@@ -81,6 +81,8 @@ def coding_line(coding: CodingSummary) -> str:
     )
     if coding.options_dropped_by_judge:
         line = f"{line}; {coding.options_dropped_by_judge} dropped by the defensibility judge"
+    if coding.defaults_replaced:
+        line = f"{line}; {len(coding.defaults_replaced)} conventional options replaced by the judge"
     if not coding.steps_reviewed:
         return line
     return (
