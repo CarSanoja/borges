@@ -40,11 +40,18 @@ class ColumnProfile(BaseModel):
     note: str | None = None
 
 
+class RepeatedUnit(BaseModel):
+    name: str
+    n_units: int
+    rows_per_unit: float
+
+
 class DatasetProfile(BaseModel):
     name: str
     n_rows: int
     columns: list[ColumnProfile]
     sample_rows: list[dict[str, object]] = Field(default_factory=list)
+    repeated_units: list[RepeatedUnit] = Field(default_factory=list)
 
 
 StepKind = Literal["filter", "transform", "feature", "model"]
@@ -61,6 +68,7 @@ class Option(BaseModel):
     source: str | None = None
     defensibility: float | None = None
     code: str | None = None
+    cluster_by: str | None = None
 
 
 class Step(BaseModel):

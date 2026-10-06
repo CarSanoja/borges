@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.harness_cluster import CLUSTER_MODELS, CLUSTER_SOURCE
 from borges.analysis.harness_covariates import COVARIATES_SOURCE
 from borges.analysis.harness_design import (
     DESIGN_CONDITION_LIMIT,
@@ -48,6 +49,7 @@ __DOMAIN__
 __EFFECTS__
 __HINTS__
 __DESIGN__
+__CLUSTER__
 __FINGERPRINT__
     seen = {}
     _np.random.seed(0)
@@ -83,7 +85,10 @@ __FINGERPRINT__
         }
         if kind == "model":
             _install_design_probe()
+            cluster_unit = __CLUSTER_BY__
+            _install_cluster_hook(cluster_unit, df)
             raw_result = estimate(df, ctx)
+            _check_clustered(cluster_unit)
             if isinstance(raw_result, dict) and isinstance(raw_result.get("note"), str):
                 trace["note"] = raw_result["note"][:500]
             reported = raw_result.get("estimate") if isinstance(raw_result, dict) else None
@@ -202,6 +207,8 @@ MAIN_TEMPLATE = (
     .replace("__OUTCOME_MAX_ROWS__", repr(OUTCOME_MAX_ROWS))
     .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))
     .replace("__PRODUCT_MAX_COLUMNS__", repr(PRODUCT_MAX_COLUMNS))
+    .replace("__CLUSTER__", CLUSTER_SOURCE.strip("\n"))
+    .replace("__CLUSTER_MODELS__", repr(CLUSTER_MODELS))
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))

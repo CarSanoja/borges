@@ -82,6 +82,7 @@ def render_step(
         .replace("__OFFSET__", repr(wants_offset(option)))
         .replace("__KEEPS_ROWS__", repr(keeps_rows(step, option)))
         .replace("__GROUP_BY__", repr(grouped_by(step, option)))
+        .replace("__CLUSTER_BY__", repr(option.cluster_by))
     )
     return policy_prelude(policy_home, policy_audit_path) + option.code.rstrip("\n") + "\n" + main
 

@@ -17,11 +17,18 @@ export interface ColumnProfile {
   summary: Record<string, number | string>;
 }
 
+export interface RepeatedUnit {
+  name: string;
+  n_units: number;
+  rows_per_unit: number;
+}
+
 export interface DatasetProfile {
   name: string;
   n_rows: number;
   columns: ColumnProfile[];
   sample_rows: Record<string, unknown>[];
+  repeated_units?: RepeatedUnit[];
 }
 
 export type StepKind = "filter" | "transform" | "feature" | "model";
@@ -37,6 +44,7 @@ export interface Option {
   source: string | null;
   defensibility: number | null;
   code: string | null;
+  cluster_by?: string | null;
 }
 
 export interface Step {

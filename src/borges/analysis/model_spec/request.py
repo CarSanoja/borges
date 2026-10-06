@@ -10,6 +10,11 @@ from borges.analysis.model_spec.assigned_covariates import (
     unbuilt_covariates,
     with_assigned_covariates,
 )
+from borges.analysis.model_spec.count_outcome import (
+    count_outcome_problems,
+    transformed_sources,
+    with_raw_count_outcome,
+)
 from borges.analysis.model_spec.ctx_covariates import ctx_covariate_names
 from borges.analysis.model_spec.ctx_listed import stored_names, without_ctx_listed
 from borges.analysis.model_spec.ctx_outcome import (
@@ -112,8 +117,10 @@ def _problems(
     if not spec.supported:
         return found
     varied = "covariates" in varying_ctx_keys(plan, step)
+    sources = transformed_sources(plan, step, produced_before(plan, step))
     return [
         *found,
+        *count_outcome_problems(spec, sources),
         *ctx_problems(spec, ctx_names, option_intent(option), varied),
         *named_exposure_problems(spec, option.spec, available),
         *marked_exposure_problems(spec, plan.dataset),
@@ -150,6 +157,7 @@ async def request_template(
         last = messages[-1]
         messages[-1] = {**last, "content": f"{last['content']}\n\n{outcome_instruction(outcomes)}"}
     key = f"coder:{step.id}.{option.id}:spec"
+    sources = transformed_sources(plan, step, produced_before(plan, step))
 
     def tidy(found: ModelSpecOutput) -> ModelSpecOutput:
         found = normalise_spec(found, option.spec, available, plan.dataset)
@@ -159,6 +167,7 @@ async def request_template(
         found = with_labelled_effects(found, option.label, available)
         found = with_assigned_covariates(found, option, available)
         found = with_produced_outcome(found, option.spec, produced_before(plan, step))
+        found = with_raw_count_outcome(found, sources)
         found = report_for_rule(standardize_for_rule(found, plan.decision_rule), plan.decision_rule)
         return pin_outcome(found, outcomes) if outcomes else found
 

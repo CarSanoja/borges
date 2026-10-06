@@ -58,6 +58,8 @@ class UniverseRunner:
             return None
         for step in [steps[failing], *reversed(steps[:failing])]:
             option = step.option(universe.choices[step.id])
+            if option.origin == "pinned":
+                continue
             if kind == "baseline" or not option.is_default:
                 return step, option
         return None

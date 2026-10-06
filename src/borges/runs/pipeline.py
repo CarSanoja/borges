@@ -7,10 +7,12 @@ from typing import Any
 
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
+from borges.analysis.model_spec.count_outcome import agree_count_specs
 from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.analysis.planner import plan_analysis
 from borges.analysis.profile import blind_profile, profile_dataframe
 from borges.analysis.scale_check import scale_check
+from borges.analysis.seeded_options import seed_cluster_options
 from borges.analysis.smoke_review import llm_reviewer
 from borges.armor.report import ArmorReport
 from borges.config import Settings
@@ -24,6 +26,7 @@ from borges.garden.hc_variant import hc_variant_caveats
 from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary
 from borges.garden.outcome_scale import scale_note
+from borges.garden.repeated_units import repeated_unit_caveats
 from borges.garden.scaled_outcome import scaled_outcome_caveats
 from borges.llm.client import LLMClient, UsageTotals
 from borges.memory.run_memory import RunMemory
@@ -172,6 +175,8 @@ class Pipeline:
                 smoke=smoke,
                 summary=self.coding,
             )
+            agree_count_specs(plan)
+            seed_cluster_options(plan)
             await publish_plan(self.emitter, plan)
         self.caveats.extend(smoke.state.notes)
         self.checkpoint(CODED_KEY, coded_payload(plan, self.judged, self.coding, smoke.state.notes))
@@ -206,6 +211,7 @@ class Pipeline:
                 *discrete_quantile_caveats(self.garden, self.flip and self.flip.universe_id),
                 *hc_variant_caveats(self.garden),
                 *untested_decision_caveats(plan, self.garden),
+                *repeated_unit_caveats(plan, self.garden),
             ]
         )
         note = scale_note(self.garden)

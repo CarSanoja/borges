@@ -58,7 +58,11 @@ scale, whose step was stopped. The report says that decision was not tested.
 
 The reproduce column was run on 5 October on the local backend, at `5070877` and, for bank, at
 `6317040`. For the cases
-without a flip, the second id is the finished universe farthest from the baseline. 11 of 12
+without a flip, the second id is the finished universe farthest from the baseline, measured on
+the raw estimate when these runs were reproduced. That distance mixes scales (log deaths against
+deaths), so `scripts/live_runs_table.py` now picks it by the largest change in z = (estimate -
+decision threshold) / standard error and prints that measure under the table; its ids differ
+for three of the four cases without a flip and the ids above were not reproduced again. 11 of 12
 MATCH. The twelfth is the adversary's median quantile regression in marp_religiosity. On macOS
 it gives 0.04461034 [0.03156106, 0.05765961]; the recording, on ConTree's Linux, gave
 0.04461015 [0.03156089, 0.05765941]. The relative difference is 4e-6, the p-value, n and verdict
