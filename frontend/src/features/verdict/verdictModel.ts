@@ -33,3 +33,9 @@ export function exploredCount(snapshot: RunSnapshot): number {
   if (snapshot.report) return snapshot.report.n_universes;
   return Object.values(snapshot.garden.universes).filter((u) => u.status === "done" && u.kind !== "verification").length;
 }
+
+export function agreementShare(snapshot: RunSnapshot): { agree: number; total: number } | null {
+  const report = snapshot.report;
+  if (!report || report.n_universes <= 0) return null;
+  return { agree: Math.max(0, report.n_universes - report.n_flipped), total: report.n_universes };
+}

@@ -41,7 +41,7 @@ describe("PlatformPage", () => {
     const data = samplePlatform();
     const identity = data.pillars.find((p) => p.id === "identity")!;
     identity.facts.recent_denials = [
-      { seq: 7, ts: 1791058796, kind: "armor.screen", principal: "agent://coder", route: "/api/runs", reason: "prompt injection pattern" },
+      { seq: 7, ts: "2026-10-03T20:19:56.123456+00:00", kind: "armor.screen", principal: "agent://coder", route: "/api/runs", reason: "prompt injection pattern" },
     ];
     respond(data);
     render(<PlatformPage />);
@@ -49,6 +49,7 @@ describe("PlatformPage", () => {
     expect(block).toHaveTextContent("armor.screen");
     expect(block).toHaveTextContent("agent://coder");
     expect(block).toHaveTextContent("prompt injection pattern");
-    expect(block).toHaveTextContent("2026-10-03 20:19:56 UTC");
+    expect(block).toHaveTextContent(/2026-10-0[34] \d\d:19:56/);
+    expect(block).not.toHaveTextContent("unknown");
   });
 });

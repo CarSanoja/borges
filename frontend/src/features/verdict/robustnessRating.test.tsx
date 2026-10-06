@@ -14,7 +14,7 @@ describe("robustness rating", () => {
   it("says how few universes there are when the rating is null", () => {
     const report = withReport({ robustness_rating: null, n_universes: 5 });
     render(<VerdictCard snapshot={report} />);
-    expect(screen.getByText(/^Too few distinct paths \(5\) to rate robustness; \d+ of 5 agree with the baseline$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Too few distinct paths \(5\) to rate robustness$/)).toBeInTheDocument();
     expect(document.querySelector(".vc-robust__fill")).toBeNull();
   });
 

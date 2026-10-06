@@ -1,9 +1,9 @@
 import userEvent from "@testing-library/user-event";
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as client from "../../shared/api/client";
 import { FALLBACK_CASES } from "../cases/fallbackCases";
-import { ReplayRoute } from "./ReplayRoute";
+import { AUTOPLAY_LIMIT_MS, ReplayRoute } from "./ReplayRoute";
 
 vi.mock("../../shared/api/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../shared/api/client")>()),
@@ -72,14 +72,57 @@ describe("ReplayRoute", () => {
     expect(screen.queryByTestId("needs-live")).toBeNull();
   });
 
-  it("shows the finished replay at once and animates only on request", async () => {
+  it("plays automatically at animated speed and holds the verdict while it runs", async () => {
+    vi.mocked(client.getCase).mockResolvedValue(checkout);
+    render(<ReplayRoute caseId="checkout_ab" onHome={() => undefined} />);
+    await waitFor(() => expect(created).toHaveLength(1));
+    expect(created[0]).toContain("speed=8");
+    expect(screen.getByTestId("verdict-holding")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Skip to the end" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Replay the animation" })).toBeNull();
+  });
+
+  it("jumps to the finished state with the skip control and offers a replay", async () => {
+    vi.mocked(client.getCase).mockResolvedValue(checkout);
+    render(<ReplayRoute caseId="checkout_ab" onHome={() => undefined} />);
+    await waitFor(() => expect(created).toHaveLength(1));
+    await userEvent.click(screen.getByRole("button", { name: "Skip to the end" }));
+    await waitFor(() => expect(created).toHaveLength(2));
+    expect(created[1]).toContain("speed=100");
+    expect(screen.queryByTestId("verdict-holding")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Skip to the end" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Replay the animation" }));
+    await waitFor(() => expect(created).toHaveLength(3));
+    expect(created[2]).toContain("speed=8");
+  });
+
+  it("finishes by itself after the autoplay limit so the answer is on screen without a click", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(client.getCase).mockResolvedValue(checkout);
+    render(<ReplayRoute caseId="checkout_ab" onHome={() => undefined} />);
+    await waitFor(() => expect(created).toHaveLength(1));
+    await act(async () => {
+      vi.advanceTimersByTime(AUTOPLAY_LIMIT_MS + 50);
+    });
+    vi.useRealTimers();
+    await waitFor(() => expect(created).toHaveLength(2));
+    expect(created[1]).toContain("speed=100");
+    expect(screen.queryByTestId("verdict-holding")).toBeNull();
+  });
+
+  it("renders the final state at once with reduced motion, with no skip or replay control", async () => {
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query.includes("reduce"),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
     vi.mocked(client.getCase).mockResolvedValue(checkout);
     render(<ReplayRoute caseId="checkout_ab" onHome={() => undefined} />);
     await waitFor(() => expect(created).toHaveLength(1));
     expect(created[0]).toContain("speed=100");
-    await userEvent.click(screen.getByRole("button", { name: "Replay the animation" }));
-    await waitFor(() => expect(created).toHaveLength(2));
-    expect(created[1]).toContain("speed=4");
+    expect(screen.queryByTestId("verdict-holding")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Skip to the end" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Replay the animation" })).toBeNull();
   });
 

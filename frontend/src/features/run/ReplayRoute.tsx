@@ -6,9 +6,11 @@ import { useCases } from "../cases/useCases";
 import { NotFound } from "../notfound/NotFound";
 import { pickSource } from "../recording/recordingText";
 import { RunPage } from "./RunPage";
+import { prefersReducedMotion } from "./usePrefersReducedMotion";
 
 export const INSTANT_SPEED = 100;
-export const ANIMATED_SPEED = 4;
+export const ANIMATED_SPEED = 8;
+export const AUTOPLAY_LIMIT_MS = 4000;
 
 type Gate =
   | { kind: "loading" }
@@ -25,12 +27,12 @@ interface Props {
 export function ReplayRoute({ caseId, requested = null, onHome }: Props) {
   const [gate, setGate] = useState<Gate>({ kind: "loading" });
   const { cases } = useCases();
-  const [animated, setAnimated] = useState(false);
+  const [animated, setAnimated] = useState(() => !prefersReducedMotion());
 
   useEffect(() => {
     let active = true;
     setGate({ kind: "loading" });
-    setAnimated(false);
+    setAnimated(!prefersReducedMotion());
     getCase(caseId).then(
       (card) => active && setGate({ kind: "card", card }),
       (cause) => active && setGate({ kind: cause instanceof ApiError && cause.status === 404 ? "missing" : "unknown" }),
@@ -39,6 +41,12 @@ export function ReplayRoute({ caseId, requested = null, onHome }: Props) {
       active = false;
     };
   }, [caseId]);
+
+  useEffect(() => {
+    if (!animated || gate.kind === "loading") return;
+    const timer = setTimeout(() => setAnimated(false), AUTOPLAY_LIMIT_MS);
+    return () => clearTimeout(timer);
+  }, [animated, gate.kind]);
 
   if (gate.kind === "loading") {
     return (
@@ -64,10 +72,21 @@ export function ReplayRoute({ caseId, requested = null, onHome }: Props) {
   const scripted = gate.kind === "card" ? gate.card.has_recording : true;
   const recording = gate.kind === "card" ? pickSource(requested, live, scripted) : undefined;
   const speed = animated ? ANIMATED_SPEED : INSTANT_SPEED;
-  const replayControl = animated ? null : (
+  const replayControl = animated ? (
+    <button type="button" className="btn replay-skip" onClick={() => setAnimated(false)}>
+      Skip to the end
+    </button>
+  ) : prefersReducedMotion() ? null : (
     <button type="button" className="btn replay-animation" onClick={() => setAnimated(true)}>
       Replay the animation
     </button>
   );
-  return <RunPage source={{ kind: "replay", caseId, speed, recording }} onHome={onHome} replayControl={replayControl} />;
+  return (
+    <RunPage
+      source={{ kind: "replay", caseId, speed, recording }}
+      onHome={onHome}
+      replayControl={replayControl}
+      holdVerdict={animated}
+    />
+  );
 }
