@@ -104,3 +104,24 @@ def test_the_profile_records_the_repeated_units_with_their_counts() -> None:
     ]
     assert blind_profile(profile).repeated_units == profile.repeated_units
     assert profile_dataframe(frame(), "visits").repeated_units == []
+
+
+CASES = Path(__file__).resolve().parents[2] / "cases"
+
+
+def test_a_column_its_note_calls_an_identifier_is_a_unit() -> None:
+    import json
+
+    case = json.loads((CASES / "teaching_ratings" / "case.json").read_text())
+    data = pd.read_parquet(CASES / "teaching_ratings" / "data.parquet")
+    assert detect_repeated_units(data) == []
+    [unit] = detect_repeated_units(data, notes=case["column_notes"])
+    assert (unit.name, unit.n_units) == ("prof", 94)
+
+
+def test_a_noted_identifier_with_one_row_each_is_not_a_unit() -> None:
+    import json
+
+    case = json.loads((CASES / "fertility_religiosity" / "case.json").read_text())
+    data = pd.read_parquet(CASES / "fertility_religiosity" / "data.parquet")
+    assert detect_repeated_units(data, notes=case["column_notes"]) == []

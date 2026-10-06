@@ -21,7 +21,7 @@
   },
   "agents": {
     "planner": {
-      "models": ["nvidia/nemotron-3-super-120b-a12b", "nvidia/Nemotron-3-Ultra-550b-a55b"],
+      "models": ["nvidia/Nemotron-3-Ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
       "max_tokens": 8192,
       "max_calls_per_run": 20,
       "max_cost_usd_per_run": 0.2,
@@ -58,7 +58,7 @@
       "max_sample_rows": 5
     },
     "judge": {
-      "models": ["nvidia/nemotron-3-super-120b-a12b"],
+      "models": ["nvidia/Nemotron-3-Ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
       "max_tokens": 2048,
       "max_calls_per_run": 400,
       "max_cost_usd_per_run": 0.25,

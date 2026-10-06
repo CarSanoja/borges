@@ -38,11 +38,11 @@ ULTRA = ModelSpec(id="nvidia/Nemotron-3-Ultra-550b-a55b", input_usd_per_m=1.0, o
 KNOWN_MODELS: dict[str, ModelSpec] = {m.id: m for m in (NANO, LIGHTNING, SUPER, ULTRA)}
 
 DEFAULT_ROLE_MODELS: dict[Role, ModelSpec] = {
-    Role.PLANNER: SUPER,
+    Role.PLANNER: ULTRA,
     Role.CODER: LIGHTNING,
     Role.REPAIRER: SUPER,
     Role.ADVERSARY: SUPER,
-    Role.JUDGE: SUPER,
+    Role.JUDGE: ULTRA,
     Role.REVIEWER: SUPER,
     Role.NARRATOR: ULTRA,
 }

@@ -80,7 +80,7 @@ def profile_dataframe(
         n_rows=int(len(df)),
         columns=columns,
         sample_rows=_sample_rows(df, sample),
-        repeated_units=detect_repeated_units(df),
+        repeated_units=detect_repeated_units(df, notes=notes),
     )
 
 

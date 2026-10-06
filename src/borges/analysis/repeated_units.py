@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 from pandas.api import types as pdt
@@ -14,8 +14,15 @@ SNAKE_ID = re.compile(r"(?:^|_)(?:id|code|num|key)$", re.IGNORECASE)
 CAMEL_ID = re.compile(r"[a-z0-9](?:Id|ID|Num|Code|Short|Key)$")
 
 
+NOTED_ID = re.compile(r"\bidentifier\b|\bID\b")
+
+
 def looks_like_identifier(name: str) -> bool:
     return SNAKE_ID.search(name) is not None or CAMEL_ID.search(name) is not None
+
+
+def noted_identifier(note: str | None) -> bool:
+    return note is not None and NOTED_ID.search(note) is not None
 
 
 def _keyable(series: pd.Series) -> bool:
@@ -32,22 +39,26 @@ def _same_grouping(frame: pd.DataFrame, first: str, second: str) -> bool:
     return len(pairs) == pairs[first].nunique() == pairs[second].nunique()
 
 
-def detect_repeated_units(df: pd.DataFrame, exclude: Iterable[str] = ()) -> list[RepeatedUnit]:
+def detect_repeated_units(
+    df: pd.DataFrame, exclude: Iterable[str] = (), notes: Mapping[str, str] | None = None
+) -> list[RepeatedUnit]:
     """Identifier columns whose values repeat across rows: the units that make rows dependent.
 
     A column is a repeated unit when all of these hold: its name reads as an identifier (ends in
-    id, code, num, key, short, in snake_case or camelCase); its values are integers or text, not
-    fractions or booleans; it has at least 30 distinct non-missing values; and its non-missing
-    rows average at least 2 per value. The outcome and the exposure, passed as `exclude`, are
-    never units. A column that groups the rows exactly as an earlier detected column does (a
-    player name beside its code) is the same unit and is left out. Units come back in column
-    order with their distinct count and the mean rows per value.
+    id, code, num, key, short, in snake_case or camelCase), or its column note calls it an
+    identifier (teaching_ratings: prof, "instructor identifier"); its values are integers or
+    text, not fractions or booleans; it has at least 30 distinct non-missing values; and its
+    non-missing rows average at least 2 per value. The outcome and the exposure, passed as
+    `exclude`, are never units. A column that groups the rows exactly as an earlier detected
+    column does (a player name beside its code) is the same unit and is left out. Units come
+    back in column order with their distinct count and the mean rows per value.
     """
     skip = set(exclude)
     found: list[RepeatedUnit] = []
     for column in df.columns:
         name = str(column)
-        if name in skip or not looks_like_identifier(name) or not _keyable(df[column]):
+        named = looks_like_identifier(name) or noted_identifier((notes or {}).get(name))
+        if name in skip or not named or not _keyable(df[column]):
             continue
         present = int(df[column].notna().sum())
         distinct = int(df[column].nunique(dropna=True))
