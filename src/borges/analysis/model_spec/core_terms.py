@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 WRAPPERS = ("C",)
-OPERATORS = " :*+()"
+PLAIN_SYMBOLS = "_ :*+"
+PARENTHESES = (40, 41)
 
 
 def _words(name: str) -> set[str]:
@@ -10,8 +11,8 @@ def _words(name: str) -> set[str]:
 
 
 def _plain_operators(name: str) -> bool:
-    rest = "".join(ch for ch in name if not (ch.isalnum() or ch == "_"))
-    return set(rest) <= set(OPERATORS) and "**" not in name
+    plain = (ch.isalnum() or ch in PLAIN_SYMBOLS or ord(ch) in PARENTHESES for ch in name)
+    return all(plain) and "**" not in name
 
 
 def is_core_term(name: str, core: list[str]) -> bool:
@@ -32,8 +33,9 @@ def runtime_filter_lines(core: list[str]) -> list[str]:
         "        for t in ''.join(h if h.isalnum() or h in '_' else ' ' for h in c).split()",
         "        if not t.isdigit()",
         "    }",
-        "    plain = lambda c: set(''.join(h for h in c if not (h.isalnum() or h == '_'))) <= "
-        f"set({OPERATORS!r}) and '**' not in c",
+        "    plain = lambda c: '**' not in c and all(",
+        f"        h.isalnum() or h in {PLAIN_SYMBOLS!r} or ord(h) in {PARENTHESES!r} for h in c",
+        "    )",
         "    names = [",
         "        c",
         "        for c in dict.fromkeys(names)",

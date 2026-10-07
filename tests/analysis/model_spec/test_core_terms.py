@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 import statsmodels.api as sm
 
+from borges.analysis.code_guard import check_code
 from borges.analysis.model_spec.core_terms import is_core_term
 from borges.analysis.model_spec.render import render_code
 from tests.analysis.model_spec.data import make_spec, synthetic
@@ -60,3 +61,11 @@ def test_a_longer_identifier_containing_a_core_name_is_kept() -> None:
     assert kept["estimate"] != pytest.approx(without["estimate"])
     static = render_code(make_spec("ols", covariates=["x_squared", "x:a"]))
     assert "'x_squared'" in static and "'x:a'" in static
+
+
+@pytest.mark.parametrize("family", ["ols", "logit", "poisson"])
+def test_the_rendered_core_term_filter_passes_the_code_guard(family: str) -> None:
+    spec = make_spec(family, covariates=["x_squared"], covariates_from_ctx=True)
+    code = render_code(spec)
+    assert "core_names" in code
+    assert check_code(code, "model") == []
