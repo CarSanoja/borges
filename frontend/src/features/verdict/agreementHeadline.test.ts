@@ -68,7 +68,7 @@ describe("smallestP", () => {
 describe("agreementHeadline", () => {
   it("calls fertility's paths inconclusive and gives the smallest p-value", () => {
     const headline = agreementHeadline(fertility())!;
-    expect(headline).toMatchObject({ agree: 32, total: 32, inconclusive: true, verb: "paths are also inconclusive", suffix: "" });
+    expect(headline).toMatchObject({ agree: 32, total: 32, inconclusive: true });
     expect(headline.pLine).toBe("No path reached p < 0.05; the smallest p-value was 0.070");
   });
 
@@ -78,7 +78,7 @@ describe("agreementHeadline", () => {
     expect(agreementHeadline(snapshot)!.pLine).toBe("The smallest p-value was 0.010");
   });
 
-  it("keeps today's wording for a positive original verdict", () => {
+  it("leads a positive original verdict with the grid share", () => {
     const snapshot = fertility({
       original_verdict: "FERTILITY SHIFTS RELIGIOSITY",
       original_result: result(1.2, 0.01),
@@ -86,27 +86,26 @@ describe("agreementHeadline", () => {
       n_universes: 12,
       n_distinct_results: 12,
     });
-    expect(agreementHeadline(snapshot)).toMatchObject({ agree: 7, total: 12, inconclusive: false, verb: "paths agree", suffix: "", pLine: null });
+    expect(agreementHeadline(snapshot)).toMatchObject({ agree: 7, total: 12, inconclusive: false, label: "of the analysis grid agrees", pLine: null });
   });
 
-  it("keeps the agree wording for a significant negative verdict", () => {
+  it("treats a significant negative verdict as conclusive", () => {
     const snapshot = fertility({ original_result: result(-1, 0.001) });
-    expect(agreementHeadline(snapshot)).toMatchObject({ inconclusive: false, verb: "paths agree", pLine: null });
+    expect(agreementHeadline(snapshot)).toMatchObject({ inconclusive: false, pLine: null });
   });
 
-  it("adds the distinct count when it is smaller, as for teaching ratings", () => {
+  it("gives the explored and distinct counts as context, as for teaching ratings", () => {
     const snapshot = fertility({
       original_verdict: "FERTILITY SHIFTS RELIGIOSITY",
       original_result: result(1.2, 0.01),
       n_universes: 20,
       n_distinct_results: 18,
     });
-    expect(agreementHeadline(snapshot)).toMatchObject({ agree: 20, total: 20, suffix: " (18 distinct results)" });
+    expect(agreementHeadline(snapshot)).toMatchObject({ agree: 20, total: 20, context: "from 20 explored paths, 18 distinct results" });
   });
 
-  it("adds no suffix when the distinct count is zero or missing", () => {
-    expect(agreementHeadline(fertility({ n_distinct_results: 0 }))!.suffix).toBe("");
-    expect(agreementHeadline(fertility({ n_distinct_results: undefined }))!.suffix).toBe("");
+  it("counts every explored path as distinct when the distinct count is missing", () => {
+    expect(agreementHeadline(fertility({ n_distinct_results: undefined }))!.context).toBe("from 32 explored paths, 32 distinct results");
   });
 
   it("returns nothing before the report", () => {

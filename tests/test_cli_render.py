@@ -44,7 +44,7 @@ def test_inconclusive_original_result_says_the_paths_are_also_inconclusive() -> 
 def test_positive_original_result_keeps_the_percentage() -> None:
     rule = fertility_rule()
     line = robustness_line(make_report(rule.positive_label, 0.01), rule, 0.01)
-    assert line.startswith("Robustness: 100% (share of distinct results)")
+    assert line.startswith("Robustness: 100% of the distinct explored results agree")
 
 
 def test_significant_negative_verdict_keeps_the_percentage() -> None:

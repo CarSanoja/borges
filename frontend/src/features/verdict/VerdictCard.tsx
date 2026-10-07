@@ -31,10 +31,19 @@ export function VerdictCard({ snapshot }: Props) {
     <section className="vc" aria-label="Verdict" data-state={flip ? (turned ? "flipped" : "found") : "original"}>
       {share && (
         <div className="vc-agree" data-testid="vc-agree" data-inconclusive={share.inconclusive}>
-          <p className="vc-agree__line">
-            <span className="mono vc-agree__n">{share.agree}</span> of <span className="mono">{share.total}</span> {share.verb}
-            {share.suffix}
-          </p>
+          {share.inconclusive ? (
+            <p className="vc-agree__line">
+              <span className="mono vc-agree__n">{share.agree}</span> of <span className="mono">{share.total}</span> paths are also
+              inconclusive
+            </p>
+          ) : (
+            <p className="vc-agree__line">
+              <span className="mono vc-agree__n">{share.percent}</span> {share.label}
+            </p>
+          )}
+          <span className="vc-agree__context" data-testid="vc-agree-context">
+            {share.context}
+          </span>
           {share.pLine && <p className="vc-agree__p">{share.pLine}</p>}
         </div>
       )}

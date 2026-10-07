@@ -77,15 +77,29 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
           </button>
         )}
         {!liveOnly && (
-          <button type="button" className="btn" disabled={busy !== null} onClick={() => start("scripted")}>
-            Replay offline (scripted)
-            <span className="btn-note">no model is called</span>
+          <button
+            type="button"
+            className="btn"
+            disabled={busy !== null}
+            aria-busy={busy === "scripted"}
+            data-busy={busy === "scripted"}
+            onClick={() => start("scripted")}
+          >
+            {busy === "scripted" ? "Starting the replay..." : "Replay offline (scripted)"}
+            <span className="btn-note">{busy === "scripted" ? "opening the run" : "no model is called"}</span>
           </button>
         )}
         {liveAvailable && (
-          <button type="button" className="btn btn-live" disabled={busy !== null} onClick={() => start("nebius")}>
-            Run live on Nemotron
-            <span className="btn-note">spends real tokens</span>
+          <button
+            type="button"
+            className="btn btn-live"
+            disabled={busy !== null}
+            aria-busy={busy === "nebius"}
+            data-busy={busy === "nebius"}
+            onClick={() => start("nebius")}
+          >
+            {busy === "nebius" ? "Starting the live run..." : "Run live on Nemotron"}
+            <span className="btn-note">{busy === "nebius" ? "opening the run" : "spends real tokens"}</span>
           </button>
         )}
       </div>

@@ -96,8 +96,11 @@ evidence on its own; a sign-reversing flip is specific. Detection of the artefac
 the true effect grows, so no flip does not prove no artefact. The rates apply to this fixed
 menu, not to arbitrary datasets, and the default analysis ignores clustering by user.
 
-**Verdict wording.** The docs and the verdict card lead with the robustness share ("N of M
-paths agree"), then the smallest flip found and its kind (direction or significance).
+**Verdict wording.** The docs and the verdict card lead with the share of the analysis grid
+that agrees ("60% of the analysis grid agrees", the same figure as the robustness meter), with
+the explored and distinct paths as context, or with "N of M paths are also inconclusive" when the
+original result is not significant; then the smallest flip found and its kind (direction or
+significance).
 
 ## Who it is for
 

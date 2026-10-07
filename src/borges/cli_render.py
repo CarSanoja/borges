@@ -55,9 +55,9 @@ def recording_label(scripted: bool, live: bool) -> str:
 
 
 BASIS_LABELS = {
-    "design_weighted": "design-weighted",
-    "distinct_results": "share of distinct results",
-    "none": "no universes",
+    "design_weighted": "of the analysis grid agrees (design-weighted)",
+    "distinct_results": "of the distinct explored results agree",
+    "none": "no universes explored",
 }
 
 
@@ -66,7 +66,7 @@ def robustness_line(
 ) -> str:
     distinct = report.n_distinct_results or report.n_universes
     counts = (
-        f"{report.n_universes} universes explored, {distinct} distinct results, "
+        f"from {report.n_universes} explored paths, {distinct} distinct results, "
         f"{report.n_flipped} flipped"
     )
     if is_inconclusive(report.original_verdict, report.original_result, rule):
@@ -76,7 +76,7 @@ def robustness_line(
         line = f"Robustness: {clause}; {counts}"
     else:
         basis = BASIS_LABELS[report.robustness_basis]
-        line = f"Robustness: {report.robustness:.0%} ({basis}); {counts}"
+        line = f"Robustness: {report.robustness:.0%} {basis}; {counts}"
     if report.n_failed:
         line += (
             f"; {report.n_failed} more failed and are untested "

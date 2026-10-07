@@ -1,13 +1,14 @@
 import type { AnalysisResult, DecisionRule, RunSnapshot, Universe } from "../../shared/types/contracts";
-import { formatP } from "./verdictFormat";
-import { activeRule, agreementShare, originalResult, originalVerdict } from "./verdictModel";
+import { formatP, formatPercent } from "./verdictFormat";
+import { activeRule, originalResult, originalVerdict } from "./verdictModel";
 
 export interface AgreementHeadline {
   agree: number;
   total: number;
   inconclusive: boolean;
-  suffix: string;
-  verb: string;
+  percent: string;
+  label: string;
+  context: string;
   pLine: string | null;
 }
 
@@ -31,19 +32,24 @@ function pLineFor(minP: number | null, alpha: number): string | null {
   return `No path reached p < ${alpha}; the smallest p-value was ${shown}`;
 }
 
+function plural(count: number, one: string, many: string): string {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
 export function agreementHeadline(snapshot: RunSnapshot): AgreementHeadline | null {
-  const share = agreementShare(snapshot);
   const report = snapshot.report;
-  if (!share || !report) return null;
+  if (!report || report.n_universes <= 0) return null;
   const rule = activeRule(snapshot);
-  const distinct = report.n_distinct_results ?? 0;
-  const suffix = distinct > 0 && distinct < share.total ? ` (${distinct} distinct results)` : "";
   const inconclusive = isInconclusive(originalVerdict(snapshot), originalResult(snapshot), rule);
+  const gridBased = report.robustness_basis === undefined || report.robustness_basis === "design_weighted";
+  const distinct = report.n_distinct_results ?? report.n_universes;
   return {
-    ...share,
+    agree: Math.max(0, report.n_universes - report.n_flipped),
+    total: report.n_universes,
     inconclusive,
-    suffix,
-    verb: inconclusive ? "paths are also inconclusive" : "paths agree",
+    percent: formatPercent(report.robustness_rating ?? report.robustness),
+    label: gridBased ? "of the analysis grid agrees" : "of the distinct explored results agree",
+    context: `from ${plural(report.n_universes, "explored path", "explored paths")}, ${plural(distinct, "distinct result", "distinct results")}`,
     pLine: inconclusive && rule ? pLineFor(smallestP(snapshot.garden.universes), rule.alpha) : null,
   };
 }

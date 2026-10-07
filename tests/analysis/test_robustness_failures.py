@@ -58,3 +58,10 @@ def test_the_robustness_sentence_survives_failure_restating() -> None:
     sentence = robustness_sentence(rep)
     assert sentence is not None
     assert sentence in restate_failures(rep, f"The estimate is 1.27. {sentence}")
+
+
+def test_the_cli_line_leads_with_the_grid_share_and_gives_explored_paths_as_context() -> None:
+    line = robustness_line(report(0))
+    assert line.startswith("Robustness: ")
+    assert "of the analysis grid agrees" in line
+    assert "from " in line and "explored paths" in line

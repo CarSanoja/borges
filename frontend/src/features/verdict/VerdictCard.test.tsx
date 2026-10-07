@@ -22,8 +22,9 @@ describe("VerdictCard", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={snapshot} />);
     expect(screen.getByText(snapshot.report!.original_verdict)).toBeInTheDocument();
-    const { n_universes, n_flipped } = snapshot.report!;
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent(`${n_universes - n_flipped} of ${n_universes} paths agree`);
+    const { n_universes, robustness } = snapshot.report!;
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent(`${Math.round(robustness * 100)}% of the analysis grid agrees`);
+    expect(screen.getByTestId("vc-agree-context")).toHaveTextContent(`from ${n_universes} explored paths`);
   });
 
   it("reveals the flip with changes and the reproduced badge", () => {
@@ -155,7 +156,7 @@ describe("VerdictCard search summary", () => {
     };
     render(<VerdictCard snapshot={clean} />);
     expect(screen.getByText(/No flip found: 7 universes explored out of a limit of 40/)).toBeInTheDocument();
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 7 paths agree");
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("of the analysis grid agrees");
     expect(screen.queryByText(/within 40/)).toBeNull();
     expect(screen.queryByText(/found in 7 universes/)).toBeNull();
   });
@@ -196,9 +197,18 @@ describe("VerdictCard search summary", () => {
 
   it("states the agreement share on the card from the report fields, also with the flip showing", () => {
     const snapshot = foldEvents("t", events);
-    const report = { ...snapshot.report!, n_universes: 12, n_flipped: 5 };
+    const report = { ...snapshot.report!, n_universes: 15, n_distinct_results: 10, robustness: 0.6, robustness_basis: "design_weighted" as const };
     render(<VerdictCard snapshot={{ ...snapshot, report }} />);
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 12 paths agree");
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("60% of the analysis grid agrees");
+    expect(screen.getByTestId("vc-agree-context")).toHaveTextContent("from 15 explored paths, 10 distinct results");
+  });
+
+  it("labels a non-grid share as the share of distinct explored results", () => {
+    const snapshot = foldEvents("t", events);
+    const report = { ...snapshot.report!, n_universes: 8, n_distinct_results: 8, robustness: 0.5, robustness_basis: "distinct_results" as const };
+    render(<VerdictCard snapshot={{ ...snapshot, report }} />);
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("50% of the distinct explored results agree");
+    expect(screen.getByTestId("vc-agree")).not.toHaveTextContent("analysis grid");
   });
 
   it("words an inconclusive original result and a distinct-result count honestly", () => {
@@ -207,7 +217,8 @@ describe("VerdictCard search summary", () => {
     const original_result = { ...snapshot.report!.original_result, p_value: 0.82 };
     const report = { ...snapshot.report!, original_verdict: "NO CLEAR EVIDENCE", original_result, n_universes: 20, n_flipped: 0, n_distinct_results: 18 };
     render(<VerdictCard snapshot={{ ...snapshot, flip: null, decision_rule: rule, report }} />);
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent("20 of 20 paths are also inconclusive (18 distinct results)");
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("20 of 20 paths are also inconclusive");
+    expect(screen.getByTestId("vc-agree-context")).toHaveTextContent("from 20 explored paths, 18 distinct results");
     expect(screen.getByTestId("vc-agree")).toHaveTextContent(/smallest p-value was/);
     expect(document.querySelector(".vc-robust")?.getAttribute("data-inconclusive")).toBe("true");
   });

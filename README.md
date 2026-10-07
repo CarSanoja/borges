@@ -7,9 +7,11 @@ smallest flip it found.**
 > ## Judge it in 2 minutes
 >
 > **What Borges answers:** how fragile or robust a data decision is, and which analytic choice
-> moves it. It leads with the share of explored paths that agree with yours ("N of M paths
-> agree"), then the smallest flip it found and which kind it is: a *direction* flip (the sign
-> reverses) or only a *significance* flip (same sign, p crosses 0.05).
+> moves it. It leads with the share of the analysis grid that agrees with yours ("60% of the
+> analysis grid agrees", with the explored paths as context; "N of M paths are also
+> inconclusive" when your own result is not significant), then the smallest flip it found and
+> which kind it is: a *direction* flip (the sign reverses) or only a *significance* flip (same
+> sign, p crosses 0.05).
 >
 > - Hosted demo: TODO-OWNER (URL, none exists yet)
 > - Video: TODO-OWNER (link, not recorded yet)
