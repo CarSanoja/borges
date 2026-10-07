@@ -101,7 +101,7 @@ the same event says `scripted`.
 | checkout_ab | SHIP: +0.85 pp [0.15, 1.55], p 0.017, n 16,000 users | Exclude the 171 internal sessions: -0.15 pp [-0.80, 0.50], DON'T SHIP (direction) | 16 |
 | red_cards | BIAS DETECTED: OR 1.17 [1.05, 1.30], p 0.0046 | Dyads with at least 2 games together plus the 0.5 skin-tone threshold: OR 1.12 [0.98, 1.29], p 0.092, NO CLEAR EVIDENCE (significance only) | 22 |
 | marp_religiosity | POSITIVE ASSOCIATION: 0.093 [0.076, 0.111] | none | 12 |
-| marp_norms | DEPENDS ON NORMS: interaction 0.035 [0.018, 0.052] | none | 29 (8 failed) |
+| marp_norms | DEPENDS ON NORMS: interaction 0.035 [0.018, 0.052] | none | 35 (6 failed) |
 | bank_marketing_calls | CAP THE CALLS: OR 0.872 [0.857, 0.886] per call | none | 12 |
 | hurricanes | NO CLEAR EVIDENCE: 0.011 on log1p(deaths) [-0.073, 0.094], p 0.80, n 93 | none | 18 |
 | teaching_ratings | BEAUTY PREMIUM: 0.165 [0.103, 0.226], p 1e-7, n 463 | none | 20 |

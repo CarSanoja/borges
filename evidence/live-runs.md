@@ -41,15 +41,16 @@ re-executes a recorded universe from scratch and must match the recording exactl
 | checkout_ab | r_20261005T224722_45a899 | `16f02e7` | 41 (0) | 84,125 / 8,316 | $0.0291 | 16 (0) |
 | red_cards | r_20261005T233430_dece7c | `5070877` | 41 (0) | 91,006 / 9,408 | $0.0306 | 22 (0) |
 | marp_religiosity | r_20261005T225939_5d10af | `16f02e7` | 31 (0) | 109,730 / 7,543 | $0.0352 | 12 (0) |
-| marp_norms | r_20261005T230329_f634c9 | `16f02e7` | 53 (2) | 193,230 / 15,222 | $0.0564 | 29 (8) |
+| marp_norms | r_20261005T230329_f634c9 | `16f02e7` | 53 (2) | 193,230 / 15,222 | $0.0564 | 35 (6) |
 | bank_marketing_calls | r_20261005T234748_d4616e | `6317040` | 33 (0) | 72,311 / 7,390 | $0.0257 | 12 (0) |
 | hurricanes | r_20261005T231651_d38583 | `16f02e7` | 39 (0) | 85,268 / 7,994 | $0.0304 | 18 (0) |
 
 Calls are the `llm_calls` of each recording's last `usage` event, $0.2073 for the six. The model
 cache was empty when each batch started. The two cached calls in marp_norms are the same runtime
 repair of `opt_pca_cnorm` asked twice inside that run (`borges.cache.hit` in `spans.jsonl`).
-marp_norms has 8 failed universes. Six of them are every universe with the PCA cultural-norms
-scale, whose step was stopped. The report says that decision was not tested.
+marp_norms ran 35 distinct universes: 29 done and 6 failed, every universe with the PCA
+cultural-norms scale, whose step was stopped. Two of the six were retried and failed again, so the
+event log has 37 finished events and 8 failures. The report says that decision was not tested.
 
 | Case | Original verdict | Smallest flip found | Reproduce |
 |---|---|---|---|
