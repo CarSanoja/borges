@@ -1,23 +1,35 @@
-"""Steegen et al.'s (2016) multiverse for Durante et al.'s (2013) Study 2 vote, from the raw data.
+"""Steegen et al.'s (2016) multiverse for Durante et al.'s (2013) Study 2, from the raw data.
 
 A Python port of their R code (osf.io/zj68b, "multiverse analysis steegen et al 2016_osf.R",
-analysis 5): three next-onset rules, five fertility windows, three relationship codings, three
-cycle-length exclusions and two certainty exclusions, 210 valid combinations, a logistic regression
-of Vote on fertility, relationship status and their product. As in R, a row whose exclusion
-criterion is missing is dropped, the cycle day is clipped to 1-28, and under the first next-onset
-rule WorkerID 15 and 16 take the cycle days 11 and 18 of the original authors' file.
+analyses 4 and 5): three next-onset rules, five fertility windows, three relationship codings,
+three cycle-length exclusions and two certainty exclusions, 210 valid combinations. `vote` fits a
+logistic regression of Vote on fertility, relationship status and their product; `social` an OLS
+of social conservatism, the mean of Marriage, RestrictAbortion and the reversed Abortion, StemCell
+and Marijuana items. As in R, a row whose exclusion criterion is missing is dropped, the cycle day
+is clipped to 1-28, and under the first next-onset rule WorkerID 15 and 16 take the cycle days 11
+and 18 of the original authors' file.
+
+    uv run python evidence/held-out/durante_study2/steegen_multiverse.py vote
+    uv run python evidence/held-out/durante_study2/steegen_multiverse.py social
 """
 
 from __future__ import annotations
 
 import itertools
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import statsmodels.formula.api as smf
 
-DATA = Path(__file__).resolve().parent / "data.parquet"
+CASES = Path(__file__).resolve().parents[1] / "cases"
+DATA = {
+    "vote": CASES / "fertility_vote" / "data.parquet",
+    "social": CASES / "fertility_social" / "data.parquet",
+}
+REVERSED = ("Abortion", "StemCell", "Marijuana")
+SOCIAL = ("Marriage", "RestrictAbortion", *REVERSED)
 HIGH = [(7, 14), (6, 14), (9, 17), (8, 14), (9, 17)]
 LOW = [((17, 25),), ((17, 27),), ((18, 25),), ((1, 7), (15, 28)), ((1, 8), (18, 28))]
 NAMES = ("NMO", "F", "R", "ECL", "EC")
@@ -49,21 +61,29 @@ def processed(raw: pd.DataFrame, nmo: int, f: int, r: int, ecl: int, ec: int) ->
         frame = frame[frame.ReportedCycleLength.between(25, 35)]
     if ec == 1:
         frame = frame[(frame.Sure1 >= 6) & (frame.Sure2 >= 6)]
-    return frame.dropna(subset=["high", "committed", "Vote"])
+    items = frame[list(SOCIAL)].copy()
+    items[list(REVERSED)] = 8 - items[list(REVERSED)]
+    frame["social"] = items.mean(axis=1)
+    return frame
 
 
-def interaction(frame: pd.DataFrame) -> tuple[float, float, int]:
-    fit = smf.logit("Vote ~ high * committed", data=frame).fit(disp=0)
+def interaction(frame: pd.DataFrame, outcome: str) -> tuple[float, float, int]:
+    if outcome == "vote":
+        data = frame.dropna(subset=["high", "committed", "Vote"])
+        fit = smf.logit("Vote ~ high * committed", data=data).fit(disp=0)
+    else:
+        data = frame.dropna(subset=["high", "committed", "social"])
+        fit = smf.ols("social ~ high * committed", data=data).fit()
     return float(fit.params["high:committed"]), float(fit.pvalues["high:committed"]), int(fit.nobs)
 
 
-def multiverse(raw: pd.DataFrame) -> list[tuple[tuple[int, ...], float, float, int]]:
+def multiverse(raw: pd.DataFrame, outcome: str) -> list[tuple[tuple[int, ...], float, float, int]]:
     rows = []
     for combo in itertools.product(range(3), range(5), range(3), range(3), range(2)):
         nmo, _, _, ecl, _ = combo
         if (nmo == 0 and ecl == 2) or (nmo == 1 and ecl == 1):
             continue
-        rows.append((combo, *interaction(processed(raw, *combo))))
+        rows.append((combo, *interaction(processed(raw, *combo), outcome)))
     return rows
 
 
@@ -72,7 +92,8 @@ def label(combo: tuple[int, ...]) -> str:
 
 
 def main() -> None:
-    rows = multiverse(pd.read_parquet(DATA))
+    outcome = sys.argv[1] if len(sys.argv) > 1 else "vote"
+    rows = multiverse(pd.read_parquet(DATA[outcome]), outcome)
     published = rows[0]
     significant = sum(p < 0.05 for _, _, p, _ in rows)
     print(

@@ -1,10 +1,11 @@
 # Fertility and the vote: how fragile is the published analysis?
 
-A live-only, held-out case. It was added on 7 October 2026 after the code it runs on was frozen,
-and every run of it is reported in `evidence/held-out.md`, failures included. Borges was not
-developed on these data: the fertility cases use Study 1 of the same paper; this is Study 2, a
-different sample, a binary outcome and a logistic model. Nothing in this directory was produced by
-a model except the recording.
+A live-only development case. It was the held-out test of 7 October 2026: added after the code it
+ran on was frozen, five attempts, every one reported in `evidence/held-out.md`. It failed its
+preregistered rule, and the fixes since were made with its runs in view, so later results on it are
+not held out; the held-out claim moved to `../fertility_social`. Borges had not been developed on
+these data before: the fertility cases use Study 1 of the same paper; this is Study 2, a different
+sample, a binary outcome and a logistic model. Nothing in this directory was produced by a model.
 
 ## Data
 
@@ -12,8 +13,9 @@ Durante, Rae and Griskevicius (2013), *The fluctuating female vote*, Psychologic
 Study 2: 502 women surveyed online before the 2012 US presidential election. Steegen, Tuerlinckx,
 Gelman and Vanpaemel (2016) published the raw data on OSF (https://osf.io/zj68b/); their supplement
 says the original author gave them permission to make the data publicly available. The OSF project
-states no licence. `prepare.py` downloads the file, checks its SHA-256 and writes `data.parquet`
-unchanged apart from parsing the dates.
+states no licence, so the data are not in this repository and the case is not among the curated
+cases of the demo: `../../durante_study2/prepare.py` downloads the file, checks its SHA-256 and
+writes `data.parquet` (git-ignored) unchanged apart from parsing the dates.
 
 ## The analysis Borges starts from
 
@@ -30,15 +32,16 @@ The text gives no hint of which changes matter. Borges is not told Steegen's gri
 
 ## Steegen's grid on these data
 
-`steegen_multiverse.py` ports their R code for this outcome: 210 valid combinations of the next
-onset rule, the fertility window, the relationship coding, a cycle-length exclusion and a
-certainty exclusion. 96 of 210 give p < .05. Of the ten single changes from the published cell,
+`../../durante_study2/steegen_multiverse.py vote` ports their R code for this outcome: 210 valid
+combinations of the next onset rule, the fertility window, the relationship coding, a cycle-length
+exclusion and a certainty exclusion. 96 of 210 give p < .05. Of the ten single changes from the published cell,
 two lose significance: keeping only women at least 6 of 9 sure of both period dates (p .1126,
 n 204) and dating the next onset from the participant's own estimate (p .1135, n 279).
 
 ## Reproduce
 
 ```
-uv run python cases/fertility_vote/prepare.py
-uv run python cases/fertility_vote/steegen_multiverse.py
+uv run python evidence/held-out/durante_study2/prepare.py
+uv run python evidence/held-out/durante_study2/steegen_multiverse.py vote
+BORGES_CASES_DIR=evidence/held-out/cases uv run borges run --case fertility_vote --llm nebius
 ```

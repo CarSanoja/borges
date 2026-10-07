@@ -25,3 +25,5 @@ evidence/blade/*/home/
 evidence/blade/*/runs/
 evidence/blade/*/cases/
 evidence/blade/*/matcher-cache/
+
+evidence/held-out/cases/*/data.parquet

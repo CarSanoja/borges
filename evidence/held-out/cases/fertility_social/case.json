@@ -1,23 +1,23 @@
 {
-  "id": "fertility_vote",
-  "title": "Fertility and the vote: how fragile is the published analysis?",
+  "id": "fertility_social",
+  "title": "Fertility and social conservatism: how fragile is the published analysis?",
   "subtitle": "Real survey data, held out. Borges starts from the published analysis and looks for the smallest change that reverses it.",
-  "question": "Does the difference in voting between women at high and at low fertility on the day they filled in the questionnaire depend on relationship status, such that women in committed relationships are less likely to vote for Obama at high fertility and single women more likely (a fertility by relationship status interaction)?",
+  "question": "Does the difference in social conservatism between women at high and at low fertility on the day they filled in the questionnaire depend on relationship status, such that women in committed relationships are more socially conservative at high fertility and single women less (a fertility by relationship status interaction)?",
   "decision_rule": {
-    "metric": "fertility by relationship status interaction on the log-odds of voting for Obama: the high minus low fertility difference among women in committed relationships minus the same difference among single women",
-    "comparator": "lt",
+    "metric": "fertility by relationship status interaction on mean social conservatism (1-7): the high minus low fertility difference among women in committed relationships minus the same difference among single women",
+    "comparator": "gt",
     "threshold": 0.0,
     "alpha": 0.05,
-    "positive_label": "FERTILITY SHIFTS THE VOTE",
+    "positive_label": "FERTILITY SHIFTS SOCIAL ATTITUDES",
     "negative_label": "NO CLEAR EVIDENCE"
   },
   "dataset_file": "data.parquet",
-  "dataset_name": "fertility_vote_study2",
+  "dataset_name": "fertility_social_study2",
   "provenance": "Real data, public on OSF (Steegen et al. 2016) with the original author's permission; no licence stated",
   "max_universes": 40,
   "reference_label": null,
   "reference": [],
-  "story": "502 women surveyed before the 2012 US presidential election, Study 2 of the paper behind the fertility cases. Borges is given the published analysis of the vote, as Steegen et al. reconstructed it, and asked how fragile it is. The case was added after the code it runs on was frozen, and every run of it is reported: it is a held-out test. Real data, nothing planted; a live run only.",
+  "story": "The same 502 women as the vote case, and another of the paper's findings: social conservatism. Borges is given the published analysis, as Steegen et al. reconstructed it, and asked how fragile it is. The case was added before the code it runs on was frozen, no fix is made while looking at its runs, and every run is reported: a held-out test of an analysis Borges was not developed on, on a sample it was. Real data, nothing planted; a live run only.",
   "live_only": true,
   "column_notes": {
     "WorkerID": "the unique identifier of a participant",
@@ -45,5 +45,5 @@
     "StartDateofPeriodBeforeLast": "the participant's best estimate of the date she started the period before her last period; has missing values",
     "StartDateNext": "the participant's estimate of the date her next period will start; has missing values"
   },
-  "analysis": "vote = Vote (1 = Obama); cycle length = StartDateofLastPeriod minus StartDateofPeriodBeforeLast in days; next onset = StartDateofLastPeriod plus that cycle length; cycle day = 28 minus the days from DateTesting to the next onset, set to 1 below 1 and to 28 above 28; for WorkerID 15 and 16, whose period dates are missing, the cycle day of the original authors' file, 11 and 18; high fertility = cycle days 7 to 14, low fertility = cycle days 17 to 25, rows on other days dropped; single = Relationship 1 or 2, committed = Relationship 3 or 4; no other exclusions; logistic regression of Vote on high fertility, committed and their product, with the model's own standard errors."
+  "analysis": "social conservatism = mean of Marriage, RestrictAbortion, and Abortion, StemCell and Marijuana each reverse-scored as 8 minus the answer; cycle length = StartDateofLastPeriod minus StartDateofPeriodBeforeLast in days; next onset = StartDateofLastPeriod plus that cycle length; cycle day = 28 minus the days from DateTesting to the next onset, set to 1 below 1 and to 28 above 28; for WorkerID 15 and 16, whose period dates are missing, the cycle day of the original authors' file, 11 and 18; high fertility = cycle days 7 to 14, low fertility = cycle days 17 to 25, rows on other days dropped; single = Relationship 1 or 2, committed = Relationship 3 or 4; no other exclusions; OLS of social conservatism on high fertility, committed and their product, classical standard errors."
 }

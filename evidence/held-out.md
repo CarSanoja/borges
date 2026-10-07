@@ -6,13 +6,13 @@ never seen, with the success rule written down before the first run.
 
 ## The case
 
-`cases/fertility_vote`: Durante et al. (2013), Study 2, 502 women, the vote for Obama or
+`evidence/held-out/cases/fertility_vote`: Durante et al. (2013), Study 2, 502 women, the vote for Obama or
 Romney, a logistic regression on fertility, relationship status and their product. The fertility
 cases use Study 1, a different sample, a 1-9 outcome and OLS. Borges is given the published
 analysis in plain words and asked how fragile it is.
 
 The ground truth was computed before any run. The port of Steegen et al.'s multiverse
-(`cases/fertility_vote/steegen_multiverse.py`) reproduces the paper: an interaction of -1.6230,
+(`evidence/held-out/durante_study2/steegen_multiverse.py vote`) reproduces the paper: an interaction of -1.6230,
 p .0038, n 303, against the published b = -1.62, Wald(1) = 8.35, p = .004, with 131 + 172 women,
 and the four cell percentages match. Of the ten single changes in Steegen's grid, two flip it
 (the certainty exclusion, p .1126, and the participant's own next-onset date, p .1135). Outside
@@ -66,3 +66,39 @@ in advance (married only, p .0524). The failures are defects in how steps hand d
 other, not in the search or the statistics. From here on this is a development case: the fixes
 were made with these runs in view, so any later result on it is not held out. The held-out claim
 moves to a new case that no fix has been tuned on.
+
+The data of Study 2 come from an OSF project that states no licence, so both Study 2 cases live
+here rather than among the curated cases, and their data are downloaded by
+`durante_study2/prepare.py`, never committed. (The first commit of the vote case, `c009f7a`,
+included the file; it has not been published.)
+
+## Development on the vote case, 7 October
+
+Twelve further live runs (6 to 17), each against a hypothesis written down before it, with the
+fix that followed. Every run and its cost is in `notes/LEDGER.md`; the defects, in order:
+
+- The step-by-step code dropped the two hand-set participants (n 301), coded fertility as -1/+1
+  (estimate halved), kept days 15-16 as low fertility (n 344) or dated the next onset from the
+  participant's estimate (n 279), while the plan's specs were right. A check of the specs cannot
+  see that. **Fix:** the whole analysis is written again as one script by a second model, twice and
+  independently, and run on the raw data; two scripts that agree are the reference. Asked for the
+  whole analysis in one script, that model wrote the exact published cell in 4 of 5 attempts and
+  never a wrong number; the coder model got 0 of 5. A reference equal to the baseline confirms
+  it; a different one sends the steps that depart to repair, and a repair that does not reach the
+  reference is undone and reported.
+- In run 14 the first script was right, the second copied the baseline's mistake, and a vote
+  that counted the baseline confirmed the wrong starting point. **Fix:** the baseline never votes;
+  a third script is written when the first two disagree.
+- A logistic fit with a separated cell (-36.6, interval ±43,000) was reported as the smallest
+  flip. **Fix:** such fits are set aside as not estimable.
+- The code reviewer dropped "married only" and "dating counts as committed" as estimand changes
+  by comparing them with the default's grouping, after the judge had accepted them. **Fix:** for an
+  accepted option the estimand is the judge's call; a reviewer verdict must quote the option's own
+  spec.
+- The split-half check refused a sound interval because the halves of a small sample were
+  separated. **Fix:** the check abstains when a half cannot be estimated.
+
+## The next held-out test
+
+`evidence/held-out/cases/fertility_social`: the published analysis of social conservatism on the
+same sample. Its answer was computed and its rule written in its README before any run.

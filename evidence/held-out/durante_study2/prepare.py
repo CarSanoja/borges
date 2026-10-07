@@ -1,7 +1,8 @@
-"""Build cases/fertility_vote/data.parquet from Durante et al. (2013) Study 2 on OSF.
+"""Build data.parquet of the held-out Study 2 cases from Durante et al. (2013) on OSF.
 
 Steegen et al. (2016) published the raw data at https://osf.io/zj68b/ with the original author's
-permission to make them public; their supplement documents the cleaning already applied.
+permission to make them public; their supplement documents the cleaning already applied. The OSF
+project states no licence, so the data are downloaded here and never committed.
 """
 
 from __future__ import annotations
@@ -12,8 +13,10 @@ from pathlib import Path
 
 import pandas as pd
 
-CASE_DIR = Path(__file__).resolve().parent
-RAW_DIR = CASE_DIR.parents[1] / "data" / "raw"
+HERE = Path(__file__).resolve().parent
+ROOT = next(p for p in HERE.parents if (p / "pyproject.toml").is_file())
+RAW_DIR = ROOT / "data" / "raw"
+CASE_DIRS = (HERE.parent / "cases" / "fertility_vote", HERE.parent / "cases" / "fertility_social")
 DATASET_URL = "https://osf.io/download/rvf9x/"
 SHA256 = "85c0e63e5c7aaa9f0f03e669ee0480bc64fd68c56e9fa79f300df42ac42c94d5"
 RAW_NAME = "durante_study2.txt"
@@ -46,8 +49,9 @@ def build_frame(path: Path) -> pd.DataFrame:
 
 def main() -> None:
     frame = build_frame(fetch_cached())
-    frame.to_parquet(CASE_DIR / "data.parquet", index=False, compression="zstd")
-    print(f"wrote {len(frame)} rows")
+    for case_dir in CASE_DIRS:
+        frame.to_parquet(case_dir / "data.parquet", index=False, compression="zstd")
+        print(f"wrote {len(frame)} rows to {case_dir.relative_to(ROOT)}/data.parquet")
 
 
 if __name__ == "__main__":
