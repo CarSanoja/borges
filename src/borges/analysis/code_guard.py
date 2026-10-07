@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 
 from borges.analysis.code_guard_codes import category_code_violations
+from borges.analysis.code_guard_dispatch import dispatch_violations
 from borges.analysis.code_guard_estimator import estimator_violations
 from borges.analysis.code_guard_fallback import (
     fallback_violations,
@@ -135,6 +136,8 @@ def _body_violations(func: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
             violations.extend(subscript_violations(node))
         elif isinstance(node, ast.Constant):
             violations.extend(_constant_violations(node, id(node) in probes))
+        elif isinstance(node, ast.Call):
+            violations.extend(dispatch_violations(node))
     return violations
 
 

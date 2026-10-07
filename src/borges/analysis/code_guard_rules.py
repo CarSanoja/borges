@@ -97,6 +97,10 @@ FORBIDDEN_ATTRIBUTES = frozenset(
         "runstring",
         "rundocs",
         "measure",
+        "test",
+        "show_versions",
+        "show_config",
+        "show_runtime",
     }
 )
 
