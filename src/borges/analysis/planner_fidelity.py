@@ -6,7 +6,9 @@ user definition: single = Relationship 1, committed = 2, 3, 4" for an analysis t
 1 or 2, and the judge accepted that default at 0.9 because it trusted the rationale. The run then
 measures the fragility of an analysis nobody brought. A second model reads the analysis and the
 default specs side by side and lists what differs; the planner is asked to fix those, twice at
-most, and what still differs is reported.
+most, and what still differs is reported. On the first recording with the check, Ultra listed every
+part, matches included ("Matches analysis."), so each comparison carries a differs flag and only
+the differences count.
 """
 
 from __future__ import annotations
@@ -28,7 +30,9 @@ Broaden = Callable[[PlannerOutput, str], Awaitable[PlannerOutput]]
 SYSTEM = """You check that the default path of an analysis plan implements the user's own \
 analysis exactly. The default path is the default option of every step, run in order.
 
-List every part of the user's analysis that the default path implements differently (a \
+Compare each part of the user's analysis with the default spec that implements it, and set \
+differs to true only for a real difference. List every part of the user's analysis that the \
+default path implements differently (a \
 different set of category codes, window, cut-off, formula, date arithmetic, exclusion, model or \
 standard error) or does not implement at all, and every default that adds something the analysis \
 does not say (an imputation, an exclusion, a covariate, a transformation). Compare the specs, not \
@@ -40,7 +44,8 @@ analysis exactly."""
 class Mismatch(BaseModel):
     step_id: str
     analysis_part: str = Field(description="the words of the user's analysis at stake")
-    default_spec: str = Field(description="the part of the default spec that differs")
+    default_spec: str = Field(description="the part of the default spec compared with them")
+    differs: bool = Field(description="true only when the default implements it differently")
     problem: str
 
 
@@ -69,7 +74,7 @@ async def fidelity_mismatches(
         schema=FidelityOutput,
         max_tokens=FIDELITY_TOKENS,
     )
-    return FidelityOutput.model_validate(response.parsed).mismatches
+    return [m for m in FidelityOutput.model_validate(response.parsed).mismatches if m.differs]
 
 
 def as_problems(mismatches: list[Mismatch]) -> list[str]:

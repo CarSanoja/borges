@@ -89,3 +89,12 @@ def test_a_column_name_written_to_ctx_is_not_a_shortfall() -> None:
         "high = 1 if 7 <= day <= 14 else 0; write high to ctx['high_col'] as 'high'.",
     ]
     assert ctx_row_shortfall([step("feature", named)]) is None
+
+
+def test_a_boolean_mask_assigned_to_ctx_is_a_shortfall() -> None:
+    spec = (
+        "cycle_day = 28 - days_to_next_onset; keep rows where 7 <= cycle_day <= 25; assign "
+        "ctx['high_fert'] = (cycle_day >= 7) & (cycle_day <= 14)"
+    )
+    found = ctx_row_shortfall([step("filter", [spec, spec.replace("25", "24")])])
+    assert found is not None and "filter_step.o0 (ctx['high_fert'])" in found

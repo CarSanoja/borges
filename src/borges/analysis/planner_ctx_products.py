@@ -17,6 +17,9 @@ CTX_KEY = re.compile(r"""ctx\[\s*["']([A-Za-z_]\w*)["']\s*\]""")
 ROW_WRITE = re.compile(
     r"""ctx\[\s*["']([A-Za-z_]\w*)["']\s*\]\s*=\s*(?:np\.where\(|df\[|df\.\w+\[|\(?df\[)"""
 )
+CTX_ASSIGN = re.compile(r"""ctx\[\s*["']([A-Za-z_]\w*)["']\s*\]\s*=(?!=)\s*([^;\n]+)""")
+QUOTED = re.compile(r"""(["']).*?\1""")
+PER_ROW_VALUE = re.compile(r"[<>]=?|==|\.dt\.|\bdf\[|np\.where\(")
 STORED = re.compile(
     r"""\b(?:store|stores|write|writes|save|saves|put|puts|keep|keeps)\s+([A-Za-z_]\w*)\s+"""
     r"""(?:in|to|into)\s+ctx\[\s*["']([A-Za-z_]\w*)["']\s*\](?!\s+as\s+["'])""",
@@ -43,6 +46,9 @@ def stored_rows(spec: str) -> list[str]:
     """ctx keys a spec fills with a quantity it computes per row, written as code or as prose
     ("cycle_day = 28 - days_to_onset; ... store cycle_day in ctx['cycle_day']")."""
     keys = ROW_WRITE.findall(spec)
+    for key, value in CTX_ASSIGN.findall(spec):
+        if PER_ROW_VALUE.search(QUOTED.sub("", value)) and key not in keys:
+            keys.append(key)
     for name, key in STORED.findall(spec):
         computed = re.search(rf"\b{re.escape(name)}\s*=(?!=)", spec)
         if computed and not is_column(spec, name) and key not in keys:

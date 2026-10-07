@@ -17,7 +17,19 @@ MISMATCH = {
             "step_id": "code",
             "analysis_part": "single = Relationship 1 or 2",
             "default_spec": "committed if Relationship in {2,3,4}",
+            "differs": True,
             "problem": "Relationship 2 is coded committed",
+        }
+    ]
+}
+MATCH = {
+    "mismatches": [
+        {
+            "step_id": "m",
+            "analysis_part": "OLS",
+            "default_spec": "fit OLS",
+            "differs": False,
+            "problem": "Matches analysis.",
         }
     ]
 }
@@ -43,6 +55,12 @@ async def test_a_faithful_plan_is_checked_once_by_the_judge_model() -> None:
     [check] = [c for c in llm.calls if c.key == "fidelity:1"]
     assert check.role is Role.JUDGE and ANALYSIS in check.messages[-1]["content"]
     assert result.step("code").default.id == "r1" and result.analysis_gaps == []
+
+
+async def test_parts_the_checker_lists_as_matching_are_not_mismatches() -> None:
+    llm, result = await plan({"planner": output("r1"), "fidelity:1": MATCH})
+    assert "planner:fidelity1" not in [c.key for c in llm.calls]
+    assert result.analysis_gaps == []
 
 
 async def test_a_mismatch_is_sent_back_to_the_planner_and_the_fixed_plan_is_kept() -> None:
