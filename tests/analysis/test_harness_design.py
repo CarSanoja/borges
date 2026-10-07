@@ -211,3 +211,25 @@ def test_an_outcome_copied_from_a_column_is_named_by_that_column(workdir: Path) 
     assert done.returncode == 0, done.stdout
     traces, _ = parse_output(done.stdout)
     assert traces[0].design is not None and traces[0].design["outcome"] == "y"
+
+
+def test_an_all_zero_column_that_arrives_constant_is_named_as_an_earlier_step_s_fault(
+    workdir: Path,
+) -> None:
+    """fertility_vote on 7 October, run 31: the fertility indicator arrived all zeros because the
+    first step passed on an empty cycle-day column, and the message suggested dummy coding."""
+    from borges.analysis.model_spec.render_design import INPUT_FAULT
+
+    frame = pd.read_parquet(workdir / "data.parquet").assign(high=0.0)
+    frame.to_parquet(workdir / "data.parquet")
+    code = (
+        HEADER
+        + """
+    fit = sm.OLS(df["y"], sm.add_constant(df[["high", "x"]])).fit()
+    return {"estimate": float(fit.params["high"]), "ci_low": -1.0, "ci_high": 1.0,
+            "p_value": 0.5, "n": int(fit.nobs)}
+"""
+    )
+    error = parse_error(run_model(workdir, code).stdout)
+    assert error is not None and "all-zero columns ['high'] that arrive" in error
+    assert INPUT_FAULT in error and "drop_first" not in error

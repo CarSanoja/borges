@@ -11,13 +11,11 @@ that does not read it, with nothing reading the column in between, is reported.
 from __future__ import annotations
 
 import ast
-import re
 
 from borges.analysis.models import AnalysisPlan, Step
 
 ROW_INDEXERS = ("loc", "at", "iloc", "iat")
 FILLS = ("fillna", "combine_first", "where", "mask", "insert", "interpolate", "ffill", "bfill")
-WORD = re.compile(r"[A-Za-z_]\w*")
 ONLY_NAMED = (
     "column '{column}' is created only by setting rows named one by one (line {line}), so every "
     "other row has no value; assign the whole column from its computation first and set those "
@@ -111,8 +109,19 @@ def _literal_rows(rows: ast.expr) -> bool:
     return False
 
 
+def _literal_names(tree: ast.AST) -> set[str]:
+    return {
+        t.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign) and _literal_rows(node.value)
+        for t in node.targets
+        if isinstance(t, ast.Name)
+    }
+
+
 def _named_row_writes(tree: ast.AST) -> dict[str, list[tuple[int, bool]]]:
     found: dict[str, list[tuple[int, bool]]] = {}
+    literal = _literal_names(tree)
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
@@ -121,7 +130,8 @@ def _named_row_writes(tree: ast.AST) -> dict[str, list[tuple[int, bool]]]:
             if hit is None or hit[2]:
                 continue
             assert isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Tuple)
-            named = _literal_rows(target.slice.elts[0])
+            rows = target.slice.elts[0]
+            named = _literal_rows(rows) or (isinstance(rows, ast.Name) and rows.id in literal)
             found.setdefault(hit[1], []).append((node.lineno, named))
     return found
 
@@ -144,12 +154,31 @@ def _filled(tree: ast.AST, column: str) -> bool:
     return False
 
 
+def _written(code: str | None) -> set[str]:
+    try:
+        tree = ast.parse(code or "")
+    except SyntaxError:
+        return set()
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            names |= {hit[1] for t in node.targets if (hit := _frame_and_column(t)) is not None}
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "assign"
+        ):
+            names |= {k.arg for k in node.keywords if k.arg}
+    return names
+
+
 def _known(plan: AnalysisPlan, step: Step) -> set[str]:
+    """The data's columns, what earlier steps produce, and what their code writes."""
     known = {c.name for c in plan.dataset.columns}
     for earlier in plan.steps[: plan.steps.index(step)]:
         known |= set(earlier.produces)
         for option in earlier.options:
-            known |= set(WORD.findall(f"{option.spec}\n{option.code or ''}"))
+            known |= _written(option.code)
     return known
 
 

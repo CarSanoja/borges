@@ -12,6 +12,7 @@ from borges.analysis.models import (
     Step,
 )
 from borges.analysis.option_references import normalise_plan
+from borges.analysis.planner_carried import carry_computed
 from borges.analysis.planner_ctx_products import with_ctx_products
 from borges.analysis.planner_degenerate import DEGENERATE, FRESH_TEMPERATURE, is_degenerate
 from borges.analysis.planner_fidelity import faithful_plan
@@ -184,7 +185,7 @@ async def plan_analysis(
             lambda fixed, prefix: _broaden(llm, messages, fixed, profile, rule, prefix),
         )
     taken: set[str] = set()
-    planned = drop_renamed(drop_level_columns(out.steps, profile), profile)
+    planned = carry_computed(drop_renamed(drop_level_columns(out.steps, profile), profile), profile)
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(planned)]
     plan = AnalysisPlan(
         question=question,

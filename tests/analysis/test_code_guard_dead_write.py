@@ -69,7 +69,20 @@ def first_step_plan():
     return plan, plan.steps[0]
 
 
-@pytest.mark.parametrize("code", [RUN_30, RUN_31])
+RUN_34 = """
+def apply(df, ctx):
+    df = df.copy()
+    if "cycle_day" not in df.columns:
+        cycle_day = (28 - df["days_to_next"]).clip(1, 28)
+        mask15_16 = df["WorkerID"].isin([15, 16])
+        df.loc[mask15_16, "cycle_day"] = [11, 18]
+        cycle_day = df["cycle_day"]
+    df["high_fertility"] = ((cycle_day >= 7) & (cycle_day <= 14)).astype(int)
+    return df
+"""
+
+
+@pytest.mark.parametrize("code", [RUN_30, RUN_31, RUN_34])
 def test_a_column_created_only_for_rows_named_one_by_one_is_reported(code: str) -> None:
     """fertility_vote on 7 October, runs 30 and 31: the computed days stayed in a local variable
     and only the two hand-set women had a cycle day."""
