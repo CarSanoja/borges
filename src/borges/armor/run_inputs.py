@@ -26,11 +26,12 @@ def screen_run_inputs(
     dataset_name: str | None,
     column_names: Iterable[str],
     column_notes: Mapping[str, str],
+    analysis: str | None = None,
 ) -> tuple[dict[str, str], ArmorReport]:
     """Refuse run text that carries instructions; return the notes with hits quarantined."""
     report = ArmorReport()
     refused = []
-    texts = {"question": question or "", **rule_texts(rule)}
+    texts = {"question": question or "", "analysis": analysis or "", **rule_texts(rule)}
     for field, text in texts.items():
         findings = screen_text(text)
         if findings:

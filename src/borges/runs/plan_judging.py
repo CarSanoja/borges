@@ -102,13 +102,16 @@ async def judge_plan_options(
     ledger: JudgedLedger | None = None,
     memory: RunMemory | None = None,
     screen: Screen | None = None,
+    keep_defaults: bool = False,
 ) -> None:
     """Judge every planner option, the conventional ones included, before any coding.
 
     A rejected alternative is dropped. When the rejections leave the plan too few branching
     steps, the planner proposes new alternatives once for each step that lost all of them,
     and those are judged in turn. A rejected conventional option is then replaced (see
-    default_judging.replace_default); a judge failure never replaces one.
+    default_judging.replace_default); a judge failure never replaces one. When the defaults are
+    the user's own analysis (keep_defaults), a rejected one is kept and the judge's reason is
+    recorded, because the run asks how fragile that analysis is.
     """
     defaults = getattr(llm, "judges_defaults", True)
     targets = [(s, o) for s in plan.steps for o in s.options if defaults or not o.is_default]
@@ -137,6 +140,12 @@ async def judge_plan_options(
             if replaced.get((step.id, o.id), o) is not None
         ]
     summary.options_dropped_by_judge += sum(len(r) for r in rejected.values())
+    if keep_defaults:
+        summary.defaults_kept.extend(
+            f"{step_id}: {plan.step(step_id).default.label}: {reason}"
+            for step_id, reason in disputed.items()
+        )
+        disputed = {}
     await gather_cancelling(
         _refill_step(llm, plan, emitter, summary, step, rejected[step.id], ledger, memory, screen)
         for step in collapsed_steps(plan, before)

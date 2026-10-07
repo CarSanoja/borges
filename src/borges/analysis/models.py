@@ -98,6 +98,8 @@ class AnalysisPlan(BaseModel):
     dataset: DatasetProfile
     steps: list[Step]
     result_scale: float = 1.0
+    analysis: str = ""
+    analysis_gaps: list[str] = Field(default_factory=list)
 
     def step(self, step_id: str) -> Step:
         return next(s for s in self.steps if s.id == step_id)
@@ -154,5 +156,6 @@ class CodingSummary(BaseModel):
     options_added_after_judge: int = 0
     defaults_replaced: list[str] = Field(default_factory=list)
     defaults_disputed: list[str] = Field(default_factory=list)
+    defaults_kept: list[str] = Field(default_factory=list)
     options_dropped_by_armor: int = 0
     options_recoded_by_output_check: int = 0

@@ -27,6 +27,7 @@ class ResolvedRun:
     column_notes: dict[str, str] = field(default_factory=dict)
     blind_notes: bool = False
     armor: ArmorReport = field(default_factory=ArmorReport)
+    analysis: str = ""
 
 
 def _screened(resolved: ResolvedRun) -> ResolvedRun:
@@ -36,6 +37,7 @@ def _screened(resolved: ResolvedRun) -> ResolvedRun:
         resolved.dataset_name,
         sorted(columns_of(resolved.data)),
         resolved.column_notes,
+        resolved.analysis,
     )
     return replace(resolved, column_notes=notes, armor=report)
 
@@ -65,6 +67,7 @@ def resolve_run(
                 fixtures_dir=registry.fixtures_dir(case.id),
                 column_notes=dict(case.column_notes),
                 blind_notes=request.blind_notes,
+                analysis=request.analysis or case.analysis,
             )
         )
     if data is None:
@@ -83,5 +86,6 @@ def resolve_run(
             fixtures_dir=None,
             column_notes=dict(request.column_notes or {}),
             blind_notes=request.blind_notes,
+            analysis=request.analysis or "",
         )
     )

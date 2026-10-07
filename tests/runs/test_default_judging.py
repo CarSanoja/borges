@@ -79,6 +79,19 @@ async def test_default_without_any_accepted_replacement_is_kept_and_disputed(
     assert summary.defaults_disputed == ["s1: label a: a why"]
 
 
+async def test_the_users_own_analysis_is_kept_with_the_judges_reason(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    plan = make_plan()
+    patch_judge(monkeypatch, {"a": 0.2})
+    calls = patch_refill(monkeypatch, [make_option("c")])
+    summary = CodingSummary()
+    await judge_plan_options(None, plan, Emitter(), summary, keep_defaults=True)
+    assert plan.step("s1").default.id == "a" and calls == []
+    assert summary.defaults_replaced == [] and summary.defaults_disputed == []
+    assert summary.defaults_kept == ["s1: label a: a why"]
+
+
 async def test_a_judge_failure_never_replaces_a_default(monkeypatch: pytest.MonkeyPatch) -> None:
     plan = make_plan()
     patch_judge(monkeypatch, {}, frozenset({"x"}))

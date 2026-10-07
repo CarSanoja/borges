@@ -16,6 +16,7 @@ class RunRequest(BaseModel):
     case_id: str | None = None
     upload_id: str | None = None
     question: str | None = Field(default=None, max_length=1000)
+    analysis: str | None = Field(default=None, max_length=2000)
     decision_rule: DecisionRule | None = None
     llm: Literal["nebius", "scripted", "local"] | None = None
     backend: Literal["local", "contree"] | None = None

@@ -65,7 +65,9 @@ def fake_minimal_flip(plan: AnalysisPlan, garden: Garden) -> Flip | None:
 def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
     FakeExecutor.scenario = scenario
 
-    async def plan_analysis(llm: Any, profile: Any, question: str, rule: Any) -> AnalysisPlan:
+    async def plan_analysis(
+        llm: Any, profile: Any, question: str, rule: Any, analysis: str = ""
+    ) -> AnalysisPlan:
         scenario.calls.append("plan_analysis")
         if scenario.plan_error:
             raise scenario.plan_error

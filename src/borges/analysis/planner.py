@@ -14,6 +14,7 @@ from borges.analysis.models import (
 from borges.analysis.option_references import normalise_plan
 from borges.analysis.planner_ctx_products import with_ctx_products
 from borges.analysis.planner_degenerate import DEGENERATE, FRESH_TEMPERATURE, is_degenerate
+from borges.analysis.planner_fidelity import faithful_plan
 from borges.analysis.planner_products import drop_level_columns, drop_renamed
 from borges.analysis.planner_validation import plan_shortfalls, reads_the_result
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
@@ -160,9 +161,9 @@ async def _broaden(
 
 
 async def plan_analysis(
-    llm: LLMClient, profile: DatasetProfile, question: str, rule: DecisionRule
+    llm: LLMClient, profile: DatasetProfile, question: str, rule: DecisionRule, analysis: str = ""
 ) -> AnalysisPlan:
-    messages = build_messages(profile, question, rule)
+    messages = build_messages(profile, question, rule, analysis)
     out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile, rule)
     if is_degenerate(out.steps):
         try:
@@ -172,6 +173,16 @@ async def plan_analysis(
             pass
     if is_degenerate(out.steps):
         raise LLMError(DEGENERATE)
+    gaps: list[str] = []
+    if analysis.strip():
+        out, gaps = await faithful_plan(
+            llm,
+            messages,
+            out,
+            analysis,
+            lambda retry, key: _ask(llm, retry, key),
+            lambda fixed, prefix: _broaden(llm, messages, fixed, profile, rule, prefix),
+        )
     taken: set[str] = set()
     planned = drop_renamed(drop_level_columns(out.steps, profile), profile)
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(planned)]
@@ -182,5 +193,7 @@ async def plan_analysis(
         dataset=profile,
         steps=steps,
         result_scale=detect_scale(rule.metric),
+        analysis=analysis,
+        analysis_gaps=gaps,
     )
     return normalise_plan(plan)

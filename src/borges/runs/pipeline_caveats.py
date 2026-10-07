@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from borges.analysis.models import CodingSummary
+from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.garden.models import Flip, Report
 from borges.garden.plausibility import IMPLAUSIBLE_REASON
 
@@ -71,6 +71,14 @@ def report_caveats(
     return caveats
 
 
+def analysis_caveats(plan: AnalysisPlan) -> list[str]:
+    return [
+        f"The starting point may not be exactly your analysis, so read the original result with "
+        f"care: {gap}."
+        for gap in plan.analysis_gaps
+    ]
+
+
 def judge_caveats(coding: CodingSummary) -> list[str]:
     replaced = [
         f"The defensibility judge rejected a conventional option and the original analysis uses "
@@ -82,4 +90,10 @@ def judge_caveats(coding: CodingSummary) -> list[str]:
         f"replacement, so it was kept; read the original result with care ({item})."
         for item in coding.defaults_disputed
     ]
-    return replaced + disputed
+    kept = [
+        f"The defensibility judge disputes a choice of your own analysis; it stays the starting "
+        f"point, because the question is how fragile your analysis is, and the alternatives are "
+        f"tested against it ({item})."
+        for item in coding.defaults_kept
+    ]
+    return replaced + disputed + kept

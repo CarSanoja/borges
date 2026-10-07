@@ -116,6 +116,21 @@ sees only the option it codes, so restate the full spec.
 Return only JSON matching the requested schema."""
 
 
+def analysis_block(analysis: str) -> str:
+    if not analysis.strip():
+        return ""
+    return (
+        "\nThe user's own analysis, the one whose fragility the question asks about: "
+        f"{analysis.strip()}\n"
+        "Make it the default option of every step it decides, implemented exactly as written: "
+        "the same formulas, windows, cut-offs, codings, exclusions and model, with nothing added "
+        "(no imputation, no extra exclusion, no covariate it does not name); a mean of items is "
+        "the mean of the items answered. "
+        "Every other option of those steps is a defensible alternative to it that researchers in "
+        "the field use, and steps the analysis leaves open follow the usual rules.\n"
+    )
+
+
 def build_retry_messages(
     base: list[dict[str, str]], previous: PlannerOutput, problems: list[str]
 ) -> list[dict[str, str]]:
@@ -130,7 +145,7 @@ def build_retry_messages(
 
 
 def build_messages(
-    profile: DatasetProfile, question: str, rule: DecisionRule
+    profile: DatasetProfile, question: str, rule: DecisionRule, analysis: str = ""
 ) -> list[dict[str, str]]:
     candidates = describe_inclusion_candidates(profile)
     hint = f"\n{candidates}\n" if candidates else ""
@@ -144,5 +159,6 @@ def build_messages(
         f"Dataset profile: {compact_json(profile)}"
         f"{notes_block}"
         f"{hint}"
+        f"{analysis_block(analysis)}"
     )
     return messages(SYSTEM, user)
