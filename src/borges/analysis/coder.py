@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from borges.analysis.coder_armor import armor_refusal
+from borges.analysis.coder_armor import armor_refusal, complete_code
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_order import code_in_order
@@ -33,10 +33,13 @@ async def _request_code(
     notes: list[str] | None = None,
 ) -> str:
     key = f"coder:{step.id}.{option.id}" + (suffix if error is not None else "")
-    response = await llm.complete(
-        Role.CODER if error is None else Role.REPAIRER,
-        build_messages(plan, step, option, error),
-        key=key,
+    role = Role.CODER if error is None else Role.REPAIRER
+    response = await complete_code(
+        llm,
+        role,
+        lambda feedback: build_messages(plan, step, option, feedback),
+        key,
+        error,
         schema=CoderOutput,
         max_tokens=CODE_TOKENS,
     )
