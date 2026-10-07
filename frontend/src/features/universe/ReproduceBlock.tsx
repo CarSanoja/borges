@@ -9,7 +9,7 @@ export function ReproduceBlock({ detail, hasRun }: { detail: UniverseDetail; has
   const command = detail.reproduce_command ? reproduceCommand(detail.reproduce_command) : "";
   const isCase = detail.reproduce_kind === "case";
   return (
-    <footer className="u-repro">
+    <section className="u-repro" aria-label="Reproduce">
       <p className="eyebrow">Reproduce</p>
       {command ? (
         <>
@@ -27,6 +27,6 @@ export function ReproduceBlock({ detail, hasRun }: { detail: UniverseDetail; has
           Download script
         </a>
       )}
-    </footer>
+    </section>
   );
 }

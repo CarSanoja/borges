@@ -5,11 +5,11 @@ function plural(count: number, one: string, many: string): string {
 }
 
 export function searchSentence(search: SearchSummary, flipFound: boolean, explored: number): string {
-  const scope = `${explored} explored of a ${search.universe_budget}-universe budget, ${plural(search.levels_explored, "level", "levels")}`;
+  const scope = `${plural(explored, "universe", "universes")} explored out of a limit of ${search.universe_budget}, in ${plural(search.levels_explored, "round", "rounds")} of combining choices`;
   return flipFound ? `Smallest flip found: ${scope}` : `No flip found: ${scope}`;
 }
 
 export function searchBudgetNote(search: SearchSummary): string | null {
   if (!search.budget_exhausted) return null;
-  return `The ${search.universe_budget}-universe budget ran out, so a smaller flip may exist.`;
+  return `The limit of ${search.universe_budget} universes was reached, so a smaller flip may exist.`;
 }

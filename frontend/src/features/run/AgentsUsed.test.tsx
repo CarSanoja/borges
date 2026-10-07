@@ -33,7 +33,9 @@ describe("AgentsUsed", () => {
     render(<AgentsUsed agents={AGENTS} />);
     expect(screen.getByRole("row", { name: /judge 1.0.0 approved scripted dddddddddd/ })).toBeInTheDocument();
     expect(screen.getByText("unpublished change")).toBeInTheDocument();
-    expect(screen.getByText("registry rrrrrrrrrr")).toBeInTheDocument();
+    expect(screen.getByText("rrrrrrrrrr")).toHaveAttribute("title", "r".repeat(64));
+    expect(screen.getByText("Agents used").closest("summary")).not.toHaveTextContent("registry");
+    expect(screen.getByText("Agents used").closest("summary")).toHaveAttribute("title", `Agent registry version ${"r".repeat(64)}`);
     expect(screen.getByRole("link", { name: "Open the fleet" })).toHaveAttribute("href", "/fleet");
   });
 

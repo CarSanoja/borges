@@ -50,6 +50,12 @@ describe("ReproduceBlock", () => {
     expect(link).toHaveAttribute("download", "borges_r1_u1.py");
   });
 
+  it("is a labelled section rather than a page footer", () => {
+    render(<ReproduceBlock detail={{ ...base, reproduce_command: "borges reproduce --case a --universe u1" }} hasRun />);
+    expect(screen.getByRole("region", { name: "Reproduce" })).toBeInTheDocument();
+    expect(screen.queryByRole("contentinfo")).toBeNull();
+  });
+
   it("never shows a stale steps/ command before the server answers", () => {
     render(<ReproduceBlock detail={{ ...base, reproduce_command: "" }} hasRun />);
     expect(screen.queryByText(/steps\//)).toBeNull();
