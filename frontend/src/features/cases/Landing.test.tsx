@@ -70,6 +70,33 @@ describe("Landing", () => {
     await waitFor(() => expect(handlers.onOpenRun).toHaveBeenCalledWith("r1"));
   });
 
+  it("shows a busy, disabled state on the scripted button at once and keeps it until navigation", async () => {
+    vi.mocked(client.getHealth).mockResolvedValue(health(false));
+    let release: (run: RunSummary) => void = () => undefined;
+    vi.mocked(client.createRun).mockReturnValue(new Promise<RunSummary>((resolve) => (release = resolve)));
+    const handlers = renderLanding();
+    await screen.findByRole("heading", { name: "Mocked checkout" });
+    const [replay] = screen.getAllByRole("button", { name: /Replay offline/ });
+    await userEvent.click(replay as HTMLElement);
+    const busy = screen.getByRole("button", { name: /Starting the replay/ });
+    expect(busy).toBeDisabled();
+    expect(busy).toHaveAttribute("aria-busy", "true");
+    expect(handlers.onOpenRun).not.toHaveBeenCalled();
+    release({ run_id: "r9" } as RunSummary);
+    await waitFor(() => expect(handlers.onOpenRun).toHaveBeenCalledWith("r9"));
+  });
+
+  it("restores the scripted button and shows the error when the run cannot start", async () => {
+    vi.mocked(client.getHealth).mockResolvedValue(health(false));
+    vi.mocked(client.createRun).mockRejectedValue(new Error("server down"));
+    renderLanding();
+    await screen.findByRole("heading", { name: "Mocked checkout" });
+    const [replay] = screen.getAllByRole("button", { name: /Replay offline/ });
+    await userEvent.click(replay as HTMLElement);
+    expect(await screen.findByRole("alert")).toHaveTextContent("server down");
+    expect(screen.getAllByRole("button", { name: /Replay offline/ })[0]).toBeEnabled();
+  });
+
   it("gives one line with the reason when the budget is spent", async () => {
     vi.mocked(client.getHealth).mockResolvedValue(health(false, { live_unavailable_reason: "budget_spent" }));
     renderLanding();
