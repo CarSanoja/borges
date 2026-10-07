@@ -20,6 +20,7 @@ from borges.analysis.smoke_settle import Tools, settle
 from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
 from borges.analysis.smoke_upstream import _short
 from borges.analysis.smoke_upstream_probe import probe_upstream
+from borges.analysis.smoke_upstream_replan import replan_upstream
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
 from borges.telemetry.scopes import option_span
@@ -155,6 +156,28 @@ async def smoke_plan(
     for index, step in enumerate(smoked.steps):
         again = partial(_smoke_round, config, repair, recode, parent, step, semaphore, summary)
         outcomes = await again()
+        if not has_survivor(outcomes) and step.kind == "model" and index > 0:
+            earlier = smoked.steps[index - 1]
+            upstream = await replan_upstream(
+                config,
+                replan,
+                earlier,
+                step,
+                outcomes,
+                partial(
+                    _smoke_round,
+                    config,
+                    repair,
+                    recode,
+                    config.state.parents[earlier.id],
+                    earlier,
+                    semaphore,
+                    summary,
+                ),
+                partial(_rerun, config, repair, recode, step, semaphore, summary),
+            )
+            if upstream is not None:
+                parent, outcomes = upstream
         if not has_survivor(outcomes):
             tools = Tools(
                 partial(_rerun, config, repair, recode, step, semaphore, summary),
