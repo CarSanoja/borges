@@ -474,10 +474,24 @@ characters), returns the findings, the PII kinds found, the text as armor would 
 `"stored": false`, writes nothing (no audit of the text either), and has its own limit of 20
 requests with 0.5 per second refill per anonymous client.
 
-**Optional second stage.** With `BORGES_ARMOR_LLM=true` text that is ambiguous (weak
-instruction-like signals but no pattern hit) is classified by the judge's model through the
-gateway, at most 12 texts per run; a failing or capped review fails closed (quarantine). Off by
-default.
+**Optional second stage.** With `BORGES_ARMOR_LLM=true`, the judge's model classifies text
+that is ambiguous (weak instruction-like signals but no pattern hit), through the gateway:
+- at most 12 texts per run;
+- a failing or capped review fails closed (quarantine);
+- scripted runs skip the stage;
+- off by default.
+
+Its prompt separates honest guidance, which is safe even when phrased as an instruction, from
+attempts to steer the conclusion.
+
+On a blind set written on 7 October by a model that never saw the code
+(`evidence/armor-fresh.md`):
+- the deterministic stage caught 19 of 70 attacks, and production with the second stage 33 of
+  70, with 0 of 70 benign texts flagged;
+- sending every note, value and cell to the judge caught 50 of 70 and missed the 56 set before
+  measuring, so it was not adopted;
+- the deterministic screen is a first filter: the guarantees that hold whatever text gets through
+  are the fixed decision rule, the option guard and the code guard.
 
 The corpus lives in `src/borges/armor/corpus/` and ships with the package so the running
 server can score itself. Two suites: `attacks.json` / `benign.json` (62 attacks including

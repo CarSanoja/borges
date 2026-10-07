@@ -510,7 +510,11 @@ values (with a caveat on the run page), drops model-proposed options that try to
 result or the code, and redacts personal data (e-mail, phone, cards, IBAN, SSN, DNI/NIE,
 CURP/RFC, IP, dates of birth) before any model sees it. The upload response and screen list the
 columns that contain personal data, with counts. Set `BORGES_ARMOR_LLM=true` to add a
-judge-model second stage for ambiguous text. Details and limits are in `SECURITY.md`.
+judge-model second stage for ambiguous text. On a blind set of 70 attacks and 70 benign texts,
+written on 7 October by a model that never saw the screen, the patterns caught 19 attacks and the
+second stage raised that to 33, with no benign text flagged (`evidence/armor-fresh.md`): the screen
+is a first filter, and the fixed decision rule, the option guard and the code guard are what hold
+when text gets through. Details and limits are in `SECURITY.md`.
 
 ## How it is built
 
@@ -546,7 +550,7 @@ from the running server and names the command that proves it.
 | Memory Bank | Encrypted per-tenant memory (AES-GCM with `BORGES_MEMORY_KEY`) of verdicts, validated code, adversary misses and owner notes: a second `checkout_ab` run makes 0 judge and 0 coder calls instead of 7 and 11 | `uv run borges memory list --tenant public-demo`, page `/memory` |
 | Agent Identity (zero-trust) | Every `/api` call resolves to a principal with scopes; the anonymous demo principal holds only the public scopes; named API keys are salted hashes in a hash-chained, anchored store; each agent call carries a short-lived signed token | `curl localhost:8000/api/me`, `uv run borges keys list` |
 | Agent Gateway | One chokepoint for model and sandbox calls: token verify, capability, egress class, armor-in, budget, route with fallback chain, armor-out, audit and span. `policy/gateway.json` sets the models, calls and cost per agent | `curl localhost:8000/api/policy`, `tests/gateway/test_no_bypass.py` |
-| Model Armor | Screens for prompt injection, tool poisoning and personal data on run creation, uploads, model input and output. On our own corpus (two suites, written by us, not an independent benchmark) it flags 93 of 93 attacks and 0 of 92 benign texts | `uv run pytest tests/armor/test_corpus.py tests/armor/test_corpus_redteam.py -s` |
+| Model Armor | Screens for prompt injection, tool poisoning and personal data on run creation, uploads, model input and output. On our own corpus (two suites, written by us, not an independent benchmark) it flags 93 of 93 attacks and 0 of 92 benign texts; on a blind set written by a model that never saw it, 19 of 70 attacks (33 with the judge-model second stage) and 0 of 70 benign | `uv run pytest tests/armor/test_corpus.py tests/armor/test_corpus_redteam.py -s` |
 | Agent Observability | OpenTelemetry spans per run (JSONL always, OTLP when `OTEL_EXPORTER_OTLP_ENDPOINT` is set), a reasoning-chain trace page per run, and a global audit log chained by hash, with anchors that are HMAC-signed once a key is set | `uv run borges audit verify global`, page `/run/<id>/trace` |
 
 How the request travels, and which store each pillar owns, is drawn in

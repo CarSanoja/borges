@@ -39,7 +39,7 @@ class ArmorStage:
     async def profile(self, profile: DatasetProfile) -> DatasetProfile:
         guarded, found = guard_profile(profile)
         self.record(found)
-        if not self.settings.borges_armor_llm:
+        if not self.settings.borges_armor_llm or not getattr(self.llm, "reviews_text", True):
             return guarded
         extra = ArmorReport()
         reviewed = await second_stage(self.llm, guarded, extra)
