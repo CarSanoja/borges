@@ -66,7 +66,7 @@ async def test_the_planner_sees_notes_only_when_the_run_is_not_blind(
     def profile(df: Any, name: str, **_: Any) -> DatasetProfile:
         return noted_profile()
 
-    async def plan(llm: Any, profile: DatasetProfile, question: str, rule: Any):
+    async def plan(llm: Any, profile: DatasetProfile, question: str, rule: Any, *_: Any):
         seen.append(profile)
         return make_plan()
 
