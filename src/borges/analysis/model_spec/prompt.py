@@ -45,6 +45,16 @@ also be a covariate, never the exposure.
 with "cluster" set `cluster` to the grouping column. "gee" is a GEE with an exchangeable working \
 correlation within `cluster` and robust standard errors (families ols, logit, poisson; report a \
 coefficient or a ratio).
+- weights: optional numeric column whose values weight the rows: OLS is fitted as weighted least \
+squares, logit and the count families as a GLM with variance weights; rows with a missing or \
+non-positive weight are dropped. "WLS weighted by students" means weights "students". Never the \
+exposure, the outcome or the moderator, and not with cov_type "gee" or report "marginal_effect". \
+Weights computed from a model (inverse probability, propensity) are not supported.
+- random_intercept: optional grouping column of a linear mixed model with a random intercept per \
+group, fitted by REML; the estimate is the fixed effect of the exposure (or of the exposure x \
+moderator interaction). "Random intercept for prof" means random_intercept "prof". Only with \
+family "ols", cov_type "nonrobust", report "coefficient", no offset and no weights; one column \
+only, no random slopes, crossed or nested effects.
 - standardize: columns to z-score before fitting (never the outcome of logit, poisson, negbin); \
 when the decision rule asks for a standardised coefficient, z-score the outcome, the exposure \
 and any moderator.
@@ -56,8 +66,8 @@ right report when the decision rule asks for additional counts (deaths, cards, c
 a ratio. Never compute additional counts from exp(intercept).
 
 Use exact column names from the list of available columns. Categorical covariates are \
-dummy-encoded automatically. Set supported to false for anything else: mixed or multilevel \
-models, t-tests, difference in proportions, bootstrap, nonparametric tests, weights, \
+dummy-encoded automatically. Set supported to false for anything else: random slopes, crossed or \
+generalised mixed models, t-tests, difference in proportions, bootstrap, nonparametric tests, \
 penalised fits (Firth, ridge, lasso), splines, outcome transformations, fixed effects \
 written as dummies of a column you cannot list, \
 or a model that reads ctx values other than the covariate list and the outcome. Never refuse \
