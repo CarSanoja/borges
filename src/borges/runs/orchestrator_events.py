@@ -68,6 +68,8 @@ async def finish(
         meta.update(outcome_meta(pipeline))
     try:
         store.update_meta(emitter.run_id, **meta)
+        if cancelled or error:
+            await emitter.usage()
         if cancelled:
             await emitter.emit("run.cancelled", RunCancelledData(reason=cancelled).model_dump())
         elif error:
