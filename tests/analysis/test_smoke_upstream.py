@@ -16,7 +16,7 @@ __all__ = ["passing_guard"]
 
 AGGREGATE = (
     "def apply(df, ctx):\n"
-    '    out = df.groupby(df.index // 10).agg(outcome=("outcome", "min"))\n'
+    '    out = df.groupby(df.index // 5).agg(outcome=("outcome", "min"))\n'
     '    out["outcome"] = out["outcome"].round(0)\n'
     '    return out.rename_axis("bucket").reset_index()'
 )

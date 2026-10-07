@@ -20,6 +20,7 @@ from borges.analysis.smoke_settle import Tools, settle
 from borges.analysis.smoke_types import Outcome, Recode, Repair, Replan, Rewrite, SmokeConfig
 from borges.analysis.smoke_upstream import _short
 from borges.analysis.smoke_upstream_probe import probe_upstream
+from borges.analysis.smoke_upstream_repair import Mark, mark, repair_upstream_default, restart
 from borges.analysis.smoke_upstream_replan import replan_upstream
 from borges.llm.client import LLMError
 from borges.sandbox.backend import Checkpoint
@@ -153,7 +154,12 @@ async def smoke_plan(
     sample_n = pq.read_metadata(io.BytesIO(sample)).num_rows
     config.larger = LargerSample(config, smoked.steps, sample_n, execute, LARGE_MAX_ROWS)
     semaphore = asyncio.Semaphore(concurrency)
-    for index, step in enumerate(smoked.steps):
+    marks: dict[str, Mark] = {}
+    repaired_upstream = False
+    index = 0
+    while index < len(smoked.steps):
+        step = smoked.steps[index]
+        marks[step.id] = mark(config, summary, step)
         again = partial(_smoke_round, config, repair, recode, parent, step, semaphore, summary)
         outcomes = await again()
         if not has_survivor(outcomes) and step.kind == "model" and index > 0:
@@ -178,6 +184,14 @@ async def smoke_plan(
             )
             if upstream is not None:
                 parent, outcomes = upstream
+        if not has_survivor(outcomes) and step.kind == "model" and not repaired_upstream:
+            fixed = await repair_upstream_default(config, repair, smoked.steps, index, outcomes)
+            if fixed is not None:
+                repaired_upstream = True
+                restart(config, summary, marks, smoked.steps, (fixed[0], index), fixed[1])
+                index = fixed[0]
+                parent = config.state.parents[smoked.steps[index].id]
+                continue
         if not has_survivor(outcomes):
             tools = Tools(
                 partial(_rerun, config, repair, recode, step, semaphore, summary),
@@ -212,4 +226,5 @@ async def smoke_plan(
         if step.kind == "model" and index > 0:
             await probe_upstream(config, repair, smoked.steps[index - 1], step, summary)
             await probe_model(config, repair, smoked.steps, index, summary)
+        index += 1
     return smoked

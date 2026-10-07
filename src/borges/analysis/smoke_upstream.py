@@ -62,7 +62,8 @@ async def _probe(
     checkpoint = await model_input(config, repair, between, outcome.checkpoint, outcome.effects)
     if checkpoint is None:
         return None
-    default = config.state.defaults[model.id].option
+    known = config.state.defaults.get(model.id)
+    default = known.option if known is not None else model.default
     error = await probe_option(config, repair, model, default, checkpoint)
     if error is not None or not every:
         return error
@@ -86,9 +87,10 @@ async def _repaired(
     error: str,
     between: Sequence[Step] = (),
     every: bool = False,
+    message: str | None = None,
 ) -> Outcome | None:
     parent = config.state.parents[previous.id]
-    message = REPAIR_MESSAGE.format(title=model.title, error=error)
+    message = message or REPAIR_MESSAGE.format(title=model.title, error=error)
     try:
         code, violation, name = await repair(previous, outcome.option, message, outcome.attempts)
     except LLMError:
