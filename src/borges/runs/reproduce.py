@@ -68,6 +68,7 @@ async def reproduce_universe(
         reuse_prefixes=False,
         step_timeout_s=step_timeout_s,
         design_check=any(t.design for t in recorded.traces),
+        full_data_checks=False,
     )
     await executor.setup()
     is_baseline = baseline_recorded is None or baseline_recorded.id == universe_id

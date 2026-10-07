@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+from borges.analysis.harness_cell_check import CELL_CHECK_SOURCE, MIN_CELL_ROWS
 from borges.analysis.harness_cluster import CLUSTER_MODELS, CLUSTER_SOURCE
+from borges.analysis.harness_cluster_count import CLUSTER_COUNT_SOURCE, MIN_CLUSTERS
 from borges.analysis.harness_covariates import COVARIATES_SOURCE
 from borges.analysis.harness_design import (
     DESIGN_CONDITION_LIMIT,
@@ -108,6 +110,8 @@ __FINGERPRINT__
                 _check_offset(design)
                 _check_weights(design)
                 _check_main_effects(df, reported)
+                _check_thin_cells(reported)
+                _check_few_clusters(reported)
                 ignored = _ignored_covariates(design, ctx, df, trace["note"])
                 if __DESIGN_CHECK__ and ignored:
                     raise ValueError(_ignored_error(ignored, design))
@@ -198,6 +202,8 @@ MAIN_TEMPLATE = (
                 DESIGN_SOURCE,
                 DESIGN_ERRORS_SOURCE,
                 DESIGN_CHECKS_SOURCE,
+                CELL_CHECK_SOURCE,
+                CLUSTER_COUNT_SOURCE,
                 COVARIATES_SOURCE,
                 OUTCOME_SOURCE,
                 RESULT_CHECKS_SOURCE,
@@ -207,6 +213,8 @@ MAIN_TEMPLATE = (
     .replace("__OUTCOME_MAX_ROWS__", repr(OUTCOME_MAX_ROWS))
     .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))
     .replace("__PRODUCT_MAX_COLUMNS__", repr(PRODUCT_MAX_COLUMNS))
+    .replace("__MIN_CELL_ROWS__", repr(MIN_CELL_ROWS))
+    .replace("__MIN_CLUSTERS__", repr(MIN_CLUSTERS))
     .replace("__CLUSTER__", CLUSTER_SOURCE.strip("\n"))
     .replace("__CLUSTER_MODELS__", repr(CLUSTER_MODELS))
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))

@@ -160,7 +160,11 @@ def install_fake_harness(monkeypatch: pytest.MonkeyPatch) -> None:
 
         @staticmethod
         def render_step(
-            step: Step, option: Option, design_check: bool = True, standardised: bool = False
+            step: Step,
+            option: Option,
+            design_check: bool = True,
+            standardised: bool = False,
+            full_data_checks: bool = False,
         ) -> str:
             return f"{step.id}:{option.id}"
 

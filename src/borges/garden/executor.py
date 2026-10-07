@@ -36,6 +36,7 @@ class GardenExecutor:
         reuse_prefixes: bool = True,
         step_timeout_s: float = STEP_TIMEOUT_S,
         design_check: bool = True,
+        full_data_checks: bool = True,
     ) -> None:
         self.backend = backend
         self.plan = plan
@@ -45,6 +46,7 @@ class GardenExecutor:
         self.reuse_prefixes = reuse_prefixes
         self.step_timeout_s = step_timeout_s
         self.design_check = design_check
+        self.full_data_checks = full_data_checks
         self.baseline_verdict: str | None = None
         self.baseline_result: AnalysisResult | None = None
         self.root: Checkpoint | None = None
@@ -96,6 +98,7 @@ class GardenExecutor:
                 step,
                 option,
                 design_check=self.design_check,
+                full_data_checks=self.full_data_checks,
                 standardised=reads_standardised(self.plan.decision_rule.metric),
             ).encode()
         }
