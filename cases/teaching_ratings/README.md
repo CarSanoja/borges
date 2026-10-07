@@ -40,3 +40,14 @@ instructor teaches several courses):
 
 The weighted model is the one usually quoted from the paper (0.275). The case is the robust
 counterpart of `fertility_religiosity`: a sound tool should find no defensible flip here.
+
+## What Borges found
+
+The live recording (`recorded-live/`, 7 October 2026, run `r_20261007T013204_6521d3`) says BEAUTY
+PREMIUM: 0.1645 [0.1034, 0.2257], p 1.3e-7, n 463, the second row of the table above, with no flip in
+20 universes. Its farthest universe, with no covariates and errors clustered by instructor, is the
+first row: 0.1330 [0.0252, 0.2408], p 0.016. All nine live runs of 6 and 7 October said BEAUTY
+PREMIUM and none found a flip. The plan's weighted option weights each course by 1 / students,
+the inverse of the third row's weighting by the number of students evaluating, so the paper's
+weighted model was not in this multiverse; the judge accepted the inverse weights, and its six
+universes gave 0.12 to 0.16. Refit and runs: `evidence/refit.md`, `evidence/repeats.md`.

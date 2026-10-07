@@ -77,6 +77,71 @@ explored: checkout_ab 0.56 (16), red_cards 0.70 (22), marp_religiosity 1.0 (12),
 sample of the analysis grid, independent of the beam search. The report states the sample size
 and the number of distinct results with the share.
 
+## 7 October: two published answers that Borges is not told
+
+`fertility_religiosity` (Durante et al. 2013, and the multiverse of Steegen et al. 2016) and
+`teaching_ratings` (Hamermesh and Parker 2005) are live-only cases: no scripted fixtures, and the
+published answer is in each case's README, not in anything Borges reads. Models from 6 October:
+planner Super with Ultra as fallback, judge and narrator Ultra, coder Lightning, adversary,
+repairer and reviewer Super. The judge moved to Ultra (agent version 2.0.0). The planner went back
+to Super after five fresh Ultra plans of the fertility case were all unusable: four had no model
+step and wrote options as pandas code, one was cut at 8,192 tokens. Super gave five usable plans
+out of five.
+
+| Case | Run | Commit | Calls (cached) | Tokens in / out | Cost | Universes (failed) |
+|---|---|---|---|---|---|---|
+| fertility_religiosity | r_20261007T020642_a23fe3 | `14adc35` | 50 (1) | 118,066 / 10,751 | $0.0674 | 32 (0) |
+| teaching_ratings | r_20261007T013204_6521d3 | `0859f2c` | 39 (0) | 84,647 / 10,607 | $0.0497 | 20 (0) |
+
+| Case | Original verdict | Smallest flip found | Reproduce |
+|---|---|---|---|
+| fertility_religiosity | NO CLEAR EVIDENCE: 0.2746 [-2.053, 2.602], p 0.817, n 171 | none | baseline u_311ac33ed6 MATCH, farthest u_1b2af9882d MATCH |
+| teaching_ratings | BEAUTY PREMIUM: 0.1645 [0.1034, 0.2257], p 1.33e-07, n 463 | none | baseline u_6cefe77c73 MATCH, farthest u_0c7221cc4f MATCH |
+
+Reproduced on 7 October on the local backend, at `aff311c`. The refit is in `evidence/refit.md`:
+both baselines and the teaching farthest universe agree to 2e-14; the fertility farthest universe
+has the right estimate and a wrong interval, explained there.
+
+- **teaching_ratings.** 0.1645 is Hamermesh and Parker's adjusted specification on these data
+  (0.165 with the same covariates), and the farthest universe, with no covariates and errors
+  clustered by instructor, is their simple one: 0.1330 [0.0252, 0.2408], p 0.0156, against the
+  published 0.133 [0.025, 0.241]. No defensible flip in 20 universes, as a sound tool should find.
+  All nine live runs of 6 and 7 October said BEAUTY PREMIUM and none found a flip
+  (`evidence/repeats.md`).
+- **fertility_religiosity.** Durante et al. report the interaction at p = .012; Steegen et al.
+  found p < .05 in 7 of 120 defensible processing choices and called the effect too fragile to be
+  taken seriously. Borges says NO CLEAR EVIDENCE with no flip in 32 universes: it agrees with the
+  multiverse, not with the single published analysis. The plan's window is 6 to 11 days since the
+  last period, not Durante's cycle days 7 to 14 counted back from the next onset. The judge
+  rejected the plan's default of keeping every participant (0.3), so the original analysis
+  excludes women with a date certainty of 5 or less on either date (n 171), and the report says
+  so; with everyone kept the verdict is the same (-0.2646, p 0.777, n 275). All fifteen completed live
+  runs of 6 and 7 October said NO CLEAR EVIDENCE, one of them on a result its code invented
+  (`evidence/repeats.md`).
+
+Two fertility recordings were made and discarded before this one:
+
+1. **The wrong coefficient.** `r_20261007T013144_46bc17` reported 0.1688 [-0.0416, 0.3793],
+   p 0.116 as the interaction. A refit gave 0.3621 [-1.8165, 2.5407], p 0.745: the recorded
+   number was the coefficient of Sure2, the last covariate. The spec model had named indicators
+   that exist only inside the model step, so the template was skipped, and the repaired free code
+   read `params.iloc[-1]`. Fixed at `c0ec1c3`: model code that reads an estimate by position is
+   refused (50 of 373 free model codes in the live caches of that day did; no shipped fixture or
+   recording does), and an indicator of a column built by an earlier step is resolved to that
+   column and level, so the template renders. Replayed offline with the same plan and spec, the
+   template gives 0.36213, the refit.
+2. **The wrong construct.** `r_20261007T014606_9884cb` coded its plan correctly, but the plan's
+   high-fertility group was fewer days since the last period than a third of the cycle: days 0 to
+   9, which include menstruation. The judge accepted it (0.6).
+
+The planner sets a fertility window against its published meaning in about one run in four on this
+case: 2 of 8 live runs and 3 of 12 fresh plans after the question was clarified. Three defences
+were measured on labelled options and none was adopted: a judge instruction on constructs
+rejected 0 of 5 wrong windows; with reasoning on, 2 of 5 at three to four times the cost; a
+dedicated construct auditor caught 8 to 9 of 11 but called 12 to 13 of 25 correct windows
+invalid. Every construction rule is listed in the plan view, and that is where a person has to
+look. Each recording above was checked by refit before it was kept.
+
 ## What the recordings show
 
 - **checkout_ab.** The data is synthetic (`cases/checkout_ab/generate.py`). The plan aggregates

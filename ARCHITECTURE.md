@@ -141,17 +141,19 @@ world.
 
 | Role | Model (Token Factory id) | Calls per run |
 |---|---|---|
-| planner | `nvidia/nemotron-3-super-120b-a12b` | 1 |
+| planner | `nvidia/nemotron-3-super-120b-a12b`, with `nvidia/Nemotron-3-Ultra-550b-a55b` as fallback | 1 (+1 fresh draw when the plan is degenerate) |
 | coder | `nvidia/Nemotron-3_5-Lightning` (Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks) | 1 per option (+1 repair max) |
 | adversary | `nvidia/nemotron-3-super-120b-a12b` | 1 |
-| judge | `nvidia/nemotron-3-super-120b-a12b` | 1 per adversary option |
+| judge | `nvidia/Nemotron-3-Ultra-550b-a55b` (Super in the 5 October recordings) | 1 per option, the plan's defaults and the adversary's options included |
+| repairer | `nvidia/nemotron-3-super-120b-a12b` | 1 per failed option (2 max) |
 | reviewer | `nvidia/nemotron-3-super-120b-a12b` | 1 per option, adversary options included |
 | narrator | `nvidia/Nemotron-3-Ultra-550b-a55b` | 1 |
 
 **Live cost, measured on 4 October 2026** (`evidence/live-runs.md`): a complete live run of one
 case cost $0.0225 to $0.0408 (23 to 40 calls, 59k to 132k input tokens). On 2 October the
 development day made 45 live runs, 31 completed, $0.65 recorded and $0.76 in the spend ledger
-with the smoke checks. The scripted runs report 0 tokens and $0. Money controls:
+with the smoke checks. On 7 October the two published-answer cases cost $0.050 and $0.067 per
+recorded run, with the judge on Ultra. The scripted runs report 0 tokens and $0. Money controls:
 - a content-addressed disk cache (`.borges/llm-cache/`), so repeated development runs are free;
 - a persistent spend ledger (`.borges/spend.json`) with a hard cap (`BORGES_SPEND_CAP_USD`),
   which raises before any call that would exceed it;

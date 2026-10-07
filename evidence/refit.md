@@ -42,6 +42,35 @@ readings needed the recorded convention to match:
 - **red_cards.** The spec says exp(b ± 1.96·SE); the recording uses statsmodels' 1.959964. The
   bounds differ by 2e-6 with 1.96 and by 7e-14 with the exact quantile.
 
+## 7 October: the two published-answer cases
+
+The fertility_religiosity and teaching_ratings recordings of 7 October were refitted the same way,
+from the option specs and the raw data, before the recorded code was read, but in the session that
+made the recordings rather than by a separate auditor. The scripts are
+`evidence/refit/fertility_religiosity.py` and `evidence/refit/teaching_ratings.py`.
+
+| Case | Universe | Recorded | Refit | Largest relative difference | n |
+|---|---|---|---|---|---|
+| teaching_ratings | baseline `u_6cefe77c73` | 0.16452 [0.10338, 0.22566], p 1.33e-07 | same | 5.1e-15 | 463 |
+| teaching_ratings | farthest `u_0c7221cc4f` (no covariates, clustered by instructor) | 0.13300 [0.02518, 0.24082], p 0.0156 | same | 8.8e-15 | 463 |
+| fertility_religiosity | baseline `u_311ac33ed6` | 0.27462 [-2.05297, 2.60221], p 0.817 | same | 1.7e-14 | 171 |
+| fertility_religiosity | farthest `u_1b2af9882d` (FGLS) | -0.31888 [-3.06018, 2.42243], p 0.820 | -0.31888 [-3.34409, 2.70634], p 0.835 | 0.12 on the bounds | 161 |
+
+The fertility baseline excludes women with a date certainty of 5 or less, because the judge
+rejected the plan's default of keeping everyone and the report says so. With everyone kept the
+same model gives -0.2646 [-2.0993, 1.5701], p 0.777, n 275: the same verdict.
+
+The farthest fertility universe is the one gap. Its spec weights the rows by the inverse of the
+fitted values of an auxiliary regression of the squared residuals. The code regressed the squared
+outcome instead and built the interval as ±1.96 standard errors. The estimate is the same either
+way: the design has one cell per group, so both sets of weights are constant within cells and the
+cell means do not move. The interval is not. The reviewer marked the code faithful, so this is a
+miss of the review step. The verdict is NO CLEAR EVIDENCE either way.
+
+Two earlier recordings of the fertility case were discarded, and the refit is what caught the
+first: it reported the coefficient of the last covariate as the interaction (see
+`evidence/live-runs.md`).
+
 ## Findings that are not headline numbers
 
 The refit also checked universes off the headline. What it found:

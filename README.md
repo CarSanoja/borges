@@ -64,11 +64,11 @@ Be clear about this before reading further. The source of truth for every live n
 
 | | State today |
 |---|---|
-| Nemotron through Token Factory | **Six cases ran live on 5 October 2026 (UTC)**, each from an empty model cache: four at commit `16f02e7`, red_cards at `5070877` and bank at `6317040` (the changes between them are listed in `evidence/live-runs.md`). 238 calls in all, an estimated $0.026 to $0.056 per case ($0.21 for the six), computed from token counts and list prices, not from invoices. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks |
-| ConTree sandboxes | **All six recordings ran on ConTree** (`backend: contree` in each `recording.json`). Earlier, on 2 October 2026, `tests/sandbox/test_contree_live.py` passed in 41.8 s |
+| Nemotron through Token Factory | **Six cases ran live on 5 October 2026 (UTC)**, each from an empty model cache: four at commit `16f02e7`, red_cards at `5070877` and bank at `6317040` (the changes between them are listed in `evidence/live-runs.md`). 238 calls in all, an estimated $0.026 to $0.056 per case ($0.21 for the six), computed from token counts and list prices, not from invoices. Models: `nvidia/nemotron-3-super-120b-a12b` (planner, adversary, judge, repairer, reviewer), `nvidia/Nemotron-3_5-Lightning` (coder), `nvidia/Nemotron-3-Ultra-550b-a55b` (narrator). The coder was chosen by measurement (`evidence/coder-choice.md`); Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks. **Two more cases, whose published answers Borges is not told, ran live on 7 October** at `0859f2c` and `14adc35` ($0.050 and $0.067), with the judge and narrator on Ultra and the planner on Super (Ultra is its fallback; five fresh Ultra plans of the fertility case were all unusable) |
+| ConTree sandboxes | **All eight recordings ran on ConTree** (`backend: contree` in each `recording.json`). Earlier, on 2 October 2026, `tests/sandbox/test_contree_live.py` passed in 41.8 s |
 | What the web app plays | The live recordings in `cases/<case>/recorded-live/events.jsonl`, by default, under the banner "Recorded live on Nemotron via Nebius Token Factory, <date>: <calls> calls, <tokens> tokens, $<cost>". Each recording also has `spans.jsonl`, `audit.jsonl` and `recording.json`. A toggle switches to the scripted replay where one exists |
 | Scripted replays | Still shipped: hand-built fixtures, not model output, labelled `scripted` (or `scripted-fixture`), 0 tokens and $0. The CLI says so: `cost: $0.0000 (scripted replay, no model called)`. They are the offline path and what the calibration and grid studies use |
-| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the farthest universe) of all six recordings on macOS: 11 of 12 MATCH. The twelfth, a median regression recorded on ConTree's Linux, differs by 4e-6 relative, with the same p-value, n and verdict. MATCH proves the recorded code is deterministic. Correctness was checked separately: an auditor that did not read the code refitted every baseline and flip from the specs and the raw data, and all agree to 2e-7 (`evidence/refit.md`). That refit caught one wrong headline, bank's, which was fixed and recorded again |
+| What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the farthest universe) of all six recordings on macOS: 11 of 12 MATCH. The twelfth, a median regression recorded on ConTree's Linux, differs by 4e-6 relative, with the same p-value, n and verdict. MATCH proves the recorded code is deterministic. Correctness was checked separately: an auditor that did not read the code refitted every baseline and flip from the specs and the raw data, and all agree to 2e-7 (`evidence/refit.md`). That refit caught one wrong headline, bank's, which was fixed and recorded again. The two 7 October recordings reproduce 4 of 4 MATCH, and a refit caught a wrong coefficient in an earlier fertility recording, which was discarded (`evidence/live-runs.md`) |
 | BLADE benchmark | Ran live on 4 October: mean F1 over 12 datasets 0.468 (planner arm) and 0.480 (adversary arm), one repeat each. The 0.012 difference is smaller than the gap between the two committed tables, and one repeat cannot show it is more than noise (`evidence/blade/README.md`) |
 | Hosted public demo | **None yet**: no public URL, no video |
 | Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
@@ -77,7 +77,7 @@ The scripted recordings (`cases/*/recorded/events.jsonl`) still list the configu
 ids in the `run.started` `models` field, even though no model was called; the `llm` field of
 the same event says `scripted`.
 
-### The six live recordings
+### The live recordings
 
 | Case | Original verdict | Smallest flip found | Universes |
 |---|---|---|---|
@@ -87,6 +87,8 @@ the same event says `scripted`.
 | marp_norms | DEPENDS ON NORMS: interaction 0.035 [0.018, 0.052] | none | 29 (8 failed) |
 | bank_marketing_calls | CAP THE CALLS: OR 0.872 [0.857, 0.886] per call | none | 12 |
 | hurricanes | NO CLEAR EVIDENCE: 0.011 on log1p(deaths) [-0.073, 0.094], p 0.80, n 93 | none | 18 |
+| teaching_ratings | BEAUTY PREMIUM: 0.165 [0.103, 0.226], p 1e-7, n 463 | none | 20 |
+| fertility_religiosity | NO CLEAR EVIDENCE: 0.27 [-2.05, 2.60], p 0.82, n 171 | none | 32 |
 
 The numbers are rounded from the full values in `evidence/live-runs.md`, which also has the run
 ids, tokens, costs and reproduce results. One run per case is one sample of a model. How often the
@@ -110,6 +112,18 @@ recordings show:
   that weighted each client by the number of calls. The independent refit caught it, the harness
   now refuses that model, and the case was recorded again.
 - **MARP.** No flip on either question.
+- **teaching ratings and fertility (7 October).** Two published answers that Borges is not told.
+  Teaching ratings is the robust one: BEAUTY PREMIUM at 0.165, Hamermesh and Parker's adjusted
+  estimate on these data, and 0.133, their simple one, in the farthest universe; no flip in nine
+  live runs. Fertility is the fragile one: Durante et al. reported p = .012, and Steegen et al.
+  found p < .05 in 7 of 120 defensible processing choices. Borges says NO CLEAR EVIDENCE in all fifteen
+  completed runs, in line with the multiverse rather than the single published analysis; one of
+  them rested on a result its code invented, which the code guard has refused since, and the three
+  flips reported along the way do not stand (`evidence/repeats.md`). Two
+  fertility recordings were discarded first: one reported a covariate's coefficient as the
+  interaction (now refused), one built "high fertility" from days 0 to 9 of the cycle. The planner
+  makes that construct error in about one fertility run in four, and neither the judge nor a
+  dedicated auditor caught it reliably, so it stays a known limitation (`evidence/live-runs.md`).
 
 ### What the live runs taught us
 
@@ -317,8 +331,9 @@ make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build
 ```
 
-The web app plays the live recording of each of the six cases by default, with a toggle to the
-scripted replay for the five cases that have one (the bank case is live-only). It also has a "Replay offline (scripted)" button (hand-built fixtures, no model called,
+The web app plays the live recording of each of the eight cases by default, with a toggle to the
+scripted replay for the five cases that have one (bank, teaching ratings and fertility are
+live-only). It also has a "Replay offline (scripted)" button (hand-built fixtures, no model called,
 local subprocess sandboxes) and, when a key is configured and the budget is not spent, "Run
 live on Nemotron" (the button says why when it is disabled). The landing page has a "bring your own data" card: it is
 enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
@@ -546,7 +561,7 @@ The closest open implementation is
 (the code of "Many AI analysts, one dataset", Bertran, Fogliato and Wu): persona agents each
 run a whole independent analysis and an LLM extracts the forks afterwards, where Borges forks
 a shared checkpointed execution and has an adversary propose forks. It has been run live at
-scale (about 5,000 analyst runs); Borges has six live recordings, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
+scale (about 5,000 analyst runs); Borges has eight live recordings, and no head-to-head exists. Boba, `multiverse`, `specr` and ForkSCOPE
 are compared in [PRODUCT.md](PRODUCT.md#related-work), with links and with what Borges does
 not do better.
 

@@ -16,6 +16,48 @@ Every case was run five times live on 2026-10-05: red_cards at `5070877`, bank_m
 
 A flip is a defensible change of analysis choices that reverses the verdict; the flip rate is how often a run finds one. The planner picks the original analysis anew in every run, so the original verdict can differ between runs; the decision that flips it is the finding to compare.
 
+## 6 and 7 October: the two published-answer cases
+
+Every live run of `fertility_religiosity` and `teaching_ratings`, from the first on the evening of
+6 October to the recordings of 7 October, read from each run's events (`runs/<run id>/events.jsonl`).
+These are not repeats at one commit: the code changed between them as the fixes they led to landed.
+Each started from an empty model cache.
+
+| case | started | completed | verdicts | runs with a flip | original estimate | cost per run |
+|---|---|---|---|---|---|---|
+| teaching_ratings | 9 | 9 | BEAUTY PREMIUM ×9 | 0 | 0.133 to 0.165 | $0.019 to $0.059 |
+| fertility_religiosity | 18 | 15 | NO CLEAR EVIDENCE ×15 | 3, none valid (below) | -1.12 to +2.06 | $0.026 to $0.112 |
+
+- **teaching_ratings.** The original estimate is 0.133 when the plan's default adjusts for nothing
+  and 0.140 to 0.165 when it adjusts for instructor or course covariates, the range of Hamermesh
+  and Parker's own specifications on these data. No run found a flip, in 4 to 24 universes.
+- **fertility_religiosity.** Every completed run said NO CLEAR EVIDENCE, one of them on an
+  invented result, and three runs reported flips that do not stand:
+  - `r_20261006T220943_0f8673`: every universe returned 0.0 [-0.1, 0.1], p 1.0. The model code
+    returned that fixed result whenever a predictor had no variance, which the fertility step had
+    caused. The code guard refuses literal results since `40e055d`, 38 minutes later; today's
+    guard flags this code.
+  - `r_20261006T215037_03c436` (6 flips in 13 universes): all six came from clustering the
+    errors by the testing date, 13 dates for 275 women. The estimate stayed at 2.06 and the
+    p-value fell from 0.15 to 0.0005. The judge, then on Super, accepted the option at 0.7. Its
+    prompt calls clustering on a date indefensible since `0b1ac51`, and a full universe now fails
+    when its estimate's errors are clustered on fewer than 20 groups (`harness_cluster_count.py`).
+  - `r_20261007T013144_46bc17` (2 of 12 universes) reported the coefficient of the last covariate
+    instead of the interaction, so its flip was that covariate becoming significant. Fixed at
+    `c0ec1c3`.
+  - `r_20261007T011707_39c2eb` (3 of 11) flipped to 4.88 [2.67, 7.10], p 1.6e-5, n 143 by excluding
+    women unsure of either period date. The refit gives the same numbers, and the effect rests on
+    two single women at high fertility. A full universe now fails when the groups its estimate
+    compares hold fewer than 5 rows (`harness_cell_check.py`).
+
+  Three runs failed, all before the fixes they led to: an Ultra plan cut at its token limit, an
+  Ultra plan whose first step loaded files instead of using the data, and a default window that
+  left one group empty (the model input was constant; such a step is now re-planned). So no valid
+  flip in fifteen completed runs. That fits Steegen et al.'s 7 significant results in 120
+  universes only partly: Borges explores 2 to 35 universes per run, not the full grid, and its
+  plans pick their own windows. In 2 of the 8 runs after the question was clarified, the plan's
+  default window was not the fertile window (see `evidence/live-runs.md`).
+
 ## Self-corrections
 
 - options recoded because their output failed a check: 4

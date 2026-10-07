@@ -136,8 +136,8 @@ What exists, verified against the primary sources (September and October 2026):
    Borges's adversary reads the real row counts and estimates at a step, argues against the
    conclusion with code, and an independent judge scores how defensible each proposal is
    before it enters the garden. It was designed and tested with scripted models, then run live.
-   The six recordings of 5 October 2026 are the current ones, and each case was also repeated
-   five times (`evidence/repeats.md`). In the checkout recording the flip is not marked
+   The six recordings of 5 October 2026 and the two of 7 October are the current ones, and each
+   of the six cases was also repeated five times (`evidence/repeats.md`). In the checkout recording the flip is not marked
    contaminated: the run starts from keeping all sessions and the flip excludes the internal
    ones, though the column notes hint at it. Whether the adversary's options change verdicts is
    measured over the repeats in `evidence/adversary-ablation.md`.
@@ -158,8 +158,8 @@ options in a plan, executed from shared checkpoints, an adversary proposes new o
 the conclusion, and each universe can be re-executed with `borges reproduce`. They are
 similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
 sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
-5,000 real model runs and a published study, while Borges has six live recordings (one per
-case, an estimated $0.0225 to $0.0408 each from list prices). We have not run their pipeline: it needs a live LLM API plus
+5,000 real model runs and a published study, while Borges has eight live recordings (one per
+case, an estimated $0.026 to $0.067 each from list prices). We have not run their pipeline: it needs a live LLM API plus
 Docker and an Inspect set-up that we did not build. The
 measurable part, a fixed full grid over the same seeded options, was run offline (see
 "What a statistician would object to" and `evidence/grid_vs_search.md`); a head-to-head
@@ -178,7 +178,7 @@ against their agents on the same dataset still does not exist.
   teams' (red cards: 1.20 to 1.36 against 0.89 to 2.93).
 - Persona sampling covers choices an LLM analyst would make unprompted, including ones that
   no planner listed; Borges's coverage is limited by its planner and adversary.
-- Mature tools are used and checked by researchers today; Borges has six live recordings
+- Mature tools are used and checked by researchers today; Borges has eight live recordings
   and no external users yet.
 
 ## What a statistician would object to
@@ -218,7 +218,9 @@ of how often a model gets these right, with wide intervals.
 4. **"The LLM judge of defensibility has no ground truth."** True. Its scores gate which
    adversary proposals enter the garden, but there is no inter-rater check against human
    methodologists and no agreement statistic; in scripted mode the scores are fixtures, and
-   in the live recordings Nemotron Super judged without any human comparison. The seeded options of the curated cases do not depend on
+   Nemotron Super judged the 5 October recordings and Ultra the 7 October ones, without any
+   human comparison. One labelled bench exists, and it shows a gap: shown 5 fertility windows
+   that measure the wrong phase of the cycle, the judge rejected none (`evidence/live-runs.md`). The seeded options of the curated cases do not depend on
    the judge. Until a rater study exists, treat 'defensible' as a documented filter, not a
    validated measurement. No evidence file yet; this limit is open.
 5. **"Forking paths inflate false discoveries, and you report a flip, not a corrected
@@ -264,16 +266,18 @@ of how often a model gets these right, with wide intervals.
 ## Built on Nebius and NVIDIA
 
 - **NVIDIA Nemotron 3 on Nebius Token Factory**, three models in seven roles:
-  - Super 120B plans, argues as the adversary, judges defensibility, repairs failed code and
-    reviews every option's code against its spec;
+  - Super 120B plans, argues as the adversary, repairs failed code and reviews every option's
+    code against its spec; it also judged defensibility in the 5 October recordings;
   - `nvidia/Nemotron-3_5-Lightning` writes the code for every branch (cheap and massively
     parallel), as the recordings show; it was chosen by measurement (`evidence/coder-choice.md`),
     replacing Nano 30B;
   - Ultra 550B writes the report from a bounded structured summary of the garden (the
     verdicts, the flip, the influences and the caveats), not from every universe: the
     narrator call is 2,610 to 4,497 tokens in on the recorded runs, and
-    `Report.narrator_input_tokens` records the estimate for each run. Ultra (550B) is used only
-    for this ~3-4.5k-token summary; its 1M-token context window is not used.
+    `Report.narrator_input_tokens` records the estimate for each run. Since 6 October Ultra also
+    judges defensibility, one short call per option; its 1M-token context window is not used.
+    It was tried as the planner and gave no usable fertility plan in five, so the planner
+    stays on Super with Ultra as its fallback.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
   checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
   and contract-tested with a fake SDK. It ran against the real service on 2 October 2026:
@@ -281,11 +285,12 @@ of how often a model gets these right, with wide intervals.
   (`r_20261002T155240_392c19`) made 22 real ConTree checkpoints and found the same flip as
   the local backend, and a live `marp_religiosity` run on Nemotron plus ConTree
   (`r_20261002T155440_0aa541`) completed 16 universes. The six live recordings of 5 October
-  ran on ConTree.
+  and the two of 7 October ran on ConTree.
 - **Nebius AI Cloud:** the Docker image is built to be deployed there. Nothing in this
   repository deploys it, and there is no public hosted demo yet.
 - **Status:** six cases ran live on Nemotron through Token Factory on 5 October 2026
-  (238 calls, an estimated $0.026 to $0.056 per case from token counts and list prices; `evidence/live-runs.md`). Each recorded universe
+  (238 calls, an estimated $0.026 to $0.056 per case from token counts and list prices; `evidence/live-runs.md`),
+  and two cases with published answers that Borges is not told on 7 October ($0.050 and $0.067). Each recorded universe
   re-executes with `borges reproduce --source live`, and every headline was refitted
   independently from the specs and the raw data (`evidence/refit.md`). The scripted replays remain as
   the offline path, hand-built and labelled as such. Still missing: a public URL, and any outside user.

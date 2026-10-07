@@ -6,9 +6,13 @@ produced by a model.
 
 ## The question and the rule
 
-- Question: does the difference in religiosity between women at high and at low fertility
-  depend on relationship status, with women in committed relationships more religious at high
-  fertility and single women less?
+- Question: does the difference in religiosity between women at high and at low fertility on
+  the day they filled in the questionnaire depend on relationship status, such that women in
+  committed relationships are more religious at high fertility and single women less (a fertility
+  by relationship status interaction)? The words "on the day they filled in the questionnaire"
+  were added on 7 October 2026 after plans read fertility as a trait of the woman rather than her
+  phase of the cycle on the day of testing. They state what the study measured, not how to
+  process the data.
 - Rule: the claim holds (FERTILITY SHIFTS RELIGIOSITY) if the fertility by relationship status
   interaction on mean religiosity is above 0 with p < 0.05. Otherwise there is no clear evidence.
 
@@ -46,3 +50,16 @@ The case was chosen because the answer is published and independent of Borges:
 `steegen_multiverse.py` recomputes both from `data.parquet` and reproduces them exactly
 (F = 6.46, p = .012; 7 of 120). Borges sees only the question, the rule, the data and the
 column notes, and none of this section.
+
+## What Borges found
+
+The live recording (`recorded-live/`, 7 October 2026, run `r_20261007T020642_a23fe3`) says NO
+CLEAR EVIDENCE: 0.2746 [-2.053, 2.602], p 0.817, n 171, with no flip in 32 universes. That agrees
+with Steegen et al.'s multiverse, not with the single published analysis. Its plan used a window of
+6 to 11 days since the last period, and the judge replaced the plan's default of keeping every
+participant with excluding women unsure of either date, which the report states. All fifteen completed
+live runs of 6 and 7 October said NO CLEAR EVIDENCE, one of them on a result its code invented;
+none of the three flips they reported stands. Two recordings were discarded before this one:
+one reported the wrong coefficient, the other used a window that was not the fertile one. The
+details, the refit and the planner's construct errors are in `evidence/live-runs.md`,
+`evidence/refit.md` and `evidence/repeats.md`.
