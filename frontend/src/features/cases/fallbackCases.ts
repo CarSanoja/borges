@@ -127,7 +127,7 @@ export const FALLBACK_CASES: CaseCard[] = [
     provenance: "Real data, ODC-By 1.0",
     title: "Fertility and religiosity: does the effect depend on relationship status?",
     subtitle: "Real survey data, nothing planted. A published finding, tested blind.",
-    question: "Does the difference in religiosity between women at high and at low fertility depend on relationship status, such that women in committed relationships are more religious at high fertility and single women less (a fertility by relationship status interaction)?",
+    question: "Does the difference in religiosity between women at high and at low fertility on the day they filled in the questionnaire depend on relationship status, such that women in committed relationships are more religious at high fertility and single women less (a fertility by relationship status interaction)?",
     decision_rule: {
       metric: "fertility by relationship status interaction on mean religiosity (1-9): the high minus low fertility difference among women in committed relationships minus the same difference among single women",
       comparator: "gt",
