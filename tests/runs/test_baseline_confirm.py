@@ -132,3 +132,47 @@ async def test_an_implementation_that_cannot_run_is_reported(monkeypatch) -> Non
     p = pipeline()
     await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
     assert p.search.reference == "unchecked" and "was not checked" in p.caveats[0]
+
+
+async def test_a_denied_repair_reports_the_mismatch_and_changes_nothing(monkeypatch) -> None:
+    from borges.gateway.errors import GatewayDenied
+
+    rerun = script(monkeypatch, [PUBLISHED, PUBLISHED], reruns=[WRONG])
+
+    async def denied(*_args):
+        raise GatewayDenied("max_tokens", "above the ceiling")
+
+    monkeypatch.setattr(baseline_confirm, "propose_fixes", denied)
+    p = pipeline()
+    base = universe(WRONG)
+    assert await confirm_baseline(p, analysis_plan(), base, rerun) is base
+    assert p.search.reference == "disagrees" and "does not match" in p.caveats[0]
+    assert rerun.calls == []
+
+
+async def test_an_error_while_writing_leaves_the_run_as_it_was(monkeypatch) -> None:
+    from borges.llm.client import LLMError
+
+    rerun = script(monkeypatch, [])
+
+    async def broken(*_args):
+        raise LLMError("budget for this run is spent")
+
+    monkeypatch.setattr(baseline_confirm, "reference_result", broken)
+    p = pipeline()
+    base = universe(PUBLISHED)
+    assert await confirm_baseline(p, analysis_plan(), base, rerun) is base
+    assert p.search.reference == "unchecked" and "budget" in p.caveats[0]
+
+
+async def test_a_confirmed_starting_point_withdraws_the_planner_s_doubts(monkeypatch) -> None:
+    rerun = script(monkeypatch, [PUBLISHED])
+    doubt = (
+        "The starting point may not be exactly your analysis, so read the original result with "
+        "care: step7: the analysis says model SEs."
+    )
+    p = pipeline()
+    p.caveats.extend([doubt, "Another caveat."])
+    await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
+    assert p.caveats[0] == "Another caveat."
+    assert "listed 1 possible difference;" in p.caveats[1] and "it does not change" in p.caveats[1]

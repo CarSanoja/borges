@@ -79,11 +79,12 @@ def report_caveats(
     return caveats
 
 
+GAP_PREFIX = "The starting point may not be exactly your analysis"
+
+
 def analysis_caveats(plan: AnalysisPlan) -> list[str]:
     return [
-        f"The starting point may not be exactly your analysis, so read the original result with "
-        f"care: {gap}."
-        for gap in plan.analysis_gaps
+        f"{GAP_PREFIX}, so read the original result with care: {gap}." for gap in plan.analysis_gaps
     ]
 
 

@@ -22,7 +22,8 @@ from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
 
 REFERENCE_TOKENS = 4000
-FIX_TOKENS = 6000
+FIX_TOKENS = 4096
+WRITE_ROUNDS = 3
 
 
 class Fix(BaseModel):
@@ -40,7 +41,7 @@ class FixOutput(BaseModel):
 async def write_reference(
     llm: LLMClient, plan: AnalysisPlan, attempt: int, feedback: str | None = None
 ) -> str:
-    for round_ in range(2):
+    for round_ in range(WRITE_ROUNDS):
         response = await llm.complete(
             Role.REPAIRER,
             build_write_messages(plan, attempt, feedback),

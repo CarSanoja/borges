@@ -12,8 +12,10 @@ keys estimate, ci_low, ci_high, p_value and n: the coefficient or difference the
 metric names, its 95% confidence interval and p-value, and the number of rows the model used. \
 Do every step the analysis says, in the way it says, and nothing it does not say: no other \
 exclusion, imputation, covariate, recoding or transformation. Code 0/1 indicators as 0 and 1. \
-If the fit fails, raise a ValueError; never return fixed numbers in its place. Use pandas, numpy, \
-statsmodels and scipy only; no file, network or system access. Return only the code."""
+If the fit fails, raise a ValueError; never return fixed numbers in its place. Import only \
+pandas, numpy, statsmodels and scipy: no other module, not even datetime or math (use pandas for \
+dates, e.g. pd.to_timedelta and .dt.days, and numpy for arithmetic). No file, network or system \
+access, no print. Return only the code."""
 
 FIX_SYSTEM = """An analysis was split into steps, each coded separately; run in order, the \
 default option of every step should carry out the user's analysis. It does not: the step-by-step \

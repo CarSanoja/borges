@@ -36,11 +36,12 @@ async def test_a_whole_analysis_may_filter_rows_and_uses_the_second_model() -> N
     assert '"attempt":1' in llm.calls[0].messages[1]["content"]
 
 
-async def test_refused_code_is_shown_to_the_writer_once_then_fails() -> None:
-    llm = FakeLLM({"reference:2:0": {"code": UNSAFE}, "reference:2:1": {"code": UNSAFE}})
+async def test_refused_code_is_shown_to_the_writer_then_fails() -> None:
+    llm = FakeLLM({f"reference:2:{r}": {"code": UNSAFE} for r in range(3)})
     with pytest.raises(LLMError, match="refused"):
         await write_reference(llm, analysis_plan(), 2)
-    assert "the code was refused" in llm.calls[1].messages[1]["content"]
+    assert len(llm.calls) == 3
+    assert "the code was refused" in llm.calls[2].messages[1]["content"]
 
 
 async def test_fixes_for_unknown_options_or_refused_code_are_dropped() -> None:
