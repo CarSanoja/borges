@@ -15,6 +15,7 @@ export function InfluenceBars({ snapshot }: Props) {
     [reported, snapshot],
   );
   const scale = items.reduce((max, item) => Math.max(max, item.max_abs_delta), 0);
+  const baselineEstimate = snapshot.report?.original_result.estimate ?? null;
 
   return (
     <section className="panel ib" aria-label="Decision influence">
@@ -27,7 +28,7 @@ export function InfluenceBars({ snapshot }: Props) {
       ) : (
         <ol className="ib-list">
           {items.map((item) => (
-            <InfluenceRow key={item.step_id} item={item} scale={scale} />
+            <InfluenceRow key={item.step_id} item={item} scale={scale} baselineEstimate={baselineEstimate} />
           ))}
         </ol>
       )}

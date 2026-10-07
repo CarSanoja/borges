@@ -52,6 +52,11 @@
   color: var(--paper-300);
 }
 
+.ib-value--none {
+  font-style: italic;
+  color: var(--paper-500);
+}
+
 .ib-badge {
   grid-area: badge;
   min-width: 4.2rem;
