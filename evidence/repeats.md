@@ -59,6 +59,35 @@ Each started from an empty model cache.
   count back from the next expected period, so no Borges universe lies in that grid. In 2 of the 8 runs after the question was clarified, the plan's
   default window was not the fertile window (see `evidence/live-runs.md`).
 
+## 7 October: starting from the published fertility analysis
+
+Every run that was given the published analysis, in order. Two measured it, and both found a
+single change that removes the effect; the rate is 2 of 2, from two runs.
+
+- `r_20261007T031142_d278f7` (local, $0.070): the analysis was written into the question. The
+  judge rejected its cycle-day formula and replaced it, so the run started from 1.61, p .117,
+  n 140, not from the published analysis. It does not count; it led to the `analysis` field,
+  which the judge may dispute but not replace.
+- `r_20261007T033117_d4a9be` (local, $0.084): failed before any universe. A filter kept the cycle
+  day in ctx, the coder could only store an empty list there, and every model option failed.
+  Prose like "store cycle_day in ctx['cycle_day']" is a plan shortfall since.
+- `r_20261007T033617_784e1b` (local, $0.084): started from 2.3834, p .012, n 163. Smallest flip,
+  proposed by the adversary: single = not dating, committed = engaged or married, dating women left
+  out, giving 1.7793, p .1218, n 129, Steegen et al.'s R3 cell to four decimals. 5 of 18 universes
+  flip.
+- `r_20261007T034436_f35b58` (ConTree, $0.066): discarded. The planner coded single as answer 1
+  only, called it "Original user definition", and the judge accepted it at 0.9; the run started
+  from Steegen's R2 cell (0.9262, p .384), so it measured an analysis nobody brought. It led to
+  the fidelity check.
+- `r_20261007T034929_a2efd7` (ConTree, $0.062): failed before any universe. The fidelity check
+  returned the parts that match as well as those that differ, so the planner re-planned twice for
+  nothing, and a filter stored a boolean mask in ctx. Only comparisons marked as different count
+  since, and a mask assigned to ctx is a shortfall.
+- `r_20261007T035352_3cba38` (ConTree, $0.080): the recording. The fidelity check caught the mean
+  counting unanswered items as 0 and the planner fixed it. Started from 2.3834, p .012, n 163;
+  smallest flip committed = married only, 0.8642, p .4039, n 163. 8 of 14 completed universes
+  flip.
+
 ## Self-corrections
 
 - options recoded because their output failed a check: 4

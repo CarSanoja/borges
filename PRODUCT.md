@@ -158,12 +158,16 @@ options in a plan, executed from shared checkpoints, an adversary proposes new o
 the conclusion, and each universe can be re-executed with `borges reproduce`. They are
 similar in the goal (show the spread of defensible conclusions), in using LLM agents, and in
 sandboxed execution. Borges is weaker on evidence: that code and paper were run live on about
-5,000 real model runs and a published study, while Borges has eight live recordings (one per
-case, an estimated $0.026 to $0.067 each from list prices). We have not run their pipeline: it needs a live LLM API plus
+5,000 real model runs and a published study, while Borges has nine live recordings (one per
+case, an estimated $0.026 to $0.080 each from list prices). We have not run their pipeline: it needs a live LLM API plus
 Docker and an Inspect set-up that we did not build. The
 measurable part, a fixed full grid over the same seeded options, was run offline (see
 "What a statistician would object to" and `evidence/grid_vs_search.md`); a head-to-head
-against their agents on the same dataset still does not exist.
+against their agents on the same dataset still does not exist. `evidence/head-to-head.md` runs the
+idea behind it, independent persona analysts, on Borges's own models and harness: on teaching
+ratings twelve personas produced two distinct analyses, and on fertility none of the twelve
+reached the published analysis, while Borges, given that analysis, started from it and found a
+one-change flip.
 
 **What it does not do better.**
 - `multiverse` also avoids recomputing shared work, and Boba and `multiverse` are mature,
@@ -179,7 +183,7 @@ against their agents on the same dataset still does not exist.
   against 0.89 to 2.93).
 - Persona sampling covers choices an LLM analyst would make unprompted, including ones that
   no planner listed; Borges's coverage is limited by its planner and adversary.
-- Mature tools are used and checked by researchers today; Borges has eight live recordings
+- Mature tools are used and checked by researchers today; Borges has nine live recordings
   and no external users yet.
 
 ## What a statistician would object to

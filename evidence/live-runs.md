@@ -1,7 +1,7 @@
 # Live runs on Nemotron through Nebius Token Factory
 
-Eight recordings are committed: six made on 5 October 2026 (UTC), described first, and two made
-on 7 October with the judge and narrator on Ultra (see "7 October" below). The role table that
+Nine recordings are committed: six made on 5 October 2026 (UTC), described first, and three made
+on 7 October with the judge and narrator on Ultra (see the two "7 October" sections below). The role table that
 follows is the 5 October one.
 
 State at `43d913c`, 5 October 2026 (UTC). The six committed recordings were made on 5 October from
@@ -147,6 +147,23 @@ rejected 0 of 5 wrong windows; with reasoning on, 2 of 5 at three to four times 
 dedicated construct auditor caught 8 to 9 of 11 but called 12 to 13 of 25 correct windows
 invalid. Every construction rule is listed in the plan view, and that is where a person has to
 look. Each recording above was checked by refit before it was kept.
+
+## 7 October: starting from the published analysis
+
+`fertility_published` gives Borges the analysis behind the published fertility result and asks
+how fragile it is (`cases/fertility_published/README.md`). The recording is
+`r_20261007T035352_3cba38` on ConTree, $0.080, 59 calls: it starts from the published 2.3834,
+p .012, n 163 and its smallest flip is one change, committed = married only, which gives 0.8642
+[-1.1754, 2.9037], p .4039, n 163. A refit from the raw data and `borges reproduce --source live`
+both give the same numbers. Its `recording.json` names `3e1d0c9`, the commit when the recording
+was copied; the run loaded its code at `7b6bb27`, and between the two only the registry seed, the
+persona baseline and two web-app merges changed, none of which a run uses.
+
+Six attempts were made, all listed in `evidence/repeats.md`. Two measured the published analysis
+and both found a one-change flip in the relationship coding; the other four led to the fixes that
+the recorded run uses: the user's analysis is a field of its own that the judge cannot replace, a
+per-row quantity may not be kept in ctx in prose or as a mask, and a fidelity check compares the
+plan's defaults with the analysis before anything runs.
 
 ## What the recordings show
 

@@ -1,0 +1,15 @@
+{
+  "run_id": "r_20261007T035352_3cba38",
+  "case_id": "fertility_published",
+  "recorded_at": "2026-10-07T03:53:52Z",
+  "commit": "3e1d0c9",
+  "dirty": false,
+  "llm": "nebius",
+  "backend": "contree",
+  "registry_sha": "149b1db2439573eefb20f44af62dc0f0482c0dcd68be5e420fce467253be9156",
+  "cost_usd": 0.08022469999999998,
+  "n_universes": 19,
+  "n_failed": 5,
+  "verdict": "FERTILITY SHIFTS RELIGIOSITY",
+  "flipped_verdict": "NO CLEAR EVIDENCE"
+}

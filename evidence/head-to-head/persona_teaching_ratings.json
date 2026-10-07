@@ -1,0 +1,270 @@
+{
+ "case": "teaching_ratings",
+ "n": 12,
+ "totals": {
+  "tokens_in": 160872,
+  "tokens_out": 19775,
+  "cost_usd": 0.04318241999999999,
+  "calls": 60,
+  "cached_calls": 0,
+  "by_model": {
+   "nvidia/nemotron-3-super-120b-a12b": 0.0371409,
+   "nvidia/Nemotron-3_5-Lightning": 0.006041520000000001
+  }
+ },
+ "analysts": [
+  {
+   "index": 0,
+   "persona": "a psychologist working in the field the question comes from",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.16452225684226057,
+   "ci": [
+    0.06889833239908401,
+    0.26014618128543715
+   ],
+   "p_value": 0.0007458528499787873,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step_filter_outliers": "Compute the 1st and 99th percentile of students and allstudents. Replace values below the 1st percentile with the 1st percentile, and above the 99th percentile with the 99th percentile, writing back to the original columns students and allstudents. Return the modified DataFrame.",
+    "step_adjust_covariates": "Set ctx['covariates'] = ['gender', 'minority', 'native', 'tenure', 'division', 'credits']. These are pre-treatment characteristics unlikely to be affected by beauty. Return the DataFrame unchanged.",
+    "step_model": "Regress eval on beauty and covariates listed in ctx['covariates'] (with drop_first=True for categoricals). Use ordinary least squares via statsmodels OLS. Compute cluster-robust covariance matrix using the prof identifier. Return a dictionary with keys: estimate (coefficient on beauty), ci_low, ci_high (95% CI), p_value (two-sided p-value for beauty coefficient)."
+   },
+   "wall_s": 22.8
+  },
+  {
+   "index": 1,
+   "persona": "an economist",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.1564742261423914,
+   "ci": [
+    0.09746828690369345,
+    0.21548016538108933
+   ],
+   "p_value": 2.0197773083178777e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute 1st and 99th percentile values for students and allstudents columns. Replace values below the 1st percentile with the 1st percentile value and above the 99th percentile with the 99th percentile value for both columns. Return the modified DataFrame.",
+    "step2_feature_covariates": "Set ctx['covariates'] = ['gender', 'minority', 'age', 'native', 'tenure', 'division', 'credits']. Return the DataFrame unchanged.",
+    "step3_model_estimate": "Fit OLS regression: eval ~ beauty + [ctx['covariates']] using statsmodels. Use HC1 (heteroskedasticity-consistent) covariance estimator. Extract coefficient for beauty, its standard error, 95% CI, and p-value. Return dict with keys: estimate, ci_low, ci_high, p_value."
+   },
+   "wall_s": 13.0
+  },
+  {
+   "index": 2,
+   "persona": "a biostatistician",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.156474226142392,
+   "ci": [
+    0.09743015997536736,
+    0.21551829230941666
+   ],
+   "p_value": 2.0565519261574883e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 1st and 99th percentile of students and allstudents; replace values below the 1st percentile with that percentile, and values above the 99th percentile with that percentile; return the modified DataFrame.",
+    "step2_feature_covariates": "Set ctx['covariates'] = ['gender', 'minority', 'age', 'tenure', 'native', 'division', 'credits']; return the unchanged DataFrame.",
+    "step3_model_estimate": "Regress eval on beauty plus each covariate in ctx['covariates'] (with drop_first=True for string columns); use ordinary least squares from statsmodels; compute HC2 robust standard errors; return the coefficient, standard error, 95% CI, and p-value for beauty."
+   },
+   "wall_s": 16.5
+  },
+  {
+   "index": 3,
+   "persona": "a methodologist who worries about small samples and flexible analyses",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.156474226142392,
+   "ci": [
+    0.09743015997536736,
+    0.21551829230941666
+   ],
+   "p_value": 2.0565519261574883e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 99th percentile of students and allstudents; replace values above that threshold with the threshold value; return the modified DataFrame.",
+    "step2_adjust_covariates": "Set ctx['covariates'] = ['gender', 'minority', 'tenure', 'native', 'division', 'credits']; return the DataFrame unchanged.",
+    "step3_model_effect": "If ctx['covariates'] is empty, fit OLS: eval ~ beauty; else fit OLS: eval ~ beauty + C(gender, drop_first=True) + C(minority, drop_first=True) + C(tenure, drop_first=True) + C(native, drop_first=True) + C(division, drop_first=True) + C(credits, drop_first=True) + ([age] if 'age' in ctx['covariates'] else []); use HC2 robust covariance; extract coefficient, standard error, p-value, and 95% CI for beauty; return dict with estimate, ci_low, ci_high, p_value."
+   },
+   "wall_s": 14.7
+  },
+  {
+   "index": 4,
+   "persona": "a sociologist",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.1564742261423914,
+   "ci": [
+    0.0974301599753668,
+    0.215518292309416
+   ],
+   "p_value": 2.056551926157648e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_outlier_filter": "Compute the 99th percentile of students and allstudents; replace values above that threshold with the threshold; return the filtered DataFrame unchanged in row count.",
+    "step2_covariate_adjustment": "Set ctx['covariates'] = ['age', 'gender', 'minority', 'native', 'tenure', 'division', 'credits']; return DataFrame unchanged.",
+    "step3_model": "Regress eval on beauty and ctx['covariates'] (with drop_first=True for categoricals) using OLS; compute HC2 robust standard errors; return estimate, ci_low, ci_high, p_value for beauty coefficient."
+   },
+   "wall_s": 17.8
+  },
+  {
+   "index": 5,
+   "persona": "a survey researcher who cleans self-reported online data",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.1564742261423914,
+   "ci": [
+    0.09680573636740886,
+    0.21614271591737394
+   ],
+   "p_value": 2.7503733206565185e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 99th percentile of students and allstudents; replace values above that percentile with the percentile value; return the modified DataFrame.",
+    "step2_feature_covariates": "Set ctx['covariates'] = ['age', 'gender', 'minority', 'native', 'tenure', 'division', 'credits']; return the input DataFrame unchanged.",
+    "step3_model_estimate": "Fit OLS: eval ~ beauty + [ctx['covariates']] with drop_first=True for categorical covariates; compute HC3 robust standard errors; return estimates for beauty: effect, ci_low, ci_high, p_value."
+   },
+   "wall_s": 19.9
+  },
+  {
+   "index": 6,
+   "persona": "a Bayesian statistician asked for a frequentist answer",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.16452225684226057,
+   "ci": [
+    0.1033979334156484,
+    0.22564658026887274
+   ],
+   "p_value": 1.3243797025696108e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_outlier_filter": "Compute 99th percentile of students and allstudents; replace values above this threshold with the percentile value; return filtered DataFrame with winsorized columns.",
+    "step2_covariate_adjustment": "Set ctx['covariates'] = ['gender', 'minority', 'native', 'tenure', 'division', 'credits']; return DataFrame unchanged.",
+    "step3_model_estimation": "Regress eval on beauty and covariates listed in ctx['covariates'] (with drop_first=True for categoricals); use ordinary least squares; compute HC2 robust standard errors; return estimate, 95% CI, and p-value for beauty coefficient."
+   },
+   "wall_s": 19.0
+  },
+  {
+   "index": 7,
+   "persona": "an epidemiologist",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.16452225684226057,
+   "ci": [
+    0.10338362607414392,
+    0.22566088761037723
+   ],
+   "p_value": 1.3333249265015036e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Return the input DataFrame unchanged.",
+    "step2_adjust_for_confounders": "Set ctx['covariates'] = ['gender', 'minority', 'native', 'tenure', 'division', 'credits']; return DataFrame unchanged.",
+    "step3_model_association": "Regress eval on beauty and each covariate in ctx['covariates'] (with drop_first=True for string columns); use ordinary least squares from statsmodels; compute HC1 robust standard errors; extract coefficient, standard error, p-value, and 95% CI for beauty; return dict with estimate, ci_low, ci_high, p_value."
+   },
+   "wall_s": 15.8
+  },
+  {
+   "index": 8,
+   "persona": "a domain expert who knows how this field measures its constructs",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.16452225684226057,
+   "ci": [
+    0.1033979334156484,
+    0.22564658026887274
+   ],
+   "p_value": 1.3243797025696108e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 99th percentile of students and allstudents; replace values above that threshold with the threshold value; return the modified DataFrame.",
+    "step2_adjustment_set": "Set ctx['covariates'] = ['gender', 'minority', 'native', 'tenure', 'division', 'credits']; return the DataFrame unchanged.",
+    "step3_model_estimation": "Regress eval on beauty and the covariates listed in ctx['covariates'] (with drop_first=True for categorical columns) using statsmodels OLS; compute HC2 robust standard errors; extract the beauty coefficient, its 95% confidence interval, and p-value; return a dictionary with keys estimate, ci_low, ci_high, p_value."
+   },
+   "wall_s": 29.5
+  },
+  {
+   "index": 9,
+   "persona": "a data scientist with no background in the field",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.16452225684226074,
+   "ci": [
+    0.1033979334156486,
+    0.22564658026887288
+   ],
+   "p_value": 1.324379702569552e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 99th percentile of students and allstudents; replace values above that percentile with the percentile value; return the modified DataFrame.",
+    "step2_transform_outcome": "Write outcome = eval (no transformation). Return DataFrame with outcome.",
+    "step3_feature_adjust": "Read ctx['covariates'] if present, else start empty; add ['gender', 'minority', 'tenure', 'native', 'division', 'credits']; write ctx['covariates'] = sorted(list(set(...))). Return DataFrame unchanged.",
+    "step4_model_assoc": "Regress outcome on beauty and covariates listed in ctx['covariates'] (if any) using statsmodels OLS; compute HC2 robust standard errors; return estimate, ci_low, ci_high, p_value for beauty coefficient."
+   },
+   "wall_s": 36.9
+  },
+  {
+   "index": 10,
+   "persona": "a graduate student running the first analysis of their thesis",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.1564742261423914,
+   "ci": [
+    0.09680573636740886,
+    0.21614271591737394
+   ],
+   "p_value": 2.7503733206565185e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 99th percentile of students and allstudents; replace values above that threshold with the threshold value; return the modified DataFrame.",
+    "step2_feature_covariates": "Set ctx['covariates'] = ['age', 'gender', 'minority', 'native', 'tenure', 'division', 'credits']; return the DataFrame unchanged.",
+    "step3_model_effect": "Regress eval on beauty and the covariates in ctx['covariates'] using OLS with HC3 robust standard errors; return a dict with estimate, ci_low, ci_high, p_value for the beauty coefficient."
+   },
+   "wall_s": 25.4
+  },
+  {
+   "index": 11,
+   "persona": "a journal reviewer re-analysing the data to check a paper",
+   "status": "done",
+   "verdict": "BEAUTY PREMIUM",
+   "estimate": 0.16452225684226057,
+   "ci": [
+    0.10287472548782234,
+    0.2261697881966988
+   ],
+   "p_value": 1.6889966257756723e-07,
+   "n": 463,
+   "error": null,
+   "replaced_steps": [],
+   "specs": {
+    "step1_filter_outliers": "Compute the 1st and 99th percentiles of 'students' and 'allstudents'; replace values below the 1st percentile with the 1st percentile value and above the 99th percentile with the 99th percentile value; return the modified DataFrame.",
+    "step2_feature_covariates": "Set ctx['covariates'] = ['gender', 'minority', 'native', 'tenure', 'division', 'credits']; return the DataFrame unchanged.",
+    "step3_model_estimate": "Ordinary least squares regression of 'eval' on 'beauty' and covariates in ctx['covariates'] (with drop_first=True for categoricals); use HC3 robust standard errors; return estimates for beauty: effect, ci_low, ci_high, p_value."
+   },
+   "wall_s": 23.6
+  }
+ ]
+}
