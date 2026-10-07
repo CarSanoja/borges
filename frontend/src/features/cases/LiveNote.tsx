@@ -3,6 +3,7 @@ import type { CaseCard, Health } from "../../shared/types/contracts";
 const REASONS: Record<string, string> = {
   budget_spent: "the live budget for this demo is used up",
   no_key: "the server has no NEBIUS_API_KEY",
+  bare_host: "this server would run model-written code on its own host, outside a container or sandbox",
 };
 
 export function liveReasonText(health: Health | null): string {

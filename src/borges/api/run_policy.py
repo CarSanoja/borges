@@ -5,7 +5,9 @@ from typing import Any
 from fastapi import HTTPException
 
 from borges.api.live_rules import (
+    BARE_HOST_MESSAGE,
     UNTRUSTED_LOCAL_MESSAGE,
+    bare_host,
     read_spend,
     untrusted_local_blocked,
     uploads_unavailable_reason,
@@ -28,6 +30,8 @@ def _check_live(request: RunRequest, settings: Settings, orchestrator: Any) -> N
         )
     if read_spend(settings) >= settings.borges_spend_cap_usd:
         raise _reject(403, "The live budget for this demo is used up; watch the recorded run.")
+    if bare_host(settings):
+        raise _reject(400, BARE_HOST_MESSAGE)
     if request.upload_id is None:
         if request.question or request.decision_rule is not None:
             raise _reject(

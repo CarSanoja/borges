@@ -89,6 +89,7 @@ class Env:
     def __init__(self, tmp_path, key: str | None, **overrides: Any) -> None:
         self.store = FakeStore()
         self.orchestrator = FakeOrchestrator()
+        overrides.setdefault("borges_isolated_host", True)
         self.app = create_app(
             settings=Settings(
                 _env_file=None, borges_home=tmp_path, nebius_api_key=key, **overrides

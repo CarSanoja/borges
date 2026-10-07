@@ -57,6 +57,7 @@ class Settings(BaseSettings):
     borges_max_universes: int = 40
     borges_concurrency: int = 6
     borges_allow_untrusted_local: bool = False
+    borges_isolated_host: bool = False
     borges_live_token: str | None = None
     borges_max_active_runs: int = 2
     borges_max_live_runs: int = 2

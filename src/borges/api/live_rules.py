@@ -5,15 +5,22 @@ from typing import Any, Literal
 
 from borges.config import Settings
 
-LiveReason = Literal["no_key", "budget_spent"]
+LiveReason = Literal["no_key", "budget_spent", "bare_host"]
 
 UNTRUSTED_LOCAL_MESSAGE = (
     "Uploaded datasets run live only on isolated sandboxes (BORGES_BACKEND=contree), "
     "or with BORGES_ALLOW_UNTRUSTED_LOCAL=true on a private machine."
 )
+BARE_HOST_MESSAGE = (
+    "A live run executes code a model wrote, and this server would run it on its own host. Live "
+    "runs need isolated sandboxes (BORGES_BACKEND=contree), a server inside a container "
+    "(BORGES_ISOLATED_HOST=true, set by the Docker image), or BORGES_ALLOW_UNTRUSTED_LOCAL=true "
+    "on a private machine."
+)
 UPLOAD_LIVE_MESSAGES: dict[LiveReason, str] = {
     "no_key": "Uploaded datasets run live and this server has no NEBIUS_API_KEY.",
     "budget_spent": "Uploaded datasets run live and the live budget of this demo is used up.",
+    "bare_host": BARE_HOST_MESSAGE,
 }
 
 
@@ -33,7 +40,18 @@ def live_unavailable_reason(settings: Settings) -> LiveReason | None:
         return "no_key"
     if read_spend(settings) >= settings.borges_spend_cap_usd:
         return "budget_spent"
+    if bare_host(settings):
+        return "bare_host"
     return None
+
+
+def bare_host(settings: Settings) -> bool:
+    """Model-written code would run on the server's own host, outside any container."""
+    return (
+        settings.borges_backend == "local"
+        and not settings.borges_isolated_host
+        and not settings.borges_allow_untrusted_local
+    )
 
 
 def untrusted_local_blocked(settings: Settings) -> bool:

@@ -383,7 +383,7 @@ export interface Health {
   backend: string;
   spend_usd: number;
   spend_cap_usd: number;
-  live_unavailable_reason?: "no_key" | "budget_spent" | null;
+  live_unavailable_reason?: "no_key" | "budget_spent" | "bare_host" | null;
   uploads_available?: boolean;
   uploads_unavailable_reason?: string | null;
   queue_depth?: number;

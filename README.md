@@ -454,6 +454,7 @@ The image defaults to the scripted model and the local backend, with
 | Variable | Purpose |
 |---|---|
 | `BORGES_ALLOW_UNTRUSTED_LOCAL` | `false` on a public instance: uploads cannot run on the local backend. `make dev` sets it to `true`; `make serve` does not |
+| `BORGES_ISOLATED_HOST` | `true` in the Docker image: the server runs in its own container, so live runs on curated cases may execute model-written code locally (in a child process with no secrets in its environment). On a bare host with the local backend live runs are refused |
 | `BORGES_LIVE_TOKEN` | Deprecated alias, kept so old setups hold: a request carrying this value in `X-Borges-Live-Token` is treated as a key with `uploads:write` and `runs:create:live:upload`. New setups should use API keys (below) |
 | `BORGES_ANON_ACTIVE_RUNS`, `BORGES_ANON_RUNS_PER_MIN`, `BORGES_ANON_LIVE_RUNS_PER_HOUR` | Per-client run quota for anonymous callers: concurrent runs, scripted starts per minute, live starts per hour (429 with `Retry-After`) |
 | `BORGES_ANON_LIVE_PER_CLIENT_PER_DAY`, `BORGES_ANON_LIVE_GLOBAL_PER_HOUR`, `BORGES_TRUSTED_PROXY`, `BORGES_TRUSTED_PROXY_HOPS`, `BORGES_IP_HASH_SALT` | Durable cap on live runs started without a key: per client (salted hash of the address, never the raw address) per 24 h and server-wide per hour, 429 with the reset time; keyed callers are exempt. `X-Forwarded-For` is read only when `BORGES_TRUSTED_PROXY=true`. `/api/health` reports the remaining quota and the cost cap per live run |

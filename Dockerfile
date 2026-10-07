@@ -32,6 +32,7 @@ ENV BORGES_FRONTEND_DIST=/app/frontend/dist \
     BORGES_RUNS_DIR=/app/runs \
     BORGES_HOME=/app/.borges \
     BORGES_REGISTRY_ENFORCE=true \
+    BORGES_ISOLATED_HOST=true \
     BORGES_STORE_KEY_AUTOGEN=true \
     BORGES_MEMORY=true
 EXPOSE 8000

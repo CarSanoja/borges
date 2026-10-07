@@ -593,8 +593,11 @@ interfaces are the tested seams.
 
 - **Uploads are refused on the local backend** (`POST /api/runs` with an `upload_id` returns
   400) unless `BORGES_ALLOW_UNTRUSTED_LOCAL` is true, which only `make dev`
-  sets. Live runs on a curated case are not refused on the local backend by the server; do not
-  expose that combination publicly.
+  sets. **Live runs are refused on a bare local host** (400, `live_unavailable_reason:
+  "bare_host"` in `/api/health`): model-written code would run on the server's own machine. They
+  run on ConTree sandboxes, inside the Docker image (`BORGES_ISOLATED_HOST=true`: the code runs in
+  the server's container, in a child process whose environment holds no secret), or with
+  `BORGES_ALLOW_UNTRUSTED_LOCAL=true` on a private machine.
 - The server, not the client, picks the backend, clamps `max_universes`, limits concurrency
   (429), refuses live runs without a key (400) or past the spend cap (403), and gates uploads and
   other privileged actions by scope (next section). `X-Borges-Live-Token` is a deprecated alias
