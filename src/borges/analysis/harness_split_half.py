@@ -6,6 +6,7 @@ SPLIT_HALF_SOURCE = """
         max_ratio = 6.0
         min_ratio = 0.025
         min_rows = 40
+        wild_half = 5.0
         rows = int(len(df))
         se = (result["ci_high"] - result["ci_low"]) / 3.92
         if rows < min_rows or not se > 0:
@@ -22,9 +23,10 @@ SPLIT_HALF_SOURCE = """
                     frame = df.iloc[part].reset_index(drop=True)
                     half = _normalise_result(estimate(frame, half_ctx))
                     value = float(half["estimate"])
+                    half_se = (float(half["ci_high"]) - float(half["ci_low"])) / 3.92
                 except BaseException:
                     return
-                if not _math.isfinite(value):
+                if not _math.isfinite(value) or not half_se < wild_half * 1.4142 * se:
                     return
                 values.append(value)
             gaps.append(abs(values[0] - values[1]))

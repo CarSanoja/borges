@@ -129,3 +129,22 @@ def test_injected_check_only_when_requested() -> None:
     step = Step(id="m", title="t", kind="model", description="d", options=[option])
     assert "if True:" not in render_step(step, option)
     assert "_check_split_half(df, ctx, result)" in render_step(step, option)
+
+
+SEPARATED_HALVES = """
+def estimate(df, ctx):
+    if len(df) < 3000:
+        wild = 1000.0 * (float(df["arm"].mean()) - 0.5)
+        return {"estimate": wild, "ci_low": wild - 4000.0, "ci_high": wild + 4000.0,
+                "p_value": 0.99, "n": len(df)}
+    return {"estimate": -1.6, "ci_low": -2.7, "ci_high": -0.5, "p_value": 0.004, "n": len(df)}
+"""
+
+
+def test_halves_that_cannot_be_estimated_leave_the_interval_unjudged(tmp_path: Path) -> None:
+    """fertility_vote on 7 October: with few single women in the sample, the halves of a logistic
+    model were separated (estimates of about 25 with intervals in the thousands) and a sound
+    full-sample interval was refused as far too narrow."""
+    done, error, result = run(tmp_path, SEPARATED_HALVES, frame(), split_half=True)
+    assert error is None, error
+    assert result is not None and result.estimate == -1.6
