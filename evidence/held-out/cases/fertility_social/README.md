@@ -33,7 +33,10 @@ fertility, relationship status and their product.
   published cell, one loses significance: counting dating women as committed (single is answer 1
   only), +0.5270, p .1789, n 303.
 - Outside the grid: both fertility windows two days earlier (5-12 and 15-23) give p .1002, n 317;
-  married women only as committed gives p .0022 and holds.
+  counting the cycle day forward from the last period (days since it, plus one, clipped to 1-28)
+  gives +0.4508, p .2099, n 320; married women only as committed gives p .0022 and holds, and the
+  participant's own next-onset date with the two hand-set days kept gives +1.0630, p .0037, n 279,
+  and holds.
 
 ## The rule, written before the first run
 
