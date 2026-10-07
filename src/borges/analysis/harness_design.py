@@ -12,6 +12,8 @@ from __future__ import annotations
 DESIGN_CONDITION_LIMIT = 1e10
 DESIGN_MAX_ROWS = 200000
 DESIGN_WIDE_COLUMNS = 500
+DESIGN_ROWS_KEPT = 2000
+DESIGN_MEANS_KEPT = 20
 
 DESIGN_SOURCE = """
     _designs = []
@@ -20,6 +22,7 @@ DESIGN_SOURCE = """
     _weights = {}
     _results = {}
     _helpers = set()
+    _rows = {}
 
     def _inside_another(model):
         frame = _sys._getframe(2)
@@ -47,6 +50,11 @@ DESIGN_SOURCE = """
                     if _inside_another(self):
                         _helpers.add(id(self))
                     _record_endog(self)
+                    labels = getattr(getattr(self, "data", None), "row_labels", None)
+                    if labels is not None and len(labels) <= __DESIGN_ROWS_KEPT__:
+                        endog = _np.asarray(self.endog, dtype=float).ravel()
+                        weights = _np.arange(1, endog.shape[0] + 1, dtype=float)
+                        _rows[id(self)] = ([int(v) for v in labels], float(endog @ weights))
             except Exception:
                 pass
 
@@ -184,6 +192,12 @@ DESIGN_SOURCE = """
                     "endog_levels": _endog_levels(model_id),
                     "cov_type": str(getattr(_results.get(model_id), "cov_type", "") or "") or None,
                     "names": [str(n) for n in names][:60],
+                    "rows": (_rows.get(model_id) or (None, None))[0],
+                    "endog_check": (_rows.get(model_id) or (None, None))[1],
+                    "means": {
+                        str(names[i]): round(float(x[:, i].mean()), 6)
+                        for i in range(min(x.shape[1], __DESIGN_MEANS_KEPT__))
+                    },
                 }
             )
         if not models:

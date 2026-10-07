@@ -66,7 +66,7 @@ def script(monkeypatch, references, fixes=(), reruns=()):
                 out.results.append((result, f"code {i + 1}"))
         return out
 
-    async def propose(llm, plan, traces, ours, theirs, code, dropped=None):
+    async def propose(llm, plan, traces, ours, theirs, code, dropped=None, evidence=None):
         script.dropped.append(dropped)
         return fix_queue.pop(0) if fix_queue else []
 

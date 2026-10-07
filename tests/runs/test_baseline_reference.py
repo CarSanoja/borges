@@ -18,7 +18,7 @@ def test_results_agree_only_with_the_same_n_and_nearly_the_same_numbers() -> Non
 def scripted(monkeypatch, outcomes: dict[int, AnalysisResult | None]) -> list[int]:
     asked: list[int] = []
 
-    async def fake(llm, executor, plan, attempt):
+    async def fake(llm, executor, plan, attempt, fits=None):
         asked.append(attempt)
         result = outcomes[attempt]
         return result, f"code {attempt}" if result is not None else "it failed"

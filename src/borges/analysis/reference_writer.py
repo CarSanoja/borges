@@ -72,11 +72,12 @@ async def propose_fixes(
     theirs: AnalysisResult,
     reference_code: str,
     dropped: dict[str, tuple[Option, str | None]] | None = None,
+    evidence: dict[str, object] | None = None,
 ) -> list[Fix]:
     """Fixes that pass the coder's checks; refused ones go back to the repairer once, with why.
     `dropped` holds, by step, the user's own option that could not run, which a fix may target."""
     dropped = dropped or {}
-    messages = build_fix_messages(plan, traces, ours, theirs, reference_code, dropped)
+    messages = build_fix_messages(plan, traces, ours, theirs, reference_code, dropped, evidence)
     accepted: dict[tuple[str, str], Fix] = {}
     for round_ in range(FIX_ROUNDS):
         response = await llm.complete(

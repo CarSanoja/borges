@@ -85,3 +85,12 @@ async def test_a_fix_may_target_the_users_option_that_could_not_run() -> None:
     assert [(f.option_id, f.code) for f in found] == [("keep", FILTER_FIX)]
     sent = llm.calls[0].messages[-1]["content"]
     assert '"analysis_option_that_could_not_run"' in sent and "TypeError: str date" in sent
+
+
+def test_the_fit_difference_goes_to_the_repairer() -> None:
+    from borges.analysis.prompts.reference import FIX_SYSTEM, build_fix_messages
+
+    evidence = {"row_key": "WorkerID", "rows_only_in_reference": [{"WorkerID": "15"}]}
+    sent = build_fix_messages(analysis_plan(), [], RESULT, RESULT, WHOLE, None, evidence)
+    assert '"fit_difference"' in sent[-1]["content"] and '"WorkerID":"15"' in sent[-1]["content"]
+    assert "fit_difference, when present" in FIX_SYSTEM

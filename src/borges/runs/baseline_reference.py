@@ -48,17 +48,25 @@ def _step(plan: AnalysisPlan, attempt: int, code: str) -> Step:
 
 
 async def reference_result(
-    llm: LLMClient, executor: GardenExecutor, plan: AnalysisPlan, attempt: int
+    llm: LLMClient,
+    executor: GardenExecutor,
+    plan: AnalysisPlan,
+    attempt: int,
+    fits: dict[str, dict[str, object]] | None = None,
 ) -> tuple[AnalysisResult | None, str]:
-    """Write and run one implementation; a failed run is shown to the writer once."""
+    """Write and run one implementation; a failed run is shown to the writer once. What the
+    model fitted is kept in `fits`, by code."""
     feedback: str | None = None
     for _ in range(2):
         try:
             code = await write_reference(llm, plan, attempt, feedback)
         except LLMError as exc:
             return None, str(exc)
-        result, error = await run_on_root(executor, _step(plan, attempt, code))
+        fit: dict[str, object] = {}
+        result, error = await run_on_root(executor, _step(plan, attempt, code), fit)
         if result is not None:
+            if fits is not None:
+                fits[code] = fit
             return result, code
         feedback = (error or "it failed")[:FEEDBACK_CHARS]
     return None, feedback or ""
@@ -68,6 +76,7 @@ async def reference_result(
 class References:
     results: list[tuple[AnalysisResult, str]] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
+    fits: dict[str, dict[str, object]] = field(default_factory=dict)
 
     @property
     def agreed(self) -> tuple[AnalysisResult, str] | None:
@@ -92,9 +101,10 @@ async def agreed_reference(
             found.results.append((result, text))
 
     for outcome in await asyncio.gather(
-        reference_result(llm, executor, plan, 1), reference_result(llm, executor, plan, 2)
+        reference_result(llm, executor, plan, 1, found.fits),
+        reference_result(llm, executor, plan, 2, found.fits),
     ):
         keep(outcome)
     if found.agreed is None:
-        keep(await reference_result(llm, executor, plan, 3))
+        keep(await reference_result(llm, executor, plan, 3, found.fits))
     return found

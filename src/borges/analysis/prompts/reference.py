@@ -34,7 +34,11 @@ keeping what that option decides. If a default spec itself contradicts the analy
 corrected spec as well. A step whose own option of the user's analysis could not run shows it \
 under analysis_option_that_could_not_run, with its last error, while another option stands in as \
 default; when the gap comes from that step, return code for that option, under its option_id, \
-doing what its spec says: it becomes the step's default again. Change nothing else."""
+doing what its spec says: it becomes the step's default again. fit_difference, when present, \
+names by their row key the raw rows the reference fits and the step-by-step code does not (and \
+the reverse), with their raw values, and gives the mean of every design column in both fits: \
+use it to find the step that drops or keeps those rows, or builds a column with another coding. \
+Change nothing else."""
 
 
 def _result(result: AnalysisResult) -> dict[str, Any]:
@@ -63,6 +67,7 @@ def build_fix_messages(
     theirs: AnalysisResult,
     reference_code: str,
     dropped: dict[str, tuple[Option, str | None]] | None = None,
+    evidence: dict[str, object] | None = None,
 ) -> list[dict[str, str]]:
     rows = {t.step_id: [t.rows_before, t.rows_after] for t in traces}
     dropped = dropped or {}
@@ -102,5 +107,6 @@ def build_fix_messages(
         "step_by_step_result": _result(ours),
         "reference_result": _result(theirs),
         "reference_code": reference_code,
+        **({"fit_difference": evidence} if evidence else {}),
     }
     return messages(FIX_SYSTEM, compact_json(payload))

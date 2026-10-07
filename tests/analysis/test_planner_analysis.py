@@ -41,3 +41,13 @@ def test_a_difference_keeps_the_direction_the_analysis_gives_it() -> None:
 
     assert "'the days from A to B' is B minus A" in analysis_block("cycle day = 28 minus ...")
     assert '"the days from A to B" is B minus A' in SYSTEM
+
+
+def test_the_fidelity_check_looks_at_step_order_and_codings() -> None:
+    """fertility_vote on 7 October, run 25: the window filter ran before the step that sets two
+    women's cycle days by hand, so both were dropped; other runs coded fertility as -1/+1."""
+    from borges.analysis.planner_fidelity import SYSTEM
+
+    assert "Check the order of the steps" in SYSTEM and "-1/+1 contrast" in SYSTEM
+    block = analysis_block("cycle day ...")
+    assert "set before any step filters on it" in block and "coded 1 and 0" in block

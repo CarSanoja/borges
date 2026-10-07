@@ -18,9 +18,11 @@ from typing import TYPE_CHECKING
 
 from borges.analysis.models import AnalysisPlan, AnalysisResult, Option
 from borges.analysis.reference_writer import Fix, propose_fixes
+from borges.analysis.row_key import row_key
 from borges.garden.models import ReferenceCheck, Universe
 from borges.gateway.errors import GatewayDenied
 from borges.llm.client import LLMError
+from borges.runs.baseline_evidence import fit_difference
 from borges.runs.baseline_lost import Lost, lost_defaults, restore, withdraw_departures
 from borges.runs.baseline_reference import agreed_reference, describe, same_result
 from borges.runs.pipeline_caveats import GAP_PREFIX
@@ -110,7 +112,8 @@ async def _confirm(
         return baseline
     if same_result(ours, found.agreed[0]):
         return _confirmed(pipeline, "agrees", baseline)
-    return await _repair(pipeline, plan, baseline, rerun, found.agreed, saved)
+    fit = found.fits.get(found.agreed[1], {})
+    return await _repair(pipeline, plan, baseline, rerun, (*found.agreed, fit), saved)
 
 
 async def _repair(
@@ -118,11 +121,13 @@ async def _repair(
     plan: AnalysisPlan,
     baseline: Universe,
     rerun: RunBaseline,
-    reference: tuple[AnalysisResult, str],
+    reference: tuple[AnalysisResult, str, dict[str, object]],
     saved: Snapshot,
 ) -> Universe:
     assert baseline.result is not None
-    theirs, code = reference
+    theirs, code, fit = reference
+    resolved = getattr(pipeline, "resolved", None)
+    data = getattr(resolved, "data", None)
     ours = describe(baseline.result)
     outcomes = pipeline.smoke.state.outcomes if pipeline.smoke is not None else {}
     lost = lost_defaults(pipeline.planned, plan, outcomes)
@@ -132,9 +137,10 @@ async def _repair(
     for _ in range(MAX_FIX_ROUNDS):
         assert current.result is not None
         dropped = {k[0]: (v.option, v.error) for k, v in lost.items() if v not in restored}
+        evidence = fit_difference(data, row_key(plan.dataset), current, fit)
         try:
             fixes = await propose_fixes(
-                pipeline.llm, plan, current.traces, current.result, theirs, code, dropped
+                pipeline.llm, plan, current.traces, current.result, theirs, code, dropped, evidence
             )
         except (LLMError, GatewayDenied):
             fixes = []

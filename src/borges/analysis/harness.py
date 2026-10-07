@@ -65,6 +65,7 @@ def render_step(
     design_check: bool = True,
     standardised: bool = False,
     full_data_checks: bool = False,
+    row_key: str | None = None,
 ) -> str:
     if option.code is None:
         raise ValueError(f"option '{option.id}' of step '{step.id}' has no code")
@@ -77,6 +78,7 @@ def render_step(
         .replace("__DESIGN_CHECK__", repr(design_check))
         .replace("__FULL_DATA_CHECKS__", repr(full_data_checks))
         .replace("__STANDARDISED__", repr(standardised))
+        .replace("__ROW_KEY__", repr(row_key))
         .replace("__PRODUCES__", repr(list(step.produces)))
         .replace("__ADJUSTS__", repr(not UNADJUSTED.search(option_intent(option))))
         .replace("__READS__", repr(read_names(option.code)))

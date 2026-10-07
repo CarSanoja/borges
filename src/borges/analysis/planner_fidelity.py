@@ -38,8 +38,12 @@ standard error) or does not implement at all, and every default that adds someth
 does not say (an imputation, an exclusion, a covariate, a transformation). Compare the specs, not \
 the labels or rationales: a rationale that claims to follow the user is not evidence. Check the \
 direction of every difference: "the days from A to B" is B minus A, so a spec that computes A \
-minus B differs, even when every name in it matches. Decisions the analysis leaves open are not \
-mismatches. Return an empty list when the defaults implement the \
+minus B differs, even when every name in it matches. Check the order of the steps: a value the \
+analysis sets by hand, or a variable it builds, must be in place before any step that filters \
+or groups on it, so a filter that runs before the step setting what it filters on drops rows \
+the analysis keeps, and differs. Check codings: an indicator the analysis defines as 1 for one \
+group and 0 for the other differs from a -1/+1 contrast or a reversed coding. Decisions the \
+analysis leaves open are not mismatches. Return an empty list when the defaults implement the \
 analysis exactly."""
 
 

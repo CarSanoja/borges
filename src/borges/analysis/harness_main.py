@@ -7,6 +7,8 @@ from borges.analysis.harness_covariates import COVARIATES_SOURCE
 from borges.analysis.harness_design import (
     DESIGN_CONDITION_LIMIT,
     DESIGN_MAX_ROWS,
+    DESIGN_MEANS_KEPT,
+    DESIGN_ROWS_KEPT,
     DESIGN_SOURCE,
     DESIGN_WIDE_COLUMNS,
 )
@@ -15,6 +17,7 @@ from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
 from borges.analysis.harness_domain import DOMAIN_SOURCE
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE, RESTORED_NOTE
 from borges.analysis.harness_fingerprint import FINGERPRINT_SOURCE
+from borges.analysis.harness_fit_rows import FIT_ROWS_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_missing_cut import MISSING_CUT_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
@@ -103,6 +106,7 @@ __FINGERPRINT__
             if design is not None:
                 trace["design"] = design
                 design["outcome"] = _outcome_name(df, reported)
+                _fit_keys(design, df)
                 scale = _outcome_scale(df, reported)
                 if scale is not None:
                     design["outcome_log"] = scale
@@ -192,7 +196,10 @@ MAIN_TEMPLATE = (
     _TEMPLATE.replace("__VALIDATE__", VALIDATE_SOURCE.strip("\n") + "\n")
     .replace("__NORMALISE__", NORMALISE_SOURCE.strip("\n"))
     .replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
-    .replace("__CHECKS__", CHECKS_SOURCE.strip("\n") + "\n\n" + REBUILD_SOURCE.strip("\n"))
+    .replace(
+        "__CHECKS__",
+        "\n\n".join(x.strip("\n") for x in (CHECKS_SOURCE, REBUILD_SOURCE, FIT_ROWS_SOURCE)),
+    )
     .replace("__MISSING_CUT__", MISSING_CUT_SOURCE.strip("\n"))
     .replace("__DOMAIN__", DOMAIN_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))
@@ -223,6 +230,8 @@ MAIN_TEMPLATE = (
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
+    .replace("__DESIGN_ROWS_KEPT__", repr(DESIGN_ROWS_KEPT))
+    .replace("__DESIGN_MEANS_KEPT__", repr(DESIGN_MEANS_KEPT))
     .replace("__ALIAS_NOTE__", repr(ALIAS_NOTE))
     .replace("__RESTORED_NOTE__", repr(RESTORED_NOTE))
     .replace("__DESIGN_WIDE_COLUMNS__", repr(DESIGN_WIDE_COLUMNS))

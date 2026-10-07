@@ -9,6 +9,7 @@ from typing import Any
 from borges.analysis import harness
 from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
+from borges.analysis.row_key import row_key
 from borges.garden.executor_checks import screen_result
 from borges.garden.executor_errors import SANDBOX_FAILED, failure_detail
 from borges.garden.executor_ids import universe_id
@@ -100,6 +101,7 @@ class GardenExecutor:
                 design_check=self.design_check,
                 full_data_checks=self.full_data_checks,
                 standardised=reads_standardised(self.plan.decision_rule.metric),
+                row_key=row_key(self.plan.dataset),
             ).encode()
         }
         command = harness.step_command(step_id, option_id)
