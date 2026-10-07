@@ -6,6 +6,7 @@ from borges.garden.models import Flip, Report
 from borges.garden.plausibility import IMPLAUSIBLE_REASON
 
 MIRROR_TOLERANCE = 0.05
+DEPARTURE = "The starting point is not exactly your analysis: in the step '{title}', "
 
 
 def mirror_caveat(flip: Flip | None, threshold: float) -> str | None:
@@ -99,8 +100,8 @@ def default_departures(planned: AnalysisPlan, coded: AnalysisPlan) -> list[str]:
             continue
         if now.default.id != step.default.id:
             found.append(
-                f"The starting point is not exactly your analysis: in the step '{step.title}', "
-                f"'{step.default.label}' could not run and '{now.default.label}' was used "
+                DEPARTURE.format(title=step.title)
+                + f"'{step.default.label}' could not run and '{now.default.label}' was used "
                 "instead, so the original result is that of a changed analysis."
             )
     return found

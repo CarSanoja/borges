@@ -16,11 +16,12 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING
 
-from borges.analysis.models import AnalysisPlan, AnalysisResult
+from borges.analysis.models import AnalysisPlan, AnalysisResult, Option
 from borges.analysis.reference_writer import Fix, propose_fixes
 from borges.garden.models import ReferenceCheck, Universe
 from borges.gateway.errors import GatewayDenied
 from borges.llm.client import LLMError
+from borges.runs.baseline_lost import Lost, lost_defaults, restore, withdraw_departures
 from borges.runs.baseline_reference import agreed_reference, describe, same_result
 from borges.runs.pipeline_caveats import GAP_PREFIX
 from borges.runtime.stage_checkpoints import CODED_KEY, coded_payload
@@ -56,18 +57,18 @@ UNCHECKED = (
 )
 
 
-Snapshot = dict[tuple[str, str], tuple[str | None, str]]
+Snapshot = dict[str, list[Option]]
 
 
 def _snapshot(plan: AnalysisPlan) -> Snapshot:
-    return {(s.id, o.id): (o.code, o.spec) for s in plan.steps for o in s.options}
+    return {s.id: [o.model_copy(deep=True) for o in s.options] for s in plan.steps}
 
 
 def _restore(plan: AnalysisPlan, saved: Snapshot) -> bool:
-    changed = saved != _snapshot(plan)
+    dumped = {key: [o.model_dump() for o in options] for key, options in saved.items()}
+    changed = dumped != {s.id: [o.model_dump() for o in s.options] for s in plan.steps}
     for step in plan.steps:
-        for option in step.options:
-            option.code, option.spec = saved[(step.id, option.id)]
+        step.options = [o.model_copy(deep=True) for o in saved[step.id]]
     return changed
 
 
@@ -123,20 +124,29 @@ async def _repair(
     assert baseline.result is not None
     theirs, code = reference
     ours = describe(baseline.result)
+    outcomes = pipeline.smoke.state.outcomes if pipeline.smoke is not None else {}
+    lost = lost_defaults(pipeline.planned, plan, outcomes)
     applied: list[Fix] = []
+    restored: list[Lost] = []
     current = baseline
     for _ in range(MAX_FIX_ROUNDS):
         assert current.result is not None
+        dropped = {k[0]: (v.option, v.error) for k, v in lost.items() if v not in restored}
         try:
             fixes = await propose_fixes(
-                pipeline.llm, plan, current.traces, current.result, theirs, code
+                pipeline.llm, plan, current.traces, current.result, theirs, code, dropped
             )
         except (LLMError, GatewayDenied):
             fixes = []
         if not fixes:
             break
         for fix in fixes:
-            option = plan.step(fix.step_id).option(fix.option_id)
+            step = plan.step(fix.step_id)
+            if all(o.id != fix.option_id for o in step.options):
+                restore(plan, lost[(fix.step_id, fix.option_id)], fix.code, fix.spec)
+                restored.append(lost[(fix.step_id, fix.option_id)])
+                continue
+            option = step.option(fix.option_id)
             option.code = fix.code
             option.spec = fix.spec or option.spec
         applied.extend(fixes)
@@ -145,6 +155,7 @@ async def _repair(
             break
         current = candidate
         if same_result(candidate.result, theirs):
+            withdraw_departures(pipeline.caveats, plan, restored)
             pipeline.caveats.append(_repaired_note(plan, applied, ours, theirs))
             _save(pipeline, plan)
             return _confirmed(pipeline, "repaired", candidate)

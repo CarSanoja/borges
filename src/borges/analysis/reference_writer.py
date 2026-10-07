@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from borges.analysis.code_guard import check_code
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import strip_trailing_closer
-from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
+from borges.analysis.models import AnalysisPlan, AnalysisResult, Option, StepTrace
 from borges.analysis.prompts.reference import build_fix_messages, build_write_messages
 from borges.analysis.schemas import CoderOutput
 from borges.llm.client import LLMClient, LLMError, Role
@@ -71,9 +71,12 @@ async def propose_fixes(
     ours: AnalysisResult,
     theirs: AnalysisResult,
     reference_code: str,
+    dropped: dict[str, tuple[Option, str | None]] | None = None,
 ) -> list[Fix]:
-    """Fixes that pass the coder's checks; refused ones go back to the repairer once, with why."""
-    messages = build_fix_messages(plan, traces, ours, theirs, reference_code)
+    """Fixes that pass the coder's checks; refused ones go back to the repairer once, with why.
+    `dropped` holds, by step, the user's own option that could not run, which a fix may target."""
+    dropped = dropped or {}
+    messages = build_fix_messages(plan, traces, ours, theirs, reference_code, dropped)
     accepted: dict[tuple[str, str], Fix] = {}
     for round_ in range(FIX_ROUNDS):
         response = await llm.complete(
@@ -86,7 +89,7 @@ async def propose_fixes(
         out = FixOutput.model_validate(response.parsed)
         refused: list[str] = []
         for fix in out.fixes:
-            checked = _checked(plan, fix)
+            checked = _checked(plan, fix, dropped)
             if isinstance(checked, Fix):
                 accepted[(fix.step_id, fix.option_id)] = checked
             elif checked:
@@ -101,9 +104,14 @@ async def propose_fixes(
     return list(accepted.values())
 
 
-def _checked(plan: AnalysisPlan, fix: Fix) -> Fix | list[str]:
+def _checked(
+    plan: AnalysisPlan, fix: Fix, dropped: dict[str, tuple[Option, str | None]]
+) -> Fix | list[str]:
     step = next((s for s in plan.steps if s.id == fix.step_id), None)
     option = next((o for o in step.options if o.id == fix.option_id), None) if step else None
+    lost = dropped.get(fix.step_id)
+    if step is not None and option is None and lost is not None and lost[0].id == fix.option_id:
+        option = lost[0]
     if step is None or option is None:
         return []
     code, _ = strip_trailing_closer(fix.code)

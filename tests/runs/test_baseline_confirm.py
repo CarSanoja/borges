@@ -29,19 +29,20 @@ def universe(result: AnalysisResult | None) -> Universe:
 
 def pipeline(**fields: Any) -> SimpleNamespace:
     saved: list[str] = []
-    return SimpleNamespace(
-        llm=None,
-        executor=object(),
-        restored=None,
-        search=SearchSummary(),
-        caveats=[],
-        smoke=None,
-        judged=JudgedLedger(),
-        coding=CodingSummary(),
-        saved=saved,
-        checkpoint=lambda key, payload: saved.append(key),
-        **fields,
-    )
+    defaults: dict[str, Any] = {
+        "llm": None,
+        "executor": object(),
+        "restored": None,
+        "search": SearchSummary(),
+        "caveats": [],
+        "smoke": None,
+        "planned": None,
+        "judged": JudgedLedger(),
+        "coding": CodingSummary(),
+        "saved": saved,
+        "checkpoint": lambda key, payload: saved.append(key),
+    }
+    return SimpleNamespace(**{**defaults, **fields})
 
 
 def analysis_plan():
@@ -52,6 +53,7 @@ def analysis_plan():
 
 def script(monkeypatch, references, fixes=(), reruns=()):
     """references: the results of the implementations that ran, None for one that failed."""
+    script.dropped = []
     fix_queue, rerun_queue = list(fixes), list(reruns)
     ran: list[dict[str, str]] = []
 
@@ -64,7 +66,8 @@ def script(monkeypatch, references, fixes=(), reruns=()):
                 out.results.append((result, f"code {i + 1}"))
         return out
 
-    async def propose(llm, plan, traces, ours, theirs, code):
+    async def propose(llm, plan, traces, ours, theirs, code, dropped=None):
+        script.dropped.append(dropped)
         return fix_queue.pop(0) if fix_queue else []
 
     monkeypatch.setattr(baseline_confirm, "agreed_reference", found)
@@ -193,3 +196,67 @@ async def test_a_confirmed_starting_point_withdraws_the_planner_s_doubts(monkeyp
     await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
     assert p.caveats[0] == "Another caveat."
     assert "listed 1 possible difference;" in p.caveats[1] and "it does not change" in p.caveats[1]
+
+
+async def test_the_users_own_option_dropped_in_coding_is_restored_by_the_repair(
+    monkeypatch,
+) -> None:
+    """fertility_vote on 7 October, run 18: the user's cycle day failed its smoke run, an
+    alternative became the default, and the repair could only correct the options left."""
+    from borges.analysis.coder_smoke import FAILED_NOTE
+    from borges.analysis.smoke_types import Outcome
+    from borges.runs.pipeline_caveats import default_departures
+
+    planned = analysis_plan()
+    plan = planned.model_copy(deep=True)
+    step = plan.step("d1")
+    step.options = [o for o in step.options if o.id != "keep"]
+    step.options[0].is_default = True
+    failed = Outcome(
+        planned.step("d1").option("keep"), "failed", 3, "TypeError: str date", None, []
+    )
+    note = FAILED_NOTE.format(label="Label keep", title="Outliers", error="TypeError")
+    p = pipeline(
+        planned=planned,
+        smoke=SimpleNamespace(state=SimpleNamespace(outcomes={"d1": [failed]}, notes=[])),
+        caveats=[note, *default_departures(planned, plan)],
+    )
+    fix = Fix(step_id="d1", option_id="keep", problem="ctx name read as a date", code=FIXED)
+    rerun = script(monkeypatch, [PUBLISHED, PUBLISHED], fixes=[[fix]], reruns=[PUBLISHED])
+    result = await confirm_baseline(p, plan, universe(WRONG), rerun)
+    assert result.result == PUBLISHED and p.search.reference == "repaired"
+    assert [(o.id, o.is_default) for o in plan.step("d1").options] == [
+        ("keep", True),
+        ("trim", False),
+    ]
+    assert plan.step("d1").default.code == FIXED
+    offered = script.dropped[0]["d1"]
+    assert offered[0].id == "keep" and offered[1] == "TypeError: str date"
+    assert not any("could not run" in c or "failed its smoke run" in c for c in p.caveats)
+    assert any(c.startswith("The step-by-step code of your analysis first gave") for c in p.caveats)
+
+
+async def test_a_restored_option_that_does_not_close_the_gap_is_taken_out_again(
+    monkeypatch,
+) -> None:
+    from borges.analysis.smoke_types import Outcome
+    from borges.runs.pipeline_caveats import default_departures
+
+    planned = analysis_plan()
+    plan = planned.model_copy(deep=True)
+    step = plan.step("d1")
+    step.options = [o for o in step.options if o.id != "keep"]
+    step.options[0].is_default = True
+    failed = Outcome(planned.step("d1").option("keep"), "failed", 3, "TypeError", None, [])
+    departures = default_departures(planned, plan)
+    p = pipeline(
+        planned=planned,
+        smoke=SimpleNamespace(state=SimpleNamespace(outcomes={"d1": [failed]}, notes=[])),
+        caveats=list(departures),
+    )
+    fix = Fix(step_id="d1", option_id="keep", problem="p", code=FIXED)
+    rerun = script(monkeypatch, [PUBLISHED, PUBLISHED], fixes=[[fix]], reruns=[OTHER, WRONG])
+    await confirm_baseline(p, plan, universe(WRONG), rerun)
+    assert p.search.reference == "disagrees"
+    assert [o.id for o in plan.step("d1").options] == ["trim"]
+    assert departures[0] in p.caveats

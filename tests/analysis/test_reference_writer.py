@@ -70,3 +70,18 @@ async def test_a_refused_fix_goes_back_once_with_the_reason() -> None:
     assert [f.code for f in found] == [FILTER_FIX]
     retry = llm.calls[1].messages[-1]["content"]
     assert "were refused" in retry and "d1/keep" in retry and "os" in retry
+
+
+async def test_a_fix_may_target_the_users_option_that_could_not_run() -> None:
+    plan = analysis_plan()
+    lost = plan.step("d1").option("keep")
+    plan.step("d1").options = [o for o in plan.step("d1").options if o.id != "keep"]
+    plan.step("d1").options[0].is_default = True
+    fixes = [{"step_id": "d1", "option_id": "keep", "problem": "p", "code": FILTER_FIX}]
+    llm = FakeLLM({"reference:fix:0": {"fixes": fixes}})
+    found = await propose_fixes(
+        llm, plan, [], RESULT, RESULT, WHOLE, {"d1": (lost, "TypeError: str date")}
+    )
+    assert [(f.option_id, f.code) for f in found] == [("keep", FILTER_FIX)]
+    sent = llm.calls[0].messages[-1]["content"]
+    assert '"analysis_option_that_could_not_run"' in sent and "TypeError: str date" in sent

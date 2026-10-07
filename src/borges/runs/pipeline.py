@@ -93,6 +93,7 @@ class Pipeline:
         self.armor = armor if armor is not None else ArmorReport()
         self.armor_stage = ArmorStage(settings, llm, emitter, self.armor, self.coding)
         self.smoke: SmokeConfig | None = None
+        self.planned: AnalysisPlan | None = None
         self.context: RunContext | None = None
         self.restored: RestoredUniverses | None = None
         self.search = SearchSummary(
@@ -177,7 +178,7 @@ class Pipeline:
         self.smoke = smoke
         async with self.stage("coding"):
             await prefill_code(self, plan, on_coded)
-            planned = plan.model_copy(deep=True)
+            planned = self.planned = plan.model_copy(deep=True)
             plan = await code_plan(
                 self.llm,
                 plan,

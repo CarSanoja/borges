@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
+from borges.analysis.models import AnalysisPlan, AnalysisResult, Option, StepTrace
 from borges.analysis.prompts import compact_json, messages
 
 WRITE_SYSTEM = """You write one Python function that carries out a statistical analysis exactly \
@@ -31,7 +31,10 @@ code of its default option: the same function name and signature, reading the co
 steps pass on and producing the columns the later steps read, doing what the user's analysis \
 says. When another option of the same step has the same defect, return its corrected code too, \
 keeping what that option decides. If a default spec itself contradicts the analysis, return the \
-corrected spec as well. Change nothing else."""
+corrected spec as well. A step whose own option of the user's analysis could not run shows it \
+under analysis_option_that_could_not_run, with its last error, while another option stands in as \
+default; when the gap comes from that step, return code for that option, under its option_id, \
+doing what its spec says: it becomes the step's default again. Change nothing else."""
 
 
 def _result(result: AnalysisResult) -> dict[str, Any]:
@@ -59,8 +62,10 @@ def build_fix_messages(
     ours: AnalysisResult,
     theirs: AnalysisResult,
     reference_code: str,
+    dropped: dict[str, tuple[Option, str | None]] | None = None,
 ) -> list[dict[str, str]]:
     rows = {t.step_id: [t.rows_before, t.rows_after] for t in traces}
+    dropped = dropped or {}
     steps = [
         {
             "step_id": step.id,
@@ -76,6 +81,17 @@ def build_fix_messages(
                 }
                 for option in step.options
             ],
+            **(
+                {
+                    "analysis_option_that_could_not_run": {
+                        "option_id": dropped[step.id][0].id,
+                        "spec": dropped[step.id][0].spec,
+                        "last_error": dropped[step.id][1],
+                    }
+                }
+                if step.id in dropped
+                else {}
+            ),
         }
         for step in plan.steps
     ]
