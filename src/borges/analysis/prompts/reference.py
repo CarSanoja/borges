@@ -1,0 +1,85 @@
+from __future__ import annotations
+
+from typing import Any
+
+from borges.analysis.models import AnalysisPlan, AnalysisResult, StepTrace
+from borges.analysis.prompts import compact_json, messages
+
+WRITE_SYSTEM = """You write one Python function that carries out a statistical analysis exactly \
+as the user describes it, from the raw data to the estimate. Signature: def estimate(df, ctx), \
+where df is the raw data as profiled and ctx is a dict you may ignore. Return a dict with the \
+keys estimate, ci_low, ci_high, p_value and n: the coefficient or difference the decision rule's \
+metric names, its 95% confidence interval and p-value, and the number of rows the model used. \
+Do every step the analysis says, in the way it says, and nothing it does not say: no other \
+exclusion, imputation, covariate, recoding or transformation. Code 0/1 indicators as 0 and 1. \
+If the fit fails, raise a ValueError; never return fixed numbers in its place. Use pandas, numpy, \
+statsmodels and scipy only; no file, network or system access. Return only the code."""
+
+FIX_SYSTEM = """An analysis was split into steps, each coded separately; run in order, the \
+default option of every step should carry out the user's analysis. It does not: the step-by-step \
+code gives a different result from two independent implementations of the same analysis, each \
+written as one script, which agree with each other. Find the steps whose code departs from the \
+user's analysis: a filter that keeps other rows, an exclusion or imputation the analysis does not \
+make, a different coding of a variable, a different model or standard error. Use the row counts \
+on the full data and the reference script to locate it. For each such step, return the corrected \
+code of its default option: the same function name and signature, reading the columns the earlier \
+steps pass on and producing the columns the later steps read, doing what the user's analysis \
+says. When another option of the same step has the same defect, return its corrected code too, \
+keeping what that option decides. If a default spec itself contradicts the analysis, return the \
+corrected spec as well. Change nothing else."""
+
+
+def _result(result: AnalysisResult) -> dict[str, Any]:
+    return result.model_dump(include={"estimate", "ci_low", "ci_high", "p_value", "n"})
+
+
+def build_write_messages(
+    plan: AnalysisPlan, attempt: int, feedback: str | None = None
+) -> list[dict[str, str]]:
+    payload: dict[str, Any] = {
+        "question": plan.question,
+        "decision_rule": plan.decision_rule,
+        "analysis": plan.analysis,
+        "dataset": plan.dataset,
+        "attempt": attempt,
+    }
+    if feedback:
+        payload["previous_code_failed"] = feedback
+    return messages(WRITE_SYSTEM, compact_json(payload))
+
+
+def build_fix_messages(
+    plan: AnalysisPlan,
+    traces: list[StepTrace],
+    ours: AnalysisResult,
+    theirs: AnalysisResult,
+    reference_code: str,
+) -> list[dict[str, str]]:
+    rows = {t.step_id: [t.rows_before, t.rows_after] for t in traces}
+    steps = [
+        {
+            "step_id": step.id,
+            "title": step.title,
+            "kind": step.kind,
+            "rows_before_after_on_full_data": rows.get(step.id),
+            "options": [
+                {
+                    "option_id": option.id,
+                    "default": option.id == step.default.id,
+                    "spec": option.spec,
+                    "code": option.code,
+                }
+                for option in step.options
+            ],
+        }
+        for step in plan.steps
+    ]
+    payload = {
+        "analysis": plan.analysis,
+        "decision_rule": plan.decision_rule,
+        "steps": steps,
+        "step_by_step_result": _result(ours),
+        "reference_result": _result(theirs),
+        "reference_code": reference_code,
+    }
+    return messages(FIX_SYSTEM, compact_json(payload))

@@ -84,6 +84,9 @@ class EstimandChange(BaseModel):
 RobustnessBasis = Literal["design_weighted", "distinct_results", "none"]
 
 
+ReferenceCheck = Literal["agrees", "repaired", "disagrees", "unresolved", "unchecked"]
+
+
 class SearchSummary(BaseModel):
     levels_explored: int = 0
     max_combinations_per_level: int = 0
@@ -91,6 +94,7 @@ class SearchSummary(BaseModel):
     universes_used: int = 0
     budget_exhausted: bool = False
     sample_draws: int = 0
+    reference: ReferenceCheck | None = None
 
 
 class Report(BaseModel):

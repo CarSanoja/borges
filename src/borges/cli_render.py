@@ -87,6 +87,15 @@ def robustness_line(
     return line
 
 
+REFERENCE_LINES = {
+    "agrees": "Starting point: matches an independent implementation of your analysis",
+    "repaired": "Starting point: repaired to match two independent implementations of it",
+    "disagrees": "Starting point: does not match two independent implementations of it",
+    "unresolved": "Starting point: independent implementations of your analysis disagree",
+    "unchecked": "Starting point: not checked against an independent implementation",
+}
+
+
 def search_line(search: SearchSummary) -> str:
     level = "level" if search.levels_explored == 1 else "levels"
     line = (
@@ -144,6 +153,8 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
             )
         if report.search is not None:
             lines.append(search_line(report.search))
+            if report.search.reference:
+                lines.append(REFERENCE_LINES[report.search.reference])
         if report.coding is not None:
             lines.append(coding_line(report.coding))
         lines.extend(f"Caveat: {caveat}" for caveat in report.caveats)

@@ -6,6 +6,7 @@ from borges.analysis.models import AnalysisPlan
 from borges.garden.executor import GardenExecutor
 from borges.garden.models import Universe
 from borges.garden.search import minimal_flip, single_flip_choices
+from borges.runs.baseline_confirm import confirm_baseline
 from borges.runs.baseline_recovery import recover_baseline
 from borges.runs.pipeline_stages import (
     run_adversary,
@@ -55,6 +56,7 @@ async def search_garden(pipeline: Pipeline, plan: AnalysisPlan) -> None:
             return await runner.run(choices, "baseline")
 
         baseline = await recover_baseline(plan, baseline, rerun, pipeline.caveats)
+        baseline = await confirm_baseline(pipeline, plan, baseline, rerun)
     async with pipeline.stage("single_flips"):
         singles = single_flip_choices(plan)
         if len(singles) > runner.remaining:

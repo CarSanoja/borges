@@ -160,7 +160,7 @@ def _is_docstring(node: ast.stmt) -> bool:
     )
 
 
-def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
+def _check_code(code: str, kind: StepKind, intent: str = "", whole: bool = False) -> list[str]:
     try:
         tree = ast.parse(code)
     except SyntaxError as exc:
@@ -190,7 +190,8 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
     violations.extend(_body_violations(func))
     if kind != "model":
         return violations + nan_threshold_violations(func) + component_sign_violations(func)
-    violations.extend(row_filter_violations(func))
+    if not whole:
+        violations.extend(row_filter_violations(func))
     violations.extend(statsmodels_violations(func, intent))
     violations.extend(se_label_violations(func, intent))
     return [
@@ -205,8 +206,9 @@ def _check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
     ]
 
 
-def check_code(code: str, kind: StepKind, intent: str = "") -> list[str]:
-    violations = _check_code(code, kind, intent)
+def check_code(code: str, kind: StepKind, intent: str = "", whole: bool = False) -> list[str]:
+    """`whole` checks a model function that carries out a whole analysis, filters included."""
+    violations = _check_code(code, kind, intent, whole)
     if not violations:
         record_guarded(code)
     if violations:
