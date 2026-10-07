@@ -8,12 +8,19 @@ until 4cf0663 gave alpha 0.23 for the hurricanes flip at a491fe1 where maximum l
 by its values took about 30 cold fits and timed out in ConTree on 115,000 red_cards rows at
 7ec07d9, and the values are flat to rounding near the optimum, which stalled a glm.nb-style
 alternation.
+
+Weights are fitted as statsmodels WLS for OLS and as var_weights of the GLM for logit, Poisson,
+quasi-Poisson and negative binomial: a weight is the inverse of the variance of a row, as in R's
+lm and glm weights, so a row weighted w contributes w times its log-likelihood without adding
+observations. freq_weights would count each row w times and overstate the sample. The negative
+binomial score of theta is weighted the same way.
 """
 
 from __future__ import annotations
 
 from borges.analysis.model_spec.render_count_margins import count_margin_lines
 from borges.analysis.model_spec.render_design import design_term
+from borges.analysis.model_spec.render_mixed import mixed_lines
 from borges.analysis.model_spec.schema import GEE_FAMILIES, GROUPED, ModelSpecOutput
 
 SCALED_OUTCOME = "outcome z-scored with the predictors: "
@@ -21,6 +28,7 @@ NB_UNCONVERGED = (
     "the negative binomial dispersion has no maximum-likelihood estimate in the range searched, "
     "up to an alpha of about 148: the counts are more dispersed than the model can describe"
 )
+COUNT_NB = ("negbin",)
 ALPHA_BOUNDS = (-10.0, 5.0)
 AT_BOUND = ", at the lower bound: no overdispersion, so the model is in effect a Poisson model"
 
@@ -33,6 +41,7 @@ def _fit_arguments(spec: ModelSpecOutput) -> str:
 
 def _count_lines(spec: ModelSpecOutput, arguments: str) -> list[str]:
     offset = ", offset=offset" if spec.offset_log is not None else ""
+    offset += ", var_weights=weights" if spec.weights is not None else ""
     if spec.family in ("poisson", "quasipoisson"):
         scale = 'scale="X2", ' if spec.family == "quasipoisson" else ""
         return [
@@ -50,9 +59,10 @@ def _count_lines(spec: ModelSpecOutput, arguments: str) -> list[str]:
         "        warm['start'] = pilot.params",
         "        mu = np.asarray(pilot.mu)",
         "        terms = digamma(counts + theta) - digamma(theta) + np.log(theta / (theta + mu))",
-        "        return float((terms + (mu - counts) / (theta + mu)).sum())",
+        "        return float(((terms + (mu - counts) / (theta + mu)) * scores).sum())",
         "",
         "    counts = np.asarray(endog, dtype=float)",
+        "    scores = 1.0 if weights is None else np.asarray(weights, dtype=float)",
         "    warm = {'start': None}",
         f"    nb = sm.GLM(endog, exog, family=sm.families.NegativeBinomial(alpha=1.0){offset})",
         f"    bounds = {ALPHA_BOUNDS!r}",
@@ -88,12 +98,29 @@ def _gee_lines(spec: ModelSpecOutput) -> list[str]:
 def fit_lines(spec: ModelSpecOutput) -> list[str]:
     arguments = _fit_arguments(spec)
     lines = []
+    if spec.weights is not None:
+        lines.append(f"    weights = data[{spec.weights!r}].astype(float)")
+    elif spec.family in COUNT_NB:
+        lines.append("    weights = None")
     if spec.offset_log is not None:
         lines.append(f"    offset = np.log(data[{spec.offset_log!r}].astype(float))")
     if spec.cov_type in GROUPED:
         lines.append(f"    groups = pd.factorize(data[{spec.cluster!r}])[0]")
-    if spec.cov_type == "gee":
+    if spec.random_intercept is not None:
+        lines += mixed_lines(spec)
+    elif spec.cov_type == "gee":
         lines += _gee_lines(spec)
+    elif spec.family == "ols" and spec.weights is not None:
+        lines += [
+            "    model = sm.WLS(endog, exog, weights=weights)",
+            f"    fit = model.fit({arguments})",
+        ]
+    elif spec.family == "logit" and spec.weights is not None:
+        lines += [
+            "    family = sm.families.Binomial()",
+            "    model = sm.GLM(endog, exog, family=family, var_weights=weights)",
+            f"    fit = model.fit({arguments})",
+        ]
     elif spec.family == "ols":
         lines += ["    model = sm.OLS(endog, exog)", f"    fit = model.fit({arguments})"]
     elif spec.family == "logit":

@@ -13,6 +13,7 @@ from borges.analysis.model_spec.validate_exposure import (
     profile_of,
 )
 from borges.analysis.model_spec.validate_standardized import standardized_problems
+from borges.analysis.model_spec.validate_weights import mixed_problems, weight_problems
 from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.result_scale import detect_scale, is_proportion_rule
 from borges.analysis.scale_check import is_difference_rule, is_ratio_rule
@@ -53,6 +54,8 @@ def _single_columns(spec: ModelSpecOutput) -> list[tuple[str, str]]:
         ("moderator", spec.moderator),
         ("offset_log", spec.offset_log),
         ("cluster", spec.cluster),
+        ("weights", spec.weights),
+        ("random_intercept", spec.random_intercept),
     ]
     return [(label, name) for label, name in pairs if name is not None]
 
@@ -220,6 +223,8 @@ def validate_spec(
         *_column_problems(spec, available),
         *_role_problems(spec),
         *_consistency_problems(spec),
+        *weight_problems(spec, profile),
+        *mixed_problems(spec),
         *_outcome_problems(spec, profile),
         *exposure_problems(spec, profile),
         *moderator_problems(spec, profile),

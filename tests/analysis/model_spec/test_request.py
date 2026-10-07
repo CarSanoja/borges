@@ -207,7 +207,9 @@ async def test_a_weighted_option_is_written_as_free_code_without_asking_for_a_sp
     plan = plan_with_score()
     step = plan.step("m1")
     welch = step.option("welch")
-    weighted = welch.model_copy(update={"spec": welch.spec + " Rows weighted by their score."})
+    weighted = welch.model_copy(
+        update={"spec": welch.spec + " Rows weighted by the inverse probability of their score."}
+    )
     step.options = [weighted if o.id == "welch" else o for o in step.options]
     llm = llm_with(GOOD_SPEC)
     code, attempts, note = await code_welch(llm, plan)

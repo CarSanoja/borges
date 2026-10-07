@@ -20,7 +20,16 @@ def test_prompt_carries_the_option_columns_and_scale() -> None:
 def test_system_names_every_field_and_the_unsupported_cases() -> None:
     for word in ("supported", "family", "outcome", "exposure", "moderator", "covariates_from_ctx"):
         assert word in SYSTEM
-    for word in ("offset_log", "cov_type", "standardize", "report", "multilevel", "t-tests"):
+    for word in (
+        "offset_log",
+        "cov_type",
+        "standardize",
+        "report",
+        "random slopes",
+        "t-tests",
+        "weights",
+        "random_intercept",
+    ):
         assert word in SYSTEM
 
 

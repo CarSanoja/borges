@@ -20,7 +20,11 @@ def _core_columns(spec: ModelSpecOutput) -> list[str]:
 
 
 def _used_columns(spec: ModelSpecOutput) -> list[str]:
-    extras = [c for c in (spec.cluster, spec.offset_log) if c is not None]
+    extras = [
+        c
+        for c in (spec.cluster, spec.offset_log, spec.weights, spec.random_intercept)
+        if c is not None
+    ]
     return [*_core_columns(spec), *extras]
 
 
@@ -91,6 +95,13 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
         "    finite = [c for c in used if pd.api.types.is_numeric_dtype(data[c])]",
         "    data = data[np.isfinite(data[finite].astype(float)).all(axis=1)]",
     ]
+    if spec.weights is not None:
+        lines += [
+            f"    positive = data[{spec.weights!r}].astype(float)",
+            "    positive = np.where(positive > 0, positive, np.nan)",
+            f"    data = data.assign(**{{{spec.weights!r}: positive}})",
+            f"    data = data.dropna(subset=[{spec.weights!r}])",
+        ]
     if spec.exposure_level is not None:
         lines += _indicator_lines(str(spec.exposure), spec.exposure_level)
     if spec.exposure_threshold is not None:

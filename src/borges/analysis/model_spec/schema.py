@@ -29,5 +29,7 @@ class ModelSpecOutput(BaseModel):
     offset_log: str | None = None
     cov_type: CovType = "nonrobust"
     cluster: str | None = None
+    weights: str | None = None
+    random_intercept: str | None = None
     standardize: list[str] = Field(default_factory=list)
     report: Report = "coefficient"
