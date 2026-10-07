@@ -1,0 +1,15 @@
+{
+  "run_id": "r_20261007T013204_6521d3",
+  "case_id": "teaching_ratings",
+  "recorded_at": "2026-10-07T01:32:04Z",
+  "commit": "0859f2c",
+  "dirty": false,
+  "llm": "nebius",
+  "backend": "contree",
+  "registry_sha": "228b8f38738fa659d0f3a7accd00044caa82cf8611154bbebe2428a0b677fb54",
+  "cost_usd": 0.049709820000000016,
+  "n_universes": 20,
+  "n_failed": 0,
+  "verdict": "BEAUTY PREMIUM",
+  "flipped_verdict": null
+}
