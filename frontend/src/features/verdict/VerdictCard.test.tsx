@@ -22,8 +22,9 @@ describe("VerdictCard", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={snapshot} />);
     expect(screen.getByText(snapshot.report!.original_verdict)).toBeInTheDocument();
-    const { n_universes, n_flipped } = snapshot.report!;
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent(`${n_universes - n_flipped} of ${n_universes} paths agree`);
+    const { n_universes, robustness } = snapshot.report!;
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent(`${Math.round(robustness * 100)}% of the analysis grid agrees`);
+    expect(screen.getByTestId("vc-agree-context")).toHaveTextContent(`from ${n_universes} explored paths`);
   });
 
   it("reveals the flip with changes and the reproduced badge", () => {
@@ -155,7 +156,7 @@ describe("VerdictCard search summary", () => {
     };
     render(<VerdictCard snapshot={clean} />);
     expect(screen.getByText(/No flip found: 7 explored of a 40-universe budget/)).toBeInTheDocument();
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 7 paths agree");
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("of the analysis grid agrees");
     expect(screen.queryByText(/within 40/)).toBeNull();
     expect(screen.queryByText(/found in 7 universes/)).toBeNull();
   });
@@ -196,9 +197,18 @@ describe("VerdictCard search summary", () => {
 
   it("states the agreement share on the card from the report fields, also with the flip showing", () => {
     const snapshot = foldEvents("t", events);
-    const report = { ...snapshot.report!, n_universes: 12, n_flipped: 5 };
+    const report = { ...snapshot.report!, n_universes: 15, n_distinct_results: 10, robustness: 0.6, robustness_basis: "design_weighted" as const };
     render(<VerdictCard snapshot={{ ...snapshot, report }} />);
-    expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 12 paths agree");
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("60% of the analysis grid agrees");
+    expect(screen.getByTestId("vc-agree-context")).toHaveTextContent("from 15 explored paths, 10 distinct results");
+  });
+
+  it("labels a non-grid share as the share of distinct explored results", () => {
+    const snapshot = foldEvents("t", events);
+    const report = { ...snapshot.report!, n_universes: 8, n_distinct_results: 8, robustness: 0.5, robustness_basis: "distinct_results" as const };
+    render(<VerdictCard snapshot={{ ...snapshot, report }} />);
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("50% of the distinct explored results agree");
+    expect(screen.getByTestId("vc-agree")).not.toHaveTextContent("analysis grid");
   });
 
   it("shows no agreement line before the report", () => {

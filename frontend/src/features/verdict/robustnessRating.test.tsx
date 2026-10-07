@@ -25,12 +25,13 @@ describe("robustness rating", () => {
 
   it("shows the rating as a percentage when there is one", () => {
     render(<VerdictCard snapshot={withReport({ robustness_rating: 0.8, robustness: 0.5 })} />);
-    expect(screen.getByText("80%")).toBeInTheDocument();
+    expect(screen.getAllByText("80%")).toHaveLength(2);
+    expect(screen.queryByText("50%")).toBeNull();
   });
 
   it("falls back to the plain robustness when the field is absent", () => {
     render(<VerdictCard snapshot={withReport({ robustness: 0.6 })} />);
-    expect(screen.getByText("60%")).toBeInTheDocument();
+    expect(screen.getAllByText("60%")).toHaveLength(2);
   });
 });
 

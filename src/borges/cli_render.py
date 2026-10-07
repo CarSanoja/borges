@@ -49,17 +49,17 @@ def recording_label(scripted: bool, live: bool) -> str:
 
 
 BASIS_LABELS = {
-    "design_weighted": "design-weighted",
-    "distinct_results": "share of distinct results",
-    "none": "no universes",
+    "design_weighted": "of the analysis grid agrees (design-weighted)",
+    "distinct_results": "of the distinct explored results agree",
+    "none": "no universes explored",
 }
 
 
 def robustness_line(report: Report) -> str:
     distinct = report.n_distinct_results or report.n_universes
     line = (
-        f"Robustness: {report.robustness:.0%} ({BASIS_LABELS[report.robustness_basis]}); "
-        f"{report.n_universes} universes explored, {distinct} distinct results, "
+        f"Robustness: {report.robustness:.0%} {BASIS_LABELS[report.robustness_basis]}; "
+        f"from {report.n_universes} explored paths, {distinct} distinct results, "
         f"{report.n_flipped} flipped"
     )
     if report.n_failed:

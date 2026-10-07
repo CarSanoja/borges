@@ -197,6 +197,13 @@
   color: var(--verdigris);
 }
 
+.vc-agree__context {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--paper-500);
+}
+
 .vc--holding {
   display: flex;
   align-items: center;
