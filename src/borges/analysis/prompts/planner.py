@@ -125,7 +125,8 @@ def analysis_block(analysis: str) -> str:
         "Make it the default option of every step it decides, implemented exactly as written: "
         "the same formulas, windows, cut-offs, codings, exclusions and model, with nothing added "
         "(no imputation, no extra exclusion, no covariate it does not name); a mean of items is "
-        "the mean of the items answered. "
+        "the mean of the items answered; every difference keeps the analysis's direction ('the "
+        "days from A to B' is B minus A). "
         "Every other option of those steps is a defensible alternative to it that researchers in "
         "the field use, and steps the analysis leaves open follow the usual rules.\n"
     )

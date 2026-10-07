@@ -24,6 +24,12 @@ from borges.llm.client import LLMClient, LLMError, Role
 REFERENCE_TOKENS = 4000
 FIX_TOKENS = 4096
 WRITE_ROUNDS = 3
+FIX_ROUNDS = 2
+REFUSED = (
+    "These corrected codes were refused by the checks every option must pass: {listed}. Return "
+    "them again, corrected, keeping what each option decides. If the default spec itself states "
+    "the departure from the analysis, return the corrected spec as well."
+)
 
 
 class Fix(BaseModel):
@@ -66,21 +72,41 @@ async def propose_fixes(
     theirs: AnalysisResult,
     reference_code: str,
 ) -> list[Fix]:
-    response = await llm.complete(
-        Role.REPAIRER,
-        build_fix_messages(plan, traces, ours, theirs, reference_code),
-        key="reference:fix",
-        schema=FixOutput,
-        max_tokens=FIX_TOKENS,
-    )
-    fixes = []
-    for fix in FixOutput.model_validate(response.parsed).fixes:
-        step = next((s for s in plan.steps if s.id == fix.step_id), None)
-        option = next((o for o in step.options if o.id == fix.option_id), None) if step else None
-        if step is None or option is None:
-            continue
-        code, _ = strip_trailing_closer(fix.code)
-        checked = option.model_copy(update={"spec": fix.spec}) if fix.spec else option
-        if not option_violations(code, plan, step, checked):
-            fixes.append(fix.model_copy(update={"code": code}))
-    return fixes
+    """Fixes that pass the coder's checks; refused ones go back to the repairer once, with why."""
+    messages = build_fix_messages(plan, traces, ours, theirs, reference_code)
+    accepted: dict[tuple[str, str], Fix] = {}
+    for round_ in range(FIX_ROUNDS):
+        response = await llm.complete(
+            Role.REPAIRER,
+            messages,
+            key=f"reference:fix:{round_}",
+            schema=FixOutput,
+            max_tokens=FIX_TOKENS,
+        )
+        out = FixOutput.model_validate(response.parsed)
+        refused: list[str] = []
+        for fix in out.fixes:
+            checked = _checked(plan, fix)
+            if isinstance(checked, Fix):
+                accepted[(fix.step_id, fix.option_id)] = checked
+            elif checked:
+                refused.append(f"{fix.step_id}/{fix.option_id}: " + "; ".join(checked))
+        if not refused:
+            break
+        messages = [
+            *messages,
+            {"role": "assistant", "content": out.model_dump_json()},
+            {"role": "user", "content": REFUSED.format(listed=" | ".join(refused)[:3000])},
+        ]
+    return list(accepted.values())
+
+
+def _checked(plan: AnalysisPlan, fix: Fix) -> Fix | list[str]:
+    step = next((s for s in plan.steps if s.id == fix.step_id), None)
+    option = next((o for o in step.options if o.id == fix.option_id), None) if step else None
+    if step is None or option is None:
+        return []
+    code, _ = strip_trailing_closer(fix.code)
+    checked = option.model_copy(update={"spec": fix.spec}) if fix.spec else option
+    violations = option_violations(code, plan, step, checked)
+    return violations or fix.model_copy(update={"code": code})

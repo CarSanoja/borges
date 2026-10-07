@@ -52,10 +52,21 @@ async def test_fixes_for_unknown_options_or_refused_code_are_dropped() -> None:
         {"step_id": "zz", "option_id": "keep", "problem": "p", "code": FILTER_FIX},
         {"step_id": "d1", "option_id": "trim", "problem": "p", "code": UNSAFE},
     ]
-    llm = FakeLLM({"reference:fix": {"fixes": fixes}})
+    llm = FakeLLM({"reference:fix:0": {"fixes": fixes}, "reference:fix:1": {"fixes": []}})
     trace = [StepTrace(step_id="d1", option_id="keep", rows_before=100, rows_after=100)]
     found = await propose_fixes(llm, plan, trace, RESULT, RESULT, WHOLE)
     assert [(f.step_id, f.option_id) for f in found] == [("d1", "keep")]
     sent = llm.calls[0].messages[1]["content"]
     assert '"rows_before_after_on_full_data":[100,100]' in sent
     assert '"reference_code"' in sent
+
+
+async def test_a_refused_fix_goes_back_once_with_the_reason() -> None:
+    plan = analysis_plan()
+    first = [{"step_id": "d1", "option_id": "keep", "problem": "p", "code": UNSAFE}]
+    second = [{"step_id": "d1", "option_id": "keep", "problem": "p", "code": FILTER_FIX}]
+    llm = FakeLLM({"reference:fix:0": {"fixes": first}, "reference:fix:1": {"fixes": second}})
+    found = await propose_fixes(llm, plan, [], RESULT, RESULT, WHOLE)
+    assert [f.code for f in found] == [FILTER_FIX]
+    retry = llm.calls[1].messages[-1]["content"]
+    assert "were refused" in retry and "d1/keep" in retry and "os" in retry

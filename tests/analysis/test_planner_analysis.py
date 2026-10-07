@@ -31,3 +31,13 @@ async def test_the_plan_carries_the_users_analysis() -> None:
     plan = await plan_analysis(llm, make_profile(), "Q?", RULE, "OLS of y on x")
     assert plan.analysis == "OLS of y on x"
     assert "OLS of y on x" in llm.calls[0].messages[-1]["content"]
+
+
+def test_a_difference_keeps_the_direction_the_analysis_gives_it() -> None:
+    """fertility_vote on 7 October, run 15: 'the days from DateTesting to the next onset' was
+    planned as DateTesting minus the onset, every cycle day became 28, the window filter kept no
+    woman and the run failed; the fidelity check had not looked at the direction."""
+    from borges.analysis.planner_fidelity import SYSTEM
+
+    assert "'the days from A to B' is B minus A" in analysis_block("cycle day = 28 minus ...")
+    assert '"the days from A to B" is B minus A' in SYSTEM

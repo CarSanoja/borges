@@ -36,8 +36,10 @@ default path implements differently (a \
 different set of category codes, window, cut-off, formula, date arithmetic, exclusion, model or \
 standard error) or does not implement at all, and every default that adds something the analysis \
 does not say (an imputation, an exclusion, a covariate, a transformation). Compare the specs, not \
-the labels or rationales: a rationale that claims to follow the user is not evidence. Decisions \
-the analysis leaves open are not mismatches. Return an empty list when the defaults implement the \
+the labels or rationales: a rationale that claims to follow the user is not evidence. Check the \
+direction of every difference: "the days from A to B" is B minus A, so a spec that computes A \
+minus B differs, even when every name in it matches. Decisions the analysis leaves open are not \
+mismatches. Return an empty list when the defaults implement the \
 analysis exactly."""
 
 
