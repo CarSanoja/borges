@@ -1,7 +1,7 @@
 BORGES = uv run --no-sync borges
 FRONTEND = pnpm -C frontend
 
-.PHONY: install lint test demo-cli demo-red-cards demo-resume serve dev record-demos live-smoke record-live docker docker-run
+.PHONY: install lint test demo-live demo-cli demo-red-cards demo-resume serve dev record-demos live-smoke record-live docker docker-run
 
 install:
 	uv sync --extra contree
@@ -16,6 +16,10 @@ test: lint
 	$(FRONTEND) typecheck
 	$(FRONTEND) test --run
 	$(FRONTEND) build
+
+demo-live:
+	$(BORGES) replay --case checkout_ab
+	$(BORGES) reproduce --case checkout_ab --source live --universe u_fb948f9bb7
 
 demo-cli:
 	$(BORGES) run --case checkout_ab --llm scripted

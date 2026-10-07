@@ -39,9 +39,24 @@ def test_first_command_tail_in_the_readme_is_the_real_output(tmp_path: Path) -> 
         assert line.strip() in quoted, f"README does not quote the real output line: {line!r}"
 
 
+def test_the_live_replay_tail_in_the_readme_is_the_real_output(tmp_path: Path) -> None:
+    env = {**os.environ, "BORGES_HOME": str(tmp_path / "home")}
+    code = "from borges.cli import app; app()"
+    command = [sys.executable, "-c", code, "replay", "--case", "checkout_ab"]
+    result = subprocess.run(
+        command, env=env, capture_output=True, text=True, cwd=REPO_ROOT, timeout=120
+    )
+    assert result.returncode == 0, result.stderr
+    tail = [line for line in result.stdout.splitlines() if line.strip()][-TAIL_LINES:]
+    quoted = readme_lines()
+    for line in tail:
+        assert line.strip() in quoted, f"README does not quote the real output line: {line!r}"
+
+
 def test_readme_names_the_same_first_commands_the_test_runs() -> None:
     text = README.read_text(encoding="utf-8")
     assert "uv run borges run --case marp_norms --llm scripted" in text
+    assert "uv run borges replay --case checkout_ab" in text
     reproduce = "uv run borges reproduce --case checkout_ab --source live"
     assert f"{reproduce} --universe {recorded_flip_universe()}" in text
 

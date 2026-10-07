@@ -113,6 +113,21 @@ def run(
 
 
 @app.command()
+def replay(
+    case: Annotated[str, typer.Option("--case", help="Case id")],
+    source: Annotated[str, typer.Option(help="live or scripted")] = "live",
+) -> None:
+    """Print the outcome of a case's committed recording, without calling a model."""
+    chosen = _validated(source, ("live", "scripted"), "--source") or "live"
+    try:
+        lines = cli_runtime.recording_lines(get_settings(), case, chosen)
+    except FileNotFoundError as missing:
+        typer.echo(str(missing), err=True)
+        raise typer.Exit(1) from missing
+    typer.echo("\n".join(lines))
+
+
+@app.command()
 def serve(
     host: Annotated[str, typer.Option()] = "127.0.0.1",
     port: Annotated[int, typer.Option()] = 8000,

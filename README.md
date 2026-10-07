@@ -17,23 +17,35 @@ smallest flip it found.**
 >
 > ```bash
 > uv sync
-> uv run borges run --case marp_norms --llm scripted
+> uv run borges replay --case checkout_ab
 > uv run borges reproduce --case checkout_ab --source live --universe u_fb948f9bb7
+> uv run borges run --case marp_norms --llm scripted
 > ```
 >
-> The first is an offline scripted replay: the data, the code and every statistic are real, no
-> model wrote the plan. The last two lines of its output are exactly (a test runs the
-> command and compares them with this block):
+> The first prints the live Nemotron recording of the checkout case, the one the web app plays:
+> the verdict, the smallest flip, the models and the estimated cost, read from the committed
+> events, with no model called. Its last two lines are exactly (a test runs the command and
+> compares them with this block):
+>
+> ```text
+> Universes: 16, checkpoints: 39, LLM calls: 41 (0 cached)
+> Tokens: 84125 in / 8316 out, estimated cost: $0.0291 (token counts x list prices, not a billed amount)
+> ```
+>
+> The second re-executes that recording's flipping universe and prints `MATCH` when the result
+> equals the recording (`make demo-live` runs both). The third runs the whole pipeline offline
+> on hand-built model responses: the data, the code and every statistic are real, no model
+> wrote the plan. Its last two lines are exactly:
 >
 > ```text
 > Universes: 27, checkpoints: 119, LLM calls: 38 scripted (0 cached)
 > Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)
 > ```
 >
-> The second re-executes the flipping universe from the live Nemotron recording of the checkout
-> case and prints `MATCH` when the result equals the recording. Six cases were recorded live on
-> 5 October 2026 on ConTree sandboxes from an empty cache, for an estimated $0.026 to $0.056 each (token counts times list prices, not billed amounts); the web
-> app plays those recordings by default. The status table below says what is and is not live.
+> Eight cases were recorded live on ConTree sandboxes from an empty cache, six on 5 October
+> 2026 ($0.026 to $0.056 each) and two on 7 October ($0.050 and $0.067), token counts times
+> list prices, not billed amounts; the web app plays those recordings by default. The status
+> table below says what is and is not live.
 >
 > **The value:** one analysis is one path. Borges shows the other defensible paths, how many
 > agree, and, with a calibration study (`evidence/calibration.md`), how much to trust a flip.
@@ -324,8 +336,10 @@ Requirements: Python 3.13 with [uv](https://docs.astral.sh/uv/), Node 22+ with p
 
 ```bash
 make install          # uv sync --extra contree, pnpm install
-make demo-cli         # checkout case end to end, offline and deterministic, $0
-make demo-red-cards   # the real red-cards data, offline, $0
+make demo-live        # the live checkout recording the web app plays, and its flip re-executed, $0
+make demo-cli         # checkout case end to end on hand-built model responses, offline, $0
+make demo-red-cards   # the real red-cards data on hand-built model responses, offline, $0
+uv run --no-sync borges replay --case red_cards   # any case's live recording, no model called
 uv run --no-sync borges run --case marp_religiosity --llm scripted   # MARP, real data, ~18 s
 make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build

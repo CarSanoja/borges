@@ -96,3 +96,26 @@ async def reproduce_recorded(
     finally:
         await backend.close()
     return snapshot.plan, rep
+
+
+def recording_lines(settings: Settings, case_id: str, source: str) -> list[str]:
+    from borges.cases.live_summary import summarize_live
+    from borges.cases.registry import CaseRegistry
+    from borges.cli_render import summary_lines
+    from borges.runs.state import fold
+
+    events = CaseRegistry(settings.borges_cases_dir).recording(case_id, source)
+    if not events:
+        raise FileNotFoundError(f"case '{case_id}' has no committed {source} recording")
+    snapshot = fold(events, events[0].run_id)
+    if source != "live":
+        return ["Scripted recording, replayed from its events: no model is called"] + (
+            summary_lines(snapshot)
+        )
+    summary = summarize_live(events)
+    roles = ", ".join(f"{role} {model}" for role, model in summary.models.items())
+    header = [
+        f"Live recording of {summary.recorded_at}, replayed from its events: no model is called",
+        f"Models: {roles}",
+    ]
+    return header + summary_lines(snapshot)
