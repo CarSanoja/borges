@@ -12,6 +12,10 @@ Three layers, from weakest to strongest:
 1. **AST code guard (first layer, a lint).** Default-deny: no underscore attributes, frame and
    traceback attributes, `type`, `getattr`, `exec`, computed string subscripts, and an exact
    import allowlist. It stops accidents and the bypasses we know of; it is not a sandbox.
+   On 7 October 2026 a review found that `np.testing.runstring` and `np.testing.measure`,
+   which execute a string, passed it; `testing`, `runstring`, `rundocs` and `measure` are
+   refused since. Under the runtime policy below, a string run that way imported `os` and
+   read the working directory, and its `os.system` call was denied.
 2. **Runtime audit-hook policy (defense in depth).** Every step file starts by installing a
    PEP 578 audit hook before any generated code runs. The sources are
    `src/borges/analysis/runtime_policy_paths.py`, `runtime_policy_config.py` and

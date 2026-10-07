@@ -145,6 +145,9 @@ def test_reject_import_escapes(header: str) -> None:
         "np.DataSource().open('/etc/passwd')\nreturn df",
         "np.memmap('/etc/passwd')\nreturn df",
         "raise SystemExit(0)",
+        "np.testing.runstring('import os', {})\nreturn df",
+        "t = np.testing\nt.measure('1 + 1')\nreturn df",
+        "f = np.testing.rundocs\nreturn df",
     ],
 )
 def test_reject_attribute_and_exit_escapes(body: str) -> None:

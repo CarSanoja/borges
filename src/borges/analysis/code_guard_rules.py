@@ -93,6 +93,10 @@ FORBIDDEN_ATTRIBUTES = frozenset(
         "ExcelWriter",
         "get_rdataset",
         "webuse",
+        "testing",
+        "runstring",
+        "rundocs",
+        "measure",
     }
 )
 
