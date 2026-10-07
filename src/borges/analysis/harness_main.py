@@ -60,6 +60,7 @@ __FINGERPRINT__
         state_df = _os.path.join("state", "df.parquet")
         state_ctx = _os.path.join("state", "ctx.json")
         df = _pd.read_parquet(state_df if _os.path.exists(state_df) else "data.parquet")
+        df = df.reset_index(drop=True)
         if _os.path.exists(state_ctx):
             with open(state_ctx) as handle:
                 ctx = _json.load(handle)
