@@ -7,11 +7,14 @@ from borges.analysis.code_guard_coefficient import positional_estimate_violation
 from borges.analysis.code_guard_complete import complete_case_violations
 from borges.analysis.code_guard_ctx import ctx_read_violations, varying_ctx_keys
 from borges.analysis.code_guard_ctx_names import ctx_name_violations
+from borges.analysis.code_guard_ctx_promise import read_promise_violations
 from borges.analysis.code_guard_ctx_spec import (
     positional_dummy_violations,
     sibling_outcome_violations,
     spec_ctx_write_violations,
 )
+from borges.analysis.code_guard_ctx_unset import unset_ctx_violations
+from borges.analysis.code_guard_ctx_value import ctx_value_violations
 from borges.analysis.code_guard_interval import interval_level_violations
 from borges.analysis.code_guard_missing import missing_violations
 from borges.analysis.code_guard_mode import empty_mode_violations
@@ -41,6 +44,9 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
             *_mode_violations(code),
             *ctx_name_violations(code, step, option),
             *spec_ctx_write_violations(code, option.spec),
+            *read_promise_violations(code, plan, step, option),
+            *ctx_value_violations(code, plan, step),
+            *unset_ctx_violations(code, plan, step),
             *sibling_outcome_violations(code, step, option),
             *positional_dummy_violations(code),
             *row_scale_violations(code),
@@ -52,6 +58,8 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
         *wide_dummy_violations(code, wide_columns(plan.dataset)),
         *complete_case_violations(code, plan.dataset),
         *ctx_read_violations(code, varying_ctx_keys(plan, step), intent),
+        *ctx_value_violations(code, plan, step),
+        *unset_ctx_violations(code, plan, step),
         *products_read_violations(code, unused_products(plan, step)),
         *interval_level_violations(code),
         *positional_estimate_violations(code),
