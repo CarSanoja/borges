@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections import Counter
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.degenerate import DEGENERATE_REASON
 from borges.garden.models import Garden, Universe
 from borges.garden.plausibility import IMPLAUSIBLE_REASON
 from borges.garden.reversal import REVERSED_REASON
@@ -24,7 +25,7 @@ def could_not_run(garden: Garden) -> list[Universe]:
         for u in garden.universes.values()
         if u.status == "failed"
         and u.kind != "verification"
-        and not (u.error or "").startswith((IMPLAUSIBLE_REASON, REVERSED_REASON))
+        and not (u.error or "").startswith((IMPLAUSIBLE_REASON, REVERSED_REASON, DEGENERATE_REASON))
     ]
 
 

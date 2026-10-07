@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan, CodingSummary
+from borges.garden.degenerate import DEGENERATE_REASON
 from borges.garden.models import Flip, Report
 from borges.garden.plausibility import IMPLAUSIBLE_REASON
 
@@ -64,6 +65,13 @@ def report_caveats(
             f"{implausible} universes produced an implausible estimate (far outside the "
             "scale of the baseline) and were excluded as broken implementations, not counted "
             "as flips."
+        )
+    degenerate = sum(1 for line in report.failed if line.startswith(DEGENERATE_REASON))
+    if degenerate:
+        caveats.append(
+            f"{degenerate} universes gave a fit that cannot be estimated on this data (an interval "
+            "over 100 times wider than the baseline's, as with separation in a logistic model) and "
+            "were left out, not counted as flips."
         )
     mirrored = mirror_caveat(flip, threshold)
     if mirrored:
