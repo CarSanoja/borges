@@ -12,6 +12,8 @@ from borges.analysis.models import (
     Step,
 )
 from borges.analysis.option_references import normalise_plan
+from borges.analysis.planner_ctx_products import with_ctx_products
+from borges.analysis.planner_degenerate import DEGENERATE, FRESH_TEMPERATURE, is_degenerate
 from borges.analysis.planner_products import drop_level_columns, drop_renamed
 from borges.analysis.planner_validation import plan_shortfalls, reads_the_result
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
@@ -34,6 +36,8 @@ def produced_name(raw: str) -> str:
 
 BARE_CTX = frozenset({"ctx", "context"})
 PLAN_RETRIES = 2
+PLAN_TOKENS = 8192
+FRESH_KEY = "planner:fresh"
 
 
 def step_produces(planned: PlannedStep) -> list[str]:
@@ -121,11 +125,18 @@ def _order_model_last(planned: list[PlannedStep]) -> list[PlannedStep]:
     return [s for s in planned if s.kind != "model" and s.id not in dropped] + [final]
 
 
-async def _ask(llm: LLMClient, messages: list[dict[str, str]], key: str) -> PlannerOutput:
+async def _ask(
+    llm: LLMClient, messages: list[dict[str, str]], key: str, temperature: float = 0.2
+) -> PlannerOutput:
     response = await llm.complete(
-        Role.PLANNER, messages, key=key, schema=PlannerOutput, max_tokens=4096
+        Role.PLANNER,
+        messages,
+        key=key,
+        schema=PlannerOutput,
+        max_tokens=PLAN_TOKENS,
+        temperature=temperature,
     )
-    return normalise_ids(PlannerOutput.model_validate(response.parsed))
+    return with_ctx_products(normalise_ids(PlannerOutput.model_validate(response.parsed)))
 
 
 async def _broaden(
@@ -134,12 +145,13 @@ async def _broaden(
     out: PlannerOutput,
     profile: DatasetProfile,
     rule: DecisionRule,
+    prefix: str = "planner",
 ) -> PlannerOutput:
     for attempt in range(PLAN_RETRIES):
         problems = plan_shortfalls(out.steps, profile, rule)
         if not problems:
             return out
-        key = "planner:retry" if attempt == 0 else f"planner:retry{attempt + 1}"
+        key = f"{prefix}:retry" if attempt == 0 else f"{prefix}:retry{attempt + 1}"
         try:
             out = await _ask(llm, build_retry_messages(messages, out, problems), key)
         except LLMError:
@@ -152,6 +164,14 @@ async def plan_analysis(
 ) -> AnalysisPlan:
     messages = build_messages(profile, question, rule)
     out = await _broaden(llm, messages, await _ask(llm, messages, "planner"), profile, rule)
+    if is_degenerate(out.steps):
+        try:
+            fresh = await _ask(llm, messages, FRESH_KEY, FRESH_TEMPERATURE)
+            out = await _broaden(llm, messages, fresh, profile, rule, FRESH_KEY)
+        except LLMError:
+            pass
+    if is_degenerate(out.steps):
+        raise LLMError(DEGENERATE)
     taken: set[str] = set()
     planned = drop_renamed(drop_level_columns(out.steps, profile), profile)
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(planned)]

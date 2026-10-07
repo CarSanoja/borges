@@ -175,7 +175,7 @@ async def test_missing_model_step_after_reask_still_fails() -> None:
     from borges.llm.client import LLMError
 
     llm = FakeLLM({"planner": no_model(), "planner:retry": no_model()})
-    with pytest.raises(LLMError, match="no step of kind 'model'"):
+    with pytest.raises(LLMError, match="fresh plan has no model step"):
         await plan_analysis(llm, make_profile(), "Q?", DecisionRule(metric="m"))
 
 

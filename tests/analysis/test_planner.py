@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 from borges.analysis.models import DecisionRule
-from borges.analysis.planner import plan_analysis, produced_name, step_produces
+from borges.analysis.planner import PLAN_TOKENS, plan_analysis, produced_name, step_produces
 from borges.analysis.schemas import PlannedOption, PlannedStep, PlannerOutput
 from borges.llm.client import LLMError, Role
 from tests.analysis.fakes import FakeLLM, make_profile
@@ -50,7 +50,7 @@ async def test_builds_plan_and_calls_planner() -> None:
     assert [s.id for s in plan.steps] == ["f1", "m"]
     assert all(o.origin == "planner" for s in plan.steps for o in s.options)
     call = llm.calls[0]
-    assert call.role is Role.PLANNER and call.key == "planner" and call.max_tokens == 4096
+    assert call.role is Role.PLANNER and call.key == "planner" and call.max_tokens == PLAN_TOKENS
     assert call.schema is PlannerOutput
     assert "group" in call.messages[1]["content"]
 
