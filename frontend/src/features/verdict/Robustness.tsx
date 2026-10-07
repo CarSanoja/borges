@@ -7,6 +7,7 @@ interface Props {
   report: Report;
   range: EffectRange | null;
   plan?: AnalysisPlan | null;
+  inconclusive?: boolean;
 }
 
 function Secondary({ report, range, plan }: Props) {
@@ -32,7 +33,7 @@ function Secondary({ report, range, plan }: Props) {
   );
 }
 
-export function Robustness({ report, range, plan = null }: Props) {
+export function Robustness({ report, range, plan = null, inconclusive = false }: Props) {
   const total = report.n_universes;
   if (report.robustness_rating === null) {
     return (
@@ -47,7 +48,7 @@ export function Robustness({ report, range, plan = null }: Props) {
   }
   const shown = report.robustness_rating ?? report.robustness;
   return (
-    <div className="vc-robust">
+    <div className="vc-robust" data-inconclusive={inconclusive}>
       <div className="vc-robust__head">
         <span className="eyebrow">Robustness</span>
         <span className="mono vc-robust__value">{formatPercent(shown)}</span>
