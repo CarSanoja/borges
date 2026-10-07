@@ -67,3 +67,25 @@ def test_a_per_row_array_stored_in_ctx_is_a_shortfall() -> None:
 def test_run_level_ctx_values_are_not_a_shortfall() -> None:
     assert ctx_row_shortfall([step("feature", COVARIATES)]) is None
     assert ctx_row_shortfall([step("feature", ["ctx['groups'] = ('committed', 'single')"])]) is None
+
+
+def test_a_per_row_quantity_stored_in_ctx_in_prose_is_a_shortfall() -> None:
+    spec = (
+        "Compute cycle_length = (StartDateofLastPeriod - StartDateofPeriodBeforeLast).dt.days; "
+        "cycle_day = 28 - days_to_next_onset; keep rows where 7 <= cycle_day <= 14; store "
+        "cycle_day in ctx['cycle_day'] for possible diagnostics; return filtered DataFrame."
+    )
+    found = ctx_row_shortfall([step("filter", [spec, spec.replace("14", "12")])])
+    assert found is not None and "filter_step.o0 (ctx['cycle_day'])" in found
+    assert "computed by a feature step placed before the filter" in found
+
+
+def test_a_column_name_written_to_ctx_is_not_a_shortfall() -> None:
+    named = [
+        "Compute religiosity_z = (raw - raw.mean()) / raw.std(); Write religiosity_z to "
+        "ctx['religiosity']. Return the DataFrame with added column religiosity_z.",
+        "Compute relig = mean of Rel1, Rel2, Rel3. Write relig to ctx['religiosity'] and return "
+        "the dataframe with new column 'relig'.",
+        "high = 1 if 7 <= day <= 14 else 0; write high to ctx['high_col'] as 'high'.",
+    ]
+    assert ctx_row_shortfall([step("feature", named)]) is None
