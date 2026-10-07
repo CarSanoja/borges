@@ -20,6 +20,7 @@ class CountingLLM:
         self.inner = inner
         self.calls = calls
         self.totals: UsageTotals = inner.totals
+        self.judges_defaults: bool = getattr(inner, "judges_defaults", True)
 
     async def complete(self, role: Any, messages: Any, **kwargs: Any) -> Any:
         self.calls[role.value] += 1

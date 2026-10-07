@@ -21,7 +21,13 @@ def fixture_name(key: str) -> str:
 
 
 class ScriptedLLM:
-    """Replays recorded responses from `fixtures_dir`, at zero cost."""
+    """Replays recorded responses from `fixtures_dir`, at zero cost.
+
+    Hand-built fixtures hold no verdicts on the conventional options, so a scripted run does
+    not ask the judge about them (judges_defaults); a live run always does.
+    """
+
+    judges_defaults = False
 
     def __init__(self, fixtures_dir: Path, latency_s: float = 0.0) -> None:
         self.fixtures_dir = fixtures_dir

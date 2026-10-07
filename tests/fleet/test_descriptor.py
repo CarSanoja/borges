@@ -7,7 +7,7 @@ from borges.config import Settings
 from borges.fleet.descriptor import build_descriptor
 from borges.fleet.models import FieldSource
 from borges.fleet.roster import declaration_for
-from borges.llm.client import DEFAULT_ROLE_MODELS, SUPER, Role
+from borges.llm.client import DEFAULT_ROLE_MODELS, ULTRA, Role
 
 
 def describe(settings: Settings, agent_id: str, provider: str = "nebius"):
@@ -26,7 +26,7 @@ def test_model_comes_from_the_provider_config(settings: Settings) -> None:
 def test_model_change_changes_the_definition(settings: Settings) -> None:
     nebius = describe(settings, "judge")
     local = describe(settings, "judge", "local")
-    assert nebius.model_id == SUPER.id and local.model_id == settings.borges_local_model
+    assert nebius.model_id == ULTRA.id and local.model_id == settings.borges_local_model
     assert nebius.definition_sha != local.definition_sha
 
 

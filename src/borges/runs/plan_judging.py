@@ -110,7 +110,8 @@ async def judge_plan_options(
     and those are judged in turn. A rejected conventional option is then replaced (see
     default_judging.replace_default); a judge failure never replaces one.
     """
-    targets = [(s, o) for s in plan.steps for o in s.options]
+    defaults = getattr(llm, "judges_defaults", True)
+    targets = [(s, o) for s in plan.steps for o in s.options if defaults or not o.is_default]
     if not targets:
         return
     before = {step.id: len(step.options) for step in plan.steps}
