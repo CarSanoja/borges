@@ -98,6 +98,46 @@ fix that followed. Every run and its cost is in `notes/LEDGER.md`; the defects, 
 - The split-half check refused a sound interval because the halves of a small sample were
   separated. **Fix:** the check abstains when a half cannot be estimated.
 
+## Development runs 15 to 41, 7 October
+
+Twenty-seven more live runs of the vote case, three at a time, each round against a hypothesis
+written down before it (`notes/LEDGER.md`), about $0.06 to $0.11 each. They are development
+results, not held out.
+
+| Outcome | Runs |
+|---|---|
+| Starting point exact, or repaired to the exact cell (-1.6230, n 303) | 11: 17, 19, 20, 24, 27, 29, 32, 33, 36, 40, 41 |
+| Starting point wrong, reported as "does not match" two independent implementations | 9: 16, 18, 21, 25, 26, 28, 34, 35, 37 |
+| Run failed before a result | 7: 15, 22, 23, 30, 31, 38, 39 |
+
+No run reported a wrong starting point as checked. Every reported flip from a checked starting
+point that was recomputed with independent code matched to the fourth decimal (runs 17, 19, 20,
+24, 27, 32, 33, 36, 40, 41). Two reported flips were the starting point with one group coded the
+other way (runs 28 and 29) and one adjusted for WorkerID cut into thirds (run 40); both kinds are
+now set aside or refused. Every defect found, and its fix:
+
+- A coder set the two hand-set days and then overwrote the whole column (28), or created the
+  column only for those two rows by WorkerID, through a selector variable or by position (30, 31,
+  34, 38). **Fix:** two code checks, and the harness fails a step whose produced column is missing
+  in 95% of the rows it keeps.
+- A filter computed the cycle day and did not pass it on, so later coders were told it did not
+  exist (34, 35). **Fix:** a name a filter computes and a later step reads is added to what the
+  filter produces.
+- The model step built its fertility indicator from a range of days inside its own spec (39).
+  **Fix:** such a plan goes back to the planner.
+- A result equal to the starting point with its sign reversed on the same rows and p-value (28,
+  29). **Fix:** set aside as the same analysis, not a flip.
+- The repair of the starting point could not localise the rows it lost (25, 26, 28) or a reversed
+  coding (37). **Fix:** it is shown which raw rows each fit keeps, after which step the chain loses
+  them and what they hold there; fixes that do not close the gap are dropped one by one; and when
+  single repairs fail, every default step is rewritten from the reference script and kept only if
+  it then reproduces it. Replayed live on run 37's plan, the rewrite gave the exact cell. Runs 36
+  and 41 were repaired this way from n 302 to n 303.
+
+No commit met the bar for freezing (exact or repaired in at least two of three, and no failed
+run, in one round): the last round, 39 to 41, had two exact or repaired and one failure, whose
+cause is fixed in the final commit but not yet run live. The held-out test below has not been run.
+
 ## The next held-out test
 
 `evidence/held-out/cases/fertility_social`: the published analysis of social conservatism on the

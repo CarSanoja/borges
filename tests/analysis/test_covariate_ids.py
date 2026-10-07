@@ -61,3 +61,26 @@ def test_the_planner_is_asked_to_drop_identifiers_from_covariate_lists() -> None
     problems = plan_shortfalls([step], PROFILE)
     listed = [p for p in problems if p.startswith("These identifier columns")]
     assert listed and "playerShort, refNum." in listed[0]
+
+
+def test_a_covariate_cut_from_an_identifier_is_refused() -> None:
+    """fertility_vote on 7 October, run 40: WorkerID cut into thirds was adjusted for, and the
+    result was reported as the smallest flip."""
+    from borges.analysis.covariate_ids import covariate_id_violations
+    from borges.analysis.models import ColumnProfile, DatasetProfile
+
+    profile = DatasetProfile(
+        name="vote",
+        n_rows=502,
+        columns=[
+            ColumnProfile(name="WorkerID", dtype="int64", n_missing=0, n_unique=502),
+            ColumnProfile(name="Rel1", dtype="float64", n_missing=0, n_unique=7),
+        ],
+    )
+    code = (
+        'dummy_cols = [c for c in df.columns if c.startswith("workerid_")]\n'
+        'ctx["covariates"] = ["workerid_tertile", "religiosity"]\n'
+    )
+    found = covariate_id_violations(code, profile)
+    assert len(found) == 1 and "built from 'WorkerID'" in found[0]
+    assert covariate_id_violations('ctx["covariates"] = ["religiosity"]\n', profile) == []

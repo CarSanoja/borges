@@ -7,6 +7,7 @@ from borges.analysis.models import DatasetProfile, DecisionRule
 from borges.analysis.planner_ctx_products import ctx_row_shortfall
 from borges.analysis.planner_degenerate import loading_shortfall
 from borges.analysis.planner_measure import linear_odds_shortfall
+from borges.analysis.planner_model_terms import model_terms_shortfall
 from borges.analysis.planner_products import renamed_products, renamed_shortfall
 from borges.analysis.profile_flags import flagged_columns
 from borges.analysis.schemas import PlannedStep
@@ -77,7 +78,11 @@ def plan_shortfalls(
             "column names or ctx keys that every option of the step creates, under the same "
             f"name and meaning: {', '.join(missing)}."
         )
-    for found in (loading_shortfall(steps), ctx_row_shortfall(steps)):
+    for found in (
+        loading_shortfall(steps),
+        ctx_row_shortfall(steps),
+        model_terms_shortfall(steps, profile),
+    ):
         if found is not None:
             problems.append(found)
     linear = linear_odds_shortfall(steps, rule)

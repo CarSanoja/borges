@@ -65,6 +65,7 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
         *ctx_value_violations(code, plan, step),
         *unset_ctx_violations(code, plan, step),
         *products_read_violations(code, unused_products(plan, step)),
+        *covariate_id_violations(code, plan.dataset),
         *interval_level_violations(code),
         *positional_estimate_violations(code),
     ]
