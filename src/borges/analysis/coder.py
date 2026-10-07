@@ -33,13 +33,26 @@ async def _request_code(
     notes: list[str] | None = None,
 ) -> str:
     key = f"coder:{step.id}.{option.id}" + (suffix if error is not None else "")
-    response = await llm.complete(
-        Role.CODER if error is None else Role.REPAIRER,
-        build_messages(plan, step, option, error),
-        key=key,
-        schema=CoderOutput,
-        max_tokens=CODE_TOKENS,
-    )
+    role = Role.CODER if error is None else Role.REPAIRER
+    try:
+        response = await llm.complete(
+            role,
+            build_messages(plan, step, option, error),
+            key=key,
+            schema=CoderOutput,
+            max_tokens=CODE_TOKENS,
+        )
+    except LLMError as exc:
+        refusal = armor_refusal(exc)
+        if error is None or refusal is None:
+            raise
+        response = await llm.complete(
+            role,
+            build_messages(plan, step, option, refusal),
+            key=f"{key}:armor",
+            schema=CoderOutput,
+            max_tokens=CODE_TOKENS,
+        )
     if models is not None:
         models.append(response.usage.model)
     code, closed = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)

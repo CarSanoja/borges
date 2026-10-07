@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.model_spec.core_terms import is_core_term, runtime_filter_lines
 from borges.analysis.model_spec.schema import INTERACTION_COLUMN, ModelSpecOutput
 
 INPUT_FAULT = "the earlier step that builds it"
@@ -29,10 +30,10 @@ def covariate_lines(spec: ModelSpecOutput) -> list[str]:
     if spec.covariates_from_ctx:
         lines = [
             f"    names = {spec.covariates!r} + [str(c) for c in ctx.get('covariates', [])]",
-            f"    names = [c for c in dict.fromkeys(names) if c not in {core!r}]",
+            *runtime_filter_lines(core),
         ]
     else:
-        names = [c for c in dict.fromkeys(spec.covariates) if c not in core]
+        names = [c for c in dict.fromkeys(spec.covariates) if not is_core_term(c, core)]
         lines = [f"    names = {names!r}"]
     lines.append(f"    used = list(dict.fromkeys({_used_columns(spec)!r} + names))")
     return lines
