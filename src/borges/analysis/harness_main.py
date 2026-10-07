@@ -19,6 +19,7 @@ from borges.analysis.harness_hints import HINTS_SOURCE
 from borges.analysis.harness_missing_cut import MISSING_CUT_SOURCE
 from borges.analysis.harness_normalise import NORMALISE_SOURCE
 from borges.analysis.harness_outcome import LOG_LINK_MODELS, OUTCOME_MAX_ROWS, OUTCOME_SOURCE
+from borges.analysis.harness_rebuild import REBUILD_SOURCE
 from borges.analysis.harness_result_checks import RESULT_CHECKS_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 from borges.analysis.harness_validate import VALIDATE_SOURCE
@@ -68,6 +69,7 @@ __FINGERPRINT__
             ctx = {}
         rows_before = int(len(df))
         seen.update({"columns": list(map(str, df.columns)), "ctx": list(map(str, ctx))})
+        _check_rebuilt(seen["columns"])
         nulls = df.isna().sum()
         seen["rows"] = int(len(df))
         seen["missing"] = {str(k): int(v) for k, v in nulls[nulls > 0].items()}
@@ -190,7 +192,7 @@ MAIN_TEMPLATE = (
     _TEMPLATE.replace("__VALIDATE__", VALIDATE_SOURCE.strip("\n") + "\n")
     .replace("__NORMALISE__", NORMALISE_SOURCE.strip("\n"))
     .replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
-    .replace("__CHECKS__", CHECKS_SOURCE.strip("\n"))
+    .replace("__CHECKS__", CHECKS_SOURCE.strip("\n") + "\n\n" + REBUILD_SOURCE.strip("\n"))
     .replace("__MISSING_CUT__", MISSING_CUT_SOURCE.strip("\n"))
     .replace("__DOMAIN__", DOMAIN_SOURCE.strip("\n"))
     .replace("__EFFECTS__", EFFECTS_SOURCE.strip("\n"))

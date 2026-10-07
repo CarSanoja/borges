@@ -13,6 +13,7 @@ from borges.analysis.keep_intent import grouped_by, keeps_rows
 from borges.analysis.models import AnalysisResult, Option, Step, StepTrace
 from borges.analysis.offset_intent import wants_offset
 from borges.analysis.path_scrub import scrub_paths
+from borges.analysis.rebuild_names import rebuilt_names
 
 DATA_FILE = "data.parquet"
 STATE_DIR = "state"
@@ -79,6 +80,7 @@ def render_step(
         .replace("__PRODUCES__", repr(list(step.produces)))
         .replace("__ADJUSTS__", repr(not UNADJUSTED.search(option_intent(option))))
         .replace("__READS__", repr(read_names(option.code)))
+        .replace("__REBUILDS__", repr(rebuilt_names(option.code)))
         .replace("__IMPUTES__", repr(imputes(option)))
         .replace("__COMPARED__", repr(compared_names(option.code)))
         .replace("__OFFSET__", repr(wants_offset(option)))
