@@ -79,6 +79,24 @@ def analysis_caveats(plan: AnalysisPlan) -> list[str]:
     ]
 
 
+def default_departures(planned: AnalysisPlan, coded: AnalysisPlan) -> list[str]:
+    """On a run from the user's analysis, a step whose default could not run and was replaced
+    leaves an original result that is not the user's; the smoke note alone does not say so."""
+    found = []
+    by_id = {step.id: step for step in coded.steps}
+    for step in planned.steps:
+        now = by_id.get(step.id)
+        if not step.options or now is None or not now.options:
+            continue
+        if now.default.id != step.default.id:
+            found.append(
+                f"The starting point is not exactly your analysis: in the step '{step.title}', "
+                f"'{step.default.label}' could not run and '{now.default.label}' was used "
+                "instead, so the original result is that of a changed analysis."
+            )
+    return found
+
+
 def judge_caveats(coding: CodingSummary) -> list[str]:
     replaced = [
         f"The defensibility judge rejected a conventional option and the original analysis uses "

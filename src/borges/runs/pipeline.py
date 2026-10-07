@@ -37,6 +37,7 @@ from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.pipeline_callbacks import coding_callbacks, replan_callback
 from borges.runs.pipeline_caveats import (
     analysis_caveats,
+    default_departures,
     judge_caveats,
     merge_caveats,
     report_caveats,
@@ -176,6 +177,7 @@ class Pipeline:
         self.smoke = smoke
         async with self.stage("coding"):
             await prefill_code(self, plan, on_coded)
+            planned = plan.model_copy(deep=True)
             plan = await code_plan(
                 self.llm,
                 plan,
@@ -188,6 +190,8 @@ class Pipeline:
             seed_cluster_options(plan)
             await publish_plan(self.emitter, plan)
         self.caveats.extend(smoke.state.notes)
+        if resolved.analysis:
+            self.caveats.extend(default_departures(planned, plan))
         self.checkpoint(CODED_KEY, coded_payload(plan, self.judged, self.coding, smoke.state.notes))
         return plan
 
