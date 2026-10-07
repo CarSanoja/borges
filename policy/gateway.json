@@ -21,7 +21,7 @@
   },
   "agents": {
     "planner": {
-      "models": ["nvidia/Nemotron-3-Ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
+      "models": ["nvidia/nemotron-3-super-120b-a12b", "nvidia/Nemotron-3-Ultra-550b-a55b"],
       "max_tokens": 8192,
       "max_calls_per_run": 20,
       "max_cost_usd_per_run": 0.2,

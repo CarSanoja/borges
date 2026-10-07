@@ -138,9 +138,9 @@ async def test_costs_use_each_models_own_prices() -> None:
     assert SUPER.cost(TOKENS_IN, TOKENS_OUT) > LIGHTNING.cost(TOKENS_IN, TOKENS_OUT)
 
 
-def test_the_repairer_runs_on_super_and_the_planner_on_ultra() -> None:
-    assert DEFAULT_ROLE_MODELS[Role.REPAIRER] is SUPER
-    assert DEFAULT_ROLE_MODELS[Role.PLANNER] is DEFAULT_ROLE_MODELS[Role.JUDGE] is ULTRA
+def test_the_planner_and_repairer_run_on_super_and_the_judge_on_ultra() -> None:
+    assert DEFAULT_ROLE_MODELS[Role.REPAIRER] is DEFAULT_ROLE_MODELS[Role.PLANNER] is SUPER
+    assert DEFAULT_ROLE_MODELS[Role.JUDGE] is ULTRA
 
 
 def test_first_attempt_uses_coder_role_and_prompt_states_the_contract() -> None:

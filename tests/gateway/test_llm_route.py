@@ -14,7 +14,7 @@ from borges.identity.agent_tokens import process_issuer
 from borges.llm.client import LIGHTNING, SUPER, ULTRA, LLMResponse, Role
 from borges.telemetry.caller import calling_as
 
-from .conftest import ROLE_MODELS, RUN, FakeLLM
+from .conftest import RUN, FakeLLM
 
 MSG = [{"role": "user", "content": "hello"}]
 
@@ -263,15 +263,12 @@ async def test_failed_probe_keeps_the_breaker_open(make_gateway, clock) -> None:
         await ask(gateway, llm, Role.JUDGE)
 
 
-ULTRA_PLANNER = {**ROLE_MODELS, Role.PLANNER: ULTRA}
-
-
 async def test_fallback_to_the_next_listed_model(make_gateway, audit) -> None:
-    llm = FakeLLM([Status(503)] * 3, role_models=ULTRA_PLANNER)
+    llm = FakeLLM([Status(503)] * 3)
     routed = await ask(make_gateway(), llm, Role.PLANNER)
-    assert routed.fallback and routed.model == SUPER.id
-    assert [c["model"] for c in llm.calls] == [ULTRA.id] * 3 + [SUPER.id]
-    assert audit.of("gateway.fallback")[0]["model"] == SUPER.id
+    assert routed.fallback and routed.model == ULTRA.id
+    assert [c["model"] for c in llm.calls] == [SUPER.id] * 3 + [ULTRA.id]
+    assert audit.of("gateway.fallback")[0]["model"] == ULTRA.id
 
 
 async def test_no_fallback_when_the_policy_lists_none(make_gateway) -> None:
@@ -284,10 +281,10 @@ async def test_no_fallback_when_the_policy_lists_none(make_gateway) -> None:
 async def test_open_breaker_sends_the_call_straight_to_the_fallback(make_gateway) -> None:
     gateway = make_gateway()
     for _ in range(4):
-        gateway.breakers.of(ULTRA.id).record_failure()
-    llm = FakeLLM(role_models=ULTRA_PLANNER)
+        gateway.breakers.of(SUPER.id).record_failure()
+    llm = FakeLLM()
     routed = await ask(gateway, llm, Role.PLANNER)
-    assert routed.model == SUPER.id and [c["model"] for c in llm.calls] == [SUPER.id]
+    assert routed.model == ULTRA.id and [c["model"] for c in llm.calls] == [ULTRA.id]
 
 
 async def test_concurrency_is_capped_per_agent(make_gateway, settings) -> None:
