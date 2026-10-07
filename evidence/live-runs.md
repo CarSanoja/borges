@@ -159,8 +159,8 @@ both give the same numbers. Its `recording.json` names `3e1d0c9`, the commit whe
 was copied; the run loaded its code at `7b6bb27`, and between the two only the registry seed, the
 persona baseline and two web-app merges changed, none of which a run uses.
 
-Six attempts were made, all listed in `evidence/repeats.md`. Two measured the published analysis
-and both found a one-change flip in the relationship coding; the other four led to the fixes that
+Seven attempts were made, all listed in `evidence/repeats.md`. Three measured the published
+analysis and all three found a one-change flip in the relationship coding; the other four led to the fixes that
 the recorded run uses: the user's analysis is a field of its own that the judge cannot replace, a
 per-row quantity may not be kept in ctx in prose or as a mask, and a fidelity check compares the
 plan's defaults with the analysis before anything runs.

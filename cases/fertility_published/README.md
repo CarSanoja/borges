@@ -37,14 +37,18 @@ against 1 to 3), which gives NO CLEAR EVIDENCE, 0.8642 [-1.1754, 2.9037], p .403
 refit from the raw data gives the same numbers, and `borges reproduce --case fertility_published
 --source live --universe u_f90ae92878` re-executes it: MATCH.
 
-An earlier run from the same analysis (`r_20261007T033617_784e1b`, local backend) found a
-different single change: single = not dating and committed = engaged or married, with dating
-women left out, which gives 1.7793, p .1218, n 129. That is exactly Steegen et al.'s R3 cell.
+Two more runs from the same analysis, on the local backend, also started from the published
+result. `r_20261007T033617_784e1b` found a different single change: single = not dating and
+committed = engaged or married, with dating women left out, which gives 1.7793, p .1218, n 129,
+exactly Steegen et al.'s R3 cell; the adversary proposed it. `r_20261007T040354_69cd17` found
+married only again, plus two window changes that flip: ovulation ± 3 days (p .1726, n 76) and,
+from the adversary, both windows two days earlier (1.5957, p .0891, n 166), which is not one of
+the five windows in Steegen's grid.
 
-Both flips are in how relationship status is coded, the decision Steegen et al. found to matter
-most. Borges did not propose the other forks of their grid that also flip the result (the reported
-cycle length, other windows, excluding women unsure of their dates), so it reports a smallest
-flip, not the whole fragile region. See `evidence/head-to-head.md` for the comparison with
+Every flip found is in how relationship status is coded or which cycle days count as fertile,
+the kinds of decision Steegen et al. found to matter. Borges never proposed the reported instead
+of the computed cycle length or excluding women unsure of their dates, so it reports a smallest
+flip and part of the fragile region, not all of it. See `evidence/head-to-head.md` for the comparison with
 Steegen's grid and with twelve independent persona analysts, none of whom reproduced the published
 analysis.
 

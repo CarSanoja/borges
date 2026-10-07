@@ -61,8 +61,8 @@ Each started from an empty model cache.
 
 ## 7 October: starting from the published fertility analysis
 
-Every run that was given the published analysis, in order. Two measured it, and both found a
-single change that removes the effect; the rate is 2 of 2, from two runs.
+Every run that was given the published analysis, in order. Three measured it, and all three
+found a single change that removes the effect; the rate is 3 of 3, from three runs.
 
 - `r_20261007T031142_d278f7` (local, $0.070): the analysis was written into the question. The
   judge rejected its cycle-day formula and replaced it, so the run started from 1.61, p .117,
@@ -87,6 +87,11 @@ single change that removes the effect; the rate is 2 of 2, from two runs.
   counting unanswered items as 0 and the planner fixed it. Started from 2.3834, p .012, n 163;
   smallest flip committed = married only, 0.8642, p .4039, n 163. 8 of 14 completed universes
   flip.
+- `r_20261007T040354_69cd17` (local, $0.069): the fidelity check found nothing to fix. Started
+  from 2.3834, p .012, n 163; three single changes flip: committed = married only (p .4039, the
+  smallest flip reported), a window of ovulation ± 3 days (p .1726, n 76) and, from the adversary,
+  both windows two days earlier (1.5957, p .0891, n 166, refit identical), a window that is not in
+  Steegen's grid. 11 of 14 universes flip.
 
 ## Self-corrections
 

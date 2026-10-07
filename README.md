@@ -149,11 +149,12 @@ recordings show:
   dedicated auditor caught it reliably, so it stays a known limitation (`evidence/live-runs.md`).
 - **fertility from the published analysis (7 October).** Given the analysis behind the published
   result, Borges starts exactly there (2.3834, p .012, n 163, Steegen et al.'s published cell)
-  and finds a one-change flip in how relationship status is coded, in both runs that measured it:
-  committed = married only (p .40, the recording) and single = not dating with dating women left
-  out (p .12, Steegen's R3 cell to four decimals, proposed by the adversary). Steegen et al.
-  found 6 of the 9 single changes lose significance; Borges finds a smallest flip, not that whole
-  region. Of six attempts, one was discarded because the planner rewrote "single = 1 or 2" and
+  and finds a one-change flip in all three runs that measured it: committed = married only
+  (p .40, the recording, and again in a third run) and single = not dating with dating women left
+  out (p .12, Steegen's R3 cell to four decimals, proposed by the adversary). In the third run the
+  adversary also shifted both fertility windows two days earlier (p .089), a flipping fork that is
+  not in Steegen's grid. Steegen et al. found 6 of the 9 single changes lose significance; Borges
+  finds a smallest flip and part of that region, not all of it. Of seven attempts, one was discarded because the planner rewrote "single = 1 or 2" and
   called it the user's definition; a fidelity check now compares the plan with the analysis
   before anything runs (`cases/fertility_published/README.md`, `evidence/repeats.md`).
 

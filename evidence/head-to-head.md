@@ -44,19 +44,26 @@ it, and asks how fragile it is. The analysis stays the starting point (the judge
 which the report states, but cannot replace it) and a second model checks that the plan's default
 path implements it before anything runs.
 
-| | Borges, run 1 (`r_20261007T033617_784e1b`, local) | Borges, run 2 (`r_20261007T035352_3cba38`, ConTree) | Steegen's grid |
-|---|---|---|---|
-| Starting point | 2.3834, p .012, n 163 | 2.3834, p .012, n 163 | 2.3834, p .012, n 163 |
-| Smallest flip | 1 change: single = not dating, committed = engaged or married, dating women left out (proposed by the adversary) | 1 change: committed = married only (proposed by the planner) | 6 of the 9 single changes lose p < .05 |
-| Flipped result | NO CLEAR EVIDENCE, 1.7793 [-0.4812, 4.0398], p .1218, n 129 | NO CLEAR EVIDENCE, 0.8642 [-1.1754, 2.9037], p .4039, n 163 | R2 p .384, R3 p .122, NMO2 p .836, F3 p .099, F5 p .257, EC2 p .066 |
-| Checked by | Steegen's R3 cell, computed independently: 1.7793, p .1218, n 129 | refit from the raw data: 0.8642 [-1.1754, 2.9037], p .4039, n 163 | `steegen_multiverse.py` |
-| Cost | $0.084 | $0.080 | no model calls |
+| | Borges, run 1 (`r_20261007T033617_784e1b`, local) | Borges, run 2, the recording (`r_20261007T035352_3cba38`, ConTree) | Borges, run 3 (`r_20261007T040354_69cd17`, local) | Steegen's grid |
+|---|---|---|---|---|
+| Starting point | 2.3834, p .012, n 163 | 2.3834, p .012, n 163 | 2.3834, p .012, n 163 | 2.3834, p .012, n 163 |
+| Single changes that flip | 1 of 4 completed | 2 of 4 completed | 3 of 4 completed | 6 of 9 |
+| Smallest flip reported | single = not dating, committed = engaged or married, dating women left out (adversary) | committed = married only (planner) | committed = married only (planner) | R2, R3, NMO2, F3, F5, EC2 |
+| Flipped result | 1.7793 [-0.4812, 4.0398], p .1218, n 129 | 0.8642 [-1.1754, 2.9037], p .4039, n 163 | 0.8642 [-1.1754, 2.9037], p .4039, n 163 | R2 p .384, R3 p .122, NMO2 p .836, F3 p .099, F5 p .257, EC2 p .066 |
+| Checked by | Steegen's R3 cell, computed independently: 1.7793, p .1218, n 129 | refit from the raw data; `borges reproduce`: MATCH | refit from the raw data | `steegen_multiverse.py` |
+| Cost | $0.084 | $0.080 | $0.069 | no model calls |
 
-In both runs Borges found a single defensible change that removes the effect, both times in how
-relationship status is coded, which is the decision Steegen et al. also found most influential
-(R2 and R3 both lose significance). It did not propose the other forks of their grid that flip the
-result (the reported instead of the computed cycle length, other fertility windows, excluding
-women unsure of their dates), so it finds a smallest flip, not the whole fragile region.
+In all three runs Borges started from the published result and found a single defensible change
+that removes the effect, each time in how relationship status is coded, the decision Steegen et
+al. also found most influential (R2 and R3 both lose significance). Run 3 found two more: a
+fertile window of ovulation ± 3 days (1.9758, p .1726, n 76) and, from the adversary, both windows
+two days earlier, high fertility days 5 to 12 and low 15 to 23 (1.5957 [-0.2468, 3.4383],
+p .0891, n 166; a refit from the raw data gives the same numbers). That window is not one of the
+five in Steegen's grid (7-14, 6-14, 9-17, 8-14 and 9-17 for high fertility), so the adversary
+found a flipping fork that the fixed grid does not contain. Across the three runs Borges proposed
+three of the kinds of fork that flip in the grid (relationship coding, other windows) and never
+the reported instead of the computed cycle length or the exclusion of women unsure of their
+dates: it finds a smallest flip and some of the fragile region, not all of it.
 
 Persona sampling has no column here: its analysts do not start from an analysis, and none of the
 twelve reproduced the published one.
@@ -83,8 +90,8 @@ defensible choices.
 
 ## Limits
 
-- One persona run of twelve analysts per case; two Borges runs from the published analysis. These
-  are rates from small numbers.
+- One persona run of twelve analysts per case; three Borges runs from the published analysis.
+  These are rates from small numbers.
 - The persona baseline uses Borges's own planner model and coder, so it measures what the forking
   search adds over independent analysts with the same models, not over other tools.
   `agentic-forking-path` was not run.
