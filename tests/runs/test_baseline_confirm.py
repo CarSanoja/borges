@@ -8,7 +8,7 @@ import pytest
 from borges.analysis.models import AnalysisResult, CodingSummary
 from borges.analysis.reference_writer import Fix
 from borges.garden.models import SearchSummary, Universe
-from borges.runs import baseline_confirm
+from borges.runs import baseline_confirm, baseline_rebuild
 from borges.runs.baseline_confirm import confirm_baseline
 from borges.runs.baseline_reference import References
 from borges.runs.judged_ledger import JudgedLedger
@@ -66,12 +66,15 @@ def script(monkeypatch, references, fixes=(), reruns=()):
                 out.results.append((result, f"code {i + 1}"))
         return out
 
-    async def propose(llm, plan, traces, ours, theirs, code, dropped=None, evidence=None):
+    async def propose(
+        llm, plan, traces, ours, theirs, code, dropped=None, evidence=None, rebuild=False
+    ):
         script.dropped.append(dropped)
         return fix_queue.pop(0) if fix_queue else []
 
     monkeypatch.setattr(baseline_confirm, "agreed_reference", found)
     monkeypatch.setattr(baseline_confirm, "propose_fixes", propose)
+    monkeypatch.setattr(baseline_rebuild, "propose_fixes", propose)
 
     async def rerun(choices):
         ran.append(dict(choices))
@@ -277,3 +280,29 @@ async def test_a_right_fix_is_kept_when_a_wrong_one_comes_with_it(monkeypatch) -
     assert plan.step("d1").option("keep").code == FIXED
     assert plan.step("m1").option("ols").code == before
     assert "hand-set days wiped" in p.caveats[0] and "precedence" not in p.caveats[0]
+
+
+async def test_when_single_repairs_fail_the_steps_rewritten_from_the_reference_are_kept(
+    monkeypatch,
+) -> None:
+    """fertility_vote on 7 October, run 37: single women coded 1 and the hand-set days lost; the
+    targeted repairs proposed an irrelevant change."""
+    rebuilt = Fix(step_id="d1", option_id="keep", problem="committed coded 1", code=FIXED)
+    rerun = script(monkeypatch, [PUBLISHED, PUBLISHED], fixes=[[], [rebuilt]], reruns=[PUBLISHED])
+    p, plan = pipeline(), analysis_plan()
+    out = await confirm_baseline(p, plan, universe(WRONG), rerun)
+    assert out.result == PUBLISHED and p.search.reference == "repaired"
+    assert "was rewritten from one of those implementations" in p.caveats[0]
+    assert plan.step("d1").option("keep").code == FIXED and p.saved == ["stage:coded"]
+
+
+async def test_a_rewrite_that_does_not_reach_the_reference_is_undone(monkeypatch) -> None:
+    rebuilt = Fix(step_id="d1", option_id="keep", problem="p", code=FIXED)
+    rerun = script(
+        monkeypatch, [PUBLISHED, PUBLISHED], fixes=[[], [rebuilt]], reruns=[OTHER, WRONG]
+    )
+    p, plan = pipeline(), analysis_plan()
+    before = plan.step("d1").option("keep").code
+    out = await confirm_baseline(p, plan, universe(WRONG), rerun)
+    assert plan.step("d1").option("keep").code == before
+    assert out.result == WRONG and p.search.reference == "disagrees"

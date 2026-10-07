@@ -73,17 +73,22 @@ async def propose_fixes(
     reference_code: str,
     dropped: dict[str, tuple[Option, str | None]] | None = None,
     evidence: dict[str, object] | None = None,
+    rebuild: bool = False,
 ) -> list[Fix]:
     """Fixes that pass the coder's checks; refused ones go back to the repairer once, with why.
-    `dropped` holds, by step, the user's own option that could not run, which a fix may target."""
+    `dropped` holds, by step, the user's own option that could not run, which a fix may target;
+    `rebuild` asks for every default step rewritten from the reference script."""
     dropped = dropped or {}
-    messages = build_fix_messages(plan, traces, ours, theirs, reference_code, dropped, evidence)
+    messages = build_fix_messages(
+        plan, traces, ours, theirs, reference_code, dropped, evidence, rebuild
+    )
+    stage = "rebuild" if rebuild else "fix"
     accepted: dict[tuple[str, str], Fix] = {}
     for round_ in range(FIX_ROUNDS):
         response = await llm.complete(
             Role.REPAIRER,
             messages,
-            key=f"reference:fix:{round_}",
+            key=f"reference:{stage}:{round_}",
             schema=FixOutput,
             max_tokens=FIX_TOKENS,
         )

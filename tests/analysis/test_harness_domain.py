@@ -31,7 +31,7 @@ import pandas as pd
 
 def apply(df, ctx):
     out = df.copy()
-    out["code"] = pd.to_numeric(out["variant"].where(out["x"] > 0, "n/a"), errors="coerce")
+    out["code"] = pd.to_numeric(out["x"].where(out["x"] > 1, "n/a"), errors="coerce")
     return out
 """
 

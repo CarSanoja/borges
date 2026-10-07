@@ -16,6 +16,7 @@ from borges.analysis.harness_design_checks import DESIGN_CHECKS_SOURCE, PRODUCT_
 from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
 from borges.analysis.harness_domain import DOMAIN_SOURCE
 from borges.analysis.harness_effects import CHECKS_SOURCE, EFFECTS_SOURCE, RESTORED_NOTE
+from borges.analysis.harness_filled import FILLED_SOURCE
 from borges.analysis.harness_fingerprint import FINGERPRINT_SOURCE
 from borges.analysis.harness_fit_rows import FIT_ROWS_SOURCE
 from borges.analysis.harness_hints import HINTS_SOURCE
@@ -198,7 +199,9 @@ MAIN_TEMPLATE = (
     .replace("__SPLIT_HALF_CHECK__", SPLIT_HALF_SOURCE.strip("\n"))
     .replace(
         "__CHECKS__",
-        "\n\n".join(x.strip("\n") for x in (CHECKS_SOURCE, REBUILD_SOURCE, FIT_ROWS_SOURCE)),
+        "\n\n".join(
+            x.strip("\n") for x in (CHECKS_SOURCE, REBUILD_SOURCE, FIT_ROWS_SOURCE, FILLED_SOURCE)
+        ),
     )
     .replace("__MISSING_CUT__", MISSING_CUT_SOURCE.strip("\n"))
     .replace("__DOMAIN__", DOMAIN_SOURCE.strip("\n"))

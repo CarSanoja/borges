@@ -94,3 +94,10 @@ def test_the_fit_difference_goes_to_the_repairer() -> None:
     sent = build_fix_messages(analysis_plan(), [], RESULT, RESULT, WHOLE, None, evidence)
     assert '"fit_difference"' in sent[-1]["content"] and '"WorkerID":"15"' in sent[-1]["content"]
     assert "fit_difference, when present" in FIX_SYSTEM
+
+
+def test_a_rebuild_asks_for_every_default_step_from_the_reference_script() -> None:
+    from borges.analysis.prompts.reference import REBUILD_SYSTEM, build_fix_messages
+
+    sent = build_fix_messages(analysis_plan(), [], RESULT, RESULT, WHOLE, None, None, True)
+    assert sent[0]["content"] == REBUILD_SYSTEM and "EVERY step" in REBUILD_SYSTEM

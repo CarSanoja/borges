@@ -45,6 +45,20 @@ rows points at the step that built it, not at the step that then dropped them. \
 Change nothing else."""
 
 
+REBUILD_SYSTEM = """An analysis was split into steps, each coded separately; run in order, the \
+default option of every step should carry out the user's analysis. It does not: two independent \
+implementations of the analysis, each written as one script, agree with each other and differ from \
+the step-by-step result, and targeted repairs of single steps did not close the gap. Rewrite the \
+code of the default option of EVERY step so that running them in order computes exactly what the \
+reference script computes. Take each step's part of the computation from the reference script: \
+the rows it keeps, the values it sets by hand, how each indicator is coded (which group is 1), the \
+model, its terms and its standard errors. Keep each step's role (a filter keeps rows, a transform \
+or feature step writes its columns, the model step returns the result), its function name and \
+signature, the exact names the step must produce, and every column and ctx key later steps read. \
+Return one fix per step, under the default's option_id, with the corrected spec when the default \
+spec departs from the analysis. fit_difference, when present, says which rows and codings differ."""
+
+
 def _result(result: AnalysisResult) -> dict[str, Any]:
     return result.model_dump(include={"estimate", "ci_low", "ci_high", "p_value", "n"})
 
@@ -72,6 +86,7 @@ def build_fix_messages(
     reference_code: str,
     dropped: dict[str, tuple[Option, str | None]] | None = None,
     evidence: dict[str, object] | None = None,
+    rebuild: bool = False,
 ) -> list[dict[str, str]]:
     rows = {t.step_id: [t.rows_before, t.rows_after] for t in traces}
     dropped = dropped or {}
@@ -113,4 +128,4 @@ def build_fix_messages(
         "reference_code": reference_code,
         **({"fit_difference": evidence} if evidence else {}),
     }
-    return messages(FIX_SYSTEM, compact_json(payload))
+    return messages(REBUILD_SYSTEM if rebuild else FIX_SYSTEM, compact_json(payload))

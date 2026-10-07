@@ -25,6 +25,14 @@ from borges.llm.client import LLMError
 from borges.runs.baseline_dropped import located_difference
 from borges.runs.baseline_fix_apply import closing_fixes
 from borges.runs.baseline_lost import Lost, lost_defaults, withdraw_departures
+from borges.runs.baseline_messages import (
+    CONFIRMED_GAPS,
+    DISAGREES,
+    REPAIRED,
+    UNCHECKED,
+    UNRESOLVED,
+)
+from borges.runs.baseline_rebuild import REBUILT, rebuild_round
 from borges.runs.baseline_reference import agreed_reference, describe, same_result
 from borges.runs.pipeline_caveats import GAP_PREFIX
 from borges.runtime.stage_checkpoints import CODED_KEY, coded_payload
@@ -35,31 +43,6 @@ if TYPE_CHECKING:
 MAX_FIX_ROUNDS = 2
 ERROR_CHARS = 200
 RunBaseline = Callable[[dict[str, str]], Awaitable[Universe]]
-REPAIRED = (
-    "The step-by-step code of your analysis first gave {ours}; two independent implementations "
-    "of it, each written as one script, gave {theirs}. The code of {steps} was repaired ({why}) "
-    "and the starting point now matches them."
-)
-DISAGREES = (
-    "The starting point does not match your analysis as two independent implementations of it "
-    "compute it: the step-by-step code gives {ours} and both implementations give {theirs}; "
-    "repairing the steps did not close the gap. Read the original result with care."
-)
-UNRESOLVED = (
-    "The starting point could not be confirmed: the step-by-step code gives {ours}, and no two "
-    "independent implementations of your analysis agreed with each other ({listed})."
-)
-CONFIRMED_GAPS = (
-    "Before the code was written, a comparison of the plan with your analysis listed {n} possible "
-    "difference{s}; an independent implementation of your analysis gives the same estimate, "
-    "interval and n as the starting point, so on this data {they} not change the original result."
-)
-UNCHECKED = (
-    "The starting point was not checked against an independent implementation of your analysis, "
-    "which could not be run ({error})."
-)
-
-
 Snapshot = dict[str, list[Option]]
 
 
@@ -135,6 +118,7 @@ async def _repair(
     applied: list[Fix] = []
     restored: list[Lost] = []
     current = baseline
+    evidence: dict[str, object] | None = None
     for _ in range(MAX_FIX_ROUNDS):
         assert current.result is not None
         dropped = {k[0]: (v.option, v.error) for k, v in lost.items() if v not in restored}
@@ -160,6 +144,15 @@ async def _repair(
             pipeline.caveats.append(_repaired_note(plan, applied, ours, theirs))
             _save(pipeline, plan)
             return _confirmed(pipeline, "repaired", candidate)
+    rebuilt = await rebuild_round(
+        pipeline.llm, plan, current, (theirs, code), evidence, lost, rerun
+    )
+    if rebuilt is not None:
+        candidate, kept, brought_back = rebuilt
+        withdraw_departures(pipeline.caveats, plan, [*restored, *brought_back])
+        pipeline.caveats.append(_repaired_note(plan, kept, ours, theirs, REBUILT))
+        _save(pipeline, plan)
+        return _confirmed(pipeline, "repaired", candidate)
     if _restore(plan, saved):
         current = await rerun(plan.default_choices())
     pipeline.search.reference = "disagrees"
@@ -168,11 +161,15 @@ async def _repair(
 
 
 def _repaired_note(
-    plan: AnalysisPlan, applied: list[Fix], ours: str, theirs: AnalysisResult
+    plan: AnalysisPlan,
+    applied: list[Fix],
+    ours: str,
+    theirs: AnalysisResult,
+    template: str = REPAIRED,
 ) -> str:
     titles = list(dict.fromkeys(f"'{plan.step(f.step_id).title}'" for f in applied))
     why = "; ".join(dict.fromkeys(" ".join(f.problem.split())[:ERROR_CHARS] for f in applied))
-    return REPAIRED.format(ours=ours, theirs=describe(theirs), steps=", ".join(titles), why=why)
+    return template.format(ours=ours, theirs=describe(theirs), steps=", ".join(titles), why=why)
 
 
 def _confirmed(pipeline: Pipeline, outcome: ReferenceCheck, baseline: Universe) -> Universe:

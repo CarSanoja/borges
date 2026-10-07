@@ -15,13 +15,11 @@ from borges.analysis.code_guard_ctx_spec import (
 )
 from borges.analysis.code_guard_ctx_unset import unset_ctx_violations
 from borges.analysis.code_guard_ctx_value import ctx_value_violations
-from borges.analysis.code_guard_dead_write import (
-    dead_write_violations,
-    named_rows_only_violations,
-)
+from borges.analysis.code_guard_dead_write import dead_write_violations
 from borges.analysis.code_guard_interval import interval_level_violations
 from borges.analysis.code_guard_missing import missing_violations
 from borges.analysis.code_guard_mode import empty_mode_violations
+from borges.analysis.code_guard_named_rows import named_rows_only_violations
 from borges.analysis.code_guard_produces import products_read_violations, unused_products
 from borges.analysis.code_guard_row_filter import row_filter_violations
 from borges.analysis.code_guard_row_scale import row_scale_violations

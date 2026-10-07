@@ -84,6 +84,7 @@ CHECKS_SOURCE = """
                     + repr(list(map(str, out.columns))[:80])
                     + "; ctx keys: " + repr(list(map(str, ctx)))
                 )
+            _check_filled(name, out, df)
 
     def _explain(exc, seen):
         text = str(exc)
