@@ -42,6 +42,17 @@ players) and with at least 30 distinct clusters. Clustering on a date, a time, a
 computed in the analysis, or fewer than 30 groups is indefensible: with few clusters the \
 interval is too narrow.
 
+Another operationalisation of the same construct is an alternative, not a change of the \
+estimand: a different window or cut-off the field uses for the construct, another defensible \
+coding of a category (which response options count in which group), an exclusion rule for data \
+quality or the absence of one, or another set of the published items. Such an option changes \
+which rows fall in which group, and that sensitivity is what the analysis studies: score it by \
+whether researchers in the field use or would defend it, not by its distance from the \
+conventional option shown below, which is only the starting point of this analysis and not \
+necessarily the published one. Keep "changes the estimand" for an option that measures another \
+construct (the opposite phase as the high window, a group the question does not compare) or \
+answers another question.
+
 Penalise any option that changes the question or the estimand, leaks the outcome, or looks \
 chosen to produce a result. Set accepted=true only when defensibility is at least 0.6. Give a \
 one or two sentence reason and, when one exists, a short source for the practice.

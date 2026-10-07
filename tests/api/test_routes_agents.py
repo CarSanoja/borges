@@ -34,7 +34,7 @@ async def test_catalog_lists_agents_and_templates(client: httpx.AsyncClient) -> 
         body = (await client.get("/api/agents")).json()
     assert len(body["agents"]) == 12 and body["summary"]["by_approval"] == {"approved": 12}
     judge = next(a for a in body["agents"] if a["agent_id"] == "judge")
-    assert judge["principal"] == "agent://borges/judge" and judge["version"] == "2.0.0"
+    assert judge["principal"] == "agent://borges/judge" and judge["version"] == "2.1.0"
     ids = {t["id"] for t in body["templates"]}
     assert {"checkout_ab", "red_cards"} <= ids
     template = next(t for t in body["templates"] if t["id"] == "checkout_ab")
@@ -65,6 +65,7 @@ async def test_agent_detail_has_history(client: httpx.AsyncClient) -> None:
         "1.4.0",
         "1.5.0",
         "2.0.0",
+        "2.1.0",
     ]
     assert missing.status_code == 404
 
