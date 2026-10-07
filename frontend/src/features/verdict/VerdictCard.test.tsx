@@ -201,6 +201,17 @@ describe("VerdictCard search summary", () => {
     expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 12 paths agree");
   });
 
+  it("words an inconclusive original result and a distinct-result count honestly", () => {
+    const snapshot = foldEvents("t", events);
+    const rule = { ...snapshot.decision_rule!, alpha: 0.05, negative_label: "NO CLEAR EVIDENCE" };
+    const original_result = { ...snapshot.report!.original_result, p_value: 0.82 };
+    const report = { ...snapshot.report!, original_verdict: "NO CLEAR EVIDENCE", original_result, n_universes: 20, n_flipped: 0, n_distinct_results: 18 };
+    render(<VerdictCard snapshot={{ ...snapshot, flip: null, decision_rule: rule, report }} />);
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent("20 of 20 paths are also inconclusive (18 distinct results)");
+    expect(screen.getByTestId("vc-agree")).toHaveTextContent(/smallest p-value was/);
+    expect(document.querySelector(".vc-robust")?.getAttribute("data-inconclusive")).toBe("true");
+  });
+
   it("shows no agreement line before the report", () => {
     render(<VerdictCard snapshot={until("stage", "baseline")} />);
     expect(screen.queryByTestId("vc-agree")).toBeNull();

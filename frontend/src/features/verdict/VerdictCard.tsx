@@ -3,7 +3,8 @@ import { BackFace } from "./BackFace";
 import { FrontFace } from "./FrontFace";
 import { useTurnOver } from "./useTurnOver";
 import { WalkingState } from "./WalkingState";
-import { activeFlip, activeRule, agreementShare, exploredCount, originalVerdict } from "./verdictModel";
+import { agreementHeadline } from "./agreementHeadline";
+import { activeFlip, activeRule, exploredCount, originalVerdict } from "./verdictModel";
 import "./verdict.css";
 import "./verdictBack.css";
 import "./verdictWalking.css";
@@ -16,7 +17,7 @@ export function VerdictCard({ snapshot }: Props) {
   const verdict = originalVerdict(snapshot);
   const flip = activeFlip(snapshot);
   const [turned, toggle] = useTurnOver(flip !== null);
-  const share = agreementShare(snapshot);
+  const share = agreementHeadline(snapshot);
 
   if (verdict === null) {
     return (
@@ -29,9 +30,13 @@ export function VerdictCard({ snapshot }: Props) {
   return (
     <section className="vc" aria-label="Verdict" data-state={flip ? (turned ? "flipped" : "found") : "original"}>
       {share && (
-        <p className="vc-agree" data-testid="vc-agree">
-          <span className="mono vc-agree__n">{share.agree}</span> of <span className="mono">{share.total}</span> paths agree
-        </p>
+        <div className="vc-agree" data-testid="vc-agree" data-inconclusive={share.inconclusive}>
+          <p className="vc-agree__line">
+            <span className="mono vc-agree__n">{share.agree}</span> of <span className="mono">{share.total}</span> {share.verb}
+            {share.suffix}
+          </p>
+          {share.pLine && <p className="vc-agree__p">{share.pLine}</p>}
+        </div>
       )}
       <div className="vc-inner" data-turned={flip !== null && turned}>
         <FrontFace snapshot={snapshot} verdict={verdict} hidden={turned && flip !== null} />

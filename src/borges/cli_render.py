@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from borges.analysis.models import AnalysisResult, CodingSummary
+from borges.analysis.models import AnalysisResult, CodingSummary, DecisionRule
+from borges.cli_inconclusive import (
+    inconclusive_clause,
+    is_inconclusive,
+    smallest_p,
+    snapshot_rule,
+)
 from borges.garden.models import Flip, Report, SearchSummary
 from borges.llm.local_models import LOCAL_LABEL
 from borges.runs.models import RunSnapshot, UniverseDetail
@@ -55,13 +61,22 @@ BASIS_LABELS = {
 }
 
 
-def robustness_line(report: Report) -> str:
+def robustness_line(
+    report: Report, rule: DecisionRule | None = None, min_p: float | None = None
+) -> str:
     distinct = report.n_distinct_results or report.n_universes
-    line = (
-        f"Robustness: {report.robustness:.0%} ({BASIS_LABELS[report.robustness_basis]}); "
+    counts = (
         f"{report.n_universes} universes explored, {distinct} distinct results, "
         f"{report.n_flipped} flipped"
     )
+    if is_inconclusive(report.original_verdict, report.original_result, rule):
+        agree = max(0, report.n_universes - report.n_flipped)
+        alpha = rule.alpha if rule is not None else 0.05
+        clause = inconclusive_clause(min_p, alpha, agree, report.n_universes)
+        line = f"Robustness: {clause}; {counts}"
+    else:
+        basis = BASIS_LABELS[report.robustness_basis]
+        line = f"Robustness: {report.robustness:.0%} ({basis}); {counts}"
     if report.n_failed:
         line += (
             f"; {report.n_failed} more failed and are untested "
@@ -121,7 +136,7 @@ def summary_lines(snapshot: RunSnapshot) -> list[str]:
                 if report.n_universes <= 1
                 else "Smallest flip found: none within the search budget"
             )
-        lines.append(robustness_line(report))
+        lines.append(robustness_line(report, snapshot_rule(snapshot), smallest_p(snapshot.garden)))
         if report.n_failed:
             lines.append(
                 f"  {report.n_universes + report.n_failed} explored, "

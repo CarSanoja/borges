@@ -193,8 +193,26 @@
   color: var(--paper-100);
 }
 
+.vc-agree__line {
+  margin: 0;
+}
+
 .vc-agree__n {
   color: var(--verdigris);
+}
+
+.vc-agree[data-inconclusive="true"] .vc-agree__n {
+  color: var(--paper-300);
+}
+
+.vc-agree__p {
+  margin: 4px 0 0;
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.vc-robust[data-inconclusive="true"] .vc-robust__fill {
+  background: var(--paper-500);
 }
 
 .vc--holding {
