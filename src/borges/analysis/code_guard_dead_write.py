@@ -11,8 +11,18 @@ that does not read it, with nothing reading the column in between, is reported.
 from __future__ import annotations
 
 import ast
+import re
+
+from borges.analysis.models import AnalysisPlan, Step
 
 ROW_INDEXERS = ("loc", "at", "iloc", "iat")
+FILLS = ("fillna", "combine_first", "where", "mask", "insert", "interpolate", "ffill", "bfill")
+WORD = re.compile(r"[A-Za-z_]\w*")
+ONLY_NAMED = (
+    "column '{column}' is created only by setting rows named one by one (line {line}), so every "
+    "other row has no value; assign the whole column from its computation first and set those "
+    "rows after it"
+)
 MESSAGE = (
     "line {first} sets column '{column}' for some rows, and line {second} assigns the whole column "
     "without reading it, so the rows set on line {first} lose their value; build the whole column "
@@ -86,4 +96,74 @@ def dead_write_violations(code: str) -> list[str]:
             block = getattr(node, field, None)
             if isinstance(block, list) and block and isinstance(block[0], ast.stmt):
                 found.extend(_block(block))
+    return found
+
+
+def _literal_rows(rows: ast.expr) -> bool:
+    """A selector like df['id'] == 15 or df['id'].isin([15, 16])."""
+    if isinstance(rows, ast.Compare) and len(rows.ops) == 1 and isinstance(rows.ops[0], ast.Eq):
+        return isinstance(rows.comparators[0], ast.Constant)
+    if isinstance(rows, ast.Call) and isinstance(rows.func, ast.Attribute):
+        values = rows.args[0] if rows.func.attr == "isin" and rows.args else None
+        return isinstance(values, ast.List | ast.Tuple | ast.Set) and all(
+            isinstance(v, ast.Constant) for v in values.elts
+        )
+    return False
+
+
+def _named_row_writes(tree: ast.AST) -> dict[str, list[tuple[int, bool]]]:
+    found: dict[str, list[tuple[int, bool]]] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            hit = _frame_and_column(target)
+            if hit is None or hit[2]:
+                continue
+            assert isinstance(target, ast.Subscript) and isinstance(target.slice, ast.Tuple)
+            named = _literal_rows(target.slice.elts[0])
+            found.setdefault(hit[1], []).append((node.lineno, named))
+    return found
+
+
+def _filled(tree: ast.AST, column: str) -> bool:
+    """A whole-column write, an .assign or .insert of it, or a fill call that names it."""
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                hit = _frame_and_column(target)
+                if hit is not None and hit[1] == column and hit[2]:
+                    return True
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if node.func.attr == "assign" and any(k.arg == column for k in node.keywords):
+                return True
+            if node.func.attr in FILLS and any(
+                isinstance(n, ast.Constant) and n.value == column for n in ast.walk(node)
+            ):
+                return True
+    return False
+
+
+def _known(plan: AnalysisPlan, step: Step) -> set[str]:
+    known = {c.name for c in plan.dataset.columns}
+    for earlier in plan.steps[: plan.steps.index(step)]:
+        known |= set(earlier.produces)
+        for option in earlier.options:
+            known |= set(WORD.findall(f"{option.spec}\n{option.code or ''}"))
+    return known
+
+
+def named_rows_only_violations(code: str, plan: AnalysisPlan, step: Step) -> list[str]:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return []
+    known = _known(plan, step) if step in plan.steps else set()
+    found = []
+    for column, writes in _named_row_writes(tree).items():
+        if column in known or not all(named for _, named in writes):
+            continue
+        if _filled(tree, column):
+            continue
+        found.append(ONLY_NAMED.format(column=column, line=min(line for line, _ in writes)))
     return found
