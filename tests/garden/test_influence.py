@@ -19,8 +19,8 @@ async def test_decision_influence_sorted_by_max_delta() -> None:
     rows = decision_influence(plan, garden)
     assert [r.step_id for r in rows] == ["s3", "s2", "s1"]
     s3 = rows[0]
-    assert s3.max_abs_delta == pytest.approx(2.0)
-    assert s3.mean_abs_delta == pytest.approx(1.15)
+    assert s3.max_abs_delta == pytest.approx(2.1)
+    assert s3.mean_abs_delta == pytest.approx(1.2)
     assert s3.flips == 1 and s3.n_alternatives == 2
     assert rows[1].flips == 1 and rows[1].n_alternatives == 1
     assert rows[2].flips == 0 and rows[2].title == "Filter"

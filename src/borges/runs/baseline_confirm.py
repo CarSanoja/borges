@@ -22,8 +22,9 @@ from borges.analysis.row_key import row_key
 from borges.garden.models import ReferenceCheck, Universe
 from borges.gateway.errors import GatewayDenied
 from borges.llm.client import LLMError
-from borges.runs.baseline_evidence import fit_difference
-from borges.runs.baseline_lost import Lost, lost_defaults, restore, withdraw_departures
+from borges.runs.baseline_dropped import located_difference
+from borges.runs.baseline_fix_apply import closing_fixes
+from borges.runs.baseline_lost import Lost, lost_defaults, withdraw_departures
 from borges.runs.baseline_reference import agreed_reference, describe, same_result
 from borges.runs.pipeline_caveats import GAP_PREFIX
 from borges.runtime.stage_checkpoints import CODED_KEY, coded_payload
@@ -137,7 +138,9 @@ async def _repair(
     for _ in range(MAX_FIX_ROUNDS):
         assert current.result is not None
         dropped = {k[0]: (v.option, v.error) for k, v in lost.items() if v not in restored}
-        evidence = fit_difference(data, row_key(plan.dataset), current, fit)
+        evidence = await located_difference(
+            pipeline.executor, plan, data, row_key(plan.dataset), current, fit
+        )
         try:
             fixes = await propose_fixes(
                 pipeline.llm, plan, current.traces, current.result, theirs, code, dropped, evidence
@@ -146,17 +149,9 @@ async def _repair(
             fixes = []
         if not fixes:
             break
-        for fix in fixes:
-            step = plan.step(fix.step_id)
-            if all(o.id != fix.option_id for o in step.options):
-                restore(plan, lost[(fix.step_id, fix.option_id)], fix.code, fix.spec)
-                restored.append(lost[(fix.step_id, fix.option_id)])
-                continue
-            option = step.option(fix.option_id)
-            option.code = fix.code
-            option.spec = fix.spec or option.spec
-        applied.extend(fixes)
-        candidate = await rerun(plan.default_choices())
+        candidate, kept, brought_back = await closing_fixes(plan, fixes, lost, rerun, theirs)
+        applied.extend(kept)
+        restored.extend(brought_back)
         if candidate.result is None:
             break
         current = candidate

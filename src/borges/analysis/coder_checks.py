@@ -15,6 +15,7 @@ from borges.analysis.code_guard_ctx_spec import (
 )
 from borges.analysis.code_guard_ctx_unset import unset_ctx_violations
 from borges.analysis.code_guard_ctx_value import ctx_value_violations
+from borges.analysis.code_guard_dead_write import dead_write_violations
 from borges.analysis.code_guard_interval import interval_level_violations
 from borges.analysis.code_guard_missing import missing_violations
 from borges.analysis.code_guard_mode import empty_mode_violations
@@ -52,6 +53,7 @@ def option_violations(code: str, plan: AnalysisPlan, step: Step, option: Option)
             *row_scale_violations(code),
             *row_filter_violations(code, option.spec),
             *covariate_id_violations(code, plan.dataset),
+            *dead_write_violations(code),
         ]
     return [
         *found,

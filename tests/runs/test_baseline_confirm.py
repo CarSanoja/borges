@@ -260,3 +260,20 @@ async def test_a_restored_option_that_does_not_close_the_gap_is_taken_out_again(
     assert p.search.reference == "disagrees"
     assert [o.id for o in plan.step("d1").options] == ["trim"]
     assert departures[0] in p.caveats
+
+
+async def test_a_right_fix_is_kept_when_a_wrong_one_comes_with_it(monkeypatch) -> None:
+    """A replay of run 28's repair on 7 October: the cycle-day fix was right, and the same answer
+    replaced the window filter's code with it."""
+    right = Fix(step_id="d1", option_id="keep", problem="hand-set days wiped", code=FIXED)
+    wrong = Fix(step_id="m1", option_id="ols", problem="precedence", code="def fit(df, ctx): 0")
+    rerun = script(
+        monkeypatch, [PUBLISHED, PUBLISHED], fixes=[[right, wrong]], reruns=[OTHER, PUBLISHED]
+    )
+    p, plan = pipeline(), analysis_plan()
+    before = plan.step("m1").option("ols").code
+    out = await confirm_baseline(p, plan, universe(WRONG), rerun)
+    assert out.result == PUBLISHED and p.search.reference == "repaired"
+    assert plan.step("d1").option("keep").code == FIXED
+    assert plan.step("m1").option("ols").code == before
+    assert "hand-set days wiped" in p.caveats[0] and "precedence" not in p.caveats[0]

@@ -38,6 +38,10 @@ doing what its spec says: it becomes the step's default again. fit_difference, w
 names by their row key the raw rows the reference fits and the step-by-step code does not (and \
 the reverse), with their raw values, and gives the mean of every design column in both fits: \
 use it to find the step that drops or keeps those rows, or builds a column with another coding. \
+Its where_the_step_by_step_code_loses_them reads the step-by-step code's own data after each \
+step: the step after which those rows are gone, and the values earlier steps built for them just \
+before it. A built value that is missing or differs from what its step's spec gives for those \
+rows points at the step that built it, not at the step that then dropped them. \
 Change nothing else."""
 
 

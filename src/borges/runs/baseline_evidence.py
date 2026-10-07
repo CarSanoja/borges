@@ -19,8 +19,13 @@ from borges.garden.models import Universe
 SHOWN = 8
 
 
+def as_text(frame: pd.DataFrame) -> list[dict[str, str]]:
+    shown = frame.astype(object).where(frame.notna(), "missing")
+    return [{str(k): str(v) for k, v in row.items()} for row in shown.to_dict("records")]
+
+
 def _rows(frame: pd.DataFrame, names: pd.Series, keys: list[str]) -> list[dict[str, str]]:
-    return frame[names.isin(keys[:SHOWN])].astype(str).to_dict("records")
+    return as_text(frame[names.isin(keys[:SHOWN])])
 
 
 def fit_difference(

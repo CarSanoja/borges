@@ -93,7 +93,7 @@ async def test_minimal_flip_prefers_fewest_changes_then_defensibility_then_move(
     assert flip.changes[0].to_option == "o"
     assert flip.baseline_verdict == "SHIP" and flip.flipped_verdict == "DON'T SHIP"
     assert flip.baseline_result.estimate == pytest.approx(1.0)
-    assert flip.flipped_result.estimate == pytest.approx(-1.0)
+    assert flip.flipped_result.estimate == pytest.approx(-1.1)
     assert flip.kind == "direction"
 
 

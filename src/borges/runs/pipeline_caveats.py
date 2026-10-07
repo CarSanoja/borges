@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.garden.degenerate import DEGENERATE_REASON
+from borges.garden.mirror import MIRROR_REASON
 from borges.garden.models import Flip, Report
 from borges.garden.plausibility import IMPLAUSIBLE_REASON
 
@@ -73,6 +74,13 @@ def report_caveats(
             f"{degenerate} universes gave a fit that cannot be estimated on this data (an interval "
             "over 100 times wider than the baseline's, as with separation in a logistic model) and "
             "were left out, not counted as flips."
+        )
+    reversed_coding = sum(1 for line in report.failed if line.startswith(MIRROR_REASON))
+    if reversed_coding:
+        caveats.append(
+            f"{reversed_coding} universes gave the starting point's result with its sign reversed "
+            "on the same rows with the same p-value: their options code the other group as 1, "
+            "the same analysis, so they were left out and not counted as flips."
         )
     mirrored = mirror_caveat(flip, threshold)
     if mirrored:

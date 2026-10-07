@@ -27,7 +27,7 @@ EFFECTS: dict[tuple[str, str], float] = {
     ("s1", "b"): -0.5,
     ("s2", "y"): -1.2,
     ("s3", "n"): -0.3,
-    ("s3", "o"): -2.0,
+    ("s3", "o"): -2.1,
 }
 BASE_ESTIMATE = 1.0
 HALF_WIDTH = 0.2
