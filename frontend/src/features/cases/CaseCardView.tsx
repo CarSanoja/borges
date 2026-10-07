@@ -49,6 +49,12 @@ export function CaseCardView({ card, liveAvailable, onOpenRun, onOpenReplay }: P
       {liveOnly && !card.live_recording && <p className="case-live-only">Needs live mode: runs only with a Nemotron key</p>}
       <h3 className="case-title">{card.title}</h3>
       <p className="case-question">{card.question}</p>
+      {card.analysis && (
+        <details className="case-analysis">
+          <summary>Starts from the published analysis</summary>
+          <p>{card.analysis}</p>
+        </details>
+      )}
       <dl className="case-meta">
         <div>
           <dt>Decision rule</dt>

@@ -48,3 +48,17 @@ describe("RunHeader provenance", () => {
     expect(screen.queryByTestId("provenance-chip")).toBeNull();
   });
 });
+
+describe("RunHeader starting analysis", () => {
+  it("shows the analysis the run kept as the original", () => {
+    const plan = snapshot.plan ? { ...snapshot.plan, analysis: "OLS of y on x, days 7 to 14" } : null;
+    render(<RunHeader snapshot={{ ...snapshot, plan }} onHome={() => undefined} />);
+    expect(screen.getByText("Starting analysis, kept as the original")).toBeInTheDocument();
+    expect(screen.getByText("OLS of y on x, days 7 to 14")).toBeInTheDocument();
+  });
+
+  it("has no starting analysis line for an ordinary run", () => {
+    render(<RunHeader snapshot={snapshot} onHome={() => undefined} />);
+    expect(screen.queryByText("Starting analysis, kept as the original")).toBeNull();
+  });
+});

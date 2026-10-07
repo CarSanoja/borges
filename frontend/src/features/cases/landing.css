@@ -317,3 +317,17 @@
   border-left: 2px solid var(--gold);
   padding-left: var(--space-3);
 }
+
+.case-analysis {
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+}
+
+.case-analysis summary {
+  cursor: pointer;
+}
+
+.case-analysis p {
+  margin-top: var(--space-2);
+  overflow-wrap: anywhere;
+}

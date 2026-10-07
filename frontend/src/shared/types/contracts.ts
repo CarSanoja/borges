@@ -61,6 +61,7 @@ export interface AnalysisPlan {
   decision_rule: DecisionRule;
   dataset: DatasetProfile;
   steps: Step[];
+  analysis?: string;
 }
 
 export interface AnalysisResult {
@@ -150,6 +151,7 @@ export interface CodingSummary {
   options_dropped_by_judge?: number;
   defaults_replaced?: string[];
   defaults_disputed?: string[];
+  defaults_kept?: string[];
   options_dropped_by_armor?: number;
 }
 
@@ -262,6 +264,7 @@ export interface CaseCard {
   traced_sources?: RecordingSource[];
   live_recording?: LiveRecordingSummary | null;
   recording_meta?: Partial<Record<RecordingSource, RecordingStamp>>;
+  analysis?: string;
 }
 
 export type StageName =

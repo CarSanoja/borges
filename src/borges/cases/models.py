@@ -32,6 +32,7 @@ class CaseSpec(BaseModel):
     owner: str = "borges-core"
     provenance: str = ""
     column_notes: dict[str, str] = Field(default_factory=dict)
+    analysis: str = ""
 
 
 class ResultBrief(BaseModel):
@@ -78,3 +79,4 @@ class CaseCard(BaseModel):
     traced_sources: list[str] = Field(default_factory=list)
     live_recording: LiveRecordingSummary | None = None
     recording_meta: dict[str, RecordingStamp] = Field(default_factory=dict)
+    analysis: str = ""

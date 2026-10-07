@@ -274,3 +274,18 @@
   display: flex;
   justify-content: flex-end;
 }
+
+.run-analysis {
+  font-size: var(--text-sm);
+  color: var(--paper-300);
+  margin-top: var(--space-2);
+}
+
+.run-analysis summary {
+  cursor: pointer;
+}
+
+.run-analysis p {
+  margin-top: var(--space-2);
+  overflow-wrap: anywhere;
+}

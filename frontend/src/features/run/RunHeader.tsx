@@ -22,6 +22,12 @@ export function RunHeader({ snapshot, onHome, traceRunId = null, provenance = nu
       <div className="run-header__body">
         <h1 className="run-title">{snapshot.title || "Opening the garden"}</h1>
         <p className="run-question">{snapshot.question}</p>
+        {snapshot.plan?.analysis && (
+          <details className="run-analysis">
+            <summary>Starting analysis, kept as the original</summary>
+            <p>{snapshot.plan.analysis}</p>
+          </details>
+        )}
       </div>
       <div className="run-header__meta">
         {mode && <span className="chip chip--mode">{mode}</span>}
