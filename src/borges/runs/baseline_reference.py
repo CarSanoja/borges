@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import math
+from dataclasses import dataclass, field
 
 from borges.analysis.models import AnalysisPlan, AnalysisResult, Option, Step
 from borges.analysis.reference_writer import write_reference
@@ -60,3 +62,39 @@ async def reference_result(
             return result, code
         feedback = (error or "it failed")[:FEEDBACK_CHARS]
     return None, feedback or ""
+
+
+@dataclass
+class References:
+    results: list[tuple[AnalysisResult, str]] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+    @property
+    def agreed(self) -> tuple[AnalysisResult, str] | None:
+        for i, (result, code) in enumerate(self.results):
+            if any(same_result(result, other) for other, _ in self.results[i + 1 :]):
+                return result, code
+        return None
+
+
+async def agreed_reference(
+    llm: LLMClient, executor: GardenExecutor | None, plan: AnalysisPlan
+) -> References:
+    """Two implementations, and a third when they disagree or one fails."""
+    assert executor is not None
+    found = References()
+
+    def keep(outcome: tuple[AnalysisResult | None, str]) -> None:
+        result, text = outcome
+        if result is None:
+            found.errors.append(text)
+        else:
+            found.results.append((result, text))
+
+    for outcome in await asyncio.gather(
+        reference_result(llm, executor, plan, 1), reference_result(llm, executor, plan, 2)
+    ):
+        keep(outcome)
+    if found.agreed is None:
+        keep(await reference_result(llm, executor, plan, 3))
+    return found

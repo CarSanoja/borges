@@ -11,7 +11,10 @@ where df is the raw data as profiled and ctx is a dict you may ignore. Return a 
 keys estimate, ci_low, ci_high, p_value and n: the coefficient or difference the decision rule's \
 metric names, its 95% confidence interval and p-value, and the number of rows the model used. \
 Do every step the analysis says, in the way it says, and nothing it does not say: no other \
-exclusion, imputation, covariate, recoding or transformation. Code 0/1 indicators as 0 and 1. \
+exclusion, imputation, covariate, recoding or transformation. Keep every row the analysis keeps: \
+drop a row only where the analysis drops it or where the model cannot use a missing value, and \
+when the analysis gives a value by hand for some rows (for rows whose inputs are missing, say), \
+set that value after computing the others and keep those rows. Code 0/1 indicators as 0 and 1. \
 If the fit fails, raise a ValueError; never return fixed numbers in its place. Import only \
 pandas, numpy, statsmodels and scipy: no other module, not even datetime or math (use pandas for \
 dates, e.g. pd.to_timedelta and .dt.days, and numpy for arithmetic). No file, network or system \

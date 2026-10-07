@@ -10,6 +10,7 @@ from borges.analysis.reference_writer import Fix
 from borges.garden.models import SearchSummary, Universe
 from borges.runs import baseline_confirm
 from borges.runs.baseline_confirm import confirm_baseline
+from borges.runs.baseline_reference import References
 from borges.runs.judged_ledger import JudgedLedger
 from tests.analysis.fakes import make_plan
 
@@ -49,42 +50,50 @@ def analysis_plan():
     return plan
 
 
-def script(monkeypatch, references, fixes=(), reruns=()) -> list[dict[str, str]]:
-    queue, fix_queue, rerun_queue = list(references), list(fixes), list(reruns)
+def script(monkeypatch, references, fixes=(), reruns=()):
+    """references: the results of the implementations that ran, None for one that failed."""
+    fix_queue, rerun_queue = list(fixes), list(reruns)
     ran: list[dict[str, str]] = []
 
-    async def reference(llm, executor, plan, attempt):
-        return queue.pop(0), f"code {attempt}"
+    async def found(llm, executor, plan):
+        out = References()
+        for i, result in enumerate(references):
+            if result is None:
+                out.errors.append(f"implementation {i + 1} failed")
+            else:
+                out.results.append((result, f"code {i + 1}"))
+        return out
 
     async def propose(llm, plan, traces, ours, theirs, code):
         return fix_queue.pop(0) if fix_queue else []
 
-    monkeypatch.setattr(baseline_confirm, "reference_result", reference)
+    monkeypatch.setattr(baseline_confirm, "agreed_reference", found)
     monkeypatch.setattr(baseline_confirm, "propose_fixes", propose)
 
     async def rerun(choices):
         ran.append(dict(choices))
         return universe(rerun_queue.pop(0))
 
-    ran_fn = rerun
-    ran_fn.calls = ran
-    return ran_fn
+    rerun.calls = ran
+    return rerun
 
 
-async def test_a_matching_implementation_confirms_the_starting_point(monkeypatch) -> None:
-    rerun = script(monkeypatch, [PUBLISHED])
+async def test_two_implementations_that_match_the_baseline_confirm_it(monkeypatch) -> None:
+    rerun = script(monkeypatch, [PUBLISHED, PUBLISHED])
     p = pipeline()
     out = await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
     assert out.result == PUBLISHED and p.search.reference == "agrees" and p.caveats == []
 
 
-async def test_a_second_implementation_that_sides_with_the_baseline_confirms_it(
+async def test_an_implementation_that_copies_the_baseline_does_not_outvote_two_others(
     monkeypatch,
 ) -> None:
-    rerun = script(monkeypatch, [OTHER, PUBLISHED])
+    fix = Fix(step_id="d1", option_id="keep", problem="kept the two hand-set rows", code=FIXED)
+    rerun = script(monkeypatch, [PUBLISHED, WRONG, PUBLISHED], fixes=[[fix]], reruns=[PUBLISHED])
     p = pipeline()
-    await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
-    assert p.search.reference == "agrees" and p.caveats == []
+    out = await confirm_baseline(p, analysis_plan(), universe(WRONG), rerun)
+    assert out.result == PUBLISHED and p.search.reference == "repaired"
+    assert p.search.reference_results == [PUBLISHED, WRONG, PUBLISHED]
 
 
 async def test_two_agreeing_implementations_repair_the_step_that_departs(monkeypatch) -> None:
@@ -109,11 +118,19 @@ async def test_a_repair_that_does_not_close_the_gap_is_undone(monkeypatch) -> No
     assert "does not match your analysis" in p.caveats[0] and len(rerun.calls) == 2
 
 
-async def test_three_different_results_are_reported_as_unresolved(monkeypatch) -> None:
-    rerun = script(monkeypatch, [PUBLISHED, OTHER])
+async def test_implementations_that_never_agree_are_reported_as_unresolved(monkeypatch) -> None:
+    rerun = script(monkeypatch, [PUBLISHED, OTHER, WRONG])
     p = pipeline()
     await confirm_baseline(p, analysis_plan(), universe(WRONG), rerun)
     assert p.search.reference == "unresolved" and "could not be confirmed" in p.caveats[0]
+    assert "-1.6230" in p.caveats[0] and "n 344" in p.caveats[0]
+
+
+async def test_one_implementation_alone_does_not_confirm_the_baseline(monkeypatch) -> None:
+    rerun = script(monkeypatch, [PUBLISHED, None, None])
+    p = pipeline()
+    await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
+    assert p.search.reference == "unresolved"
 
 
 @pytest.mark.parametrize("analysis", ["", "the published analysis"])
@@ -128,10 +145,10 @@ async def test_no_analysis_or_a_failed_baseline_is_left_alone(monkeypatch, analy
 
 
 async def test_an_implementation_that_cannot_run_is_reported(monkeypatch) -> None:
-    rerun = script(monkeypatch, [None])
+    rerun = script(monkeypatch, [None, None, None])
     p = pipeline()
     await confirm_baseline(p, analysis_plan(), universe(PUBLISHED), rerun)
-    assert p.search.reference == "unchecked" and "was not checked" in p.caveats[0]
+    assert p.search.reference == "unchecked" and "implementation 1 failed" in p.caveats[0]
 
 
 async def test_a_denied_repair_reports_the_mismatch_and_changes_nothing(monkeypatch) -> None:
@@ -158,7 +175,7 @@ async def test_an_error_while_writing_leaves_the_run_as_it_was(monkeypatch) -> N
     async def broken(*_args):
         raise LLMError("budget for this run is spent")
 
-    monkeypatch.setattr(baseline_confirm, "reference_result", broken)
+    monkeypatch.setattr(baseline_confirm, "agreed_reference", broken)
     p = pipeline()
     base = universe(PUBLISHED)
     assert await confirm_baseline(p, analysis_plan(), base, rerun) is base
@@ -166,7 +183,7 @@ async def test_an_error_while_writing_leaves_the_run_as_it_was(monkeypatch) -> N
 
 
 async def test_a_confirmed_starting_point_withdraws_the_planner_s_doubts(monkeypatch) -> None:
-    rerun = script(monkeypatch, [PUBLISHED])
+    rerun = script(monkeypatch, [PUBLISHED, PUBLISHED])
     doubt = (
         "The starting point may not be exactly your analysis, so read the original result with "
         "care: step7: the analysis says model SEs."

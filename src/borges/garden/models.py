@@ -95,6 +95,7 @@ class SearchSummary(BaseModel):
     budget_exhausted: bool = False
     sample_draws: int = 0
     reference: ReferenceCheck | None = None
+    reference_results: list[AnalysisResult] = Field(default_factory=list)
 
 
 class Report(BaseModel):

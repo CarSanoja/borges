@@ -1,11 +1,14 @@
 """Check the starting point against independent implementations of the user's analysis.
 
-On a run from the user's own analysis, a second model writes the whole analysis as one script and
-it is run on the raw data. If its result matches the step-by-step baseline, the starting point is
-confirmed. If not, a second script breaks the tie: when it sides with the baseline, the first
-script was wrong; when the two scripts agree with each other, the step-by-step code is wrong, and
-the steps that depart from the analysis are repaired against it, twice at most. Each outcome is
-reported; a repair that breaks the baseline is undone. See `analysis/reference_writer.py`.
+On a run from the user's own analysis, a second model writes the whole analysis as one script, twice
+and independently, and each script is run on the raw data. The baseline is what is under test, so
+it never votes: two scripts that agree with each other are the reference, and a third is written
+when the first two disagree or one fails. A reference equal to the baseline confirms it; a
+different one means the step-by-step code departs from the analysis, and the steps that depart are
+repaired against the reference, twice at most. Each outcome is reported; a repair that does not
+reach the reference is undone. Run 14 of fertility_vote on 7 October is why the baseline does not
+vote: the first script was right, the second copied the baseline's mistake (two participants
+dropped), and a two-of-three vote counting the baseline confirmed the wrong starting point.
 """
 
 from __future__ import annotations
@@ -18,7 +21,7 @@ from borges.analysis.reference_writer import Fix, propose_fixes
 from borges.garden.models import ReferenceCheck, Universe
 from borges.gateway.errors import GatewayDenied
 from borges.llm.client import LLMError
-from borges.runs.baseline_reference import describe, reference_result, same_result
+from borges.runs.baseline_reference import agreed_reference, describe, same_result
 from borges.runs.pipeline_caveats import GAP_PREFIX
 from borges.runtime.stage_checkpoints import CODED_KEY, coded_payload
 
@@ -39,8 +42,8 @@ DISAGREES = (
     "repairing the steps did not close the gap. Read the original result with care."
 )
 UNRESOLVED = (
-    "The starting point could not be confirmed: the step-by-step code gives {ours} and two "
-    "independent implementations of your analysis gave {first} and {second}."
+    "The starting point could not be confirmed: the step-by-step code gives {ours}, and no two "
+    "independent implementations of your analysis agreed with each other ({listed})."
 )
 CONFIRMED_GAPS = (
     "Before the code was written, a comparison of the plan with your analysis listed {n} possible "
@@ -90,30 +93,23 @@ async def confirm_baseline(
 async def _confirm(
     pipeline: Pipeline, plan: AnalysisPlan, baseline: Universe, rerun: RunBaseline, saved: Snapshot
 ) -> Universe:
-    executor = pipeline.executor
-    assert executor is not None and baseline.result is not None
+    assert baseline.result is not None
     ours = baseline.result
-    first, code = await reference_result(pipeline.llm, executor, plan, 1)
-    if first is None:
+    found = await agreed_reference(pipeline.llm, pipeline.executor, plan)
+    pipeline.search.reference_results = [result for result, _ in found.results]
+    if found.agreed is None and not found.results:
         pipeline.search.reference = "unchecked"
-        pipeline.caveats.append(UNCHECKED.format(error=" ".join(code.split())[:ERROR_CHARS]))
+        error = " ".join(found.errors[0].split())[:ERROR_CHARS] if found.errors else "no result"
+        pipeline.caveats.append(UNCHECKED.format(error=error))
         return baseline
-    if same_result(ours, first):
-        return _confirmed(pipeline, "agrees", baseline)
-    second, _ = await reference_result(pipeline.llm, executor, plan, 2)
-    if second is not None and same_result(ours, second):
-        return _confirmed(pipeline, "agrees", baseline)
-    if second is None or not same_result(first, second):
+    if found.agreed is None:
         pipeline.search.reference = "unresolved"
-        pipeline.caveats.append(
-            UNRESOLVED.format(
-                ours=describe(ours),
-                first=describe(first),
-                second=describe(second) if second is not None else "no result",
-            )
-        )
+        listed = "; ".join(describe(result) for result, _ in found.results)
+        pipeline.caveats.append(UNRESOLVED.format(ours=describe(ours), listed=listed))
         return baseline
-    return await _repair(pipeline, plan, baseline, rerun, (first, code), saved)
+    if same_result(ours, found.agreed[0]):
+        return _confirmed(pipeline, "agrees", baseline)
+    return await _repair(pipeline, plan, baseline, rerun, found.agreed, saved)
 
 
 async def _repair(
