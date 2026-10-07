@@ -72,27 +72,44 @@ async def test_template_family_reads_the_note() -> None:
 
 
 RETRY_KEY = f"{KEY}:retry"
+RECONSIDER_KEY = f"{KEY}:reconsider"
 
 
 @pytest.mark.parametrize(
-    ("spec", "retried"),
+    ("spec", "asked_again"),
     [
-        ({"supported": False, "reason": "needs a mixed model"}, False),
-        ({**GOOD_SPEC, "exposure": "ghost"}, True),
-        ({**GOOD_SPEC, "report": "odds_ratio"}, True),
-        ({**GOOD_SPEC, "family": "gee"}, False),
-        ({"supported": True}, True),
+        ({"supported": False, "reason": "needs a mixed model"}, RECONSIDER_KEY),
+        ({**GOOD_SPEC, "exposure": "ghost"}, RETRY_KEY),
+        ({**GOOD_SPEC, "report": "odds_ratio"}, RETRY_KEY),
+        ({**GOOD_SPEC, "family": "gee"}, None),
+        ({"supported": True}, RETRY_KEY),
     ],
 )
 async def test_unsupported_or_invalid_spec_falls_back_to_free_code(
-    spec: dict, retried: bool
+    spec: dict, asked_again: str | None
 ) -> None:
     llm = llm_with(spec)
     code, attempts, note = await code_welch(llm)
     assert code == FREE and attempts == 1
     assert note is not None and note.startswith("template skipped: ")
     assert template_family(note) is None
-    assert llm.keys() == ([KEY, RETRY_KEY, FREE_KEY] if retried else [KEY, FREE_KEY])
+    assert llm.keys() == [KEY, *([asked_again] if asked_again else []), FREE_KEY]
+
+
+async def test_a_refusal_is_reconsidered_once_with_the_fields_that_express_it() -> None:
+    refused = {"supported": False, "reason": "mixed models are not supported"}
+    llm = FakeLLM({KEY: refused, RECONSIDER_KEY: GOOD_SPEC})
+    code, _, note = await code_welch(llm)
+    assert note == "template: ols" and "sm.OLS" in code
+    assert llm.keys() == [KEY, RECONSIDER_KEY]
+    asked = llm.calls[1].messages[-1]["content"]
+    assert "mixed models are not supported" in asked and "random_intercept" in asked
+
+
+async def test_a_supported_spec_is_not_reconsidered() -> None:
+    llm = llm_with(GOOD_SPEC)
+    await code_welch(llm)
+    assert llm.keys() == [KEY]
 
 
 async def test_an_invalid_spec_gets_one_corrective_retry_with_its_problems() -> None:

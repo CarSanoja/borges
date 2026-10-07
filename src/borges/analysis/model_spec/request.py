@@ -30,6 +30,7 @@ from borges.analysis.model_spec.normalise import normalise_spec
 from borges.analysis.model_spec.percent_outcome import percent_outcome
 from borges.analysis.model_spec.produced_outcome import produced_before, with_produced_outcome
 from borges.analysis.model_spec.prompt import build_spec_messages, correction
+from borges.analysis.model_spec.refusal import reconsider
 from borges.analysis.model_spec.render import render_code
 from borges.analysis.model_spec.report_for_rule import report_for_rule
 from borges.analysis.model_spec.schema import ModelSpecOutput
@@ -174,6 +175,9 @@ async def request_template(
     spec = await _ask(llm, messages, key, models, skipped)
     if spec is None:
         return None
+    if not spec.supported:
+        again = await _ask(llm, [*messages, *reconsider(spec)], f"{key}:reconsider", models, None)
+        spec = again if again is not None and again.supported else spec
     spec = tidy(spec)
     if ignored_interaction(spec, option):
         _skip(skipped, SKIP)
