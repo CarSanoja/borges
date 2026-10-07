@@ -158,3 +158,18 @@
 .vc-search[data-exhausted="true"] .vc-search__budget {
   color: var(--gold);
 }
+
+.vc-start {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  max-width: 46ch;
+}
+
+.vc-start__label {
+  font-weight: 600;
+  color: var(--verdigris);
+}
+
+.vc-start[data-tone="warn"] .vc-start__label {
+  color: var(--vermilion);
+}

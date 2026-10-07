@@ -135,12 +135,15 @@ export interface DecisionInfluence {
   n_alternatives: number;
 }
 
+export type ReferenceCheck = "agrees" | "repaired" | "disagrees" | "unresolved" | "unchecked";
+
 export interface SearchSummary {
   levels_explored: number;
   max_combinations_per_level: number;
   universe_budget: number;
   universes_used: number;
   budget_exhausted: boolean;
+  reference?: ReferenceCheck | null;
 }
 
 export interface CodingSummary {

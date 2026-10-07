@@ -2,6 +2,7 @@ import type { RunSnapshot } from "../../shared/types/contracts";
 import { effectRange } from "./flipKind";
 import { isInconclusive } from "./agreementHeadline";
 import { SearchNote } from "./SearchNote";
+import { StartingPoint } from "./StartingPoint";
 import { ResultStats } from "./ResultStats";
 import { Robustness } from "./Robustness";
 import { activeFlip, activeRule, exploredCount, originalResult } from "./verdictModel";
@@ -36,6 +37,7 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
       <h2 className="vc-verdict vc-verdict--gold">{verdict}</h2>
       {result && <ResultStats result={result} tone="gold" threshold={rule?.threshold ?? 0} />}
       {rule && <p className="vc-rule">{ruleInWords(rule)}</p>}
+      <StartingPoint check={snapshot.report?.search?.reference} />
       {flip && !hidden && <p className="vc-hint">Borges found a fork that changes this verdict.</p>}
       {clean && <p className="vc-clean">No defensible flip found</p>}
       {untested && (
