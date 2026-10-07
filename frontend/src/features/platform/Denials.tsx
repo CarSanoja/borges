@@ -23,26 +23,16 @@ export function Denials({ facts }: { facts: Record<string, unknown> }) {
   return (
     <div className="platform-denials" data-testid="recent-denials">
       <p className="platform-verify__label">Recent denials</p>
-      <table>
-        <thead>
-          <tr>
-            <th scope="col">Rule</th>
-            <th scope="col">Agent</th>
-            <th scope="col">Reason</th>
-            <th scope="col">Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, index) => (
-            <tr key={row.seq ?? index}>
-              <td className="mono">{row.kind ?? "unknown"}</td>
-              <td className="mono">{row.principal ?? "unknown"}</td>
-              <td>{row.reason ?? row.route ?? "no reason recorded"}</td>
-              <td className="mono">{when(row.ts)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul className="platform-denials__list">
+        {rows.map((row, index) => (
+          <li className="platform-denials__item" key={row.seq ?? index}>
+            <span className="platform-denials__rule mono">{row.kind ?? "unknown"}</span>
+            <span className="platform-denials__agent mono">{row.principal ?? "unknown"}</span>
+            <span className="platform-denials__reason">{row.reason ?? row.route ?? "no reason recorded"}</span>
+            <time className="platform-denials__time mono">{when(row.ts)}</time>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

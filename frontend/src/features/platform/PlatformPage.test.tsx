@@ -52,4 +52,24 @@ describe("PlatformPage", () => {
     expect(block).toHaveTextContent(/2026-10-0[34] \d\d:19:56/);
     expect(block).not.toHaveTextContent("unknown");
   });
+
+  it("renders the denials as stacked rows, not a table", async () => {
+    const data = samplePlatform();
+    const identity = data.pillars.find((p) => p.id === "identity")!;
+    identity.facts.recent_denials = [
+      { seq: 1, ts: "2026-10-03T20:19:56+00:00", kind: "armor.screen", principal: "caller://anonymous", reason: "prompt injection pattern" },
+      { seq: 2, ts: "2026-10-03T20:20:56+00:00", kind: "armor.screen", principal: "agent://coder", reason: "oversized body" },
+    ];
+    respond(data);
+    render(<PlatformPage />);
+    const block = await screen.findByTestId("recent-denials");
+    expect(block.querySelector("table")).toBeNull();
+    const items = block.querySelectorAll("ul.platform-denials__list > li.platform-denials__item");
+    expect(items).toHaveLength(2);
+    const first = items[0]!;
+    expect(first.querySelector(".platform-denials__rule")).toHaveTextContent("armor.screen");
+    expect(first.querySelector(".platform-denials__agent")).toHaveTextContent("caller://anonymous");
+    expect(first.querySelector(".platform-denials__reason")).toHaveTextContent("prompt injection pattern");
+    expect(first.querySelector("time.platform-denials__time")).not.toBeNull();
+  });
 });
