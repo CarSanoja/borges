@@ -16,7 +16,9 @@ def test_terms_made_only_of_core_columns_are_core(name: str) -> None:
     assert is_core_term(name, CORE)
 
 
-@pytest.mark.parametrize("name", ["x_squared", "a", "x:a", "log(x)", "xm", "C(a)"])
+@pytest.mark.parametrize(
+    "name", ["x_squared", "a", "x:a", "log(x)", "xm", "C(a)", "x**2", "x/m", "x-m", "I(x**2)"]
+)
 def test_other_terms_are_kept(name: str) -> None:
     assert not is_core_term(name, CORE)
 

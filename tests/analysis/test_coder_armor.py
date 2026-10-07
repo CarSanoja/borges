@@ -83,11 +83,14 @@ async def test_dunder_refusal_in_the_repair_path_is_asked_again_once() -> None:
     )
     plan = make_plan()
     step = plan.step("d1")
-    got = await coder._request_code(llm, plan, step, step.option("keep"), "boom", suffix=":smoke1")
+    error = "KeyError: 'students' | columns available: ['eval', 'beauty']"
+    got = await coder._request_code(llm, plan, step, step.option("keep"), error, suffix=":smoke1")
     assert got == GOOD
     assert llm.keys() == ["coder:d1.keep:smoke1", "coder:d1.keep:smoke1:armor"]
     assert llm.calls[-1].role is Role.REPAIRER
-    assert "__class__" not in llm.calls[-1].messages[1]["content"]
+    content = llm.calls[-1].messages[1]["content"]
+    assert "__class__" not in content
+    assert error in content and "(code.dunder)" in content
 
 
 async def test_a_second_refusal_fails_the_option() -> None:

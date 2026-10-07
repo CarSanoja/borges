@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from borges.analysis.coder_armor import armor_refusal
+from borges.analysis.coder_armor import armor_refusal, complete_code
 from borges.analysis.coder_checks import option_violations
 from borges.analysis.coder_normalise import add_missing_imports, strip_trailing_closer
 from borges.analysis.coder_order import code_in_order
@@ -34,25 +34,15 @@ async def _request_code(
 ) -> str:
     key = f"coder:{step.id}.{option.id}" + (suffix if error is not None else "")
     role = Role.CODER if error is None else Role.REPAIRER
-    try:
-        response = await llm.complete(
-            role,
-            build_messages(plan, step, option, error),
-            key=key,
-            schema=CoderOutput,
-            max_tokens=CODE_TOKENS,
-        )
-    except LLMError as exc:
-        refusal = armor_refusal(exc)
-        if error is None or refusal is None:
-            raise
-        response = await llm.complete(
-            role,
-            build_messages(plan, step, option, refusal),
-            key=f"{key}:armor",
-            schema=CoderOutput,
-            max_tokens=CODE_TOKENS,
-        )
+    response = await complete_code(
+        llm,
+        role,
+        lambda feedback: build_messages(plan, step, option, feedback),
+        key,
+        error,
+        schema=CoderOutput,
+        max_tokens=CODE_TOKENS,
+    )
     if models is not None:
         models.append(response.usage.model)
     code, closed = strip_trailing_closer(CoderOutput.model_validate(response.parsed).code)
