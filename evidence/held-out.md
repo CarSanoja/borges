@@ -20,7 +20,7 @@ the grid, married only gives p .0524 and both windows two days earlier p .1360.
 
 ## The rule, written before the first run
 
-Frozen commit `c009f7a`, five attempts, every attempt counted. Success needed both:
+Frozen commit `2345f04`, five attempts, every attempt counted. Success needed both:
 
 - (a) the baseline reproduces the published cell (-1.62 within 0.01, n 303) in at least 4 of 5;
 - (c) a flip by a single change, whose refit matches, in at least 4 of 5.
@@ -69,8 +69,9 @@ moves to a new case that no fix has been tuned on.
 
 The data of Study 2 come from an OSF project that states no licence, so both Study 2 cases live
 here rather than among the curated cases, and their data are downloaded by
-`durante_study2/prepare.py`, never committed. (The first commit of the vote case, `c009f7a`,
-included the file; it has not been published.)
+`durante_study2/prepare.py`, never committed. (The first commit of the vote case, `2345f04`,
+included the file when the runs were made; it was removed from the history on 7 October, before
+the repository was published.)
 
 ## Development on the vote case, 7 October
 
