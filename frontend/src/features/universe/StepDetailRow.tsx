@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Option, UniverseStepDetail } from "../../shared/types/contracts";
 import { CodeBlock } from "./CodeBlock";
 
@@ -11,8 +12,16 @@ function rows(value: number): string {
   return value.toLocaleString("en-US");
 }
 
+export function clusterLine(option: Option): string | null {
+  if (!option.cluster_by) return null;
+  return `Errors clustered by ${option.cluster_by}: the harness fits the model with cluster-robust errors on that column, overriding the covariance the code asks for.`;
+}
+
 export function StepDetailRow({ detail, index }: { detail: UniverseStepDetail; index: number }) {
   const { step, option, trace, changed, checkpoint_id } = detail;
+  const [showCode, setShowCode] = useState(false);
+  const cluster = clusterLine(option);
+  const codeId = `u-code-${step.id}`;
   return (
     <li className={`u-step${changed ? " is-changed" : ""}`} data-changed={changed}>
       <div className="u-step-head">
@@ -24,6 +33,7 @@ export function StepDetailRow({ detail, index }: { detail: UniverseStepDetail; i
         {changed && <span className="u-tag">differs from default</span>}
       </div>
       <p className="u-rationale">{option.rationale}</p>
+      {cluster && <p className="u-cluster">{cluster}</p>}
       <dl className="u-facts">
         <div>
           <dt>Defensibility</dt>
@@ -55,7 +65,22 @@ export function StepDetailRow({ detail, index }: { detail: UniverseStepDetail; i
         )}
       </dl>
       {option.code ? (
-        <CodeBlock code={option.code} label={`Code for ${option.label}`} />
+        <>
+          <button
+            type="button"
+            className="u-code-toggle"
+            aria-expanded={showCode}
+            aria-controls={codeId}
+            onClick={() => setShowCode((value) => !value)}
+          >
+            {showCode ? "Hide code" : "Show code"}
+          </button>
+          {showCode && (
+            <div id={codeId}>
+              <CodeBlock code={option.code} label={`Code for ${option.label}`} />
+            </div>
+          )}
+        </>
       ) : (
         <p className="u-nocode">No code recorded for this option.</p>
       )}

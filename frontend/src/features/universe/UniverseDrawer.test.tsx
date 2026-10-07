@@ -28,8 +28,60 @@ describe("UniverseDrawer", () => {
     render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
     const changed = (snapshot.garden.universes[flipId]?.changed.length ?? -1);
     expect(document.querySelectorAll('[data-changed="true"]')).toHaveLength(changed);
-    expect(screen.getAllByLabelText(/^Code for/).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Show code" }).length).toBeGreaterThan(0);
     expect(screen.getByText("Reproduced from scratch")).toBeInTheDocument();
+  });
+
+  it("puts the result and the Reproduce block before the per-step choices", () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
+    const result = document.querySelector(".u-result")!;
+    const reproduce = screen.getByRole("region", { name: "Reproduce" });
+    const steps = document.querySelector(".u-steps")!;
+    expect(result.compareDocumentPosition(reproduce) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(reproduce.compareDocumentPosition(steps) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps each step's code closed until its toggle is used from the keyboard", async () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
+    expect(screen.queryByLabelText(/^Code for/)).toBeNull();
+    const toggle = screen.getAllByRole("button", { name: "Show code" })[0]!;
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    toggle.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).toHaveTextContent("Hide code");
+    expect(screen.getAllByLabelText(/^Code for/)).toHaveLength(1);
+    await userEvent.keyboard(" ");
+    expect(screen.queryByLabelText(/^Code for/)).toBeNull();
+  });
+
+  it("states that errors are clustered when the chosen option sets cluster_by", () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    const detail = deriveDetail(snapshot, flipId) as UniverseDetail;
+    const chosen = detail.steps[0]!.option.id;
+    const plan = snapshot.plan!;
+    const clustered = {
+      ...snapshot,
+      plan: {
+        ...plan,
+        steps: plan.steps.map((step, index) =>
+          index === 0 ? { ...step, options: step.options.map((o) => (o.id === chosen ? { ...o, cluster_by: "prof" } : o)) } : step,
+        ),
+      },
+    };
+    render(<UniverseDrawer runId={null} snapshot={clustered} universeId={flipId} onClose={() => undefined} />);
+    const lines = screen.getAllByText(
+      "Errors clustered by prof: the harness fits the model with cluster-robust errors on that column, overriding the covariance the code asks for.",
+    );
+    expect(lines).toHaveLength(1);
+  });
+
+  it("shows no clustering line when no chosen option sets cluster_by", () => {
+    const flipId = snapshot.flip?.universe_id ?? "";
+    render(<UniverseDrawer runId={null} snapshot={snapshot} universeId={flipId} onClose={() => undefined} />);
+    expect(screen.queryByText(/Errors clustered by/)).toBeNull();
   });
 
   it("shows the command computed by the server for the run, never the stored steps chain", async () => {

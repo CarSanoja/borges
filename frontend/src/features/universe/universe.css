@@ -159,6 +159,26 @@
   overflow-wrap: anywhere;
 }
 
+.u-cluster {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--gold);
+}
+
+.u-code-toggle {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.u-code-toggle:hover,
+.u-code-toggle:focus-visible {
+  border-color: var(--gold);
+}
+
 .u-nocode {
   font-size: var(--text-xs);
   color: var(--text-muted);

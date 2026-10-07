@@ -60,6 +60,7 @@
 
 .run-header__meta {
   grid-area: meta;
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -79,6 +80,10 @@
 }
 
 .chip--rule {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  min-width: 0;
   font-family: var(--font-mono);
   border-color: var(--gold-soft);
   color: var(--gold);
@@ -207,6 +212,13 @@
   gap: var(--space-3);
   align-items: baseline;
   color: var(--paper-100);
+}
+
+.run-agents__version {
+  margin: var(--space-2) 0 0;
+  color: var(--paper-500);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
 }
 
 .run-agents__sha {

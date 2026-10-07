@@ -30,9 +30,9 @@
 }
 
 .u-repro {
-  margin-top: auto;
-  padding-top: var(--space-3);
+  padding: var(--space-3) 0;
   border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
 .u-repro-row {

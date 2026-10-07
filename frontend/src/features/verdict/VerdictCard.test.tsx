@@ -142,8 +142,8 @@ describe("VerdictCard search summary", () => {
   it("states the bounded search on the flipped face and says when the budget ran out", () => {
     const snapshot = foldEvents("t", events);
     render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search } }} />);
-    expect(screen.getByText(/Smallest flip found: \d+ explored of a 24-universe budget, 2 levels\./)).toBeInTheDocument();
-    expect(screen.getByText(/24-universe budget ran out/)).toBeInTheDocument();
+    expect(screen.getByText(/Smallest flip found: \d+ universes explored out of a limit of 24, in 2 rounds of combining choices\./)).toBeInTheDocument();
+    expect(screen.getByText(/limit of 24 universes was reached/)).toBeInTheDocument();
   });
 
   it("states executed and budgeted universes once, never two conflicting counts", () => {
@@ -154,7 +154,7 @@ describe("VerdictCard search summary", () => {
       report: { ...snapshot.report!, minimal_flip: null, n_universes: 7, n_flipped: 0, search: { ...search, universe_budget: 40, budget_exhausted: false } },
     };
     render(<VerdictCard snapshot={clean} />);
-    expect(screen.getByText(/No flip found: 7 explored of a 40-universe budget/)).toBeInTheDocument();
+    expect(screen.getByText(/No flip found: 7 universes explored out of a limit of 40/)).toBeInTheDocument();
     expect(screen.getByTestId("vc-agree")).toHaveTextContent("7 of 7 paths agree");
     expect(screen.queryByText(/within 40/)).toBeNull();
     expect(screen.queryByText(/found in 7 universes/)).toBeNull();
@@ -164,7 +164,7 @@ describe("VerdictCard search summary", () => {
     const snapshot = foldEvents("t", events);
     const done = { ...search, levels_explored: 1, budget_exhausted: false };
     render(<VerdictCard snapshot={{ ...snapshot, report: { ...snapshot.report!, search: done } }} />);
-    expect(screen.getByText(/explored of a 24-universe budget, 1 level\./)).toBeInTheDocument();
+    expect(screen.getByText(/explored out of a limit of 24, in 1 round of combining choices\./)).toBeInTheDocument();
     expect(screen.queryByText(/search budget ran out/)).toBeNull();
   });
 

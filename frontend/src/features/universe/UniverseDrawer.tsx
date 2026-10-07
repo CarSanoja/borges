@@ -69,12 +69,12 @@ export function UniverseDrawer({ runId, snapshot, universeId, onClose }: Props) 
             )}
             {universe.error && <p className="case-error">{universe.error}</p>}
           </div>
+          <ReproduceBlock detail={detail} hasRun={runId !== null} />
           <ol className="u-steps">
             {detail.steps.map((stepDetail, index) => (
               <StepDetailRow key={stepDetail.step.id} detail={stepDetail} index={index} />
             ))}
           </ol>
-          <ReproduceBlock detail={detail} hasRun={runId !== null} />
         </motion.div>
       )}
     </AnimatePresence>

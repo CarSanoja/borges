@@ -7,12 +7,12 @@ export function AgentsUsed({ agents }: { agents: RunAgents | null | undefined })
   if (!agents || agents.agents.length === 0) return null;
   return (
     <details className="run-agents" aria-label="Agents used">
-      <summary>
+      <summary title={`Agent registry version ${agents.registry_sha}`}>
         Agents used <span className="mono">{agents.agents.length}</span>
-        <span className="mono run-agents__sha" title={agents.registry_sha}>
-          registry {shortSha(agents.registry_sha)}
-        </span>
       </summary>
+      <p className="run-agents__version">
+        Agent registry version <span className="mono run-agents__sha" title={agents.registry_sha}>{shortSha(agents.registry_sha)}</span>
+      </p>
       <table className="run-agents__table">
         <thead>
           <tr>
