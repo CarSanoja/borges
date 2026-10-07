@@ -6,6 +6,11 @@ pdays, so the new column was missing for 82% of the rows and the model dropped t
 45,211 to 8,252 under an adjustment label. A covariate option whose universes keep less than 80% of
 the rows their twins with the step's default keep is reported as a change of sample.
 
+On the published-analysis probe of 7 Oct the step that built the fertility and relationship
+indicators had a stricter coding that leaves one relationship group missing by definition; the
+note blamed missing covariates. A step that builds named columns other than the covariate list is
+described by the columns it builds.
+
 At 1ecb614 the bank covariate option kept every row under the encoding that made missing values a
 category and 8,182 under the ordinal encoding: when only some of its universes lose rows, the note
 counts them and names the choice they share that the others lack.
@@ -52,6 +57,19 @@ def _where(plan: AnalysisPlan, step_id: str, pairs: list[tuple[int, int, Univers
     )
 
 
+def _cause(produces: list[str]) -> str:
+    built = [name for name in produces if name != "covariates"]
+    if built:
+        return (
+            f"changes the sample: the columns it builds ({', '.join(built)}) are missing in rows "
+            "the model then drops"
+        )
+    return (
+        "changes the sample, not only the adjustment: its covariates are missing in rows the "
+        "model then drops"
+    )
+
+
 def covariate_sample_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
     done = garden.finished()
     by_choices = {_key(u.choices): u for u in done}
@@ -76,9 +94,8 @@ def covariate_sample_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
             if rows >= SHARE * kept:
                 continue
             notes.append(
-                f"The option '{option.label}' of the step '{step.title}' changes the sample, not "
-                f"only the adjustment: its covariates are missing in rows the model then drops, so "
-                f"{_where(plan, step.id, pairs)} {rows:,} of the {kept:,} rows that "
+                f"The option '{option.label}' of the step '{step.title}' {_cause(step.produces)}, "
+                f"so {_where(plan, step.id, pairs)} {rows:,} of the {kept:,} rows that "
                 f"'{default.label}' keeps, "
                 "and its estimates describe that subset."
             )

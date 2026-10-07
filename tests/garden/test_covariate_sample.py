@@ -54,3 +54,16 @@ def test_a_loss_under_one_other_choice_counts_and_names_it() -> None:
     assert len(notes) == 1
     assert "so in 1 of its 2 universes (those with '" in notes[0]
     assert "at the step 'Step model') it keeps 8,182 of the 45,211 rows" in notes[0]
+
+
+def test_a_step_that_builds_columns_names_them_instead_of_covariates() -> None:
+    plan = covariate_plan()
+    plan.step("cov").produces = ["high_fertility", "committed"]
+    garden = garden_of(
+        plan,
+        universe(plan, {}, result(2.38, n=163)),
+        universe(plan, {"cov": "contact"}, result(1.78, n=129)),
+    )
+    [note] = covariate_sample_caveats(plan, garden)
+    assert "changes the sample: the columns it builds (high_fertility, committed)" in note
+    assert "covariates" not in note and "keep 129 of the 163 rows" in note
