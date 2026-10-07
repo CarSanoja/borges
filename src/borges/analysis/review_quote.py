@@ -24,6 +24,7 @@ UNQUOTED = (
     "review point dropped: it quoted {quote!r} as the option's spec, and the spec does not "
     "contain those words"
 )
+NO_QUOTE = "review point dropped: it quoted no words of the option's own spec"
 
 
 def plain(text: str) -> str:
@@ -31,8 +32,9 @@ def plain(text: str) -> str:
 
 
 def unsupported(verdict: ReviewVerdict, spec: str) -> bool:
+    """An unfaithful verdict must quote words its own spec contains; no quote is no support."""
     quote = plain(verdict.quote)
-    return not verdict.faithful and bool(quote) and quote not in plain(spec)
+    return not verdict.faithful and (not quote or quote not in plain(spec))
 
 
 async def checked_quotes(
@@ -46,7 +48,9 @@ async def checked_quotes(
     if not missing:
         return out.verdicts
     listed = "; ".join(
-        f"{v.option_id}: {v.quote!r}" for v in out.verdicts if v.option_id in missing
+        f"{v.option_id}: {v.quote!r}" if v.quote else f"{v.option_id}: no quote"
+        for v in out.verdicts
+        if v.option_id in missing
     )
     follow = [
         *messages,
@@ -65,8 +69,7 @@ async def checked_quotes(
         if verdict.option_id in missing:
             verdict = again.get(verdict.option_id, verdict)
         if unsupported(verdict, specs.get(verdict.option_id, "")):
-            verdict = verdict.model_copy(
-                update={"faithful": True, "problem": UNQUOTED.format(quote=verdict.quote)}
-            )
+            reason = UNQUOTED.format(quote=verdict.quote) if verdict.quote else NO_QUOTE
+            verdict = verdict.model_copy(update={"faithful": True, "problem": reason})
         checked.append(verdict)
     return checked

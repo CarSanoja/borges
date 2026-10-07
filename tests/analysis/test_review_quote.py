@@ -16,7 +16,7 @@ def verdict(quote: str, faithful: bool = False) -> ReviewVerdict:
 def test_a_quote_the_spec_does_not_contain_is_unsupported() -> None:
     assert unsupported(verdict("using np.log1p(alldeaths)"), SPEC)
     assert not unsupported(verdict('"log_alldeaths_plus1 = np.sqrt(alldeaths)."'), SPEC)
-    assert not unsupported(verdict(""), SPEC)
+    assert unsupported(verdict(""), SPEC)
     assert not unsupported(verdict("np.log1p", faithful=True), SPEC)
 
 

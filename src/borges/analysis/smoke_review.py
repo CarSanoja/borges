@@ -6,6 +6,7 @@ from typing import Any
 from borges.analysis.models import AnalysisPlan, CodingSummary, Step
 from borges.analysis.prompts.reviewer import build_messages
 from borges.analysis.review_dummies import apply_contracts
+from borges.analysis.review_estimand import settle_estimand
 from borges.analysis.review_quote import checked_quotes
 from borges.analysis.schemas import ReviewerOutput, ReviewVerdict
 from borges.analysis.smoke_core import smoke_option
@@ -113,6 +114,8 @@ async def _re_review(config: SmokeConfig, step: Step, repaired: Outcome) -> Outc
         (v for v in (result.verdicts if result else []) if v.option_id == repaired.option.id),
         None,
     )
+    if verdict is not None:
+        verdict = settle_estimand(verdict, repaired.option)
     if result is not None and verdict is not None and config.on_review is not None:
         await config.on_review(
             step.id,
@@ -157,6 +160,7 @@ async def review_step(
         verdict = verdicts.get(outcome.option.id)
         if verdict is None or outcome.status == "failed":
             return outcome
+        verdict = settle_estimand(verdict, outcome.option)
         if config.on_review is not None:
             await config.on_review(
                 step.id,
@@ -197,6 +201,7 @@ async def review_extra(
     )
     if result is None or verdict is None:
         return outcome
+    verdict = settle_estimand(verdict, outcome.option)
     if config.on_review is not None:
         await config.on_review(
             step.id,

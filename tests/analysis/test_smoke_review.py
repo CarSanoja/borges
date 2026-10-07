@@ -42,8 +42,13 @@ class Reviews:
 
 
 def verdict(option_id: str, faithful: bool = True, estimand: bool = False, problem: str = ""):
+    quote = "" if faithful else f"Spec for {option_id}"
     return ReviewVerdict(
-        option_id=option_id, faithful=faithful, changes_estimand=estimand, problem=problem
+        option_id=option_id,
+        faithful=faithful,
+        changes_estimand=estimand,
+        problem=problem,
+        quote=quote,
     )
 
 
@@ -220,3 +225,19 @@ def test_reviewer_judges_each_option_against_its_own_spec() -> None:
 
     assert "against its own spec only" in SYSTEM
     assert "quote the phrase" in SYSTEM
+
+
+async def test_an_accepted_option_whose_code_follows_its_spec_is_not_dropped_for_its_estimand() -> (
+    None
+):
+    llm, config, reviews, _ = setup(
+        [verdict("treat"), verdict("control", True, True, "single differs from the default")],
+        aligned(),
+    )
+    plan = feature_plan(["treated"])
+    for option in plan.step("f1").options:
+        option.defensibility = 0.6
+    config.reviewer = llm_reviewer(llm, plan)
+    coded = await code_plan(llm, plan, smoke=config, summary=CodingSummary())
+    assert [o.id for o in coded.step("f1").options] == ["treat", "control"]
+    assert reviews.events[1][2:4] == (True, False)
