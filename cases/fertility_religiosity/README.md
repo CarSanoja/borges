@@ -54,9 +54,11 @@ column notes, and none of this section.
 ## What Borges found
 
 The live recording (`recorded-live/`, 7 October 2026, run `r_20261007T020642_a23fe3`) says NO
-CLEAR EVIDENCE: 0.2746 [-2.053, 2.602], p 0.817, n 171, with no flip in 32 universes. That agrees
-with Steegen et al.'s multiverse, not with the single published analysis. Its plan used a window of
-6 to 11 days since the last period, and the judge replaced the plan's default of keeping every
+CLEAR EVIDENCE: 0.2746 [-2.053, 2.602], p 0.817, n 171, with no flip in 32 universes. That is not a
+reproduction of Steegen et al.'s multiverse: its plan counts the cycle day forward and used a window
+of 6 to 11 days since the last period, while Durante et al. and all 120 of Steegen's universes count
+back from the next expected period, so none of its universes lies in Steegen's grid and none reached
+the 7 significant ones. It shows that another defensible convention also gives no effect, and the judge replaced the plan's default of keeping every
 participant with excluding women unsure of either date, which the report states. All fifteen completed
 live runs of 6 and 7 October said NO CLEAR EVIDENCE, one of them on a result its code invented;
 none of the three flips they reported stands. Two recordings were discarded before this one:

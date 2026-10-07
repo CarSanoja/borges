@@ -175,7 +175,8 @@ against their agents on the same dataset still does not exist.
   searches it adversarially and says so, so its flip is biased toward finding one.
 - Borges explores the options its planner and adversary propose, under one estimand. Human
   teams also change the estimand and the model family, so Borges's curve is narrower than the
-  teams' (red cards: 1.20 to 1.36 against 0.89 to 2.93).
+  teams' (red cards: 1.09 to 1.24 in the live recording, 1.20 to 1.36 in the scripted replay,
+  against 0.89 to 2.93).
 - Persona sampling covers choices an LLM analyst would make unprompted, including ones that
   no planner listed; Borges's coverage is limited by its planner and adversary.
 - Mature tools are used and checked by researchers today; Borges has eight live recordings
@@ -193,7 +194,7 @@ of how often a model gets these right, with wide intervals.
    means robust to what you listed."** Correct. The curated cases are seeded from published
    many-analysts choices, and in live mode a planner and an adversary propose the rest; any
    fork nobody proposed is invisible, and a human team also changes the estimand and the
-   model family (red cards: the teams span 0.89 to 2.93, Borges's curve 1.20 to 1.36). The
+   model family (red cards: the teams span 0.89 to 2.93, Borges's live curve 1.09 to 1.24). The
    robustness share is a statement about the explored menu, not about all defensible
    analyses. The measurable part: on the four cases the fixed full grid over the seeded
    options finds the same smallest flip as Borges, so the bounded search loses nothing
@@ -312,7 +313,8 @@ Borges is finished when all of these hold, on a clean clone:
    planted single-decision flip (excluding internal test accounts) to **DON'T SHIP**, and
    verifies it reproduces. The data is synthetic and the flip is planted.
 2. The **red-cards case** (Silberzahn data, real) runs end to end. Its specification curve
-   (odds ratio 1.20 to 1.36 over 30 universes) is narrower than the range of the 29 human teams
+   (odds ratio 1.20 to 1.36 over 39 universes in the scripted replay, 1.09 to 1.24 over 22 in the
+   live recording) is narrower than the range of the 29 human teams
    (0.89 to 2.93), which is shown next to it; the report names the decisions that split
    "bias detected" from "no clear evidence". The two MARP cases (real, CC-BY 4.0) run the same
    way against 110 and 105 teams. A live-only real business case, `bank_marketing_calls` (UCI Bank Marketing,

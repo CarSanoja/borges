@@ -129,8 +129,13 @@ recordings show:
   estimate on these data, and 0.133, their simple one, in the farthest universe; no flip in nine
   live runs. Fertility is the fragile one: Durante et al. reported p = .012, and Steegen et al.
   found p < .05 in 7 of 120 defensible processing choices. Borges says NO CLEAR EVIDENCE in all fifteen
-  completed runs, in line with the multiverse rather than the single published analysis; one of
-  them rested on a result its code invented, which the code guard has refused since, and the three
+  completed runs, but that does not reproduce Steegen's finding: 13 of the 15 plans counted the
+  cycle day forward from the last period and the other two built "fertility" from cycle length
+  alone; none counted back from the next expected period as Durante et al. and all 120 of
+  Steegen's universes do, so no Borges universe lies in
+  Steegen's grid and none reached its 7 significant cells. Borges shows that another defensible
+  convention also gives no effect; it does not show the fragility those 7 cells show. One run
+  rested on a result its code invented, which the code guard has refused since, and the three
   flips reported along the way do not stand (`evidence/repeats.md`). Two
   fertility recordings were discarded first: one reported a covariate's coefficient as the
   interaction (now refused), one built "high fertility" from days 0 to 9 of the cycle. The planner
@@ -214,7 +219,7 @@ in `evidence/live-runs.md`.
 | Smallest flip found | 1 change: exclude internal test accounts | 3 changes together: the second rater only, referees with 22+ dyads, full covariates |
 | Flipped result | **DON'T SHIP**: −0.14 pp, [−0.50, 0.21], p = 0.43 | **NO CLEAR EVIDENCE**: OR 1.20, [1.00, 1.46], p = 0.055 |
 | Reproduced from scratch | yes | yes |
-| Explored | universes and checkpoints: see the last lines printed by `make demo-cli` | same, `make demo-red-cards` |
+| Explored | universes and checkpoints: see the last lines printed by `make demo-cli` | same, `uv run borges run --case red_cards --llm scripted` |
 
 **The checkout data is synthetic and the answer is planted.** `cases/checkout_ab/generate.py`
 sets a true effect of -0.2 pp (`TRUE_EFFECT = -0.0020`), adds a +0.4 pp novelty bump to the
@@ -230,11 +235,11 @@ only, is rejected by the judge as an indefensible change of population.
 
 ### How wide is the curve, against the human teams
 
-| | Borges universes (scripted replay) | Reference teams |
+| | Borges universes | Reference teams |
 |---|---|---|
-| Red cards (odds ratio) | 30 universes: 1.20 to 1.36 | 29 teams: 0.89 to 2.93, median 1.31, 20 significant. Two teams (Tobit 2.88, Poisson 2.93) are the extremes; the next highest is 1.71. Ten teams fall inside Borges's range |
-| MARP religiosity (standardised beta) | 40 universes: 0.064 to 0.150; all 768 universes enumerated offline: 0.053 to 0.156 | 110 teams: 0.007 to 0.354, median 0.120, all 110 intervals above 0 |
-| MARP cultural norms (interaction beta) | 15 universes: 0.018 to 0.046; offline 1,536: -0.002 to 0.049 | 105 teams: -0.045 to 0.282, median 0.039, 68 of 105 above 0 |
+| Red cards (odds ratio) | live recording, 22 universes: 1.09 to 1.24; scripted replay, 39 universes: 1.20 to 1.36 | 29 teams: 0.89 to 2.93, median 1.31, 20 significant. Two teams (Tobit 2.88, Poisson 2.93) are the extremes; the next highest is 1.71. Five teams fall inside the live range and ten inside the scripted one |
+| MARP religiosity (standardised beta) | live recording, 12 universes: 0.045 to 0.107; scripted replay, 38 of 40 completed: 0.060 to 0.150; all 768 universes enumerated offline: 0.053 to 0.156 | 110 teams: 0.007 to 0.354, median 0.120, all 110 intervals above 0 |
+| MARP cultural norms (interaction beta) | live recording, 29 of 37 completed: 0.034 to 0.048; scripted replay, 25 of 27 completed: 0.018 to 0.046; offline 1,536: -0.002 to 0.049 | 105 teams: -0.045 to 0.282, median 0.039, 68 of 105 above 0 |
 
 Borges's range is narrower than the teams', and it should be. It walks defensible choices
 under one estimand: the red-cards plan has four decisions (skin-tone measure, exclusions,
@@ -263,7 +268,7 @@ CAP THE CALLS, and found no flip in 12 universes. An independent refit agrees to
 `marp_religiosity` and `marp_norms` use the Many Analysts Religion Project (10,535
 participants in 24 countries, CC-BY 4.0), with the per-team results as the reference lane.
 Nobody planted anything. Religiosity and well-being is robust in this option space (no flip
-in 40 universes), with a disclosed caveat: well-being options are alternative measures of
+in the 38 universes that completed of 40), with a disclosed caveat: well-being options are alternative measures of
 overall well-being, and the physical-health facet alone is fragile (see
 `cases/marp_religiosity/README.md`). The cultural-norms interaction has one single-change
 flip, pooled OLS (p = 0.056, estimate still positive). These recordings are scripted
@@ -338,8 +343,8 @@ Requirements: Python 3.13 with [uv](https://docs.astral.sh/uv/), Node 22+ with p
 make install          # uv sync --extra contree, pnpm install
 make demo-live        # the live checkout recording the web app plays, and its flip re-executed, $0
 make demo-cli         # checkout case end to end on hand-built model responses, offline, $0
-make demo-red-cards   # the real red-cards data on hand-built model responses, offline, $0
-uv run --no-sync borges replay --case red_cards   # any case's live recording, no model called
+make demo-red-cards   # the live red-cards recording the web app plays, and its flip re-executed, $0
+uv run --no-sync borges replay --case teaching_ratings   # any case's live recording, no model called
 uv run --no-sync borges run --case marp_religiosity --llm scripted   # MARP, real data, ~18 s
 make serve            # build the web app and serve it on http://127.0.0.1:8000
 make test             # ruff, pytest, frontend typecheck, tests and build
@@ -371,10 +376,10 @@ uv run borges reproduce --case checkout_ab --source live --universe u_fb948f9bb7
 
 `--source live` reads `cases/<case>/recorded-live/events.jsonl` instead of the scripted
 recording and re-executes that universe's code from scratch. It matched 11 of 12 universes
-across the six cases. The twelfth is a quantile regression that differs by 4e-6 between macOS and
+across the six cases recorded on 5 October. The twelfth is a quantile regression that differs by 4e-6 between macOS and
 ConTree's Linux. Universe ids and results are in `evidence/live-runs.md`. A MATCH proves the
 recorded code is deterministic, not that it is statistically correct; `evidence/refit.md` checks
-correctness.
+correctness. The two cases recorded on 7 October reproduce 4 of 4 universes.
 
 (`uv run --no-sync` works too once `uv sync` has run.) It re-executes that universe's steps on the case dataset with the local backend, and prints
 `MATCH` only if estimate, interval, p-value, n and verdict equal the recording (exit 1 and

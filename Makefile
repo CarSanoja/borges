@@ -25,7 +25,8 @@ demo-cli:
 	$(BORGES) run --case checkout_ab --llm scripted
 
 demo-red-cards:
-	$(BORGES) run --case red_cards --llm scripted
+	$(BORGES) replay --case red_cards
+	$(BORGES) reproduce --case red_cards --source live --universe u_0c4e209321
 
 demo-resume:
 	uv run --no-sync python scripts/demo_resume.py

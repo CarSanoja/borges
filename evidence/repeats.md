@@ -53,9 +53,10 @@ Each started from an empty model cache.
   Three runs failed, all before the fixes they led to: an Ultra plan cut at its token limit, an
   Ultra plan whose first step loaded files instead of using the data, and a default window that
   left one group empty (the model input was constant; such a step is now re-planned). So no valid
-  flip in fifteen completed runs. That fits Steegen et al.'s 7 significant results in 120
-  universes only partly: Borges explores 2 to 35 universes per run, not the full grid, and its
-  plans pick their own windows. In 2 of the 8 runs after the question was clarified, the plan's
+  flip in fifteen completed runs, and none of them reproduces Steegen et al.'s 7 significant
+  results in 120 universes: 13 of the 15 plans count the cycle day forward from the last period and
+  the other two build "fertility" from cycle length alone, while all 120 of Steegen's universes
+  count back from the next expected period, so no Borges universe lies in that grid. In 2 of the 8 runs after the question was clarified, the plan's
   default window was not the fertile window (see `evidence/live-runs.md`).
 
 ## Self-corrections

@@ -1,5 +1,9 @@
 # Live runs on Nemotron through Nebius Token Factory
 
+Eight recordings are committed: six made on 5 October 2026 (UTC), described first, and two made
+on 7 October with the judge and narrator on Ultra (see "7 October" below). The role table that
+follows is the 5 October one.
+
 State at `43d913c`, 5 October 2026 (UTC). The six committed recordings were made on 5 October from
 an empty model cache, on Token Factory models and ConTree sandboxes: four at `16f02e7`, red_cards
 at `5070877` and bank_marketing_calls at `6317040`. Between `16f02e7` and `43d913c` the code
@@ -110,9 +114,11 @@ has the right estimate and a wrong interval, explained there.
   (`evidence/repeats.md`).
 - **fertility_religiosity.** Durante et al. report the interaction at p = .012; Steegen et al.
   found p < .05 in 7 of 120 defensible processing choices and called the effect too fragile to be
-  taken seriously. Borges says NO CLEAR EVIDENCE with no flip in 32 universes: it agrees with the
-  multiverse, not with the single published analysis. The plan's window is 6 to 11 days since the
-  last period, not Durante's cycle days 7 to 14 counted back from the next onset. The judge
+  taken seriously. Borges says NO CLEAR EVIDENCE with no flip in 32 universes. That is not a
+  reproduction of the multiverse: the plan's window is 6 to 11 days since the last period, not
+  Durante's cycle days 7 to 14 counted back from the next onset, and none of the plans of the 15 completed
+  runs counted back (13 counted forward, 2 used cycle length alone), so no Borges universe lies in Steegen's grid and none reached its 7
+  significant cells. The judge
   rejected the plan's default of keeping every participant (0.3), so the original analysis
   excludes women with a date certainty of 5 or less on either date (n 171), and the report says
   so; with everyone kept the verdict is the same (-0.2646, p 0.777, n 275). All fifteen completed live
