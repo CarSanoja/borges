@@ -457,9 +457,11 @@ armor-out hook and the AST code guard remains the hard boundary for code.
 
 **3. Personal data.** E-mail, phone numbers, payment cards (Luhn and issuer prefix), IBANs
 (mod 97), US SSNs (by shape, so an invalid serial is redacted too), Spanish DNI/NIE (check
-letter), Mexican CURP (check digit) and RFC, IP addresses, dates of birth in columns whose name
-says so, and person names (a column whose header says so, such as `full_name` or `apellidos`,
-or whose values read as two to four capitalised words with high uniqueness). It is redacted to
+letter), Mexican CURP (check digit) and RFC, IP addresses, medical record numbers (MRN, NHC),
+dates of birth in columns whose name says so, and person names (a column whose header says so,
+such as `full_name` or `apellidos`, or whose values read as two to four capitalised words with
+high uniqueness; a column named for a person's role, such as `partner_name` or `nombre_cliente`,
+may repeat names, as 60 audit partners do over 900 engagements). It is redacted to
 `[redacted:<kind>]` in every profile value and sample row a model reads, in every model output
 (report, narrative, events) and in audit reasons; the upload response lists the columns that
 contain personal data with counts and never values, and the upload screen shows it before the

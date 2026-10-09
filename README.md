@@ -515,7 +515,7 @@ armor-out hooks and into run creation and uploads. It refuses runs whose questio
 file or column names carry instructions, quarantines instruction-like column notes and cell
 values (with a caveat on the run page), drops model-proposed options that try to steer the
 result or the code, and redacts personal data (e-mail, phone, cards, IBAN, SSN, DNI/NIE,
-CURP/RFC, IP, dates of birth, person names) before any model sees it. The upload response and screen list the
+CURP/RFC, IP, medical record numbers, dates of birth, person names) before any model sees it. The upload response and screen list the
 columns that contain personal data, with counts. Set `BORGES_ARMOR_LLM=true` to add a
 judge-model second stage for ambiguous text. On two blind sets, written by writers who never saw
 the screen: `blind_2026-10-07.json` (7 October), 19 of 70 attacks caught by the patterns and 33
