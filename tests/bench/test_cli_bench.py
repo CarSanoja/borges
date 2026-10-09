@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -10,13 +11,15 @@ from borges.cli import app
 from tests.bench.support import MINI
 
 runner = CliRunner()
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
 def test_bench_blade_is_a_registered_command() -> None:
-    result = runner.invoke(app, ["bench", "blade", "--help"])
+    result = runner.invoke(app, ["bench", "blade", "--help"], env={"COLUMNS": "200"})
     assert result.exit_code == 0
+    text = ANSI.sub("", result.output)
     for flag in ("--datasets", "--arms", "--llm", "--out", "--max-usd", "--repeats"):
-        assert flag in result.output
+        assert flag in text
 
 
 def test_live_run_over_budget_is_refused_before_any_call(tmp_path: Path) -> None:

@@ -18,6 +18,8 @@ from borges.analysis.schemas import (
 )
 from borges.cases.models import CaseSpec
 
+pytestmark = pytest.mark.timeout(900)
+
 CASE_DIR = Path(__file__).resolve().parents[2] / "cases" / "red_cards"
 sys.path.insert(0, str(CASE_DIR))
 
