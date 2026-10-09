@@ -64,11 +64,12 @@ def _values(report: Report) -> list[float]:
 
 def carries_estimate(report: Report, sentence: str) -> bool:
     """A pay-gap narrative opened with the estimate as "-503", which has no decimals, and the
-    built sentence was put in front of it, so the summary said the same thing twice."""
+    built sentence was put in front of it, so the summary said the same thing twice. A rounding
+    counts only when it keeps the magnitude: 0.0293 rounds to "0", the 0% of any share."""
     value = report.original_result.estimate
     if carries_value(sentence, value):
         return True
-    shown = {_num(value), f"{value:,.0f}", str(round(value))}
+    shown = {_num(value)} | ({f"{value:,.0f}", str(round(value))} if abs(value) >= 100 else set())
     return any(token in shown for token in NUMBER.findall(sentence))
 
 

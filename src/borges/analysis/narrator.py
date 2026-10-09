@@ -106,6 +106,9 @@ def _complete(
     plan: AnalysisPlan, report: Report, narrative: str, sentence: str | None, scale: str | None
 ) -> str:
     units = unit_readings(report, narrative, scale)
+    stated = scale is not None and has_sentence(narrative, scale)
+    if scale is not None and stated:
+        narrative = " ".join(narrative.replace(scale, " ").split())
     narrative = rewrite_claimed_flips(report, drop_unit_readings(report, narrative, scale))
     narrative = restate_failures(report, narrative)
     kept = with_original(plan, report, narrative)
@@ -118,7 +121,7 @@ def _complete(
         flat = " ".join(kept.split())
         kept = flat.replace(head, robust) if head != robust and head in flat else f"{kept} {robust}"
     missing = scale is not None and not has_sentence(kept, scale)
-    if scale is not None and missing and (units or not mentions_log_scale(kept)):
+    if scale is not None and missing and (stated or units or not mentions_log_scale(kept)):
         kept = insert_sentence(kept, scale)
     return kept
 

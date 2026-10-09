@@ -164,6 +164,7 @@ async def test_the_scale_sentence_is_not_written_twice() -> None:
     llm = FakeLLM({"narrator": NarratorOutput(narrative=text, caveats=[])})
     narrative = await narrate(llm, make_plan(), report, scaled)
     assert narrative.count(note) == 1
+    assert narrative.startswith("The original analysis estimated 0.0293")
 
 
 async def test_a_units_reading_beside_another_log_mention_is_still_replaced() -> None:
