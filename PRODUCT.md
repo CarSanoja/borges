@@ -285,7 +285,9 @@ of how often a model gets these right, with wide intervals.
     `Report.narrator_input_tokens` records the estimate for each run. Since 6 October Ultra also
     judges defensibility, one short call per option; its 1M-token context window is not used.
     It was tried as the planner and gave no usable fertility plan in five, so the planner
-    stays on Super with Ultra as its fallback.
+    stays on Super with Ultra as its fallback. Token Factory stopped serving Ultra on 9 October
+    2026 (404); the gateway reads that as a missing model and falls back to Super for the judge
+    and the narrator, as `policy/gateway.json` orders.
 - **Nebius Token Factory Sandboxes (ConTree):** VM-isolated execution with git-like
   checkpoints, selected with `BORGES_BACKEND=contree`. Implemented against `contree-sdk`
   and contract-tested with a fake SDK. It ran against the real service on 2 October 2026:
