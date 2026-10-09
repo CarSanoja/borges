@@ -14,6 +14,11 @@ class Blocker(BaseModel):
     reason: str
 
 
+USER_MESSAGE = (
+    "This server's analysis agents are being updated, so live runs are paused; try again later."
+)
+
+
 class RegistryBlocked(RuntimeError):
     def __init__(self, blockers: list[Blocker]) -> None:
         self.blockers = blockers

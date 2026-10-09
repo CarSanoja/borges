@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
 from borges.api.awaitables import resolve
 from borges.api.deps import get_orchestrator, get_settings, get_uploads
 from borges.api.run_armor import prescreen_request
-from borges.api.run_policy import enforce_run_policy
+from borges.api.run_policy import enforce_run_policy, validate_run_request
 from borges.api.runtime_wiring import get_runtime
 from borges.api.uploads import UploadStore
 from borges.armor.audit import record_decision
@@ -34,11 +34,7 @@ REPLAY_HEADER = "Idempotent-Replay"
 def _resolve_upload(request: RunRequest, uploads: UploadStore) -> tuple[bytes, str] | None:
     if request.upload_id is None:
         return None
-    if not request.question or request.decision_rule is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Uploaded datasets need both a question and a decision_rule.",
-        )
+    validate_run_request(request)
     try:
         return uploads.get(request.upload_id)
     except KeyError:
@@ -134,6 +130,7 @@ async def create_run(
         if existing is not None:
             response.headers[REPLAY_HEADER] = "true"
             return RunCreated(run_id=existing)
+    upload = _resolve_upload(request, uploads)
     audited_policy(
         settings,
         "run_quota",
@@ -157,7 +154,6 @@ async def create_run(
         llm=request.llm,
         upload=request.upload_id is not None,
     )
-    upload = _resolve_upload(request, uploads)
     data, name = upload if upload else (None, None)
     live_quota: AnonLiveQuota = http.app.state.anon_live_quota
     metered = principal.anonymous and (request.llm or settings.borges_llm) == "nebius"

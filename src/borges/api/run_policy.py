@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import HTTPException
@@ -13,12 +14,42 @@ from borges.api.live_rules import (
     uploads_unavailable_reason,
 )
 from borges.config import Settings
-from borges.fleet.enforcement import RegistryBlocked, enforce_registry
+from borges.fleet.enforcement import USER_MESSAGE, RegistryBlocked, enforce_registry
 from borges.runs.models import RunRequest
+from borges.telemetry.policy_audit import audit_global
+
+logger = logging.getLogger(__name__)
 
 
 def _reject(status: int, detail: str) -> HTTPException:
     return HTTPException(status_code=status, detail=detail)
+
+
+def _busy_message(request: RunRequest, active: int) -> str:
+    base = f"Borges is already running {active} analyses, the most this server allows;"
+    if request.upload_id is None:
+        return f"{base} watch the recorded run or try again in a minute."
+    return f"{base} try again in a minute."
+
+
+def validate_run_request(request: RunRequest) -> None:
+    if request.upload_id is None:
+        return
+    rule = request.decision_rule
+    missing = []
+    if not request.question or not request.question.strip():
+        missing.append("a question")
+    if rule is None:
+        missing.append("a decision_rule")
+    if rule is None or missing:
+        raise _reject(
+            400,
+            "Uploaded datasets need both a question and a decision_rule; "
+            f"missing {' and '.join(missing)}.",
+        )
+    problems = rule.problems()
+    if problems:
+        raise _reject(400, f"The decision rule is not valid: {'; '.join(problems)}.")
 
 
 def _check_live(request: RunRequest, settings: Settings, orchestrator: Any) -> None:
@@ -50,7 +81,15 @@ def _check_registry(settings: Settings, llm: str) -> None:
     try:
         enforce_registry(settings, llm)
     except RegistryBlocked as blocked:
-        raise _reject(409, str(blocked)) from blocked
+        logger.warning("live run refused by the agent registry: %s", blocked)
+        audit_global(
+            settings,
+            "policy.registry_blocked",
+            decision="deny",
+            reason=str(blocked),
+            data={"blockers": [b.model_dump() for b in blocked.blockers]},
+        )
+        raise _reject(409, USER_MESSAGE) from blocked
 
 
 def enforce_upload_policy(settings: Settings) -> None:
@@ -77,11 +116,9 @@ def enforce_run_policy(request: RunRequest, settings: Settings, orchestrator: An
     ceiling = settings.borges_max_universes
     clamped = min(request.max_universes or ceiling, ceiling)
     request = request.model_copy(update={"max_universes": clamped})
-    if orchestrator.active_count() >= settings.borges_max_active_runs:
-        raise _reject(
-            429,
-            "Borges is busy with other runs; watch the recorded run or try again in a minute.",
-        )
+    active = orchestrator.active_count()
+    if active >= settings.borges_max_active_runs:
+        raise _reject(429, _busy_message(request, active))
     llm = request.llm or settings.borges_llm
     if request.upload_id is not None and llm != "nebius":
         raise _reject(400, "Uploaded datasets need live mode (llm=nebius with NEBIUS_API_KEY).")

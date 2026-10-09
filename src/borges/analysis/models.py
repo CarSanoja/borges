@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from enum import StrEnum
 from typing import Literal
 
@@ -18,6 +19,18 @@ class DecisionRule(BaseModel):
     alpha: float = 0.05
     positive_label: str = "SHIP"
     negative_label: str = "DON'T SHIP"
+
+    def problems(self) -> list[str]:
+        found: list[str] = []
+        if not self.metric.strip():
+            found.append("the metric is empty")
+        if not math.isfinite(self.alpha) or not 0 < self.alpha < 1:
+            found.append("alpha must be greater than 0 and less than 1")
+        if not math.isfinite(self.threshold):
+            found.append("the threshold must be a finite number")
+        if not self.positive_label.strip() or not self.negative_label.strip():
+            found.append("both verdict labels need text")
+        return found
 
     def is_positive(self, result: AnalysisResult) -> bool:
         beyond = (

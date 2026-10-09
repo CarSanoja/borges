@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
+from borges.telemetry.run_telemetry import global_audit_path
 from tests.api.test_routes_runs import Env
 from tests.identity.keys import bearer, make_key
 
@@ -95,7 +98,8 @@ async def test_active_run_cap_applies_to_scripted_runs(tmp_path) -> None:
     env.orchestrator.active = 2
     response = await post(env, {"case_id": "a", "llm": "scripted"})
     assert response.status_code == 429
-    assert "busy" in response.json()["detail"]
+    assert "already running 2 analyses" in response.json()["detail"]
+    assert "recorded run" in response.json()["detail"]
     env.orchestrator.active = 1
     assert (await post(env, {"case_id": "a"})).status_code == 202
 
@@ -137,7 +141,7 @@ async def test_local_llm_is_refused_over_http(tmp_path) -> None:
     assert env.orchestrator.calls == []
 
 
-async def test_live_run_is_refused_when_the_registry_has_no_approval(tmp_path) -> None:
+async def test_live_run_is_refused_when_the_registry_has_no_approval(tmp_path, caplog) -> None:
     env = Env(tmp_path, key="k", borges_registry_enforce=True)
     from borges.analysis.prompts import judge
 
@@ -148,8 +152,14 @@ async def test_live_run_is_refused_when_the_registry_has_no_approval(tmp_path) -
     finally:
         judge.SYSTEM = original
     assert response.status_code == 409
-    assert "judge" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail == (
+        "This server's analysis agents are being updated, so live runs are paused; try again later."
+    )
     assert env.orchestrator.calls == []
+    operator = global_audit_path(env.app.state.settings).read_text()
+    assert "borges agents publish" in operator and "judge" in operator
+    assert "borges agents publish" in caplog.text
 
 
 async def test_live_run_is_accepted_when_the_registry_approves_the_tree(tmp_path) -> None:
@@ -168,3 +178,66 @@ async def test_scripted_run_ignores_registry_enforcement(tmp_path) -> None:
     finally:
         judge.SYSTEM = original
     assert response.status_code == 202
+
+
+async def test_unknown_upload_is_reported_even_when_the_server_is_busy(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_max_active_runs=1)
+    env.orchestrator.active = 1
+    response = await post(env, UPLOAD, uploader(env))
+    assert response.status_code == 400
+    assert "Unknown upload" in response.json()["detail"]
+
+
+async def test_busy_message_for_an_upload_does_not_mention_a_recorded_run(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_max_active_runs=1, borges_allow_untrusted_local=True)
+    stub_upload(env)
+    env.orchestrator.active = 1
+    response = await post(env, UPLOAD, uploader(env))
+    assert response.status_code == 429
+    assert response.json()["detail"] == (
+        "Borges is already running 1 analyses, the most this server allows; try again in a minute."
+    )
+
+
+@pytest.mark.parametrize("alpha", [0, 1, -0.5, 7])
+async def test_bad_alpha_is_reported_before_the_busy_gate(tmp_path, alpha: float) -> None:
+    env = Env(tmp_path, key="k", borges_max_active_runs=1, borges_allow_untrusted_local=True)
+    stub_upload(env)
+    env.orchestrator.active = 1
+    body = {**UPLOAD, "decision_rule": {"metric": "effect", "alpha": alpha}}
+    response = await post(env, body, uploader(env))
+    assert response.status_code == 400
+    assert "alpha" in response.json()["detail"]
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        {"metric": " "},
+        {"metric": "m", "positive_label": ""},
+        {"metric": "m", "negative_label": " "},
+    ],
+)
+async def test_other_bad_rules_are_400(tmp_path, rule: dict) -> None:
+    env = Env(tmp_path, key="k", borges_allow_untrusted_local=True)
+    stub_upload(env)
+    response = await post(env, {**UPLOAD, "decision_rule": rule}, uploader(env))
+    assert response.status_code == 400
+    assert "decision rule" in response.json()["detail"]
+
+
+async def test_upload_without_a_question_is_400_before_the_gates(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_max_active_runs=1, borges_allow_untrusted_local=True)
+    stub_upload(env)
+    env.orchestrator.active = 1
+    body = {k: v for k, v in UPLOAD.items() if k != "question"}
+    response = await post(env, body, uploader(env))
+    assert response.status_code == 400
+    assert "question" in response.json()["detail"]
+
+
+async def test_registry_gate_comes_after_request_validation(tmp_path) -> None:
+    env = Env(tmp_path, key="k", borges_registry_enforce=True, borges_allow_untrusted_local=True)
+    response = await post(env, UPLOAD, uploader(env))
+    assert response.status_code == 400
+    assert "Unknown upload" in response.json()["detail"]
