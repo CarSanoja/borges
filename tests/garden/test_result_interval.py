@@ -66,3 +66,35 @@ async def test_universe_with_zero_width_interval_fails_after_scaling(
     universe = await executor.run_universe(plan.default_choices(), "baseline")
     assert universe.status == "failed"
     assert universe.error is not None and "zero width" in universe.error
+
+
+@pytest.mark.parametrize(
+    ("estimate", "low", "high", "p"),
+    [
+        (-502.86, -1157.0, 155.31, 1.0),
+        (-489.55, -1127.77, 168.49, 1.0),
+        (2.0, 1.0, 3.0, 0.9),
+        (0.1, -2.0, 2.2, 1e-9),
+    ],
+)
+def test_a_p_value_the_interval_cannot_give_is_rejected(
+    estimate: float, low: float, high: float, p: float
+) -> None:
+    problem = interval_error(result(estimate=estimate, ci_low=low, ci_high=high, p_value=p))
+    assert problem is not None and "come from different tests" in problem
+
+
+@pytest.mark.parametrize(
+    ("estimate", "low", "high", "p"),
+    [
+        (-502.86, -1197.4, 191.69, 0.156),
+        (1.35, 1.1, 1.66, 0.004),
+        (-1.15, -21.57, 0.186, 0.106),
+        (12.0, 10.0, 14.0, 0.0),
+        (0.02, -0.5, 0.54, 0.94),
+    ],
+)
+def test_p_values_that_match_their_interval_pass(
+    estimate: float, low: float, high: float, p: float
+) -> None:
+    assert interval_error(result(estimate=estimate, ci_low=low, ci_high=high, p_value=p)) is None
