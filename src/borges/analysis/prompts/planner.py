@@ -108,6 +108,8 @@ leave an answer out, never put an answer between two answers of the other group.
 - Exclusions motivated by quality items in the data (ratings of certainty or confidence, \
 attention checks, reported values outside a plausible range) are their own filter step whose \
 options keep and exclude those rows.
+- Rows with a missing exposure or outcome are dropped, not filled with zero, the mean or another \
+constant, unless the question or the column notes say a missing value stands for that constant.
 - Cluster-robust errors are an option only on a sampling or design unit that repeats across \
 rows (a participant, instructor, school or player with several rows) and with at least 30 \
 distinct units; never cluster on a date, a time or a variable computed in the analysis.

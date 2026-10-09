@@ -5,6 +5,7 @@ from borges.analysis.prompts.adversary import SYSTEM as ADVERSARY_SYSTEM
 from borges.analysis.prompts.adversary import build_messages as adversary_messages
 from borges.analysis.prompts.coder import SYSTEM as CODER_SYSTEM
 from borges.analysis.prompts.coder import build_messages as coder_messages
+from borges.analysis.prompts.judge import SYSTEM as JUDGE_SYSTEM
 from borges.analysis.prompts.planner import SYSTEM as PLANNER_SYSTEM
 from borges.analysis.prompts.planner import build_messages as planner_messages
 from borges.garden.models import Universe
@@ -283,3 +284,16 @@ def test_a_cox_model_is_written_with_phreg_and_read_by_its_term_name() -> None:
     assert "PHReg for a Cox model of a time to an event" in planner
     assert "R's Surv(), lifelines and parametric survival regressions" in planner
     assert "R's Surv() does not exist in a formula" in coder
+
+
+def test_a_missing_exposure_is_dropped_not_filled_with_a_constant() -> None:
+    assert "not filled with zero, the mean or another constant" in PLANNER_SYSTEM
+    assert "gives the rows whose value is unknown a value nobody measured" in JUDGE_SYSTEM
+    assert "such an option scores below 0.3" in JUDGE_SYSTEM
+
+
+def test_judge_scores_dropping_a_named_confounder_below_acceptance() -> None:
+    text = " ".join(JUDGE_SYSTEM.split())
+    assert "nothing says the exposure was assigned at random" in text
+    assert "keeps that confounding in the estimate" in text
+    assert "crude association, not an answer to the question, and scores below 0.6" in text

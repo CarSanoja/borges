@@ -69,7 +69,18 @@ of the estimand, even when the conventional option, the step's title or the user
 is unadjusted, because an unadjusted comparison of observational data keeps the confounding in \
 the estimate. Score it by whether the variable is a plausible pre-exposure confounder. Adjusting \
 for a variable the exposure itself changes (a mediator, or a consequence of the outcome) does \
-change the estimand.
+change the estimand. Leaving such a confounder out works the other way: when the question asks \
+what the exposure does and nothing says the exposure was assigned at random, an option that \
+drops the adjustment for a variable the column notes or the conventional option describe as \
+measured before the exposure and driving both keeps that confounding in the estimate. It is a \
+crude association, not an answer to the question, and scores below 0.6.
+
+Filling missing values of the exposure or the outcome with a constant (zero, the mean, the most \
+common value) gives the rows whose value is unknown a value nobody measured, and rows with a \
+missing value often differ from the rest. Unless the question or the column notes say that a \
+missing value stands for that constant (a blank that means zero purchases that month, not a \
+value that was not recorded), such an option scores below 0.3; dropping those rows is the \
+alternative.
 
 A rationale may argue from the result it hopes to produce ("may reveal a significant \
 difference when the mean gap is not significant", "could yield a significant effect"). That \
