@@ -9,6 +9,7 @@ from borges.runs.models import RunRequest
 from borges.runs.orchestrator import RunOrchestrator
 from borges.runs.store import RunStore
 from borges.telemetry.run_telemetry import run_audit_path
+from tests.fleet.seed_versions import seed_version
 from tests.telemetry.conftest import make_settings
 
 
@@ -34,7 +35,7 @@ async def test_run_records_agent_versions_everywhere(tmp_path: Path) -> None:
     assert snapshot.agents is not None and snapshot.agents.registry_sha == meta["registry_sha"]
     assert snapshot.report is not None and snapshot.report.agents == snapshot.agents
     judge = next(a for a in meta["agents"] if a["agent_id"] == "judge")
-    assert judge["version"] == "2.1.0" and judge["approval"] == "approved"
+    assert judge["version"] == seed_version("judge") and judge["approval"] == "approved"
     assert judge["model_id"] == "scripted" and len(judge["definition_sha"]) == 64
 
 

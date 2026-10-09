@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from borges.config import Settings
 from borges.fleet.catalog import build_catalog, build_detail
+from tests.fleet.seed_versions import seed_version
 
 
 def test_catalog_summarises_the_fleet(settings: Settings) -> None:
@@ -10,7 +11,7 @@ def test_catalog_summarises_the_fleet(settings: Settings) -> None:
     assert catalog.summary.by_approval == {"approved": 12}
     assert catalog.summary.blocked == [] and catalog.summary.enforce is False
     judge = next(a for a in catalog.agents if a.agent_id == "judge")
-    assert judge.version == "2.1.0" and judge.approval == "approved"
+    assert judge.version == seed_version("judge") and judge.approval == "approved"
 
 
 def test_filters(settings: Settings) -> None:

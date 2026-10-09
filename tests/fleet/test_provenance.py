@@ -5,13 +5,14 @@ import pytest
 from borges.analysis.prompts import judge
 from borges.config import Settings
 from borges.fleet.provenance import run_provenance
+from tests.fleet.seed_versions import seed_version
 
 
 def test_every_agent_is_recorded_with_version_and_sha(settings: Settings) -> None:
     result = run_provenance(settings, "nebius")
     assert len(result.agents) == 12 and len(result.registry_sha) == 64
     judge_use = next(a for a in result.agents if a.agent_id == "judge")
-    assert judge_use.version == "2.1.0" and judge_use.approval == "approved"
+    assert judge_use.version == seed_version("judge") and judge_use.approval == "approved"
     assert judge_use.principal == "agent://borges/judge" and judge_use.prompt_sha
 
 
