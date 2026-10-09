@@ -6,7 +6,7 @@ from borges.analysis.models import AnalysisPlan, Judgement, Option, Step
 from borges.analysis.option_columns import missing_reason
 from borges.analysis.option_equivalence import equivalence_reason
 from borges.analysis.prompts.judge import build_messages
-from borges.analysis.prompts.notes import describe_column_notes
+from borges.analysis.prompts.notes import describe_column_notes, describe_named_columns
 from borges.analysis.schemas import JudgeOutput
 from borges.llm.client import LLMClient, Role
 from borges.telemetry import hooks
@@ -18,6 +18,12 @@ JudgeOrigin = Literal["planner", "adversary", "default"]
 def judge_key(step: Step, option: Option, origin: JudgeOrigin) -> str:
     prefixes = {"planner": "judge:planner:", "default": "judge:default:"}
     return f"{prefixes.get(origin, 'judge:')}{step.id}.{option.id}"
+
+
+def judge_facts(plan: AnalysisPlan, option: Option) -> str:
+    text = " ".join([option.label, option.rationale, option.spec])
+    blocks = [describe_column_notes(plan.dataset), describe_named_columns(plan.dataset, text)]
+    return "\n".join(b for b in blocks if b)
 
 
 async def judge_option(
@@ -55,7 +61,7 @@ async def judge_option(
         )
     response = await llm.complete(
         Role.JUDGE,
-        build_messages(plan, step, option, describe_column_notes(plan.dataset)),
+        build_messages(plan, step, option, judge_facts(plan, option)),
         key=judge_key(step, option, origin),
         schema=JudgeOutput,
         max_tokens=800,

@@ -103,3 +103,24 @@ async def test_an_option_naming_missing_columns_is_dropped_before_the_model_is_a
     assert judgement.accepted is False and judgement.defensibility == 0.0
     assert judgement.reason == "names columns not in the data: selfesteem, depression"
     assert llm.calls == []
+
+
+async def test_the_judge_sees_how_many_distinct_values_the_named_columns_hold() -> None:
+    out = JudgeOutput(defensibility=0.9, accepted=True, reason="r")
+    llm = FakeLLM({"judge:d1.trim": out})
+    columns = [
+        ColumnProfile(name="partner_id", dtype="str", n_missing=0, n_unique=40),
+        ColumnProfile(name="partner_idx", dtype="str", n_missing=0, n_unique=7),
+    ]
+    plan = make_plan().model_copy(
+        update={"dataset": DatasetProfile(name="d", n_rows=1200, columns=columns)}
+    )
+    step = plan.step("d1")
+    option = step.option("trim").model_copy(
+        update={"spec": "Cluster the standard errors by partner_id."}
+    )
+    plan.step("d1").options[[o.id for o in step.options].index("trim")] = option
+    await judge_option(llm, plan, step, option)
+    content = llm.calls[0].messages[1]["content"]
+    assert "Columns this option names, in 1,200 rows:\n- partner_id: 40 distinct values" in content
+    assert "partner_idx" not in content

@@ -38,9 +38,13 @@ cut-off the field does not use for it) is indefensible even as the conventional 
 
 Cluster-robust standard errors are defensible only on a sampling or design unit that repeats \
 across rows (participants measured repeatedly, instructors with several courses, schools, \
-players) and with at least 30 distinct clusters. Clustering on a date, a time, a variable \
+players) and with at least 30 distinct clusters. Read the number of clusters from the distinct \
+values listed under the option; never assume it. Clustering on a date, a time, a variable \
 computed in the analysis, or fewer than 30 groups is indefensible: with few clusters the \
-interval is too narrow.
+interval is too narrow. The exception is an exposure assigned to whole clusters (a school, ward \
+or branch adopted it or did not): its rows are not independent, errors that ignore the clusters \
+are too narrow, and with fewer than 30 such clusters the defensible options are clustering with \
+t critical values on clusters minus one degrees of freedom, or a model on one row per cluster.
 
 Another operationalisation of the same construct is an alternative, not a change of the \
 estimand: a different window or cut-off the field uses for the construct, another defensible \

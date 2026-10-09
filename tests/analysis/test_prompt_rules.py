@@ -247,3 +247,12 @@ def test_judge_keeps_a_pre_exposure_confounder_in_the_same_estimand() -> None:
     text = " ".join(JUDGE_SYSTEM.split())
     assert "plausible pre-exposure confounder" in text
     assert "a mediator, or a consequence of the outcome" in text
+
+
+def test_judge_reads_cluster_counts_and_accepts_t_for_cluster_assigned_exposures() -> None:
+    from borges.analysis.prompts.judge import SYSTEM as JUDGE_SYSTEM
+
+    text = " ".join(JUDGE_SYSTEM.split())
+    assert "Read the number of clusters from the distinct values listed under the option" in text
+    assert "an exposure assigned to whole clusters" in text
+    assert "t critical values on clusters minus one degrees of freedom" in text
