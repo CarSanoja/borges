@@ -9,7 +9,7 @@ import pytest
 import statsmodels.api as sm
 
 from borges.analysis.harness import parse_error, parse_output
-from borges.analysis.model_spec.render_design import ALIAS_NOTE, REBUILT_NOTE
+from borges.analysis.model_spec.render_alias import ALIAS_NOTE, REBUILT_NOTE
 from tests.analysis.test_harness_design import HEADER, run_model
 
 FIT = (
@@ -210,3 +210,26 @@ def test_a_covariate_that_rebuilds_the_exposure_is_left_out_with_a_note(tmp_path
     assert done.returncode == 0, done.stdout
     traces, _ = parse_output(done.stdout)
     assert traces[0].note == REBUILT_NOTE + "month"
+
+
+def test_the_template_leaves_out_a_ward_that_defines_the_exposure_and_says_so(
+    tmp_path: Path,
+) -> None:
+    from borges.analysis.model_spec.render import render_code
+    from tests.analysis.model_spec.data import make_spec
+
+    rng = np.random.default_rng(13)
+    ward = rng.choice(["A", "B", "C", "D"], 400)
+    frame = pd.DataFrame({"ward": ward, "risk": rng.poisson(3, 400).astype(float)})
+    frame["x"] = np.isin(ward, ["A", "B"]).astype(float)
+    frame["y"] = -0.4 * frame["x"] + 0.3 * frame["risk"] + rng.normal(size=400)
+    frame.to_parquet(tmp_path / "data.parquet")
+    with_ctx(tmp_path, ["ward", "risk"])
+    spec = make_spec("ols", outcome="y", covariates_from_ctx=True)
+    done = run_model(tmp_path, render_code(spec))
+    assert done.returncode == 0, done.stdout
+    traces, result = parse_output(done.stdout)
+    assert traces[0].note == REBUILT_NOTE + "ward"
+    lean = sm.OLS(frame["y"], sm.add_constant(frame[["x", "risk"]])).fit()
+    assert result is not None
+    assert result.estimate == pytest.approx(float(lean.params["x"]), rel=1e-8)

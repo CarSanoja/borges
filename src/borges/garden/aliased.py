@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from borges.analysis.model_spec.render_design import ALIAS_NOTE, REBUILT_NOTE, TANGLED_NOTE
+from borges.analysis.model_spec.render_alias import ALIAS_NOTE, REBUILT_NOTE, TANGLED_NOTE
 from borges.analysis.models import StepTrace
 from borges.garden.models import Garden
 

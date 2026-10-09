@@ -23,7 +23,7 @@ column, and the report says so.
 
 from __future__ import annotations
 
-from borges.analysis.model_spec.render_design import REBUILT_NOTE
+from borges.analysis.model_spec.render_alias import REBUILT_NOTE
 
 COVARIATES_SOURCE = """
     def _uses_covariate(column, terms):

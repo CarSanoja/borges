@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.model_spec.core_terms import is_core_term, runtime_filter_lines
+from borges.analysis.model_spec.render_alias import ALIAS_LINES
 from borges.analysis.model_spec.schema import INTERACTION_COLUMN, ModelSpecOutput
 
 INPUT_FAULT = "the earlier step that builds it"
@@ -123,42 +124,6 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
             " / (data[c].astype(float).std() or 1.0) for c in scaled})",
         ]
     return lines
-
-
-ALIAS_TOLERANCE = 1e-7
-ALIAS_NOTE = "aliased covariates dropped: "
-TANGLED_NOTE = "; covariates that rebuild the exposure with them dropped: "
-REBUILT_NOTE = "covariates that rebuild the exposure by themselves left out: "
-ALIAS_LINES = [
-    "    protected = ['const', *map(str, core.columns)]",
-    "    basis = np.zeros((len(exog), 0))",
-    "    aliased = []",
-    "    for column in list(exog.columns):",
-    "        vector = exog[column].to_numpy(dtype=float)",
-    "        size = float(np.linalg.norm(vector))",
-    "        residual = vector / size if size else vector",
-    "        for _ in range(2):",
-    "            residual = residual - basis @ (basis.T @ residual)",
-    "        size = float(np.linalg.norm(residual))",
-    f"        if size >= {ALIAS_TOLERANCE!r}:",
-    "            basis = np.column_stack([basis, residual / size])",
-    "        elif str(column) not in protected:",
-    "            aliased.append(str(column))",
-    "    kept = [c for c in exog.columns if c not in aliased]",
-    "    tangled = []",
-    "    for column in aliased:",
-    "        target = exog[column].to_numpy(dtype=float)",
-    "        weights = np.linalg.lstsq(exog[kept].to_numpy(dtype=float), target, rcond=None)[0]",
-    "        sizes = np.abs(weights) * exog[kept].abs().max().to_numpy(dtype=float)",
-    f"        floor = {ALIAS_TOLERANCE!r} * (float(np.abs(target).max()) or 1.0)",
-    "        involved = [c for c, size in zip(kept, sizes) if size > floor]",
-    "        if any(c in core.columns for c in involved):",
-    "            tangled += [c for c in involved if c not in protected]",
-    "    tangled = list(dict.fromkeys(tangled))",
-    "    exog = exog.drop(columns=aliased + tangled)",
-    f"    note = {ALIAS_NOTE!r} + ', '.join(aliased) if aliased else ''",
-    f"    note += {TANGLED_NOTE!r} + ', '.join(tangled) if tangled else ''",
-]
 
 
 def exog_lines(spec: ModelSpecOutput) -> list[str]:
