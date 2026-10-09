@@ -20,6 +20,7 @@ from borges.fleet.models import RunAgents
 from borges.garden.aliased import aliased_caveats, tangled_caveats
 from borges.garden.covariate_sample import baseline_sample_caveats, covariate_sample_caveats
 from borges.garden.discrete_quantile import discrete_quantile_caveats
+from borges.garden.duplicate_rows import duplicate_row_caveats
 from borges.garden.executor import GardenExecutor
 from borges.garden.failed_caveat import failed_caveat, untested_decision_caveats
 from borges.garden.hc_variant import hc_variant_caveats
@@ -227,6 +228,7 @@ class Pipeline:
                 *hc_variant_caveats(self.garden),
                 *untested_decision_caveats(plan, self.garden),
                 *repeated_unit_caveats(plan, self.garden),
+                *duplicate_row_caveats(plan),
             ]
         )
         note = scale_note(self.garden)

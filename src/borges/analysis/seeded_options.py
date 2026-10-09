@@ -30,6 +30,8 @@ def _clusterable(default: Option) -> bool:
     code = default.code
     if code is None or "def estimate" not in code or default.cluster_by is not None:
         return False
+    if "statsmodels" not in code:
+        return False
     return UNSUPPORTED.search(code) is None and CLUSTERS_ALREADY.search(code) is None
 
 

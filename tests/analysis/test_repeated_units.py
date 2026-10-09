@@ -6,7 +6,11 @@ import numpy as np
 import pandas as pd
 
 from borges.analysis.profile import blind_profile, profile_dataframe
-from borges.analysis.repeated_units import detect_repeated_units, looks_like_identifier
+from borges.analysis.repeated_units import (
+    count_duplicate_rows,
+    detect_repeated_units,
+    looks_like_identifier,
+)
 
 RED_CARDS = Path(__file__).resolve().parents[2] / "cases" / "red_cards" / "data.parquet"
 
@@ -36,7 +40,7 @@ def test_a_column_with_few_distinct_values_is_not_a_unit() -> None:
 
 def test_a_column_that_does_not_repeat_is_not_a_unit() -> None:
     assert detect_repeated_units(frame(row_id=np.arange(600))) == []
-    thin = np.arange(600) % 400
+    thin = np.arange(600) % 590
     assert detect_repeated_units(frame(row_id=thin)) == []
 
 
@@ -125,3 +129,55 @@ def test_a_noted_identifier_with_one_row_each_is_not_a_unit() -> None:
     case = json.loads((CASES / "fertility_religiosity" / "case.json").read_text())
     data = pd.read_parquet(CASES / "fertility_religiosity" / "data.parquet")
     assert detect_repeated_units(data, notes=case["column_notes"]) == []
+
+
+def test_a_sessions_file_where_a_third_of_users_return_is_repeated() -> None:
+    rng = np.random.default_rng(5)
+    counts = np.where(rng.random(1500) < 0.31, 2, 1)
+    users = np.repeat(np.arange(1500), counts)
+    units = detect_repeated_units(frame(rows=len(users), user_id=users))
+    assert [(u.name, u.n_units) for u in units] == [("user_id", 1500)]
+    assert 1.2 < units[0].rows_per_unit < 2
+
+
+def test_a_few_stray_repeats_are_not_a_repeated_unit() -> None:
+    assert detect_repeated_units(frame(row_id=np.arange(600) % 550)) == []
+
+
+def grunfeld() -> pd.DataFrame:
+    firms = np.repeat(np.arange(11), 20)
+    years = np.tile(np.arange(1935, 1955), 11)
+    return pd.DataFrame({"inv": np.arange(220.0), "firm": firms, "year": years})
+
+
+def test_a_small_panel_with_a_time_column_is_a_repeated_unit() -> None:
+    units = detect_repeated_units(grunfeld(), exclude={"inv"})
+    assert [(u.name, u.n_units, u.rows_per_unit) for u in units] == [("firm", 11, 20.0)]
+
+
+def test_an_entity_column_without_a_time_column_is_not_a_panel() -> None:
+    assert detect_repeated_units(grunfeld().drop(columns="year")) == []
+
+
+def test_an_entity_that_does_not_make_a_panel_with_time_is_not_a_unit() -> None:
+    assert detect_repeated_units(grunfeld().assign(firm=lambda d: d["firm"] % 3)) == []
+    assert detect_repeated_units(grunfeld().assign(year=1)) == []
+
+
+def test_treatment_and_group_columns_with_few_levels_are_not_units() -> None:
+    rng = np.random.default_rng(1)
+    data = frame(
+        variant=rng.integers(0, 2, 600),
+        group=rng.integers(0, 4, 600),
+        arm=rng.integers(0, 3, 600),
+        gender=rng.integers(0, 2, 600),
+        department=rng.integers(0, 4, 600),
+        year=rng.integers(2000, 2005, 600),
+    )
+    assert detect_repeated_units(data) == []
+
+
+def test_exact_duplicate_rows_are_counted_and_profiled() -> None:
+    data = pd.DataFrame({"a": [1, 1, 2, 2, 2, 3], "b": list("xxyyyz")})
+    assert count_duplicate_rows(data) == 3
+    assert profile_dataframe(data, "d").duplicate_rows == 3

@@ -65,6 +65,7 @@ class DatasetProfile(BaseModel):
     columns: list[ColumnProfile]
     sample_rows: list[dict[str, object]] = Field(default_factory=list)
     repeated_units: list[RepeatedUnit] = Field(default_factory=list)
+    duplicate_rows: int = 0
 
 
 StepKind = Literal["filter", "transform", "feature", "model"]

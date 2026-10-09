@@ -62,7 +62,8 @@ def test_a_default_model_that_cannot_cluster_or_already_clusters_seeds_nothing()
     )
     gee = LOGIT.replace("sm.Logit", "sm.GEE")
     clustered = LOGIT.replace('"HC3"', '"cluster", cov_kwds={"groups": g}')
-    for code in (quantile, gee, clustered, None):
+    by_hand = 'import math\n\n\ndef estimate(df, ctx):\n    return {"estimate": math.sqrt(2)}\n'
+    for code in (quantile, gee, clustered, by_hand, None):
         assert seed_cluster_options(plan_with_units(code)) == []
 
 
