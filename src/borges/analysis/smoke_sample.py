@@ -8,6 +8,7 @@ import pandas as pd
 ID_NAME = re.compile(r"(?:^|_)id$", re.IGNORECASE)
 MIN_GROUPS = 20
 COVER_MAX_LEVELS = 50
+RARE_MIN = 20
 
 
 def group_column(frame: pd.DataFrame) -> str | None:
@@ -50,19 +51,46 @@ def missing_levels(frame: pd.DataFrame, sample: pd.DataFrame) -> list[object]:
     return extra
 
 
+def rare_values(frame: pd.DataFrame, sample: pd.DataFrame, seed: int) -> list[object]:
+    """Row indices that give the rarer value of each two-valued column RARE_MIN rows in the sample.
+
+    A clinic table (r_20261009T083216_35c688) had a major bleed in 2 % of 3000 patients; the
+    200-row sample held none, every model of the outcome failed its smoke run, and the run failed
+    although the full data has 58 bleeds.
+    """
+    rng = np.random.default_rng(seed)
+    extra: list[object] = []
+    for column in frame.columns:
+        counts = frame[column].value_counts(dropna=True)
+        if len(counts) != 2:
+            continue
+        rare = counts.index[-1]
+        need = min(RARE_MIN, int(counts.iloc[-1])) - int((sample[column] == rare).sum())
+        if need <= 0:
+            continue
+        pool = frame.index[(frame[column] == rare).to_numpy()].difference(sample.index)
+        extra.extend(rng.choice(pool.to_numpy(), size=min(need, len(pool)), replace=False))
+    return extra
+
+
 def sample_frame(frame: pd.DataFrame, target: int, seed: int) -> pd.DataFrame:
     """About `target` rows; whole groups of the id column when one repeats, else random rows.
 
-    Every level of a text column with few levels appears at least once.
+    Every level of a text column with few levels appears at least once, and the rarer value of a
+    two-valued column at least RARE_MIN times when the data has that many.
     """
     column = group_column(frame)
     if column is None:
         sample = frame.sample(n=target, random_state=seed)
-        return frame.loc[sample.index.union(missing_levels(frame, sample))].sort_index()
+        index = sample.index.union(missing_levels(frame, sample))
+        index = index.union(rare_values(frame, frame.loc[index], seed))
+        return frame.loc[index].sort_index()
     sizes = frame[column].value_counts(dropna=True)
     order = sizes.index.to_numpy()[np.random.default_rng(seed).permutation(len(sizes))]
     counts = sizes.loc[order].to_numpy().cumsum()
     keep = set(order[: int(np.searchsorted(counts, target)) + 1].tolist())
     sample = frame[frame[column].isin(keep)]
     keep.update(frame.loc[missing_levels(frame, sample), column].dropna().tolist())
+    sample = frame[frame[column].isin(keep)]
+    keep.update(frame.loc[rare_values(frame, sample, seed), column].dropna().tolist())
     return frame[frame[column].isin(keep)].sort_index()

@@ -49,7 +49,8 @@ def test_a_rare_level_of_a_text_column_is_always_in_the_sample() -> None:
     frame["flag"] = frame["session_id"] == 5
     sample = sample_frame(frame, 300, 7)
     assert set(sample["default"]) == {"no", "yes"} and set(sample["flag"]) == {True, False}
-    assert 300 < len(sample) <= 302
+    assert int(sample["default"].eq("yes").sum()) == 3
+    assert 300 < len(sample) <= 304
 
 
 def test_a_rare_level_brings_its_whole_group() -> None:
@@ -59,3 +60,39 @@ def test_a_rare_level_brings_its_whole_group() -> None:
     sample = sample_frame(frame, 500, 7)
     assert "pro" in set(sample["plan"])
     assert (sample["user_id"] == 1999).sum() == (frame["user_id"] == 1999).sum()
+
+
+def bleeds(patients: int = 3000) -> pd.DataFrame:
+    rng = np.random.default_rng(1)
+    return pd.DataFrame(
+        {
+            "age": rng.integers(40, 95, size=patients),
+            "new_drug": rng.integers(0, 2, size=patients),
+            "bleed": (rng.random(patients) < 0.02).astype(int),
+        }
+    )
+
+
+def test_a_rare_outcome_has_enough_events_in_the_sample() -> None:
+    frame = bleeds()
+    assert frame["bleed"].sum() >= 20
+    sample = sample_frame(frame, 200, 7)
+    assert int(sample["bleed"].sum()) >= 20
+    assert len(sample) <= 220
+    assert sample_frame(frame, 200, 7).index.equals(sample.index)
+
+
+def test_a_rare_outcome_with_few_events_keeps_all_of_them() -> None:
+    frame = bleeds()
+    frame.loc[frame.index[frame["bleed"].eq(1)][5:], "bleed"] = 0
+    assert int(sample_frame(frame, 200, 7)["bleed"].sum()) == 5
+
+
+def test_a_group_sample_adds_whole_groups_for_a_rare_value() -> None:
+    frame = sessions()
+    frame["converted"] = 0
+    frame.loc[frame.index[::97], "converted"] = 1
+    sample = sample_frame(frame, 500, 7)
+    assert int(sample["converted"].sum()) >= 20
+    sampled = set(sample["user_id"])
+    assert len(sample) == int(frame["user_id"].isin(sampled).sum())
