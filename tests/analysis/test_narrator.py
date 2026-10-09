@@ -158,7 +158,9 @@ async def test_the_scale_sentence_is_not_written_twice() -> None:
     scaled = garden({"kind": "log1p", "column": "alldeaths"})
     note = scale_note(scaled)
     assert note is not None
-    text = f"{note} The estimate was 0.029 additional deaths per unit. {robustness_sentence(report)}"
+    text = (
+        f"{note} The estimate was 0.029 additional deaths per unit. {robustness_sentence(report)}"
+    )
     llm = FakeLLM({"narrator": NarratorOutput(narrative=text, caveats=[])})
     narrative = await narrate(llm, make_plan(), report, scaled)
     assert narrative.count(note) == 1

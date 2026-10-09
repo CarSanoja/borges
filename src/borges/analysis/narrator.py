@@ -117,9 +117,9 @@ def _complete(
         head = robust.split(", leaving out", 1)[0] + "."
         flat = " ".join(kept.split())
         kept = flat.replace(head, robust) if head != robust and head in flat else f"{kept} {robust}"
-    if scale is not None and not has_sentence(kept, scale):
-        if units or not mentions_log_scale(kept):
-            kept = insert_sentence(kept, scale)
+    missing = scale is not None and not has_sentence(kept, scale)
+    if scale is not None and missing and (units or not mentions_log_scale(kept)):
+        kept = insert_sentence(kept, scale)
     return kept
 
 
