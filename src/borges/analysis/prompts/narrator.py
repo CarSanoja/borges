@@ -80,3 +80,18 @@ def build_messages(
     if problems:
         user += "\nYour previous summary was rejected: " + "; ".join(problems) + "."
     return messages(SYSTEM, user)
+
+
+TRANSLATE_SYSTEM = """You translate the summary of a robustness analysis into {language} for the \
+person who asked the question in that language.
+
+Keep the meaning, the markdown and the order of the sentences. Keep every number exactly as \
+written, with its decimal point, minus sign, thousands commas and percent sign: do not write \
+0.045 as 0,045 or 10,535 as 10.535, and do not round, add, spell out or drop a number. Keep column \
+names, option names and these verdict labels verbatim and untranslated: {labels}. Return only JSON \
+with the field "narrative" and an empty "caveats" list."""
+
+
+def translate_messages(language: str, narrative: str, labels: list[str]) -> list[dict[str, str]]:
+    system = TRANSLATE_SYSTEM.format(language=language, labels=", ".join(labels) or "none")
+    return messages(system, narrative)
