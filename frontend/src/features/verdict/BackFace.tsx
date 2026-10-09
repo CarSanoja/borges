@@ -31,7 +31,7 @@ export function BackFace({ flip, hidden, rule, search, explored }: Props) {
       )}
       {flip.contaminated === true && (
         <p className="vc-warning" role="note" data-testid="flip-contaminated">
-          Contaminated analysis flip: this change re-includes rows that the plan's own column notes mark invalid
+          Contaminated analysis flip: this change re-includes rows that the column notes mark invalid
           {flip.contamination_reason ? ` (${flip.contamination_reason})` : ""}.
         </p>
       )}

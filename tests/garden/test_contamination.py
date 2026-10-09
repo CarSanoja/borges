@@ -36,7 +36,7 @@ def test_a_note_the_user_wrote_flags_the_rows_and_the_plan_is_quoted_as_the_plan
     plan = country_plan({"country": "country of the visitor; missing means a bot or test session"})
     garden = garden_for(plan)
     [found] = contaminated_options(plan, garden)
-    assert "the notes you wrote mark as invalid (bot, test)" in found.reason
+    assert "the column notes mark as invalid (bot, test)" in found.reason
     assert f"the plan's default drops these rows because {RATIONALE}" in found.reason
     [flip] = contaminated_flips(plan, garden)
     assert "the plan's default drops these rows because" in (flip.contamination_reason or "")

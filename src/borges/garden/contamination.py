@@ -64,7 +64,7 @@ def contamination_reason(
             continue
         return (
             f"{step.title}: '{change.to_label}' re-includes {rows[1] - rows[0]} rows that the "
-            f"baseline option '{step.default.label}' excluded and that the notes you wrote mark "
+            f"baseline option '{step.default.label}' excluded and that the column notes mark "
             f"as invalid ({', '.join(words)}){plan_reason(plan, step.id)}; this is a "
             "contaminated-analysis flip, not a finding about the question"
         )

@@ -29,7 +29,7 @@ function Caveats({ card }: { card: CaseCard }) {
     <ul className="headline-caveats">
       {live.contaminated && (
         <li data-testid="headline-contaminated">
-          Contaminated analysis flip: it re-includes rows that the plan's own column notes mark invalid.
+          Contaminated analysis flip: it re-includes rows that the column notes mark invalid.
         </li>
       )}
       {steadyEstimate(live) && (
