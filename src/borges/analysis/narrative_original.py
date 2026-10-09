@@ -23,6 +23,7 @@ ORIGINAL = re.compile(
 )
 ADVERSARY = re.compile(r"\badversar", re.I)
 DECIMAL = re.compile(r"-?\d+\.\d+")
+NUMBER = re.compile(r"-?\d[\d,]*(?:\.\d+)?(?:e[+-]?\d+)?")
 
 
 def _num(value: float) -> str:
@@ -62,7 +63,13 @@ def _values(report: Report) -> list[float]:
 
 
 def carries_estimate(report: Report, sentence: str) -> bool:
-    return carries_value(sentence, report.original_result.estimate)
+    """A pay-gap narrative opened with the estimate as "-503", which has no decimals, and the
+    built sentence was put in front of it, so the summary said the same thing twice."""
+    value = report.original_result.estimate
+    if carries_value(sentence, value):
+        return True
+    shown = {_num(value), f"{value:,.0f}", str(round(value))}
+    return any(token in shown for token in NUMBER.findall(sentence))
 
 
 def _contradicts(report: Report, sentence: str) -> bool:

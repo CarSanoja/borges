@@ -60,3 +60,15 @@ def test_the_fallback_states_the_original_and_drops_what_contradicts_it() -> Non
         f"{original_sentence(report())} The analysis examined 10,170 respondents. "
         "Both kept the verdict."
     )
+
+
+def test_an_opening_with_the_estimate_rounded_to_a_whole_number_is_not_repeated() -> None:
+    gap = AnalysisResult(estimate=-502.856, ci_low=-1197.4, ci_high=191.7, p_value=0.156, n=1500)
+    pay = report().model_copy(
+        update={"original_result": gap, "original_verdict": "NO SIGNIFICANT GAP"}
+    )
+    narrative = (
+        "The original analysis estimated -503 (95% CI -1.2e+03 to 192, p = 0.16, n = 1,500) and "
+        "returned the verdict NO SIGNIFICANT GAP. No change flips it."
+    )
+    assert with_original(make_plan(), pay, narrative) == narrative
