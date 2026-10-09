@@ -11,9 +11,18 @@ GLOB = re.compile(r"[*?\[]")
 STAR = re.compile(r"(\w+?)_?\*")
 Products = dict[str, tuple[list[str], set[str], set[str]]]
 COUNT_OR_BINARY_FIT = re.compile(
-    r"\b(?:Poisson|NegativeBinomial\w*|GeneralizedPoisson|ZeroInflated\w*|Logit|Probit|Binomial)\b"
+    r"\b(?:Poisson|NegativeBinomial\w*|GeneralizedPoisson|ZeroInflated\w*|Logit|Probit|Binomial)\b",
+    re.IGNORECASE,
 )
 OUTCOME_READ = re.compile(r"""\b(?:endog|y)\s*=\s*\w+\[\s*["'](\w+)["']\s*\]""")
+FIT_OUTCOME = re.compile(
+    r"\b(?:GLM|Poisson|NegativeBinomial\w*|GeneralizedPoisson|ZeroInflated\w*|Logit|Probit)"
+    r"""\(\s*\w+\[\s*["'](\w+)["']\s*\]"""
+)
+FORMULA_OUTCOME = re.compile(r"""["']\s*(\w+)\s*~""")
+DENOMINATOR = re.compile(r"\b(?:offset|exposure)\s*=\s*([^\n]*)")
+COLUMN_READ = re.compile(r"""\w+\[\s*["'](\w+)["']\s*\]""")
+LEADING_NAME = re.compile(r"^\s*([A-Za-z_]\w*)")
 
 
 def _mention(name: str) -> re.Pattern[str]:
@@ -74,13 +83,33 @@ def unused_products(plan: AnalysisPlan, step: Step) -> Products:
     return found
 
 
+def _denominators(code: str) -> set[str]:
+    """Columns read as an offset or exposure, directly or through a variable assigned from them."""
+    found: set[str] = set()
+    for argument in DENOMINATOR.findall(code):
+        found |= set(COLUMN_READ.findall(argument))
+        for name in LEADING_NAME.findall(argument):
+            assigned = re.findall(rf"^\s*{re.escape(name)}\s*=\s*(.*)$", code, re.MULTILINE)
+            found |= {c for value in assigned for c in COLUMN_READ.findall(value)}
+    return found
+
+
 def _raw_outcome(code: str, sources: set[str]) -> bool:
-    """A count or binary model needs the raw count or 0/1 column as its outcome, so reading the
-    column an earlier step transformed is not rebuilding the transform."""
+    """A count or binary model needs the raw count or 0/1 column as its outcome, and a rate model
+    the raw denominator as its offset, so reading the columns an earlier step turned into a rate is
+    not rebuilding the transform. An audit run (r_20261009T104019_338034) built exceptions per item
+    tested in one step and fitted a Poisson model of the exceptions with log(items) as its offset;
+    the outcome sat in a formula and the denominator in offset=, so the default model was refused
+    on every attempt and the run failed."""
     if not COUNT_OR_BINARY_FIT.search(code):
         return False
     read = {source for source in sources if _mention(source).search(code)}
-    return bool(read) and read <= set(OUTCOME_READ.findall(code))
+    outcome = {
+        *OUTCOME_READ.findall(code),
+        *FIT_OUTCOME.findall(code),
+        *FORMULA_OUTCOME.findall(code),
+    }
+    return bool(read) and read <= outcome | _denominators(code)
 
 
 def products_read_violations(code: str, products: Products) -> list[str]:

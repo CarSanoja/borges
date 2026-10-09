@@ -158,3 +158,43 @@ def test_a_count_model_on_the_raw_outcome_is_not_rebuilding_its_transform() -> N
     assert products_read_violations(POISSON, products) == []
     assert len(products_read_violations(OLS_ON_RAW, products)) == 1
     assert len(products_read_violations(POISSON_REBUILDS_COVARIATE, products)) == 1
+
+
+RATE = step(
+    "rate",
+    "Compute exception rate",
+    "transform",
+    "Create exception_rate = exceptions_found / items_tested.",
+    "Create exception_rate as a shrunk rate of exceptions_found over items_tested.",
+).model_copy(update={"produces": ["exception_rate"]})
+FORMULA_OFFSET = """
+def estimate(df, ctx):
+    fit = smf.glm("exceptions_found ~ new_method", df, family=sm.families.Poisson(),
+                  offset=np.log(df["items_tested"])).fit()
+"""
+ARRAY_EXPOSURE = """
+def estimate(df, ctx):
+    log_items = np.log(df["items_tested"])
+    fit = sm.GLM(df["exceptions_found"], X, family=sm.families.Poisson(), offset=log_items).fit()
+"""
+OLS_ON_RATE_SOURCES = """
+def estimate(df, ctx):
+    fit = smf.ols("exceptions_found ~ new_method + items_tested", df).fit()
+"""
+
+
+def rate_plan() -> AnalysisPlan:
+    base = plan(RATE, MODEL)
+    columns = [
+        *base.dataset.columns,
+        base.dataset.columns[1].model_copy(update={"name": "exceptions_found"}),
+        base.dataset.columns[1].model_copy(update={"name": "items_tested"}),
+    ]
+    return base.model_copy(update={"dataset": base.dataset.model_copy(update={"columns": columns})})
+
+
+def test_a_rate_model_on_the_raw_count_and_its_offset_is_not_rebuilding_the_rate() -> None:
+    products = unused_products(rate_plan(), MODEL)
+    assert products_read_violations(FORMULA_OFFSET, products) == []
+    assert products_read_violations(ARRAY_EXPOSURE, products) == []
+    assert len(products_read_violations(OLS_ON_RATE_SOURCES, products)) == 1
