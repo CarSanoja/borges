@@ -47,6 +47,11 @@ class CircuitBreaker:
         self.opened_at = None
         self.probing = False
 
+    def trip(self) -> None:
+        self.failures = max(self.failures, self.policy.failure_threshold)
+        self.probing = False
+        self.opened_at = self.clock()
+
     def record_failure(self) -> None:
         self.failures += 1
         was_probe = self.probing

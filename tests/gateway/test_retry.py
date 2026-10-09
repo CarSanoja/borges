@@ -5,7 +5,7 @@ import asyncio
 import pytest
 
 from borges.gateway.policy_models import RetryPolicy
-from borges.gateway.retry import backoff_delay, is_transient
+from borges.gateway.retry import backoff_delay, is_model_missing, is_transient
 
 POLICY = RetryPolicy(max_attempts=5, base_delay_s=0.5, max_delay_s=4.0, jitter=0.25)
 
@@ -78,3 +78,14 @@ def test_a_transient_error_wrapped_by_the_provider_is_still_transient() -> None:
     assert is_transient(wrapped(Status(503)))
     assert not is_transient(wrapped(Status(400)))
     assert not is_transient(wrapped(ValueError("invalid output")))
+
+
+def test_a_not_found_model_is_missing_through_the_wrapping_error() -> None:
+    try:
+        try:
+            raise Status(404)
+        except Status as inner:
+            raise RuntimeError("Nebius request failed") from inner
+    except RuntimeError as wrapped:
+        assert is_model_missing(wrapped)
+    assert not is_model_missing(Status(503)) and not is_model_missing(ValueError("x"))

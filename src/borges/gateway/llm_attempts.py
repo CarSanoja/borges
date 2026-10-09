@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from borges.gateway.breaker import BreakerState, CircuitBreaker
 from borges.gateway.guard import gateway_call
-from borges.gateway.retry import backoff_delay, is_transient
+from borges.gateway.retry import backoff_delay, is_model_missing, is_transient
 from borges.llm.client import LLMClient, LLMResponse, ModelSpec, Role
 from borges.llm.model_override import use_model
 
@@ -65,6 +65,10 @@ async def run_model(
                     )
         except Exception as exc:
             gw.budgets.release(reservation)
+            if is_model_missing(exc):
+                breaker.trip()
+                observe("gateway.model_missing", agent_id, model, f"not served: {exc!r}"[:200])
+                return ModelOutcome(None, attempts, exc)
             if not is_transient(exc):
                 breaker.abandon_probe()
                 raise

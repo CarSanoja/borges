@@ -67,3 +67,11 @@ def test_registry_keeps_one_breaker_per_model(clock: Clock) -> None:
     assert registry.of("a").state is BreakerState.OPEN
     assert registry.of("b").state is BreakerState.CLOSED
     assert registry.states() == {"a": "open", "b": "closed"}
+
+
+def test_trip_opens_at_once_and_probes_after_the_cooldown(clock: Clock) -> None:
+    b = breaker(clock)
+    b.trip()
+    assert b.state is BreakerState.OPEN and not b.allow()
+    clock.now += 31
+    assert b.allow()

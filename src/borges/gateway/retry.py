@@ -55,6 +55,20 @@ def is_transient(exc: BaseException) -> bool:
     return False
 
 
+def is_model_missing(exc: BaseException) -> bool:
+    """A 404 means the provider does not serve the model: Token Factory stopped serving Nemotron
+    Ultra on 9 October 2026, and every judge and narrator call failed instead of moving on to the
+    next model the policy lists."""
+    current: BaseException | None = exc
+    for _ in range(MAX_CAUSE_DEPTH):
+        if current is None:
+            return False
+        if _status_of(current) == 404 or type(current).__name__ == "NotFoundError":
+            return True
+        current = current.__cause__
+    return False
+
+
 def backoff_delay(
     policy: RetryPolicy, attempt: int, rng: Callable[[], float] = random.random
 ) -> float:
