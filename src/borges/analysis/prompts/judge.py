@@ -55,7 +55,11 @@ whether researchers in the field use or would defend it, not by its distance fro
 conventional option shown below, which is only the starting point of this analysis and not \
 necessarily the published one. Keep "changes the estimand" for an option that measures another \
 construct (the opposite phase as the high window, a group the question does not compare) or \
-answers another question.
+answers another question. When an ordered answer (a relationship stage, a level of education, \
+a frequency) is collapsed into two groups, each group is a run of neighbouring answers: an \
+alternative moves the cut point or leaves an answer out, and one that puts an answer between \
+two answers of the other group (committed = engaged only, with married women counted as \
+single) assigns observations to the wrong category and is rejected.
 
 When the question asks what the exposure does (whether it reduced, caused, improved or worked) or \
 compares groups at equal values of other variables (the same risk profile, holding a factor \

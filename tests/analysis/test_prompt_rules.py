@@ -256,3 +256,20 @@ def test_judge_reads_cluster_counts_and_accepts_t_for_cluster_assigned_exposures
     assert "Read the number of clusters from the distinct values listed under the option" in text
     assert "an exposure assigned to whole clusters" in text
     assert "t critical values on clusters minus one degrees of freedom" in text
+
+
+def test_ranges_are_written_and_coded_as_ranges_not_two_value_lists() -> None:
+    planner = " ".join(PLANNER_SYSTEM.split())
+    assert '"from 7 to 14 inclusive"' in planner and "never write either in brackets" in planner
+    coder = " ".join(CODER_SYSTEM.split())
+    assert "`x.between(7, 14)`" in coder and "`x.isin([7, 14])` keeps only 7 and 14" in coder
+
+
+def test_a_status_from_an_ordered_answer_keeps_each_group_a_run_of_neighbouring_answers() -> None:
+    from borges.analysis.prompts.judge import SYSTEM as JUDGE_SYSTEM
+
+    judge = " ".join(JUDGE_SYSTEM.split())
+    assert "each group is a run of neighbouring answers" in judge
+    assert "with married women counted as single" in judge and "is rejected" in judge
+    planner = " ".join(PLANNER_SYSTEM.split())
+    assert "never put an answer between two answers of the other group" in planner

@@ -65,6 +65,9 @@ puts every missing row in group 0. Build the column, then blank those rows: \
 rows only. Fill missing values only when the option says it imputes them. In a model step, \
 drop the rows where a column you compare or transform is missing before building anything from \
 it, and report n as the rows fitted.
+- A window on a measured quantity (a day, an age, a score, an amount) written [7, 14], 7-14 or \
+"from 7 to 14" covers every value from 7 to 14: `x.between(7, 14)`. `x.isin([7, 14])` keeps \
+only 7 and 14; use isin only for category codes.
 - For a model fitted by maximum likelihood (logit, Poisson, negative binomial), rescale each \
 numeric covariate that is not the exposure and reaches the thousands, (x - x.mean()) / x.std(), \
 before fitting: the exposure's coefficient does not change, and the solver no longer meets a \

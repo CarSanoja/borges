@@ -35,7 +35,9 @@ the data.
 - Ids are short snake_case, unique across steps for steps and unique within a step for options.
 - spec is a precise implementation instruction that uses the exact column names of the \
 dataset, states what is written to ctx if later steps depend on it, and says what the \
-function returns. Specs must be implementable in pandas, numpy, scipy or statsmodels, and a \
+function returns. Write a range as "from 7 to 14 inclusive" and a set of codes as "one of 3, \
+4"; never write either in brackets, which reads as a list of two values. Specs must be \
+implementable in pandas, numpy, scipy or statsmodels, and a \
 model option names only an estimator those libraries provide directly (for example OLS, WLS, \
 GLM families, Logit, Probit, Poisson, NegativeBinomial, MixedLM, GEE, robust or cluster-robust \
 covariance). No sampler is available: do not propose Bayesian models, Firth penalized \
@@ -97,7 +99,9 @@ columns (a category computed from dates or timestamps, a status collapsed from a
 answer, a composite of several items), each construction is its own transform or feature step. \
 Its options are the definitions that published studies of that construct use, with the \
 cut-offs and categories they use, and the default is the most common published definition. \
-Never define a construct against its published meaning.
+Never define a construct against its published meaning. A status collapsed from an ordered \
+answer keeps each group a run of neighbouring answers: alternatives move the cut point or \
+leave an answer out, never put an answer between two answers of the other group.
 - Exclusions motivated by quality items in the data (ratings of certainty or confidence, \
 attention checks, reported values outside a plausible range) are their own filter step whose \
 options keep and exclude those rows.
