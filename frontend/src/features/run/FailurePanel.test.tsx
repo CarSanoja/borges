@@ -23,6 +23,16 @@ describe("FailurePanel", () => {
     expect(panel).toHaveTextContent(/simplifying the question/);
   });
 
+  it("names a column the question needs that the data does not have", () => {
+    const error =
+      "LLMError: step s1: no option passed its smoke run; last error: KeyError: \"'smoking' column required but not found\" | columns available (4): ['age', 'bmi', 'exercise_hours', 'lung_disease']; ctx keys: []";
+    render(<FailurePanel snapshot={{ ...failed(), error }} />);
+    const panel = screen.getByTestId("failure-panel");
+    expect(panel).toHaveTextContent('The data has no column "smoking"');
+    expect(panel).toHaveTextContent("columns: age, bmi, exercise_hours, lung_disease");
+    expect(panel).toHaveTextContent(/does not build a stand-in/);
+  });
+
   it("keeps the raw error behind a collapsed disclosure", () => {
     render(<FailurePanel snapshot={failed()} />);
     const details = screen.getByText("Technical details").closest("details")!;

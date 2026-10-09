@@ -14,6 +14,18 @@ function failedStep(snapshot: RunSnapshot): string | null {
   return step ? step.title : null;
 }
 
+const MISSING_KEY = /KeyError: "?'([^'"]+)'/;
+const AVAILABLE = /columns available \(\d+\): \[([^\]]*)\]/;
+
+export function missingColumn(error: string): { column: string; available: string[] } | null {
+  const key = MISSING_KEY.exec(error);
+  const listed = AVAILABLE.exec(error);
+  if (!key || !listed) return null;
+  const available = [...listed[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+  const column = key[1].replace(/ column required but not found$/, "");
+  return available.includes(column) ? null : { column, available };
+}
+
 function suggestionFor(snapshot: RunSnapshot): string {
   const error = snapshot.error ?? "";
   if (/smoke run|LogitResults|IndexError|AttributeError/.test(error)) {
@@ -23,6 +35,14 @@ function suggestionFor(snapshot: RunSnapshot): string {
 }
 
 export function failureSummary(snapshot: RunSnapshot): FailureSummary {
+  const missing = missingColumn(snapshot.error ?? "");
+  if (missing) {
+    return {
+      sentence: `The data has no column "${missing.column}", which this analysis needs (columns: ${missing.available.join(", ")}).`,
+      suggestion:
+        "Borges does not build a stand-in for a missing column from the others. Upload a file that has it, or ask a question these columns can answer.",
+    };
+  }
   const stage = currentStage(snapshot);
   const step = failedStep(snapshot);
   const where = stage ? `at the stage "${stageLabel(stage)}"` : "before the first stage";
