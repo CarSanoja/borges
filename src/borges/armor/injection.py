@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import cache
 
+from borges.armor.decision_branch import BRANCHED, is_decision_branch
 from borges.armor.findings import Finding, clip
 from borges.armor.normalize import normalize_identifier, variants_of
 from borges.armor.patterns_code import CODE, CODE_STEERING
@@ -52,6 +53,8 @@ def _scan(window: str, profile: ScreenProfile, found: dict[tuple[str, str], Find
         for name, pattern in _compiled(profile):
             match = pattern.search(variant.text)
             if match is None or (name, variant.technique) in found or (name, "plain") in found:
+                continue
+            if name in BRANCHED and is_decision_branch(variant.text, match.start(), match.end()):
                 continue
             found[(name, variant.technique)] = Finding(
                 category=name,
