@@ -64,7 +64,7 @@ DETECTORS: tuple[Detector, ...] = (
     Detector("email", EMAIL_SPELLED),
     Detector("iban", IBAN, check.iban_valid),
     Detector("card", CARD, check.card_valid),
-    Detector("ssn", SSN, check.ssn_valid),
+    Detector("ssn", SSN),
     Detector("curp", CURP, check.curp_valid),
     Detector("rfc", RFC, check.rfc_valid),
     Detector("dni_nie", DNI, check.dni_valid),
@@ -84,4 +84,5 @@ KINDS = (
     "rfc",
     "ip_address",
     "date_of_birth",
+    "person_name",
 )

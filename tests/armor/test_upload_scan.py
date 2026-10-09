@@ -42,3 +42,12 @@ def test_clean_and_empty_columns_report_nothing() -> None:
     assert scan_column(pd.Series(["x", "y"]), "c") is None
     assert scan_column(pd.Series([None, None], dtype=object), "c") is None
     assert scan_column(pd.Series([True, False]), "b") is None
+
+
+def test_person_name_columns_are_reported_by_header_and_by_values() -> None:
+    names = [f"{a} {b}ez" for a in ("Maria", "John", "Ana") for b in "ABCDEFGHIJ"]
+    by_values = scan_column(pd.Series(names), "staff")
+    assert by_values is not None and by_values.kinds == {"person_name": len(names)}
+    by_header = scan_column(pd.Series(["Smith", "Jones", "Lee"]), "last_name")
+    assert by_header is not None and by_header.kinds == {"person_name": 3}
+    assert scan_column(pd.Series(["Sales", "Ops"] * 20), "department") is None

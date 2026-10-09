@@ -33,7 +33,6 @@ def test_each_kind_is_detected_and_redacted(text: str, kind: str) -> None:
         "2024-01-15 10:30:45",
         "estimate 0.0123 with n = 10535",
         "4111 1111 1111 1112",
-        "123-45-0000",
         "version 1.2.3",
         "u_4e00fbb461 r_20261002T101112_ab12cd",
         "12345678A",
@@ -90,3 +89,8 @@ def test_text_beyond_the_scan_limit_is_cut_rather_than_leaked(monkeypatch) -> No
     monkeypatch.setattr("borges.armor.pii.MAX_SCAN_CHARS", 50)
     cleaned = redact_pii("a" * 60 + " leak@example.com")
     assert "leak@example.com" not in cleaned and cleaned.endswith("[redacted:unscanned]")
+
+
+def test_ssn_shaped_strings_are_redacted_even_with_an_invalid_serial() -> None:
+    assert [m.kind for m in find_pii("123-45-0000")] == ["ssn"]
+    assert redact_pii("id 000-12-3456 here") == "id [redacted:ssn] here"
