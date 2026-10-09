@@ -1,0 +1,17 @@
+{
+ "question": "¿Los clientes con asesor asignado contratan más productos?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "razón de tasas de productos contratados, con asesor frente a sin asesor",
+  "comparator": "gt",
+  "threshold": 1.0,
+  "alpha": 0.05,
+  "positive_label": "EL ASESOR AUMENTA LOS PRODUCTOS",
+  "negative_label": "SIN EFECTO CLARO"
+ },
+ "column_notes": {
+  "Antigüedad (años)": "años como cliente cuando se asignaron los asesores, medidos antes de la asignación",
+  "¿Asesor asignado?": "Sí si el cliente tiene un asesor personal asignado",
+  "Productos contratados": "número de productos contratados un año después de la asignación"
+ }
+}

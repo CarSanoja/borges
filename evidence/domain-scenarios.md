@@ -1,14 +1,14 @@
-# Domain scenarios: sixteen analyses a user would bring, with a planted answer
+# Domain scenarios: nineteen analyses a user would bring, with a planted answer
 
 On 9 October 2026 Borges was run live (Nemotron on Nebius Token Factory, ConTree sandboxes) on
-sixteen synthetic datasets from four domains: an audit firm's internal reviews, a hospital
+nineteen synthetic datasets from four domains: an audit firm's internal reviews, a hospital
 department, a K-12 district and a retail bank. The audit firm, *Northbridge Assurance LLP*, is
 fictional, and so are every name, e-mail address (on `.example`) and account number in the data.
 
 Each dataset hides a known answer and a trap a real analyst meets. The answer was computed with
 statsmodels before any run (`evidence/domains/truth.json`). Each request (`*.request.json`) is
 what a user would type: a question, a decision rule, column notes and, in two cases, the memo of
-an earlier analysis. Five cases ask in Spanish.
+an earlier analysis. Six cases ask in Spanish.
 
 The first four target confounding: the answer changes once the right covariates are in the model.
 The second four target the design: nested units, a question about how likely something is asked
@@ -17,7 +17,9 @@ four are edge cases: a numeric exposure with values missing for the riskiest row
 with a site that never used the treatment, 24 students measured twice in long format, and a
 rollout staggered across branches over a trend. The last four test inputs: yes/no flags typed by
 hand, a time to readmission censored at 90 days, an outcome already in percent under a rule in
-percentage points, and a European CSV with thousands dots and decimal commas.
+percentage points, and a European CSV with thousands dots and decimal commas. The last three
+test the rule and the headers: Spanish headers with accents and symbols and notes written against
+them, a rule on "at least half a point per hour", and a rate ratio that must fall below 0.8.
 
 ## Results
 
@@ -41,6 +43,9 @@ percentage points, and a European CSV with thousands dots and decimal commas.
 | Clinic: does a discharge protocol delay readmission? Time censored at 90 days, 66 % never readmitted | log hazard ratio −0.545 (Cox); +7.0 days if the censoring is ignored | Run failed (r_20261009T085134_fe4c15); two more attempts failed as each gap below was fixed | A Cox option ran as an OLS of the days; the planner wrote R's Surv() and a statsmodels API that does not exist; the harness refused PHReg for having no intercept; the coefficient guard refused positions found by name; "exposure=new_protocol" read as an offset | Correct: PROTOCOL DELAYS READMISSION, −0.5449, p 4e-6, equal to the Cox fit (r_20261009T093901_079f20) |
 | K-12: did tutoring raise the percent of proficient students? Outcome 0-100, rule in percentage points | +6.27 points adjusted | Correct: +6.2702 (r_20261009T085134_43c1c4) | None | — |
 | Bank: does a fee waiver raise the average balance? (Spanish; `;` CSV with 1.234,56 and dd/mm/yyyy dates) | +404 euros adjusted for income, randomised waiver | Correct: +404.107 (r_20261009T085134_401637), but the check added this morning for a moved origin refused a days-since-sign-up covariate counted from another date | The moved-origin check applied to every column, not only to columns the plan cuts | Correct, the covariate kept and reported as a no-op (r_20261009T092811_a0e3b8) |
+| Bank: do clients with an assigned advisor take more products? (Spanish; headers "Antigüedad (años)", "¿Asesor asignado?" with Sí/No; notes keyed by those headers) | rate ratio 1.153 adjusted for tenure; 1.44 raw | Right answer, 1.150 (r_20261009T104019_378c8a), but the columns were stored as antig_edad_a_os_ and _asesor_asignado_ and all three notes were dropped without a word | Accented letters became underscores, and notes matched only the stored names | Columns antiguedad_anios, asesor_asignado; the three notes reach the agents; 1.1528 (r_20261009T110345_7b552c) |
+| K-12: does each weekly hour of tutoring add at least half a point? Rule: > 0.5 | 0.678 per hour, interval [0.46, 0.90]; one-sided p 0.053 against 0.5 | AT LEAST HALF A POINT PER HOUR with no caveat (r_20261009T104019_6d1535) | The p-value tests no effect, not 0.5, and the report did not say the interval reaches 0.5 | Same verdict, with a caveat: the interval includes 0.5, so the data show an effect but not that it is past 0.5 (r_20261009T110345_bf6487) |
+| Audit: did a new sampling method cut exceptions per item tested by at least 20 %? Rule: rate ratio < 0.8 | 0.694, interval [0.656, 0.734] | Run failed (r_20261009T104019_338034) | The planner built a rate column, and the check that a model reads an earlier step's product refused a Poisson model of the raw count with log(items) as its offset on every attempt | Correct: 0.6936 [0.655, 0.734], the rate step reported as having no effect (r_20261009T110346_6e9334) |
 
 A rerun of the clinic case after the template fix still gave the old answer
 (r_20261009T070254_637cec): memory reused the model code that the previous coder version had
@@ -108,6 +113,16 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
   blank stands for that value; the judge scores such a fill below 0.3.
 - **Dropping a named confounder is below acceptance in a causal question** on observational data
   (score under 0.6); with a randomised exposure the unadjusted comparison stays.
+- **Uploaded headers keep their letters** ("Antigüedad (años)" is antiguedad_anios), notes written
+  against the original headers reach their columns, and a note that names no column is reported
+  (`analysis/column_names.py`).
+- **Spanish rules are read on their scale**: "puntos porcentuales", "probabilidad", "proporción",
+  "riesgo relativo" and "razón de tasas", and English "relative risk"; a ratio rule is checked for
+  a ratio at any positive threshold, not only 1.
+- **A rate model may read the raw count and its offset** instead of an earlier rate column
+  (`analysis/code_guard_produces.py`).
+- **A positive verdict whose interval reaches a threshold other than no effect gets a caveat**
+  (`garden/threshold_interval.py`).
 
 ## Still open
 
@@ -135,6 +150,7 @@ uv run python evidence/domains/confounding_cases.py
 uv run python evidence/domains/design_cases.py
 uv run python evidence/domains/edge_cases.py
 uv run python evidence/domains/input_cases.py
+uv run python evidence/domains/rule_cases.py
 ```
 
 Each writes its CSVs next to the script and updates `truth.json`. Upload a CSV and post its

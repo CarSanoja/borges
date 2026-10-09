@@ -243,5 +243,52 @@
    ],
    "trap": "semicolon CSV with thousands dots and decimal commas (1.234,56) and dd/mm/yyyy dates"
   }
+ },
+ "bank_headers_es": {
+  "file": "banco_asesores.csv",
+  "truth": {
+   "planted_log_rate": 0.15,
+   "adjusted_log_rate": [
+    0.1421866962261932,
+    8.806538511283753e-05
+   ],
+   "raw_log_rate": [
+    0.36346146323213635,
+    1.5481925632440271e-27
+   ],
+   "trap": "headers with accents, spaces and symbols; notes keyed by those headers; Sí/No flag; tenure drives both"
+  }
+ },
+ "k12_threshold": {
+  "file": "k12_tutoring_hours.csv",
+  "truth": {
+   "planted_points_per_hour": 0.6,
+   "adjusted_points_per_hour": [
+    0.6783562904007867,
+    8.668631467267855e-10
+   ],
+   "ci": [
+    0.4615402089836692,
+    0.8951723718179042
+   ],
+   "p_against_threshold": 0.05344866894652015,
+   "trap": "the rule asks for at least 0.5 points per hour; the p-value of the coefficient tests 0, not 0.5"
+  }
+ },
+ "audit_rate_ratio": {
+  "file": "northbridge_sampling.csv",
+  "truth": {
+   "planted_rate_ratio": 0.697676326071031,
+   "rate_ratio": [
+    0.6940659017742056,
+    1.3467948785218417e-37
+   ],
+   "ci": [
+    0.6563637139332908,
+    0.7339337409724652
+   ],
+   "no_offset_ratio": 0.7346922098213104,
+   "trap": "rule on a rate ratio below 0.8, not 1; samples differ in size, so the count needs an offset"
+  }
  }
 }

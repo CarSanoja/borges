@@ -1,0 +1,17 @@
+{
+ "question": "Did the new sampling method cut the rate of exceptions per item tested by at least 20%?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "rate ratio of exceptions per item tested, new sampling method versus old",
+  "comparator": "lt",
+  "threshold": 0.8,
+  "alpha": 0.05,
+  "positive_label": "AT LEAST 20% FEWER EXCEPTIONS",
+  "negative_label": "NOT SHOWN"
+ },
+ "column_notes": {
+  "items_tested": "number of items sampled and tested in the engagement",
+  "new_sampling_method": "1 = the engagement was assigned at random to the new method",
+  "risk_tier": "1-3 risk rating set at planning"
+ }
+}

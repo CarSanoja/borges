@@ -1,0 +1,16 @@
+{
+ "question": "Does each extra weekly hour of tutoring raise spring math scores by at least half a point?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "points of spring math score per additional weekly tutoring hour",
+  "comparator": "gt",
+  "threshold": 0.5,
+  "alpha": 0.05,
+  "positive_label": "AT LEAST HALF A POINT PER HOUR",
+  "negative_label": "NOT SHOWN"
+ },
+ "column_notes": {
+  "prior_math": "fall math score, measured before tutoring hours were assigned",
+  "weekly_tutoring_hours": "average weekly hours of tutoring from October to March"
+ }
+}
