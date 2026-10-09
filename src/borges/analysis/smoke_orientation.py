@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import math
 from functools import partial
 from typing import Any
 
@@ -10,10 +9,10 @@ import numpy as np
 from borges.analysis.models import CodingSummary, Step
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_larger import smoke_rows
+from borges.analysis.smoke_origin import probe_pairs, shifted_error
 from borges.analysis.smoke_types import Check, Outcome, Repair, SmokeConfig
 from borges.sandbox.backend import Checkpoint
 
-MIN_PAIRS = 30
 REVERSED_BELOW = -0.3
 
 REVERSED_TEMPLATE = (
@@ -24,33 +23,13 @@ REVERSED_TEMPLATE = (
 )
 
 
-def _probe(effects: dict[str, Any] | None, name: str) -> dict[str, float | None] | None:
-    if not effects:
-        return None
-    column = (effects.get("columns") or {}).get(name)
-    if not isinstance(column, dict):
-        return None
-    probe = column.get("probe")
-    return probe if isinstance(probe, dict) else None
-
-
 def probe_correlation(
     default: dict[str, Any] | None, other: dict[str, Any] | None, name: str
 ) -> float | None:
-    left, right = _probe(default, name), _probe(other, name)
-    if not left or not right:
+    pairs = probe_pairs(default, other, name)
+    if pairs is None:
         return None
-    pairs = [
-        (float(left[k]), float(right[k]))
-        for k in left.keys() & right.keys()
-        if left[k] is not None
-        and right[k] is not None
-        and math.isfinite(float(left[k]))
-        and math.isfinite(float(right[k]))
-    ]
-    if len(pairs) < MIN_PAIRS:
-        return None
-    xs, ys = np.array(pairs).T
+    xs, ys = pairs
     if np.std(xs) == 0 or np.std(ys) == 0:
         return None
     return float(np.corrcoef(xs, ys)[0, 1])
@@ -69,6 +48,9 @@ def orientation_error(
         r = probe_correlation(default, other, name)
         if r is not None and r < REVERSED_BELOW:
             return REVERSED_TEMPLATE.format(name=name, r=r)
+        shifted = shifted_error(name, default, other)
+        if shifted is not None:
+            return shifted
     return None
 
 
