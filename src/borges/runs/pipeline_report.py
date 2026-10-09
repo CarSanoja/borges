@@ -9,6 +9,7 @@ from borges.garden.covariate_sample import baseline_sample_caveats, covariate_sa
 from borges.garden.discrete_quantile import discrete_quantile_caveats
 from borges.garden.duplicate_rows import duplicate_row_caveats
 from borges.garden.failed_caveat import failed_caveat, untested_decision_caveats
+from borges.garden.filtered_rows import filtered_rows_caveats
 from borges.garden.hc_variant import hc_variant_caveats
 from borges.garden.influence import build_report
 from borges.garden.likelihood_question import likelihood_caveats
@@ -38,6 +39,7 @@ def assemble_report(pipeline: Pipeline, plan: AnalysisPlan) -> Report:
             *rebuilt_caveats(pipeline.garden),
             *scaled_outcome_caveats(pipeline.garden),
             *baseline_sample_caveats(plan, pipeline.garden),
+            *filtered_rows_caveats(plan, pipeline.garden),
             *covariate_sample_caveats(plan, pipeline.garden),
             *discrete_quantile_caveats(
                 pipeline.garden, pipeline.flip and pipeline.flip.universe_id
