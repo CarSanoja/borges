@@ -57,6 +57,20 @@ def test_formula_terms_over_columns_pass(workdir: Path) -> None:
     assert run(workdir, NAMES_TERMS).returncode == 0
 
 
+def test_a_one_column_term_is_built_so_the_model_can_index_it(workdir: Path) -> None:
+    code = (
+        "def apply(df, ctx):\n"
+        "    ctx['covariates'] = ['age', 'I(age**2)', 'np.log(age)', 'age:country']\n"
+        "    return df\n"
+    )
+    done = run(workdir, code)
+    assert done.returncode == 0, done.stdout
+    frame = pd.read_parquet(workdir / "state" / "df.parquet")
+    assert frame["I(age**2)"].tolist() == [900.0, 1600.0, 2500.0]
+    assert frame["age:country"].tolist() == [30.0, 80.0, 150.0]
+    assert frame["np.log(age)"].round(4).tolist() == [3.4012, 3.6889, 3.912]
+
+
 def test_a_formula_term_over_no_column_fails(workdir: Path) -> None:
     done = run(workdir, NAMES_UNKNOWN_TERM)
     error = parse_error(done.stdout)

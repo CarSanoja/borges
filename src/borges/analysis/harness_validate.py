@@ -47,6 +47,29 @@ VALIDATE_SOURCE = """
 
         columns = list(map(str, out.columns))
 
+        def _materialise(term):
+            if term in columns or not _re.search(r"[():*]", term):
+                return
+            try:
+                import patsy as _patsy
+
+                env = _patsy.EvalEnvironment([{"np": _np, "numpy": _np}])
+                built = _patsy.dmatrix(
+                    "0 + " + term,
+                    out,
+                    NA_action=_patsy.NAAction(NA_types=[]),
+                    eval_env=env,
+                    return_type="dataframe",
+                )
+            except Exception:
+                return
+            if built.shape[1] == 1 and len(built) == len(out):
+                out[term] = built.iloc[:, 0].to_numpy()
+                columns.append(term)
+
+        for term in named:
+            _materialise(term)
+
         def _term_ok(term):
             if term in columns:
                 return True
