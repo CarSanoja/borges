@@ -1,0 +1,16 @@
+{
+ "question": "¿El programa de lectura de verano subió los puntajes de lectura de los alumnos?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "cambio medio del puntaje de lectura de cada alumno de antes a después del verano",
+  "comparator": "gt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "EL PROGRAMA SUBE LA LECTURA",
+  "negative_label": "SIN EFECTO CLARO"
+ },
+ "column_notes": {
+  "momento": "antes = prueba de junio, despues = prueba de septiembre, el mismo alumno",
+  "puntaje_lectura": "puntaje escalado de lectura"
+ }
+}

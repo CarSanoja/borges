@@ -1,18 +1,21 @@
-# Domain scenarios: eight analyses a user would bring, with a planted answer
+# Domain scenarios: twelve analyses a user would bring, with a planted answer
 
 On 9 October 2026 Borges was run live (Nemotron on Nebius Token Factory, ConTree sandboxes) on
-eight synthetic datasets from four domains: an audit firm's internal reviews, a hospital
+twelve synthetic datasets from four domains: an audit firm's internal reviews, a hospital
 department, a K-12 district and a retail bank. The audit firm, *Northbridge Assurance LLP*, is
 fictional, and so are every name, e-mail address (on `.example`) and account number in the data.
 
 Each dataset hides a known answer and a trap a real analyst meets. The answer was computed with
 statsmodels before any run (`evidence/domains/truth.json`). Each request (`*.request.json`) is
 what a user would type: a question, a decision rule, column notes and, in two cases, the memo of
-an earlier analysis. Two cases ask in Spanish.
+an earlier analysis. Four cases ask in Spanish.
 
 The first four target confounding: the answer changes once the right covariates are in the model.
 The second four target the design: nested units, a question about how likely something is asked
-of a count, an exposure given to whole schools, and a Spanish CSV with a rare outcome.
+of a count, an exposure given to whole schools, and a Spanish CSV with a rare outcome. The last
+four are edge cases: a numeric exposure with values missing for the riskiest rows, a 2 % outcome
+with a site that never used the treatment, 24 students measured twice in long format, and a
+rollout staggered across branches over a trend.
 
 ## Results
 
@@ -28,6 +31,10 @@ of a count, an exposure given to whole schools, and a Spanish CSV with a rare ou
 | Clinic: are patients on the new discharge protocol less likely to be readmitted? | −0.32 log odds, p 0.02 adjusted; the protocol runs on two of four wards | Wrong: NO CLEAR EFFECT, −0.042, p 0.051 (r_20261009T065046_4433e5) | Adjusting for ward, which defines the protocol: the template kept one ward dummy and compared ward A with C and D | Correct: PROTOCOL CUTS READMISSIONS, −0.041, p 0.017, ward left out with the reason (r_20261009T070801_6239a1) |
 | K-12: did a curriculum adopted by 5 of 10 schools raise scores? | +2.0, not detectable with 10 schools: p 0.20 clustered, 0.004 if the schools are ignored | Run failed (r_20261009T065046_af1a24) | The few-clusters check told the repair to use robust errors, the wrong answer here | Correct: NO CLEAR EFFECT, p 0.2298, the exact t(9) reference; the judge rejects errors that ignore the schools (r_20261009T070255_7d0a7c) |
 | Bank: did the new alert model cut fraud? (Spanish `;` CSV, decimal commas, BOM; 1.3 % fraud) | −0.81 log odds, about −1.1 points | Correct: −1.09 points (r_20261009T065047_3f2868); CSV read with the right types | Summary in English; the judge rejected client-clustered errors, "not 30 clients" (there are 3,000) | Summary in Spanish, numbers checked against the English (r_20261009T070802_2fc5a8) |
+| Audit: do more manager review hours lower the chance of a restatement? | −0.0047 per hour on the probability (−0.069 log odds); complex clients get more hours, and hours are missing mostly for them | Right sign, wrong scale: the logit coefficient −0.068 and a probit alternative −0.035, which the summary read as the effect "roughly halving" (r_20261009T083215_3c1abc) | The marginal-effect template refused a numeric exposure, and free code reported raw coefficients under a rule on a probability | Correct: −0.00471 per hour, probit −0.00477, "a spread of about 0.00006" (r_20261009T084632_39cf88) |
+| Clinic: does a new anticoagulant raise major bleeds? 2 % bleed; the rural site never stocks it and has no bleeds | +2.4 points without the rural site (+1.33 log odds) | Run failed (r_20261009T083216_35c688) | The 200-row smoke sample held no bleed, so every model of the outcome failed | Correct: MORE BLEEDS, +2.4 points [1.3, 3.5] (r_20261009T083806_4e3faa) |
+| K-12: did a summer reading program raise scores? (Spanish; 24 students before and after, long format) | +4.375 paired, p 8.7e-7; p 0.20 if the pairs are ignored | Refused at upload: 48 rows, "needs at least 50" | The floor's reason, that fewer rows "cannot be told apart from noise", is false for a paired design | Correct: +4.375, p 8.7e-7, n 24, summary in Spanish (r_20261009T083806_696661) |
+| Bank: did a new call-centre script cut complaints? (Spanish; staggered across 30 branches, rising trend) | −3.0; −0.41, p 0.26 if months are pooled | Correct: −3.049 with branch and month fixed effects (r_20261009T083216_fcaffe) | None | — |
 
 A rerun of the clinic case after the template fix still gave the old answer
 (r_20261009T070254_637cec): memory reused the model code that the previous coder version had
@@ -57,6 +64,13 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
   the checked English summary survives the translation (`analysis/narrative_language.py`).
 - **Person names in role columns and medical record numbers are redacted** before any model sees
   them (`armor/pii_names.py`, `armor/pii_patterns.py`).
+- **A rare outcome reaches the smoke sample.** The rarer value of every two-valued column gets 20
+  rows of the sample when the data has them (`analysis/smoke_sample.py`).
+- **A rule on a probability gets a probability.** The template reports the average slope for a
+  numeric exposure, and a Logit, Probit or binomial GLM coefficient fails the step under such a
+  rule with the code for the marginal effect (`analysis/model_spec/validate_exposure.py`,
+  `analysis/harness_result_checks.py`).
+- **A table needs 20 rows, not 50** (`api/uploads.py`).
 
 ## Still open
 
@@ -75,6 +89,7 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
 ```bash
 uv run python evidence/domains/confounding_cases.py
 uv run python evidence/domains/design_cases.py
+uv run python evidence/domains/edge_cases.py
 ```
 
 Each writes its CSVs next to the script and updates `truth.json`. Upload a CSV and post its

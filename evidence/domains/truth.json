@@ -127,5 +127,68 @@
    ],
    "trap": "Spanish ';' CSV with decimal comma and BOM; alerts rolled out on the riskier app channel; rare outcome; 4 rows per client"
   }
+ },
+ "audit_hours": {
+  "file": "northbridge_review_hours.csv",
+  "truth": {
+   "planted_logodds_per_hour": -0.04,
+   "naive_complete_cases": [
+    -0.016282016135916476,
+    0.08096906867667376
+   ],
+   "adjusted_complete_cases": [
+    -0.06863400639183344,
+    4.298950221288559e-07
+   ],
+   "adjusted_all_rows": [
+    -0.058532815544087145,
+    3.1266118434690853e-06
+   ],
+   "missing_share": 0.13,
+   "trap": "continuous exposure; complex clients get more hours and restate more; hours missing mostly for complex clients"
+  }
+ },
+ "clinic_bleeding": {
+  "file": "clinic_bleeding.csv",
+  "truth": {
+   "planted_logodds": 0.7,
+   "adjusted_without_rural": [
+    1.334870135285876,
+    2.7029115697732182e-05
+   ],
+   "event_rate": 0.019333333333333334,
+   "rural_events": 0,
+   "trap": "rare outcome; the rural site has no events and never used the new drug, so site dummies separate perfectly"
+  }
+ },
+ "k12_paired": {
+  "file": "k12_verano_pareado.csv",
+  "truth": {
+   "planted_gain": 4.0,
+   "paired": [
+    4.375000000000001,
+    8.697044389024497e-07
+   ],
+   "unpaired": [
+    4.375000000000001,
+    0.19563752379581648
+   ],
+   "trap": "long format, two rows per student: only a paired analysis sees the gain"
+  }
+ },
+ "bank_staggered": {
+  "file": "banco_reclamos_escalonado.csv",
+  "truth": {
+   "planted_effect": -3.0,
+   "two_way_fixed_effects": [
+    -3.048975409836066,
+    2.4469936297424284e-16
+   ],
+   "pooled": [
+    -0.4076681246582763,
+    0.26353472308376874
+   ],
+   "trap": "staggered rollout by branch and month with an upward trend: comparing months mixes the trend into the effect"
+  }
  }
 }

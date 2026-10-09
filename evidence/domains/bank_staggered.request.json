@@ -1,0 +1,16 @@
+{
+ "question": "¿El guion nuevo del centro de llamadas redujo los reclamos de las sucursales?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "efecto del guion nuevo sobre los reclamos mensuales de una sucursal",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "EL GUION REDUCE RECLAMOS",
+  "negative_label": "SIN EFECTO CLARO"
+ },
+ "column_notes": {
+  "guion_nuevo": "1 = la sucursal ya usaba el guion nuevo ese mes; cada sucursal empezó en un mes distinto y algunas nunca",
+  "reclamos": "reclamos recibidos por la sucursal en el mes"
+ }
+}

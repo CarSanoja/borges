@@ -1,0 +1,17 @@
+{
+ "question": "Does the new anticoagulant increase the risk of a major bleed within 90 days?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "effect of the new anticoagulant on the probability of a major bleed in 90 days",
+  "comparator": "gt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "MORE BLEEDS ON THE NEW DRUG",
+  "negative_label": "NO CLEAR DIFFERENCE"
+ },
+ "column_notes": {
+  "new_anticoagulant": "1 = discharged on the new anticoagulant, 0 = on warfarin",
+  "site": "hospital site; Rural only stocks warfarin",
+  "major_bleed_90d": "1 = major bleed within 90 days of discharge"
+ }
+}
