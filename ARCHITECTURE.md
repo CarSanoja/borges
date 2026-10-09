@@ -327,8 +327,10 @@ replays, which are hand-built, not model runs) on the local backend, and should 
 `BORGES_BACKEND=contree`. The server, not the client, chooses the backend. `POST /api/runs` applies a policy: it clamps
 `max_universes` to `BORGES_MAX_UNIVERSES`, answers 429 when `BORGES_MAX_ACTIVE_RUNS` runs are
 active or `BORGES_MAX_LIVE_RUNS` live runs are active, and rejects live runs when there is
-no key (400) or the spend cap is used up (403). `/api/health` reports
-`llm_live_available` and `live_unavailable_reason` (`no_key` or `budget_spent`), and the
+no key (400), the spend cap is used up (403) or the server would run model-written code on its
+own host (400: the local backend outside a container, without `BORGES_ALLOW_UNTRUSTED_LOCAL`).
+`/api/health` reports `llm_live_available` and `live_unavailable_reason` (`no_key`,
+`budget_spent` or `bare_host`), and the
 case cards disable the live button with that reason. It also reports `uploads_available` and
 `uploads_unavailable_reason`, derived by `api/live_rules.py` with the same rules the policy
 uses. Uploads (CSV or parquet) need live mode; the local backend refuses them (400) unless

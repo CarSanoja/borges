@@ -76,7 +76,8 @@ the repository was published.)
 ## Development on the vote case, 7 October
 
 Twelve further live runs (6 to 17), each against a hypothesis written down before it, with the
-fix that followed. Every run and its cost is in `notes/LEDGER.md`; the defects, in order:
+fix that followed. The hypotheses and costs were kept in the team's working log, which is not
+part of this repository; the defects, in order:
 
 - The step-by-step code dropped the two hand-set participants (n 301), coded fertility as -1/+1
   (estimate halved), kept days 15-16 as low fertility (n 344) or dated the next onset from the
@@ -102,7 +103,8 @@ fix that followed. Every run and its cost is in `notes/LEDGER.md`; the defects, 
 ## Development runs 15 to 41, 7 October
 
 Twenty-seven more live runs of the vote case, three at a time, each round against a hypothesis
-written down before it (`notes/LEDGER.md`), about $0.06 to $0.11 each. They are development
+written down before it in the team's working log (not part of this repository), about $0.06 to
+$0.11 each. They are development
 results, not held out.
 
 | Outcome | Runs |
