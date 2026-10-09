@@ -54,4 +54,5 @@ async def create_upload(
         "upload_id": upload_id,
         "profile": profile.model_dump(mode="json"),
         "pii": pii.model_dump(mode="json"),
+        "dropped_columns": uploads.dropped_columns(upload_id),
     }

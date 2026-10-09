@@ -145,3 +145,56 @@ def test_empty_column_name_is_replaced() -> None:
     normalised, mapping = uploads_module.normalise_columns(frame)
     assert list(normalised.columns) == ["column", "column_2"]
     assert mapping == {"column": "", "column_2": "!!!"}
+
+
+def test_semicolon_decimal_comma_bom_upload_is_accepted(tmp_path) -> None:
+    lines = ["id;ingresos;año"] + [f"{i};{i},5;mañana" for i in range(60)]
+    content = b"\xef\xbb\xbf" + "\n".join(lines).encode()
+    store = UploadStore(tmp_path)
+    upload_id, profile = store.put(content, "export.csv")
+    assert profile.n_rows == 60
+    frame = pd.read_parquet(io.BytesIO(store.get(upload_id)[0]))
+    assert list(frame.columns) == ["id", "ingresos", "a_o"]
+    assert frame["ingresos"].iloc[1] == 1.5
+
+
+def test_tab_delimited_upload_is_accepted(tmp_path) -> None:
+    lines = ["a\tb\tc"] + [f"{i}\t{i}.5\tx" for i in range(60)]
+    _, profile = UploadStore(tmp_path).put("\n".join(lines).encode(), "export.tsv")
+    assert profile.n_rows == 60
+
+
+def test_xlsx_renamed_csv_is_explained(tmp_path) -> None:
+    with pytest.raises(ValueError, match="CSV UTF-8"):
+        UploadStore(tmp_path).put(b"PK\x03\x04" + b"\xa4" * 50, "book.csv")
+
+
+def test_all_empty_columns_are_dropped_and_reported(tmp_path) -> None:
+    df = pd.DataFrame({"a": range(60), "b": range(60), "vacia": [None] * 60, "tail": [None] * 60})
+    store = UploadStore(tmp_path)
+    upload_id, profile = store.put(df.to_csv(index=False).encode(), "d.csv")
+    frame = pd.read_parquet(io.BytesIO(store.get(upload_id)[0]))
+    assert list(frame.columns) == ["a", "b"]
+    dropped = store.dropped_columns(upload_id)
+    assert [d["column"] for d in dropped] == ["vacia", "tail"]
+    assert all(d["reason"] for d in dropped)
+    assert profile.n_rows == 60
+
+
+def test_no_empty_columns_reports_nothing(tmp_path) -> None:
+    store = UploadStore(tmp_path)
+    upload_id, _ = store.put(csv_bytes(), "d.csv")
+    assert store.dropped_columns(upload_id) == []
+
+
+def test_too_few_columns_after_dropping_is_explained(tmp_path) -> None:
+    df = pd.DataFrame({"a": range(60), "vacia": [None] * 60})
+    with pytest.raises(ValueError, match="1 empty columns were dropped"):
+        UploadStore(tmp_path).put(df.to_csv(index=False).encode(), "d.csv")
+
+
+def test_too_few_rows_says_why_and_how_many(tmp_path) -> None:
+    with pytest.raises(ValueError, match="has 10 rows") as raised:
+        UploadStore(tmp_path).put(csv_bytes(rows=10), "d.csv")
+    assert "cannot be told apart from noise" in str(raised.value)
+    assert "at least 50" in str(raised.value)

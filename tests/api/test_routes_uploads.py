@@ -199,3 +199,16 @@ async def test_upload_with_instruction_in_a_column_name_is_refused(tmp_path) -> 
         )
     assert response.status_code == 400
     assert "Armor refused the run" in response.json()["detail"]
+
+
+async def test_upload_response_lists_dropped_empty_columns(client: httpx.AsyncClient) -> None:
+    df = pd.DataFrame({"a": range(60), "b": range(60), "vacia": [None] * 60})
+    async with client:
+        response = await client.post(
+            "/api/uploads",
+            files={"file": ("d.csv", df.to_csv(index=False).encode(), "text/csv")},
+        )
+    assert response.status_code == 200
+    dropped = response.json()["dropped_columns"]
+    assert [d["column"] for d in dropped] == ["vacia"]
+    assert dropped[0]["reason"]
