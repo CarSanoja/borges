@@ -42,7 +42,10 @@ def test_policy_precedes_generated_code() -> None:
         ("os.fork()", "os.fork"),
         ("import subprocess; subprocess.run(['true'])", "subprocess.Popen"),
         ("import pty; pty.spawn(['true'])", "pty.spawn"),
-        ("import webbrowser; webbrowser.open('http://x')", "webbrowser.open"),
+        (
+            "import webbrowser; webbrowser.GenericBrowser('true').open('http://x')",
+            "webbrowser.open",
+        ),
         ("import ctypes; ctypes.CDLL(None)", "ctypes.dlopen"),
         ("import ctypes; ctypes.string_at(0, 1)", "ctypes."),
         ("import cffi", "import cffi"),

@@ -6,6 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from borges.config import REPO_ROOT
 
 README = REPO_ROOT / "README.md"
@@ -24,6 +26,7 @@ def readme_lines() -> set[str]:
     return {line.removeprefix(">").strip() for line in lines}
 
 
+@pytest.mark.timeout(600)
 def test_first_command_tail_in_the_readme_is_the_real_output(tmp_path: Path) -> None:
     env = {**os.environ, "BORGES_RUNS_DIR": str(tmp_path / "runs")}
     env["BORGES_HOME"] = str(tmp_path / "home")

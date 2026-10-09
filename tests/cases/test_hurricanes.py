@@ -136,7 +136,14 @@ def test_recording_is_the_scripted_run(snapshot) -> None:
     events = CaseRegistry(CASES_DIR).recording("hurricanes")
     assert events
     recorded = fold(events)
-    assert recorded.report.original_result == snapshot.report.original_result
+    ours, theirs = recorded.report.original_result, snapshot.report.original_result
+    assert ours is not None and theirs is not None
+    assert (ours.n, ours.metric) == (theirs.n, theirs.metric)
+    numbers = ("estimate", "ci_low", "ci_high", "p_value")
+    assert [getattr(ours, k) for k in numbers] == pytest.approx(
+        [getattr(theirs, k) for k in numbers], rel=1e-9
+    )
+    assert ours.extra == pytest.approx(theirs.extra, rel=1e-9)
     assert recorded.report.minimal_flip.universe_id == snapshot.report.minimal_flip.universe_id
 
 

@@ -24,7 +24,8 @@ PROBES = {
     "listdir_cwd": "__import__('os').listdir('.')",
     "setsid": "__import__('os').setsid()",
     "signal_signal": "__import__('signal').signal(__import__('signal').SIGUSR1, lambda *a: 0)",
-    "setrlimit_raise": RLIM + "(r.RLIMIT_NOFILE, (1, 2**40)))(__import__('resource'))",
+    "setrlimit_raise": RLIM + "(r.RLIMIT_CORE, (0, 0)) or r.setrlimit(r.RLIMIT_CORE, (0, 1)))"
+    "(__import__('resource'))",
     "setrlimit_lower": RLIM + "(r.RLIMIT_CORE, (0, 0)))(__import__('resource'))",
     "getframe": "(lambda: sys._getframe(0))()",
     "subprocess_run": "__import__('subprocess').run(['true'])",

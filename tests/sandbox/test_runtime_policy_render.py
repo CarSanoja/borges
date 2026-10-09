@@ -20,7 +20,7 @@ GOLDEN = {
     "read_home": "PermissionError runtime policy denied open for reading",
     "remove_outside": "PermissionError runtime policy denied os.remove",
     "setrlimit_lower": "ok",
-    "setrlimit_raise": "ok",
+    "setrlimit_raise": "PermissionError runtime policy denied resource.setrlimit",
     "setsid": "PermissionError runtime policy denied a call that would reach the policy",
     "signal_signal": "PermissionError runtime policy denied a call that would reach the policy",
     "subprocess_run": "PermissionError runtime policy denied subprocess.Popen",

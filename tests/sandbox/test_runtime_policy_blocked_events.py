@@ -17,7 +17,7 @@ ATTEMPTS = {
     "os.fork": "os.fork()",
     "os.forkpty": "os.forkpty()",
     "pty.spawn": "import pty; pty.spawn(['true'])",
-    "webbrowser.open": "import webbrowser; webbrowser.open('http://127.0.0.1:9')",
+    "webbrowser.open": "import webbrowser; webbrowser.GenericBrowser('true').open('http://x')",
     "socket.connect": "import socket; socket.socket().connect(('127.0.0.1', 9))",
     "socket.bind": "import socket; socket.socket().bind(('127.0.0.1', 0))",
     "socket.getaddrinfo": "import socket; socket.getaddrinfo('example.com', 80)",
