@@ -1,0 +1,17 @@
+{
+ "question": "Are patients discharged under the new protocol less likely to be readmitted within 90 days?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "effect of discharge_protocol_new on readmission within 90 days",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "PROTOCOL CUTS READMISSIONS",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "discharge_protocol_new": "1 = discharged under the new protocol (wards A and B since January)",
+  "readmissions_90d": "number of readmissions within 90 days of discharge",
+  "comorbidity_index": "Charlson comorbidity index at admission"
+ }
+}

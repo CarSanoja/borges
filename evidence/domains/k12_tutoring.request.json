@@ -1,0 +1,18 @@
+{
+ "question": "¿El programa de tutorías de matemáticas mejoró las notas de los estudiantes?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "efecto de tutoring sobre post_math_score, en puntos",
+  "comparator": "gt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "LAS TUTORÍAS FUNCIONAN",
+  "negative_label": "SIN EFECTO CLARO"
+ },
+ "column_notes": {
+  "tutoring": "1 = el estudiante recibió tutorías; se ofrecieron sobre todo a quienes tenían nota previa baja",
+  "prior_math_score": "nota de matemáticas del curso anterior (0-100)",
+  "post_math_score": "nota de matemáticas a final de curso (0-100); vacía si el estudiante se fue del distrito",
+  "frl": "1 = comedor gratuito o reducido"
+ }
+}

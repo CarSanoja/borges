@@ -1,0 +1,18 @@
+{
+ "question": "¿Aprobamos menos préstamos a mujeres que a hombres con el mismo perfil de riesgo?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "diferencia en la probabilidad de aprobación, mujeres menos hombres, a igual perfil de riesgo",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "SESGO CONTRA MUJERES",
+  "negative_label": "SIN DIFERENCIA CLARA"
+ },
+ "column_notes": {
+  "sexo": "M = mujer, H = hombre",
+  "aprobado": "1 = préstamo aprobado",
+  "ingresos_mensuales": "ingresos netos mensuales en euros",
+  "ratio_deuda": "deuda mensual / ingresos mensuales"
+ }
+}

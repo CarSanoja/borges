@@ -1,0 +1,19 @@
+{
+ "question": "Did the data-analytics tool reduce budget overruns on our audit engagements?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "effect of analytics_tool on the budget overrun (actual_hours / budget_hours - 1)",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "TOOL CUTS OVERRUNS",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "analysis": "Audit quality memo FY2025: we compared the overrun (actual_hours / budget_hours - 1) of engagements that used the analytics tool with those that did not. Tool engagements ran 2.8 points lower (p < 0.001, n = 900). We plan to make the tool mandatory.",
+ "column_notes": {
+  "actual_hours": "hours charged to the engagement code at sign-off",
+  "budget_hours": "hours approved at the planning stage",
+  "analytics_tool": "1 = the team used the data-analytics tool for journal-entry testing",
+  "client_revenue_musd": "client annual revenue, millions of USD"
+ }
+}

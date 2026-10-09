@@ -1,0 +1,18 @@
+{
+ "question": "Confirm that engagement quality reviews reduced the number of audit adjustments; the partners expect yes.",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "effect of eqr_review on the number of audit adjustments per engagement",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "REVIEWS CUT ADJUSTMENTS",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "eqr_review": "1 = an engagement quality reviewer signed off before the opinion was issued",
+  "audit_adjustments": "number of proposed audit adjustments booked by the client",
+  "client_risk_rating": "1 (low) to 5 (high), set at client acceptance",
+  "partner_id": "engagement partner"
+ }
+}

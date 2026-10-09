@@ -1,0 +1,131 @@
+{
+ "audit_tool": {
+  "file": "audit_engagements.csv",
+  "truth": {
+   "planted_effect": 0.0,
+   "naive": [
+    -0.028468970393336332,
+    8.727570655650502e-05
+   ],
+   "adjusted": [
+    0.012996362583675238,
+    0.06362787912096513
+   ],
+   "trap": "tool assigned to larger clients; larger clients overrun less"
+  }
+ },
+ "clinic_triage": {
+  "file": "clinic_triage.csv",
+  "truth": {
+   "planted_log_effect": -0.1,
+   "naive_log": [
+    -0.22078620484666972,
+    3.2927156325987507e-29
+   ],
+   "adjusted_log": [
+    -0.1294918728900148,
+    0.0007391715742168105
+   ],
+   "trap": "before/after with a -1.5%/month staffing trend; 999 sentinel; skewed minutes"
+  }
+ },
+ "k12_tutoring": {
+  "file": "k12_tutoring.csv",
+  "truth": {
+   "planted_effect": 3.0,
+   "naive_post": [
+    -10.17404339462709,
+    2.1049636933801782e-90
+   ],
+   "naive_gain": [
+    5.591930109934344,
+    9.163300356279423e-71
+   ],
+   "ancova_cluster": [
+    2.84850719957236,
+    1.3501936061734518e-14
+   ],
+   "trap": "selection on low prior score: post-only comparison is negative; gain score inflated by regression to the mean; 24 school clusters; minors' names"
+  }
+ },
+ "bank_fair_lending": {
+  "file": "banco_solicitudes.csv",
+  "truth": {
+   "planted_conditional_gap": 0.0,
+   "naive_gap": [
+    -0.04831511599131322,
+    2.9427593831870522e-05
+   ],
+   "adjusted_gap": [
+    -0.014577819402408987,
+    0.18513729294612447
+   ],
+   "trap": "raw gap from lower incomes; semicolon CSV with decimal commas; names, IBAN and email"
+  }
+ },
+ "audit_adjustments": {
+  "file": "northbridge_adjustments.csv",
+  "truth": {
+   "planted_log_rate": -0.16,
+   "naive": [
+    0.2766888712808526,
+    2.9389938412108104e-20
+   ],
+   "adjusted_clustered": [
+    -0.14724215719984612,
+    0.0004910778632845598
+   ],
+   "trap": "reviews go to riskier clients; loaded question; engagements nested in 40 partners; partner_name"
+  }
+ },
+ "clinic_readmissions": {
+  "file": "clinic_readmissions.csv",
+  "truth": {
+   "planted_logodds_any": -0.45,
+   "naive_any": [
+    0.06741720168876196,
+    0.5818700632455435
+   ],
+   "adjusted_any": [
+    -0.32106911926860565,
+    0.020409493126753626
+   ],
+   "adjusted_count_lograte": [
+    -0.18927778024958677,
+    0.03364764441960907
+   ],
+   "trap": "likelihood question on a count; sicker, older patients on the new-protocol wards; MRN"
+  }
+ },
+ "k12_small": {
+  "file": "k12_curriculum_small.csv",
+  "truth": {
+   "planted_effect": 2.0,
+   "ols": [
+    4.4869534579258215,
+    0.004066326886275779
+   ],
+   "school_clustered": [
+    4.4869534579258215,
+    0.19768421027697125
+   ],
+   "trap": "60 classrooms, curriculum assigned by school (10 schools): classroom rows are not independent"
+  }
+ },
+ "bank_fraud_es": {
+  "file": "banco_fraude_es.csv",
+  "truth": {
+   "planted_logodds": -0.8,
+   "fraud_rate": 0.013333333333333334,
+   "naive": [
+    -0.342029834012778,
+    0.038061180064056045
+   ],
+   "adjusted": [
+    -0.8100322883989839,
+    2.2390153495794604e-05
+   ],
+   "trap": "Spanish ';' CSV with decimal comma and BOM; alerts rolled out on the riskier app channel; rare outcome; 4 rows per client"
+  }
+ }
+}

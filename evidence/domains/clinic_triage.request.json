@@ -1,0 +1,17 @@
+{
+ "question": "Did the new triage protocol reduce the time to diagnosis in our clinics?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "effect of the new protocol on minutes to diagnosis",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "PROTOCOL SPEEDS DIAGNOSIS",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "minutes_to_diagnosis": "minutes from arrival to a confirmed diagnosis; 999 means the time was not recorded",
+  "protocol": "the new triage protocol replaced the old one at all three sites in July 2025",
+  "acuity": "triage level, 1 = most urgent, 5 = least urgent"
+ }
+}

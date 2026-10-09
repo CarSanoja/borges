@@ -1,0 +1,17 @@
+{
+ "question": "Did the new reading curriculum raise reading scores?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "effect of new_curriculum on the classroom mean reading score",
+  "comparator": "gt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "CURRICULUM RAISES SCORES",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "new_curriculum": "1 = the school adopted the new curriculum (whole-school decision)",
+  "reading_score": "classroom mean scaled reading score, spring",
+  "prior_year_reading": "same classroom cohort's mean score the year before"
+ }
+}

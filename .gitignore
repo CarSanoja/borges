@@ -27,3 +27,5 @@ evidence/blade/*/cases/
 evidence/blade/*/matcher-cache/
 
 evidence/held-out/cases/*/data.parquet
+
+evidence/domains/*.csv

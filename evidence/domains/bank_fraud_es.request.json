@@ -1,0 +1,17 @@
+{
+ "question": "¿Redujo el nuevo modelo de alertas la probabilidad de fraude por transacción?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "efecto de alerta_nueva sobre la probabilidad de fraude",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "LAS ALERTAS REDUCEN EL FRAUDE",
+  "negative_label": "SIN EFECTO CLARO"
+ },
+ "column_notes": {
+  "alerta_nueva": "1 = la transacción pasó por el nuevo modelo de alertas",
+  "fraude": "1 = transacción confirmada como fraude",
+  "canal": "canal de la transacción"
+ }
+}
