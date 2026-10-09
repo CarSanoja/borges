@@ -3,6 +3,7 @@ from __future__ import annotations
 from borges.analysis.models import Option, Step
 from borges.analysis.smoke_core import execute
 from borges.analysis.smoke_types import Outcome, SmokeConfig
+from borges.gateway.code_evidence import record_guarded
 from borges.sandbox.backend import Checkpoint
 
 LEFT_OUT_ID = "left_out"
@@ -29,8 +30,12 @@ def identity_option() -> Option:
 async def leave_out(
     config: SmokeConfig, step: Step, parent: Checkpoint, failed: list[Outcome]
 ) -> Outcome | None:
-    """Replace a data step none of whose options runs by a pass-through, and say so."""
+    """Replace a data step none of whose options runs by a pass-through, and say so.
+
+    The pass-through is Borges's own code, not a model's, so it is recorded as guarded: without
+    that the sandbox gateway refused it in every live run (r_20261009T021141_d6ab2f)."""
     option = identity_option()
+    record_guarded(IDENTITY)
     blank = step.model_copy(update={"options": [option], "produces": []})
     checkpoint, error, effects, _ = await execute(config, parent, blank, option)
     if error is not None or checkpoint is None:
