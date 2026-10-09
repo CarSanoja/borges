@@ -48,6 +48,7 @@ def test_guard_rejects_percentage_point_values_for_scale_100(
     error = scale_error(_result(*values), 100.0)
     assert error is not None
     assert "difference in proportions" in error and "percentage points" in error
+    assert "when the outcome itself is a percentage (0 to 100), divide the estimate" in error
     scaled, same_error = convert(_result(*values), 100.0)
     assert scaled is None and same_error == error
 

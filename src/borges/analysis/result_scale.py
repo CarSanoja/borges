@@ -37,7 +37,8 @@ def scale_error(raw: dict[str, object] | AnalysisResult, scale: float) -> str | 
                 f"the metric is in percentage points and Borges converts units itself, so "
                 f"{key} must be returned as a difference in proportions (between -1 and 1), "
                 f"not in percentage points; got {key}={value:.6g}. Remove any multiplication "
-                f"by 100 and return the difference in proportions"
+                f"by 100; when the outcome itself is a percentage (0 to 100), divide the "
+                f"estimate and both limits by 100"
             )
     return None
 
