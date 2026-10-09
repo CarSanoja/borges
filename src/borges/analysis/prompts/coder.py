@@ -86,6 +86,13 @@ like do not exist).
 `.loc[<comparison>]`, `.query(...)` or an `isin`/`between` mask. The only rows a model may \
 drop are incomplete ones (`dropna`, or a mask that only tests isna/notna); excluding or keeping \
 records by value is a decision of a filter step and the code guard rejects it.
+- A Cox proportional hazards model is statsmodels' PHReg (lifelines is not installed, and R's \
+Surv() does not exist in a formula: the time is the outcome and the event goes in status=): \
+`fit = smf.phreg("days ~ exposure + age", data, status=data["event"]).fit()`, or \
+`.fit(groups=np.arange(len(data)))` for robust errors. It has no intercept by design, and its \
+params, pvalues and conf_int() are numpy arrays: take `i = fit.model.exog_names.index(name)` and \
+read `fit.params[i]`, `fit.pvalues[i]` and `fit.conf_int()[i]`; n is `int(fit.model.nobs)`. The \
+estimate is the log hazard ratio; exponentiate it and both limits for a hazard ratio.
 - Discrete models (Logit, Probit, Poisson, NegativeBinomial, in either API) take robust \
 standard errors when fitted, `.fit(disp=0, cov_type="HC1")`: their results have no \
 get_robustcov_results. For an average marginal effect write \

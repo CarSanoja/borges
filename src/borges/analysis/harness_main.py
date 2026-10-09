@@ -15,6 +15,7 @@ from borges.analysis.harness_design import (
     DESIGN_ROWS_KEPT,
     DESIGN_SOURCE,
     DESIGN_WIDE_COLUMNS,
+    NO_CONSTANT,
 )
 from borges.analysis.harness_design_checks import DESIGN_CHECKS_SOURCE, PRODUCT_MAX_COLUMNS
 from borges.analysis.harness_design_errors import DESIGN_ERRORS_SOURCE
@@ -245,6 +246,7 @@ MAIN_TEMPLATE = (
     .replace("__DESIGN_MAX_ROWS__", repr(DESIGN_MAX_ROWS))
     .replace("__DESIGN_ROWS_KEPT__", repr(DESIGN_ROWS_KEPT))
     .replace("__DESIGN_MEANS_KEPT__", repr(DESIGN_MEANS_KEPT))
+    .replace("__NO_CONSTANT__", repr(NO_CONSTANT))
     .replace("__ALIAS_NOTE__", repr(ALIAS_NOTE))
     .replace("__RESTORED_NOTE__", repr(RESTORED_NOTE))
     .replace("__DESIGN_WIDE_COLUMNS__", repr(DESIGN_WIDE_COLUMNS))

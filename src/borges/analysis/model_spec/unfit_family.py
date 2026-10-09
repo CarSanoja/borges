@@ -5,7 +5,8 @@ from a column, and a linear random-intercept model with one grouping column.
 Asked for anything else, the translator returned the nearest family it has: in the recordings up to
 70a6102, 3 of 323 templated options named another model and ran as one of these (two
 complementary log-log options in bank as logits, a Gamma GLM in marp_religiosity as OLS), and a
-checkout "Weighted OLS by session length" ran without its weights.
+checkout "Weighted OLS by session length" ran without its weights. A Cox model of time to
+readmission (r_20261009T085134_fe4c15) ran as OLS of the days, which ignores the censoring.
 """
 
 from __future__ import annotations
@@ -19,7 +20,8 @@ OTHER_MODEL = re.compile(
     r"ordered (?:logit|probit|logistic)|ordinal (?:logit|probit|logistic|regression)|"
     r"multinomial|mixed[- ]effects?|multilevel|random (?:intercepts?|effects?|slopes?)|MixedLM|"
     r"zero[- ]inflated|hurdle|cloglog|complementary log-log|\bfirth\b|penali[sz]ed|bayesian|"
-    r"quantile|\bRLM\b|M-estimat",
+    r"quantile|\bRLM\b|M-estimat|\bcox\b|proportional hazards?|\bhazards? ratio|\bPHReg\b|"
+    r"survival (?:model|analysis|regression)|time[- ]to[- ]event",
     re.IGNORECASE,
 )
 WEIGHTED_SKIP = "the option weights the observations, which a template cannot express"

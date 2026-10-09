@@ -273,3 +273,13 @@ def test_a_status_from_an_ordered_answer_keeps_each_group_a_run_of_neighbouring_
     assert "with married women counted as single" in judge and "is rejected" in judge
     planner = " ".join(PLANNER_SYSTEM.split())
     assert "never put an answer between two answers of the other group" in planner
+
+
+def test_a_cox_model_is_written_with_phreg_and_read_by_its_term_name() -> None:
+    coder = " ".join(CODER_SYSTEM.split())
+    assert 'smf.phreg("days ~ exposure + age", data, status=data["event"]).fit()' in coder
+    assert "fit.model.exog_names.index(name)" in coder and "lifelines is not installed" in coder
+    planner = " ".join(PLANNER_SYSTEM.split())
+    assert "PHReg for a Cox model of a time to an event" in planner
+    assert "R's Surv(), lifelines and parametric survival regressions" in planner
+    assert "R's Surv() does not exist in a formula" in coder

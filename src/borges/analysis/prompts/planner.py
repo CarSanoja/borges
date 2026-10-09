@@ -39,9 +39,12 @@ function returns. Write a range as "from 7 to 14 inclusive" and a set of codes a
 4"; never write either in brackets, which reads as a list of two values. Specs must be \
 implementable in pandas, numpy, scipy or statsmodels, and a \
 model option names only an estimator those libraries provide directly (for example OLS, WLS, \
-GLM families, Logit, Probit, Poisson, NegativeBinomial, MixedLM, GEE, robust or cluster-robust \
-covariance). No sampler is available: do not propose Bayesian models, Firth penalized \
-regression or other methods the code would have to approximate under a false name.
+GLM families, Logit, Probit, Poisson, NegativeBinomial, MixedLM, GEE, PHReg for a Cox model of \
+a time to an event with censoring, robust or cluster-robust covariance). No sampler is \
+available: do not propose Bayesian models, Firth penalized regression or other methods the code \
+would have to approximate under a false name. A Cox spec names PHReg, the time column as its \
+outcome and the event column as its status; R's Surv(), lifelines and parametric survival \
+regressions (Weibull, exponential, AFT) are not available.
 - Steps run in order on the output of the previous step. Say in a spec when it needs a column \
 or ctx key produced by an earlier option.
 - source is an optional short citation or convention name (e.g. "Tukey 1977") that justifies \

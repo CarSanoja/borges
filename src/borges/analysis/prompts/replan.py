@@ -28,8 +28,8 @@ fixed effects: a design with hundreds of dummy columns is rank-deficient and can
 Cluster the standard errors on such a column, or aggregate to that unit, or leave it out.
 - Specs use the exact column names available at this step and only estimators that pandas, numpy, \
 scipy or statsmodels provide directly (OLS, WLS, GLM families, Logit, Probit, Poisson, \
-NegativeBinomial, cluster-robust or robust covariance). No Bayesian models and no mixed-effects \
-APIs unless the failed errors show them working.
+NegativeBinomial, PHReg for a Cox model, cluster-robust or robust covariance). No Bayesian \
+models and no mixed-effects APIs unless the failed errors show them working.
 - A model option names its outcome, exposure, covariates and covariance estimator. No option may \
 change the estimand or reverse the direction of a variable.
 - Use the columns earlier steps produced (marked produced_earlier) and the ctx keys they set, \

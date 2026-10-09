@@ -5,6 +5,10 @@ number (columns scaled to unit length, the threshold statsmodels itself uses to 
 multicollinearity) exceeds DESIGN_CONDITION_LIMIT fails the step with a clear reason. The check
 reads the exog of every statsmodels model the step builds; models built with other libraries
 are not inspected.
+
+A clinic run (r_20261009T085134_fe4c15) asked for a Cox model of time to readmission: a correct
+PHReg fit was refused for having no intercept and told to add one, which a Cox model cannot have
+(its baseline hazard takes that place). Models without a constant by construction are exempt.
 """
 
 from __future__ import annotations
@@ -14,6 +18,7 @@ DESIGN_MAX_ROWS = 200000
 DESIGN_WIDE_COLUMNS = 500
 DESIGN_ROWS_KEPT = 2000
 DESIGN_MEANS_KEPT = 20
+NO_CONSTANT = ("PHReg", "ConditionalLogit", "ConditionalPoisson", "ConditionalMNLogit")
 
 DESIGN_SOURCE = """
     _designs = []
@@ -214,7 +219,10 @@ DESIGN_SOURCE = """
         reported = [m for m in own if m.pop("reported")]
         bad = next((m for m in own if m["deficient"]), None)
         main = bad or (reported or own)[-1]
-        no_intercept = next((m["model"] for m in own if not m["intercept"]), None)
+        no_intercept = next(
+            (m["model"] for m in own if not m["intercept"] and m["model"] not in __NO_CONSTANT__),
+            None,
+        )
         aliased = sorted({n for m in own for n in m["aliased"]})
         echoed = sorted({n for m in own for n in m["outcome_regressors"]})
         return {

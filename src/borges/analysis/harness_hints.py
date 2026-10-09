@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-HINTS_SOURCE = r"""
+from borges.analysis.harness_phreg import PHREG_SOURCE
+
+HINTS_SOURCE = (
+    PHREG_SOURCE
+    + r"""
     def _encoding_hint(exc, seen, kind):
         text = str(exc)
         if kind != "model" or not seen or "could not convert string to float" not in text:
@@ -106,6 +110,9 @@ HINTS_SOURCE = r"""
 
     def _statsmodels_hint(exc):
         text = str(exc)
+        phreg = _phreg_hint(exc)
+        if phreg:
+            return phreg
         if "not a valid option for `at`" in text:
             return (
                 " | get_margeff(at=...) takes 'overall' (the average marginal effect over the"
@@ -140,3 +147,4 @@ HINTS_SOURCE = r"""
             tb = tb.tb_next
         return ""
 """
+)

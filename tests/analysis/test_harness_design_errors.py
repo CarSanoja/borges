@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from borges.analysis.harness import parse_error
+from borges.analysis.harness import parse_error, parse_output
 from tests.analysis.test_harness_design import HEADER, run_model
 
 ONE_DUMMY_PER_ROW = (
@@ -72,3 +72,31 @@ def test_a_regressor_close_to_the_outcome_is_not_refused(tmp_path: Path) -> None
     frame.to_parquet(tmp_path / "data.parquet")
     done = run_model(tmp_path, OUTCOME_IN_THE_LIST.replace('["y", "a"', '["y_lag", "a"'))
     assert done.returncode == 0, done.stdout
+
+
+COX = (
+    HEADER
+    + """
+    import statsmodels.formula.api as smf
+
+    data = df.dropna()
+    fit = smf.phreg("days ~ treated + age", data, status=data["event"]).fit()
+    i = fit.model.exog_names.index("treated")
+    low, high = fit.conf_int()[i]
+    return {"estimate": float(fit.params[i]), "ci_low": float(low), "ci_high": float(high),
+            "p_value": float(fit.pvalues[i]), "n": int(fit.model.nobs)}
+"""
+)
+
+
+def test_a_cox_model_is_not_refused_for_having_no_intercept(tmp_path: Path) -> None:
+    rng = np.random.default_rng(8)
+    frame = pd.DataFrame({"treated": rng.integers(0, 2, 300), "age": rng.normal(60, 9, 300)})
+    time = rng.exponential(1 / (0.01 * np.exp(-0.5 * frame["treated"])))
+    frame["days"] = np.minimum(np.ceil(time), 90)
+    frame["event"] = (time <= 90).astype(int)
+    frame.to_parquet(tmp_path / "data.parquet")
+    done = run_model(tmp_path, COX)
+    assert done.returncode == 0, parse_error(done.stdout)
+    _, result = parse_output(done.stdout)
+    assert result is not None and -1.2 < result.estimate < 0.0

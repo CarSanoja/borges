@@ -13,6 +13,8 @@ from borges.analysis.model_spec.unfit_family import WEIGHTED_SKIP, unfit_reason
         "Negative binomial regression with referee random effects",
         "Ordered logit of the rating",
         "Median quantile regression",
+        "Fit a Cox proportional hazards model using lifelines.CoxPHFitter",
+        "Survival analysis of time to readmission with a hazard ratio",
     ],
 )
 def test_models_the_templates_do_not_fit_are_named(intent: str) -> None:
