@@ -8,6 +8,11 @@ receives is named as the earlier steps' fault, in the words that send the smoke 
 A clinic run (r_20261009T034108_7e3b1d) adjusted a protocol introduced in July for every arrival
 month: the month dummies after July add up to the exposure, the message suggested drop_first,
 and three repairs kept the dummies. When the covariates rebuild the exposure, they are named.
+
+Two fertility_social alternatives (r_20261009T074442_630a07) took the regressors from a column list
+that held the outcome: the fit was perfect, the interaction came out 0 with a zero standard error,
+and three repairs were told only that the interval was degenerate. A regressor that is the
+outcome, or a linear rescaling of it, is now named.
 """
 
 from __future__ import annotations
@@ -15,6 +20,33 @@ from __future__ import annotations
 from borges.analysis.model_spec.render_design import INPUT_FAULT
 
 DESIGN_ERRORS_SOURCE = """
+    def _outcome_regressors(model_id, x, names):
+        try:
+            endog = _np.asarray(_endogs[model_id].endog, dtype=float).ravel()
+        except Exception:
+            return []
+        if endog.shape[0] != x.shape[0] or not _np.isfinite(endog).all():
+            return []
+        centred = endog - endog.mean()
+        size = float(_np.linalg.norm(centred))
+        found = []
+        for i in range(x.shape[1]):
+            column = x[:, i] - x[:, i].mean()
+            norm = float(_np.linalg.norm(column))
+            if size > 0 and norm > 0 and abs(float(column @ centred)) >= (1 - 1e-9) * norm * size:
+                found.append(str(names[i]))
+        return found
+
+    def _outcome_regressor_error(design):
+        return (
+            "the model's outcome is also one of its regressors: "
+            + repr(design["outcome_regressors"][:4]) + " is the outcome, or a linear rescaling of"
+            + " it, on every row. Explaining the outcome with itself fits perfectly, so every"
+            + " other coefficient comes out zero with a zero standard error. Take the regressors"
+            + " from the exposure and the covariates only, never from a list that holds the"
+            + " outcome column. Columns: " + repr(design["names"][:20])
+        )
+
     def _rebuilding(scaled, names, exposure, frame_columns):
         if exposure is None or scaled.shape[1] < 2:
             return []

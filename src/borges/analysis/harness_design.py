@@ -136,6 +136,7 @@ DESIGN_SOURCE = """
                 continue
             if x.ndim != 2 or x.shape[0] == 0 or x.shape[1] == 0 or not _np.isfinite(x).all():
                 continue
+            echoed = _outcome_regressors(model_id, x, names)
             if x.shape[0] > __DESIGN_MAX_ROWS__:
                 x = x[:: int(_math.ceil(x.shape[0] / __DESIGN_MAX_ROWS__))]
             norms = _np.linalg.norm(x, axis=0)
@@ -184,6 +185,7 @@ DESIGN_SOURCE = """
                     if aliased_only or rank >= x.shape[1]
                     else _rebuilding(scaled, names, exposure, frame_columns),
                     "dead": dead,
+                    "outcome_regressors": echoed,
                     "intercept": intercept,
                     "terms": terms,
                     "exposure": _term_of(str(names[found]), frame_columns) if hit else None,
@@ -214,9 +216,11 @@ DESIGN_SOURCE = """
         main = bad or (reported or own)[-1]
         no_intercept = next((m["model"] for m in own if not m["intercept"]), None)
         aliased = sorted({n for m in own for n in m["aliased"]})
+        echoed = sorted({n for m in own for n in m["outcome_regressors"]})
         return {
             **main,
             "aliased": aliased,
+            "outcome_regressors": echoed,
             "n_models": len(models),
             "deficient": bad is not None,
             "no_intercept": no_intercept,

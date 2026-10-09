@@ -47,8 +47,9 @@ def test_statsmodels_results_with_one_term_is_normalised(workdir) -> None:  # no
 
 def test_statsmodels_results_with_many_terms_gets_a_clear_error(workdir) -> None:  # noqa: F811
     body = (
-        "    X = sm.add_constant(df[['age', 'y']])\n"
-        "    return sm.OLS(df['age'].astype(float), X).fit()\n"
+        "    d = df.assign(treat=df['arm'].eq('treat').astype(float))\n"
+        "    X = sm.add_constant(d[['age', 'treat']])\n"
+        "    return sm.OLS(df['y'].astype(float), X).fit()\n"
     )
     error, result = outcome(workdir, body)
     assert result is None

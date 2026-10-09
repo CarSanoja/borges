@@ -115,6 +115,8 @@ __FINGERPRINT__
                 scale = _outcome_scale(df, reported)
                 if scale is not None:
                     design["outcome_log"] = scale
+                if __DESIGN_CHECK__ and design["outcome_regressors"]:
+                    raise ValueError(_outcome_regressor_error(design))
                 if __DESIGN_CHECK__ and design["deficient"]:
                     raise ValueError(_design_error(design, df))
                 if __DESIGN_CHECK__ and design["no_intercept"]:
