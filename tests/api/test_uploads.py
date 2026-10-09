@@ -196,5 +196,10 @@ def test_too_few_columns_after_dropping_is_explained(tmp_path) -> None:
 def test_too_few_rows_says_why_and_how_many(tmp_path) -> None:
     with pytest.raises(ValueError, match="has 10 rows") as raised:
         UploadStore(tmp_path).put(csv_bytes(rows=10), "d.csv")
-    assert "cannot be told apart from noise" in str(raised.value)
-    assert "at least 50" in str(raised.value)
+    assert "too few degrees of freedom" in str(raised.value)
+    assert "at least 20" in str(raised.value)
+
+
+def test_one_class_measured_before_and_after_is_accepted(tmp_path) -> None:
+    _, profile = UploadStore(tmp_path).put(csv_bytes(rows=48), "d.csv")
+    assert profile.n_rows == 48

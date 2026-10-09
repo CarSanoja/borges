@@ -16,7 +16,7 @@ from borges.armor.upload_scan import PiiSummary, scan_dataframe
 
 MAX_BYTES = 20 * 1024 * 1024
 MIN_COLUMNS = 2
-MIN_ROWS = 50
+MIN_ROWS = 20
 _ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 
 
@@ -84,7 +84,8 @@ class UploadStore:
         if df.shape[0] < MIN_ROWS:
             raise ValueError(
                 f"The table has {df.shape[0]} rows and needs at least {MIN_ROWS}: "
-                "with fewer rows the analysis options cannot be told apart from noise."
+                "with fewer rows a model with an exposure and a few covariates has too few "
+                "degrees of freedom left to estimate its uncertainty."
             )
         df, columns = normalise_columns(df)
         name = Path(filename).name or "upload.csv"

@@ -383,7 +383,7 @@ reason. The same flow is available over the API (`POST /api/uploads`, CSV or par
 a byte-order mark, decimal commas in semicolon files (the default Excel export in Spanish
 locales) and latin-1 text; an Excel workbook renamed `.csv` gets a message to save it as CSV
 UTF-8, fully empty columns are dropped and named before the run starts, and a table needs at
-least 50 rows. Uploaded data always needs a live run and an API key with
+least 20 rows (one class of 24 measured before and after is 48). Uploaded data always needs a live run and an API key with
 the `uploads:write` scope; anonymous demo access cannot upload, and the card says so before you
 submit. One upload has run live end to end: the public teaching-ratings data (463 rows) gave
 BEAUTY PREMIUM, 0.141 [0.076, 0.206], in 148 s for an estimated $0.016 (`evidence/live-runs.md`).
