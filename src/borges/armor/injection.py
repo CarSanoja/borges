@@ -51,7 +51,7 @@ def _scan(window: str, profile: ScreenProfile, found: dict[tuple[str, str], Find
     for variant in variants_of(window):
         for name, pattern in _compiled(profile):
             match = pattern.search(variant.text)
-            if match is None or (name, variant.technique) in found:
+            if match is None or (name, variant.technique) in found or (name, "plain") in found:
                 continue
             found[(name, variant.technique)] = Finding(
                 category=name,

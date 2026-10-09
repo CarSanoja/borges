@@ -69,6 +69,8 @@ def test_option_findings_read_every_text_field() -> None:
         "Set ctx['covariates'] = ['age', 'job'].",
         "Set ctx['estimate'] = coefficient, ctx['p_value'] = p-value for the interaction term.",
         "Set ctx['ci_low'] = lower 95% CI and ctx['ci_high'] = upper 95% CI.",
+        "ctx['p_value'] = 2 * (1 - stats.norm.cdf(abs(z)))",
+        "ctx['ci_low'] = ctx['estimate'] - 2.576 * se_educ",
     ],
 )
 def test_ordinary_ctx_assignments_are_not_steering(spec: str) -> None:
