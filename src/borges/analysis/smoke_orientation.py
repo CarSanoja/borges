@@ -42,13 +42,16 @@ def produced_names(produces: list[str], default: dict[str, Any] | None) -> list[
 
 
 def orientation_error(
-    names: list[str], default: dict[str, Any] | None, other: dict[str, Any] | None
+    names: list[str],
+    default: dict[str, Any] | None,
+    other: dict[str, Any] | None,
+    cut: set[str] | frozenset[str] = frozenset(),
 ) -> str | None:
     for name in names:
         r = probe_correlation(default, other, name)
         if r is not None and r < REVERSED_BELOW:
             return REVERSED_TEMPLATE.format(name=name, r=r)
-        shifted = shifted_error(name, default, other)
+        shifted = shifted_error(name, default, other) if name in cut else None
         if shifted is not None:
             return shifted
     return None
@@ -62,7 +65,7 @@ def orientation_check(config: SmokeConfig, step: Step, option_id: str) -> Check 
     names = produced_names(step.produces, default.effects)
     if not names:
         return None
-    return partial(orientation_error, names, default.effects)
+    return partial(orientation_error, names, default.effects, cut=config.state.cut)
 
 
 def effective_default(step: Step, outcomes: list[Outcome]) -> Outcome | None:
@@ -108,7 +111,7 @@ async def apply_orientation(
         return outcomes
 
     def check(effects: dict[str, Any] | None) -> str | None:
-        return orientation_error(names, default.effects, effects)
+        return orientation_error(names, default.effects, effects, config.state.cut)
 
     async def one(outcome: Outcome) -> Outcome:
         if outcome is default or outcome.status == "failed":

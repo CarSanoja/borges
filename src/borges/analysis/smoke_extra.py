@@ -7,6 +7,7 @@ from borges.analysis.smoke_collision import remember_extra, resolve_extra
 from borges.analysis.smoke_core import smoke_option
 from borges.analysis.smoke_extra_probe import probe_extra, probe_extra_model
 from borges.analysis.smoke_orientation import orientation_check
+from borges.analysis.smoke_origin import cut_names
 from borges.analysis.smoke_review import review_extra
 from borges.analysis.smoke_types import Outcome, Repair, SmokeConfig
 
@@ -18,6 +19,7 @@ async def smoke_extra_option(
     default = config.state.defaults.get(step.id)
     if parent is None or default is None:
         return None
+    config.state.cut |= cut_names([*steps, step.model_copy(update={"options": [option]})])
     check = orientation_check(config, step, option.id)
     outcome = await smoke_option(config, repair, parent, step, option, check)
     if outcome.status != "failed":

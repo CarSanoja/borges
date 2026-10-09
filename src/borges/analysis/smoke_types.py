@@ -53,6 +53,7 @@ class SmokeState:
     notes: list[str] = field(default_factory=list)
     larger_rows: dict[tuple[str, str], int] = field(default_factory=dict)
     outcomes: dict[str, list[Outcome]] = field(default_factory=dict)
+    cut: set[str] = field(default_factory=set)
 
 
 @dataclass

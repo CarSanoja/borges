@@ -13,6 +13,7 @@ from borges.analysis.smoke_core import execute, sample_rows, smoke_option
 from borges.analysis.smoke_larger import LARGE_MAX_ROWS, LargerSample, smoke_rows
 from borges.analysis.smoke_model_probe import probe_model
 from borges.analysis.smoke_orientation import apply_orientation, effective_default
+from borges.analysis.smoke_origin import cut_names
 from borges.analysis.smoke_recode import recode_failed_default
 from borges.analysis.smoke_replan import has_survivor
 from borges.analysis.smoke_review import review_step
@@ -149,6 +150,7 @@ async def smoke_plan(
     smoked = plan.model_copy(deep=True)
     config.rewrite = rewrite
     config.metric = plan.decision_rule.metric
+    config.state.cut = cut_names(smoked.steps)
     sample = sample_rows(config.data)
     parent = await config.backend.root({harness.DATA_FILE: sample})
     sample_n = pq.read_metadata(io.BytesIO(sample)).num_rows

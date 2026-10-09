@@ -7,14 +7,22 @@ step read it with the default's windows (7-14 high, 17-25 low), so "high fertili
 luteal phase, and the run reported that universe as a sign-reversing flip. A whole-number column
 that follows the default's one for one but sits more than SHIFTED_SDS standard deviations away
 counts from another origin, and later steps that cut it at fixed values select other rows.
+
+A bank run (r_20261009T085134_401637) lost an option that counted days since sign-up from another
+date: the column only entered a linear model, where the shift moves the intercept and nothing
+else. The check applies to a column that some option of the plan compares with a value.
 """
 
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
+
+from borges.analysis.harness_missing_cut import compared_names
+from borges.analysis.models import Step
 
 MIN_PAIRS = 30
 SHIFTED_SDS = 1.5
@@ -53,6 +61,11 @@ def probe_pairs(
         return None
     xs, ys = np.array(pairs).T
     return xs, ys
+
+
+def cut_names(steps: Iterable[Step]) -> set[str]:
+    """Columns that some option of the plan compares with a value."""
+    return {n for s in steps for o in s.options if o.code for n in compared_names(o.code)}
 
 
 def shifted_error(
