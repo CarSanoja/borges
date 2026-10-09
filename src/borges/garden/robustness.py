@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from borges.analysis.models import AnalysisPlan
@@ -9,6 +10,7 @@ from borges.garden.result_key import result_key
 from borges.garden.sampling import MIN_SAMPLE
 
 MIN_DISTINCT_TO_RATE = 10
+Z95 = 1.959963984540054
 
 
 @dataclass(frozen=True)
@@ -18,6 +20,8 @@ class RobustnessFigures:
     beam: float | None
     design: float | None
     design_note: str | None
+    low: float | None
+    high: float | None
     n_distinct: int
     rating: float | None
     rating_reason: str | None
@@ -50,7 +54,15 @@ def beam_share(garden: Garden, noops: list[NoopOption]) -> tuple[float | None, i
     return agreeing / len(distinct), len(distinct)
 
 
-def sampled_share(garden: Garden, noops: list[NoopOption]) -> tuple[float, int, int] | None:
+def wilson(agreeing: int, total: int) -> tuple[float, float]:
+    share = agreeing / total
+    spread = Z95 * math.sqrt(share * (1 - share) / total + Z95**2 / (4 * total**2))
+    centre = share + Z95**2 / (2 * total)
+    scale = 1 + Z95**2 / total
+    return max(0.0, (centre - spread) / scale), min(1.0, (centre + spread) / scale)
+
+
+def sampled_share(garden: Garden, noops: list[NoopOption]) -> tuple[int, int, int] | None:
     baseline = garden.baseline
     if baseline is None or baseline.result is None or not garden.sample_ids:
         return None
@@ -61,7 +73,7 @@ def sampled_share(garden: Garden, noops: list[NoopOption]) -> tuple[float, int, 
     if len(distinct) < MIN_SAMPLE:
         return None
     agreeing = sum(1 for u in distinct if u.verdict == baseline.verdict)
-    return agreeing / len(distinct), len(distinct), len(garden.sample_ids)
+    return agreeing, len(distinct), len(garden.sample_ids)
 
 
 def single_decision_share(
@@ -90,22 +102,42 @@ def single_decision_share(
     return sum(shares) / len(shares) if shares else None
 
 
-def design_share(
-    plan: AnalysisPlan, garden: Garden, noops: list[NoopOption]
-) -> tuple[float | None, str | None]:
+@dataclass(frozen=True)
+class DesignShare:
+    share: float | None
+    note: str | None
+    low: float | None = None
+    high: float | None = None
+
+
+def design_share(plan: AnalysisPlan, garden: Garden, noops: list[NoopOption]) -> DesignShare:
     sample = sampled_share(garden, noops)
+    if sample is not None and garden.sample_kind == "grid":
+        agreeing, distinct, cells = sample
+        return DesignShare(
+            agreeing / distinct,
+            f"the whole grid: {cells} combinations, {distinct} distinct results; exact, not "
+            "sampled, and independent of the beam search",
+        )
     if sample is not None:
-        share, distinct, draws = sample
-        return share, (
-            f"uniform random sample of the grid: {draws} draws (each decision picks each of its "
-            f"options equally), {distinct} distinct results; independent of the beam search"
+        agreeing, distinct, draws = sample
+        low, high = wilson(agreeing, distinct)
+        seed = f" (seed {garden.sample_seed})" if garden.sample_seed is not None else ""
+        return DesignShare(
+            agreeing / distinct,
+            f"uniform random sample of the grid: {draws} draws{seed}, each decision picking each "
+            f"of its options equally, {distinct} distinct results, 95% interval "
+            f"{low:.0%} to {high:.0%}; independent of the beam search",
+            low,
+            high,
         )
     single = single_decision_share(plan, garden, noops)
     if single is None:
-        return None, None
-    return single, (
+        return DesignShare(None, None)
+    return DesignShare(
+        single,
         "one decision changed at a time: each decision counts equally and each of its options "
-        "equally; interactions between decisions are not covered"
+        "equally; interactions between decisions are not covered",
     )
 
 
@@ -113,7 +145,8 @@ def robustness_figures(
     plan: AnalysisPlan, garden: Garden, noops: list[NoopOption]
 ) -> RobustnessFigures:
     beam, n_distinct = beam_share(garden, noops)
-    design, design_note = design_share(plan, garden, noops)
+    found = design_share(plan, garden, noops)
+    design, design_note = found.share, found.note
     if design is not None:
         headline, basis = design, "design_weighted"
     elif beam is not None:
@@ -124,4 +157,7 @@ def robustness_figures(
         rating, reason = headline, None
     else:
         rating, reason = None, f"n={n_distinct}, too few to rate"
-    return RobustnessFigures(headline, basis, beam, design, design_note, n_distinct, rating, reason)
+    low, high = (found.low, found.high) if basis == "design_weighted" else (None, None)
+    return RobustnessFigures(
+        headline, basis, beam, design, design_note, low, high, n_distinct, rating, reason
+    )

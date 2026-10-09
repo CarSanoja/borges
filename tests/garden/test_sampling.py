@@ -7,9 +7,13 @@ from borges.garden.sampling import (
     MIN_SAMPLE,
     SAMPLE_DRAWS,
     affordable_prefix,
+    choice_key,
     draw_grid,
+    full_grid,
+    grid_draws,
     grid_options,
     sampled_ids,
+    seed_for,
 )
 from tests.garden.synthetic import garden_of, option, plan_of, result, step_of, universe
 
@@ -70,3 +74,20 @@ def test_draws_already_explored_cost_nothing() -> None:
 
 def test_the_sample_needs_a_minimum_of_draws_to_count() -> None:
     assert MIN_SAMPLE < SAMPLE_DRAWS
+
+
+def test_the_whole_grid_is_enumerated_when_it_fits_the_budget() -> None:
+    p = plan()
+    garden = garden_of(p, universe(p, {}, result(1.0)))
+    kept, new, kind = grid_draws(p, [], garden, 10, seed_for("r_1"))
+    assert kind == "grid" and len(kept) == 6 and len(new) == 5
+    assert {choice_key(c) for c in kept} == {choice_key(c) for c in full_grid(p, [])}
+
+
+def test_a_grid_larger_than_the_budget_is_sampled_with_the_run_seed() -> None:
+    p = plan()
+    garden = garden_of(p, universe(p, {}, result(1.0)))
+    kept, new, kind = grid_draws(p, [], garden, 2, seed_for("r_1"))
+    assert kind == "sample" and len(new) <= 2
+    assert kept == affordable_prefix(draw_grid(p, [], seed=seed_for("r_1")), garden, 2)[0]
+    assert seed_for("r_1") != seed_for("r_2")

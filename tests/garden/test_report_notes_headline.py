@@ -17,6 +17,8 @@ def figures(**extra) -> RobustnessFigures:
         beam=0.67,
         design=0.56,
         design_note=NOTE,
+        low=0.3,
+        high=0.79,
         n_distinct=15,
         rating=0.56,
         rating_reason=None,

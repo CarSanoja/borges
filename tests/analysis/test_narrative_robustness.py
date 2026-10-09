@@ -4,6 +4,7 @@ from borges.analysis.models import AnalysisResult
 from borges.analysis.narrative_robustness import (
     drop_inverted_sentences,
     drop_method_sentences,
+    inverted_shares,
     robustness_problems,
     robustness_sentence,
 )
@@ -37,6 +38,15 @@ def test_the_sentence_states_the_agreeing_share_and_its_complement() -> None:
     assert robustness_sentence(report()) == (
         "Robustness: 60% of the analysis grid agrees with the original verdict and 40% reverses it."
     )
+
+
+def test_a_sampled_share_carries_its_interval() -> None:
+    sampled = report().model_copy(update={"robustness_low": 0.3, "robustness_high": 0.8})
+    assert robustness_sentence(sampled) == (
+        "Robustness: 60% of the analysis grid agrees with the original verdict (a random sample "
+        "of the grid: 95% interval 30% to 80%) and 40% reverses it."
+    )
+    assert inverted_shares(sampled, robustness_sentence(sampled) or "") == []
 
 
 def test_an_agreeing_share_read_as_flips_is_rejected_and_dropped() -> None:

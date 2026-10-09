@@ -9,9 +9,9 @@ from borges.garden.models import Universe
 from borges.garden.sampling import (
     MIN_SAMPLE,
     SAMPLE_DRAWS,
-    affordable_prefix,
-    draw_grid,
+    grid_draws,
     sampled_ids,
+    seed_for,
 )
 from borges.garden.search import combination_flip_choices, minimal_flip
 from borges.llm.client import BudgetExceeded
@@ -92,12 +92,14 @@ async def run_uniform_sample(
 ) -> None:
     garden = pipeline.garden
     noops = excluded_options(plan, garden)
-    draws = draw_grid(plan, noops)
-    kept, new = affordable_prefix(draws, garden, runner.remaining)
-    if len(kept) < MIN_SAMPLE:
+    seed = seed_for(pipeline.emitter.run_id)
+    kept, new, kind = grid_draws(plan, noops, garden, runner.remaining, seed)
+    if kind == "sample" and len(kept) < MIN_SAMPLE:
         return
     await tolerate_budget(
         pipeline, runner.run_many(new, "combination"), "The uniform grid sample stopped early"
     )
     garden.sample_ids = sampled_ids(garden, kept)
+    garden.sample_kind = kind
+    garden.sample_seed = seed if kind == "sample" else None
     pipeline.search.sample_draws = len(kept)

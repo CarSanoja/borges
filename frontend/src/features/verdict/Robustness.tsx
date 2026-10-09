@@ -10,11 +10,24 @@ interface Props {
   inconclusive?: boolean;
 }
 
+function Interval({ report }: { report: Report }) {
+  if (report.robustness_low == null || report.robustness_high == null) return null;
+  return (
+    <p className="vc-robust__interval" data-testid="robustness-interval">
+      Sampled from the grid: 95% interval{" "}
+      <span className="mono">
+        {formatPercent(report.robustness_low)} to {formatPercent(report.robustness_high)}
+      </span>
+    </p>
+  );
+}
+
 function Secondary({ report, range, plan }: Props) {
   const failed = report.n_failed ?? 0;
   const reason = report.robustness_rating === null ? report.robustness_rating_reason : null;
   return (
     <div className="vc-robust__secondary">
+      <Interval report={report} />
       {reason && <p>{withPlanLabels(reason, plan)}</p>}
       {range && (
         <p className="vc-range">

@@ -124,6 +124,28 @@ def test_a_uniform_sample_is_the_design_weighted_figure_when_it_is_large_enough(
     assert figures.beam == pytest.approx(4 / 6)
     assert figures.design_note is not None and "uniform random sample" in figures.design_note
     assert "6 draws" in figures.design_note
+    assert figures.low == pytest.approx(0.3, abs=0.01) and figures.high == pytest.approx(
+        0.903, abs=0.01
+    )
+    assert "95% interval 30% to 90%" in figures.design_note
+
+
+def test_the_whole_grid_gives_an_exact_share_with_no_interval() -> None:
+    plan = two_decision_plan()
+    garden = garden_of(
+        plan,
+        universe(plan, {}, SHIP),
+        universe(plan, {"a": "a1"}, result(0.8)),
+        universe(plan, {"a": "a2"}, result(0.7)),
+        universe(plan, {"m": "m1"}, result(0.6)),
+        universe(plan, {"a": "a1", "m": "m1"}, result(-0.1, p=0.8)),
+        universe(plan, {"a": "a2", "m": "m1"}, result(-0.2, p=0.8)),
+    )
+    garden.sample_ids = list(garden.universes)
+    garden.sample_kind = "grid"
+    figures = robustness_figures(plan, garden, [])
+    assert figures.design == pytest.approx(4 / 6) and figures.low is None and figures.high is None
+    assert figures.design_note is not None and figures.design_note.startswith("the whole grid")
 
 
 def test_a_sample_below_the_minimum_falls_back_to_one_decision_at_a_time() -> None:

@@ -22,6 +22,13 @@ def failure_clause(report: Report) -> str:
     )
 
 
+def interval_clause(report: Report) -> str:
+    if report.robustness_low is None or report.robustness_high is None:
+        return ""
+    low, high = round(report.robustness_low * 100), round(report.robustness_high * 100)
+    return f" (a random sample of the grid: 95% interval {low}% to {high}%)"
+
+
 def robustness_sentence(report: Report) -> str | None:
     if report.n_universes == 0:
         return None
@@ -34,8 +41,8 @@ def robustness_sentence(report: Report) -> str | None:
     failed = failure_clause(report)
     if report.robustness_basis == "design_weighted":
         return (
-            f"Robustness: {agree}% of the analysis grid agrees with the original verdict and "
-            f"{100 - agree}% reverses it{left_out}{failed}."
+            f"Robustness: {agree}% of the analysis grid agrees with the original verdict"
+            f"{interval_clause(report)} and {100 - agree}% reverses it{left_out}{failed}."
         )
     return (
         f"Robustness: {agree}% of the distinct results agree with the original verdict and "

@@ -93,6 +93,8 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
         robustness_beam=figures.beam,
         robustness_design=figures.design,
         robustness_design_note=figures.design_note,
+        robustness_low=figures.low,
+        robustness_high=figures.high,
         robustness_rating=figures.rating,
         robustness_rating_reason=figures.rating_reason,
         noop_options=noops,

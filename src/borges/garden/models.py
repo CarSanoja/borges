@@ -112,6 +112,8 @@ class Report(BaseModel):
     robustness_beam: float | None = None
     robustness_design: float | None = None
     robustness_design_note: str | None = None
+    robustness_low: float | None = None
+    robustness_high: float | None = None
     robustness_rating: float | None = None
     robustness_rating_reason: str | None = None
     noop_options: list[NoopOption] = Field(default_factory=list)
@@ -134,6 +136,8 @@ class Garden(BaseModel):
     baseline_id: str | None = None
     universes: dict[str, Universe] = Field(default_factory=dict)
     sample_ids: list[str] = Field(default_factory=list)
+    sample_kind: Literal["grid", "sample"] | None = None
+    sample_seed: int | None = None
 
     def add(self, universe: Universe) -> None:
         self.universes[universe.id] = universe

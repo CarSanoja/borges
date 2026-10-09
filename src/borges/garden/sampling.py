@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import itertools
 import random
+import zlib
+from typing import Literal
 
 from borges.analysis.models import AnalysisPlan
 from borges.garden.models import Garden, NoopOption
 from borges.garden.noop import noop_pairs
 
-SAMPLE_DRAWS = 12
+SAMPLE_DRAWS = 30
 MIN_SAMPLE = 5
 SAMPLE_SEED = 20261003
+SampleKind = Literal["grid", "sample"]
 
 
 def grid_options(plan: AnalysisPlan, noops: list[NoopOption]) -> dict[str, list[str]]:
@@ -19,11 +23,28 @@ def grid_options(plan: AnalysisPlan, noops: list[NoopOption]) -> dict[str, list[
     }
 
 
+def seed_for(run_id: str) -> int:
+    return zlib.crc32(run_id.encode())
+
+
+def full_grid(plan: AnalysisPlan, noops: list[NoopOption]) -> list[dict[str, str]]:
+    options = grid_options(plan, noops)
+    base = plan.default_choices()
+    steps = list(options)
+    return [
+        {**base, **dict(zip(steps, combo, strict=True))}
+        for combo in itertools.product(*(options[s] for s in steps))
+    ]
+
+
 def draw_grid(
-    plan: AnalysisPlan, noops: list[NoopOption], draws: int = SAMPLE_DRAWS
+    plan: AnalysisPlan,
+    noops: list[NoopOption],
+    draws: int = SAMPLE_DRAWS,
+    seed: int = SAMPLE_SEED,
 ) -> list[dict[str, str]]:
     """Independent uniform draws from the grid: every decision picks each of its options equally."""
-    rng = random.Random(SAMPLE_SEED)
+    rng = random.Random(seed)
     options = grid_options(plan, noops)
     base = plan.default_choices()
     return [
@@ -60,3 +81,21 @@ def affordable_prefix(
             new[key] = choices
         kept.append(choices)
     return kept, list(new.values())
+
+
+def grid_draws(
+    plan: AnalysisPlan, noops: list[NoopOption], garden: Garden, budget: int, seed: int
+) -> tuple[list[dict[str, str]], list[dict[str, str]], SampleKind]:
+    """The whole grid when its unexplored cells fit the budget, otherwise a uniform sample.
+
+    A grid of 72 cells was summarised by 12 draws (10 distinct results), a share with an interval
+    of about 40 to 90 per cent; when the budget covers every cell the share is exact. A prefix of
+    the enumeration is never used, since it would favour the options listed first.
+    """
+    grid = full_grid(plan, noops)
+    explored = {choice_key(u.choices) for u in garden.universes.values()}
+    unexplored = [c for c in grid if choice_key(c) not in explored]
+    if len(unexplored) <= budget:
+        return grid, unexplored, "grid"
+    kept, new = affordable_prefix(draw_grid(plan, noops, seed=seed), garden, budget)
+    return kept, new, "sample"

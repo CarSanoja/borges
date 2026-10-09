@@ -29,6 +29,16 @@ describe("robustness rating", () => {
     expect(screen.queryByText("50%")).toBeNull();
   });
 
+  it("shows the 95% interval of a sampled share and none for an exact one", () => {
+    const { unmount } = render(
+      <VerdictCard snapshot={withReport({ robustness_rating: 0.7, robustness_low: 0.4, robustness_high: 0.89 })} />,
+    );
+    expect(screen.getByTestId("robustness-interval")).toHaveTextContent("95% interval 40% to 89%");
+    unmount();
+    render(<VerdictCard snapshot={withReport({ robustness_rating: 0.7, robustness_low: null, robustness_high: null })} />);
+    expect(screen.queryByTestId("robustness-interval")).toBeNull();
+  });
+
   it("falls back to the plain robustness when the field is absent", () => {
     render(<VerdictCard snapshot={withReport({ robustness: 0.6 })} />);
     expect(screen.getAllByText("60%")).toHaveLength(2);

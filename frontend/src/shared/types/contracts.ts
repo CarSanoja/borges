@@ -181,6 +181,8 @@ export interface Report {
   n_universes: number;
   n_flipped: number;
   n_distinct_results?: number;
+  robustness_low?: number | null;
+  robustness_high?: number | null;
   robustness_rating?: number | null;
   robustness_rating_reason?: string | null;
   robustness_basis?: "design_weighted" | "distinct_results" | "none";
