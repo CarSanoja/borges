@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from borges.analysis.models import AnalysisPlan, AnalysisResult
 from borges.analysis.prompts import compact_json
+from borges.garden.comparable import other_scale
 from borges.garden.models import Garden, Universe
 
 if TYPE_CHECKING:
@@ -42,7 +43,9 @@ def _result(result: AnalysisResult, detail: int) -> dict[str, Any]:
     return {"estimate": _sig(result.estimate), "p": _sig(result.p_value)}
 
 
-def _row(plan: AnalysisPlan, universe: Universe, detail: int) -> dict[str, Any]:
+def _row(
+    plan: AnalysisPlan, universe: Universe, detail: int, baseline: Universe | None = None
+) -> dict[str, Any]:
     row: dict[str, Any] = {
         "id": universe.id,
         "kind": universe.kind,
@@ -51,6 +54,8 @@ def _row(plan: AnalysisPlan, universe: Universe, detail: int) -> dict[str, Any]:
     if universe.status == "done" and universe.result is not None:
         row.update(_result(universe.result, detail))
         row["verdict"] = universe.verdict
+        if other_scale(baseline, universe) is not None:
+            row["other_scale"] = "not comparable with the original estimate: leave out of any range"
         if universe.flipped:
             row["flipped"] = True
     else:
@@ -86,7 +91,7 @@ def _universes(plan: AnalysisPlan, garden: Garden, detail: int) -> list[dict[str
     if detail >= 2:
         baseline = garden.baseline_id
         rows = [u for u in rows if u.id == baseline or u.flipped or u.status == "failed"]
-    return [_row(plan, u, detail) for u in rows]
+    return [_row(plan, u, detail, garden.baseline) for u in rows]
 
 
 def garden_digest(

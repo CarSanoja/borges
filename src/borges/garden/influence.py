@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.comparable import comparable, scale_caveats
 from borges.garden.contaminated_options import contaminated_notes, contaminated_options
 from borges.garden.duplicates import duplicate_options
 from borges.garden.estimand import estimand_changes
@@ -21,7 +22,11 @@ def decision_influence(plan: AnalysisPlan, garden: Garden) -> list[DecisionInflu
     finished = garden.finished()
     rows: list[DecisionInfluence] = []
     for step in plan.decision_steps:
-        singles = [u for u in finished if u.changed == [step.id] and u.result is not None]
+        singles = [
+            u
+            for u in finished
+            if u.changed == [step.id] and u.result is not None and comparable(baseline, u)
+        ]
         deltas = [abs(u.result.estimate - baseline.result.estimate) for u in singles if u.result]
         rows.append(
             DecisionInfluence(
@@ -114,5 +119,6 @@ def build_report(plan: AnalysisPlan, garden: Garden, flip: Flip | None) -> Repor
             *contaminated_notes(invalid),
             *rule_measure_caveats(plan, garden),
             *measure_caveats(plan, garden),
+            *scale_caveats(garden),
         ],
     )

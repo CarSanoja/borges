@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Literal
 
 from borges.analysis.models import AnalysisPlan, Judgement, Option, Step
+from borges.analysis.option_columns import missing_reason
 from borges.analysis.option_equivalence import equivalence_reason
 from borges.analysis.prompts.judge import build_messages
 from borges.analysis.prompts.notes import describe_column_notes
@@ -26,6 +27,17 @@ async def judge_option(
     option: Option,
     origin: JudgeOrigin = "adversary",
 ) -> Judgement:
+    absent = None if option.is_default else missing_reason(plan, option)
+    if absent is not None:
+        hooks.audit(
+            "judge.missing_columns",
+            decision="deny",
+            reason=absent[:300],
+            step_id=step.id,
+            option_id=option.id,
+            origin=origin,
+        )
+        return Judgement(defensibility=0.0, accepted=False, reason=absent)
     duplicate = None if option.is_default else equivalence_reason(step, option)
     if duplicate is not None:
         hooks.audit(

@@ -4,6 +4,7 @@ import math
 from dataclasses import dataclass
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.comparable import comparable
 from borges.garden.models import Garden, NoopOption, RobustnessBasis, Universe
 from borges.garden.noop import has_noop, noop_pairs, single_universe
 from borges.garden.result_key import result_key
@@ -32,7 +33,9 @@ def counted_universes(garden: Garden, noops: list[NoopOption]) -> list[Universe]
     return [
         u
         for u in garden.finished()
-        if u.kind != "verification" and (u.kind == "baseline" or not has_noop(u, pairs))
+        if u.kind != "verification"
+        and (u.kind == "baseline" or not has_noop(u, pairs))
+        and comparable(garden.baseline, u)
     ]
 
 
@@ -68,7 +71,11 @@ def sampled_share(garden: Garden, noops: list[NoopOption]) -> tuple[int, int, in
         return None
     pairs = noop_pairs(noops)
     drawn = [garden.universes.get(uid) for uid in garden.sample_ids]
-    pool = [u for u in drawn if u is not None and u.status == "done" and u.result is not None]
+    pool = [
+        u
+        for u in drawn
+        if u is not None and u.status == "done" and u.result is not None and comparable(baseline, u)
+    ]
     distinct = distinct_universes([u for u in pool if not has_noop(u, pairs)])
     if len(distinct) < MIN_SAMPLE:
         return None
@@ -91,7 +98,7 @@ def single_decision_share(
             if option.id == step.default.id or (step.id, option.id) in pairs:
                 continue
             single = single_universe(garden, step.id, option.id)
-            if single is None or single.result is None:
+            if single is None or single.result is None or not comparable(baseline, single):
                 continue
             key = result_key(single.result)
             if key != base_key:

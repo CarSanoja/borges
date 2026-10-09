@@ -90,3 +90,16 @@ def test_judge_prompt_rejects_linear_rescalings_of_the_conventional_option() -> 
     assert "only a linear rescaling of the conventional one" in SYSTEM
     assert "sum instead of a mean" in SYSTEM
     assert 'reason "equivalent to the conventional option"' in SYSTEM
+
+
+async def test_an_option_naming_missing_columns_is_dropped_before_the_model_is_asked() -> None:
+    llm = FakeLLM({})
+    plan = make_plan()
+    step = plan.step("d1")
+    invented = step.option("trim").model_copy(
+        update={"spec": "ctx['covariates'] = ['selfesteem', 'depression']"}
+    )
+    judgement = await judge_option(llm, plan, step, invented)
+    assert judgement.accepted is False and judgement.defensibility == 0.0
+    assert judgement.reason == "names columns not in the data: selfesteem, depression"
+    assert llm.calls == []

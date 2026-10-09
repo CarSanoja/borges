@@ -9,12 +9,26 @@ well-being, and was reported as a re-analysis of the same outcome.
 A marp_norms Gamma GLM at 0b92e6c passed `sm.families.links.log()`, the lower-case class statsmodels
 keeps as a deprecated alias, and its log-scale coefficient was read under a standardised rule with
 no note; the link is matched whatever its case (2 of 207 recorded model codes use that class).
+A randhie ZeroInflatedPoisson (r_20261009T003245_1d5875) reported its raw log-link coefficient
+(-0.0315) beside Poisson options reporting an average marginal effect (-0.188); the zero-inflated
+count models are log-link models too.
 """
 
 from __future__ import annotations
 
 OUTCOME_MAX_ROWS = 5000
-LOG_LINK_MODELS = ("Poisson", "NegativeBinomial", "NegativeBinomialP", "GeneralizedPoisson")
+ZERO_INFLATED_MODELS = (
+    "ZeroInflatedPoisson",
+    "ZeroInflatedNegativeBinomialP",
+    "ZeroInflatedGeneralizedPoisson",
+)
+LOG_LINK_MODELS = (
+    "Poisson",
+    "NegativeBinomial",
+    "NegativeBinomialP",
+    "GeneralizedPoisson",
+    *ZERO_INFLATED_MODELS,
+)
 
 OUTCOME_SOURCE = """
     _endogs = {}

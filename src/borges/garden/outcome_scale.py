@@ -4,6 +4,7 @@ import math
 import re
 from typing import Any
 
+from borges.analysis.harness_outcome import ZERO_INFLATED_MODELS
 from borges.garden.models import Garden, Universe
 
 CHANGE = r"(?:more|less|fewer|higher|lower|increase|decrease|change|rise|drop)"
@@ -13,12 +14,24 @@ LOG_WORDS = re.compile(
 )
 
 
+def _zero_inflated(universe: Universe) -> dict[str, Any] | None:
+    """A trace recorded before the harness read zero-inflated models: a count model that keeps no
+    separate coefficient beside its estimate reports the raw log-link coefficient."""
+    if universe.result is None or "coefficient" in universe.result.extra:
+        return None
+    for trace in reversed(universe.traces):
+        design = trace.design or {}
+        if design.get("model") in ZERO_INFLATED_MODELS:
+            return {"kind": "log link", "column": str(design.get("outcome") or "the outcome")}
+    return None
+
+
 def log_outcome(universe: Universe) -> dict[str, Any] | None:
     for trace in universe.traces:
         scale = (trace.design or {}).get("outcome_log")
         if isinstance(scale, dict) and scale.get("column"):
             return scale
-    return None
+    return _zero_inflated(universe)
 
 
 def scale_note(garden: Garden) -> str | None:

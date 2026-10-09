@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.extreme_rows import extreme_rows_note
 from borges.garden.models import DuplicateOption, Flip, NoopOption
 from borges.garden.report_duplicate_notes import (
     dead_step_notes,
@@ -54,6 +55,9 @@ def figure_caveats(
         )
     if flip is not None and flip.estimand_change:
         notes.append(f"The minimal flip {flip.estimand_change}.")
+    extreme = extreme_rows_note(plan, flip)
+    if extreme is not None:
+        notes.append(extreme)
     if len(contaminated) == 1:
         notes.append(
             f"A flip was found but is not the headline: {contaminated[0].contamination_reason}."
