@@ -184,6 +184,7 @@ __FINGERPRINT__
                     + _fit_key_hint(exc)
                     + _singular_hint(exc, seen, kind)
                     + _spelled_hint(exc, seen)
+                    + _statsmodels_hint(exc)
                 ),
                 "where": _clean("\\n".join(lines[-6:])),
             },

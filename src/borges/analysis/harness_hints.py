@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-HINTS_SOURCE = """
+HINTS_SOURCE = r"""
     def _encoding_hint(exc, seen, kind):
         text = str(exc)
         if kind != "model" or not seen or "could not convert string to float" not in text:
@@ -103,4 +103,34 @@ HINTS_SOURCE = """
             + " wrap it in a list, df[[" + repr(found[0]) + "]], or when it comes from ctx,"
             + " [ctx[" + repr(found[0]) + "]] if isinstance(ctx[" + repr(found[0]) + "], str)"
         )
+
+    def _statsmodels_hint(exc):
+        text = str(exc)
+        if "not a valid option for `at`" in text:
+            return (
+                " | get_margeff(at=...) takes 'overall' (the average marginal effect over the"
+                + " rows), 'mean', 'median', 'zero' or 'all': write get_margeff(at='overall')"
+            )
+        if isinstance(exc, AttributeError) and "get_robustcov_results" in text:
+            return (
+                " | results of discrete models (Logit, Probit, Poisson, NegativeBinomial) have"
+                + " no get_robustcov_results: choose the covariance when fitting,"
+                + " model.fit(disp=0, cov_type='HC1'), or cov_type='cluster' with"
+                + " cov_kwds={'groups': ...}"
+            )
+        if not isinstance(exc, IndexError):
+            return ""
+        import linecache as _linecache
+
+        tb = exc.__traceback__
+        while tb is not None:
+            if "margeff" in _linecache.getline(tb.tb_frame.f_code.co_filename, tb.tb_lineno):
+                return (
+                    " | get_margeff() leaves out the constant, so its rows do not line up with"
+                    + " params: read the exposure's row by name,"
+                    + " result.get_margeff(at='overall').summary_frame().loc[name], whose"
+                    + " columns are 'dy/dx', 'Pr(>|z|)', 'Conf. Int. Low' and 'Cont. Int. Hi.'"
+                )
+            tb = tb.tb_next
+        return ""
 """

@@ -156,3 +156,38 @@ def test_a_name_read_letter_by_letter_gets_the_list_hint(tmp_path: Path) -> None
     )
     error = _run_model(tmp_path, code, {"exposure": "job"})
     assert error is not None and "the missing keys are the letters of 'job'" in error
+
+
+LOGIT_STEP = """
+import numpy as np
+import statsmodels.api as sm
+
+def estimate(df, ctx):
+    y = (np.arange(len(df)) % 3 == 0).astype(float)
+    exog = sm.add_constant((df["variant"] == "treat").astype(float).to_frame("t"))
+    result = sm.Logit(y, exog).fit(disp=0)
+    __LINE__
+    return {"estimate": 0.0, "ci_low": -1.0, "ci_high": 1.0, "p_value": 0.5, "n": len(df)}
+"""
+
+
+@pytest.mark.parametrize(
+    ("line", "hint"),
+    [
+        ('result.get_margeff(at="observed")', "write get_margeff(at='overall')"),
+        (
+            'result.get_robustcov_results(cov_type="HC0")',
+            "model.fit(disp=0, cov_type='HC1')",
+        ),
+        (
+            'result.get_margeff(at="overall").margeff[result.params.index.get_loc("t")]',
+            "summary_frame().loc[name]",
+        ),
+    ],
+)
+def test_the_discrete_model_mistakes_of_a_fraud_run_get_their_fix(
+    tmp_path: Path, line: str, hint: str
+) -> None:
+    done, error, _ = run(tmp_path, *make("model", LOGIT_STEP.replace("__LINE__", line)))
+    assert done.returncode == 1
+    assert error is not None and hint in error
