@@ -129,6 +129,7 @@ __FINGERPRINT__
             result = _validate(raw_result)
             _check_standardised_outcome(reported)
             _use_model_rows(df, reported, result, trace)
+            _check_copied_units(df, design, result)
             _check_model_cuts(df, result)
             if __SPLIT_HALF__:
                 _check_split_half(df, ctx, result)

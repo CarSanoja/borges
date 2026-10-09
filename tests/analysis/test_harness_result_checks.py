@@ -66,3 +66,41 @@ def test_n_is_the_rows_the_model_was_fitted_on(workdir: Path) -> None:
     traces, result = parse_output(done.stdout)
     assert result is not None and result.n == 190
     assert MODEL_ROWS_NOTE in traces[-1].note
+
+
+PER_USER = """
+import statsmodels.formula.api as smf
+
+
+def estimate(df, ctx):
+    data = DATA
+    fit = smf.ols("revenue_u ~ treated", data=data).fit()
+    return {"estimate": float(fit.params["treated"]),
+            "ci_low": float(fit.conf_int().loc["treated", 0]),
+            "ci_high": float(fit.conf_int().loc["treated", 1]),
+            "p_value": float(fit.pvalues["treated"]), "n": int(len(data))}
+"""
+
+
+def sessions(workdir: Path) -> None:
+    rng = np.random.default_rng(5)
+    users = pd.DataFrame({"user_id": range(300), "treated": rng.integers(0, 2, 300)})
+    users["revenue_u"] = rng.exponential(10, 300) + users["treated"]
+    rows = users.loc[users.index.repeat(rng.integers(1, 4, 300))].reset_index(drop=True)
+    rows["session_id"] = range(len(rows))
+    rows.to_parquet(workdir / "data.parquet")
+
+
+def test_user_totals_copied_onto_every_session_fail_the_model(workdir: Path) -> None:
+    sessions(workdir)
+    done = run(workdir, PER_USER.replace("DATA", "df"), standardised=False)
+    assert done.returncode == 1
+    error = parse_error(done.stdout)
+    assert error is not None and "for 300 distinct 'user_id' values" in error
+    assert "drop_duplicates('user_id')" in error
+
+
+def test_one_row_per_user_passes(workdir: Path) -> None:
+    sessions(workdir)
+    code = PER_USER.replace("DATA", "df.drop_duplicates('user_id')")
+    assert run(workdir, code, standardised=False).returncode == 0
