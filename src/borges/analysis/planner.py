@@ -17,6 +17,7 @@ from borges.analysis.planner_ctx_products import with_ctx_products
 from borges.analysis.planner_degenerate import DEGENERATE, FRESH_TEMPERATURE, is_degenerate
 from borges.analysis.planner_fidelity import faithful_plan
 from borges.analysis.planner_products import drop_level_columns, drop_renamed
+from borges.analysis.planner_trend import numeric_trend
 from borges.analysis.planner_validation import plan_shortfalls, reads_the_result
 from borges.analysis.prompts.planner import build_messages, build_retry_messages
 from borges.analysis.result_scale import detect_scale
@@ -186,6 +187,7 @@ async def plan_analysis(
         )
     taken: set[str] = set()
     planned = carry_computed(drop_renamed(drop_level_columns(out.steps, profile), profile), profile)
+    planned = numeric_trend(planned, profile)
     steps = [_build_step(p, unique_id(p.id, taken)) for p in _order_model_last(planned)]
     plan = AnalysisPlan(
         question=question,
