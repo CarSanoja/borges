@@ -20,9 +20,11 @@ const AVAILABLE = /columns available \(\d+\): \[([^\]]*)\]/;
 export function missingColumn(error: string): { column: string; available: string[] } | null {
   const key = MISSING_KEY.exec(error);
   const listed = AVAILABLE.exec(error);
-  if (!key || !listed) return null;
-  const available = [...listed[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
-  const column = key[1].replace(/ column required but not found$/, "");
+  const named = key?.[1];
+  const list = listed?.[1];
+  if (named === undefined || list === undefined) return null;
+  const available = [...list.matchAll(/'([^']+)'/g)].flatMap((m) => (m[1] ? [m[1]] : []));
+  const column = named.replace(/ column required but not found$/, "");
   return available.includes(column) ? null : { column, available };
 }
 
