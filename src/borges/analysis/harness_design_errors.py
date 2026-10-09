@@ -40,7 +40,10 @@ DESIGN_ERRORS_SOURCE = """
             + " and the intercept: together they rebuild it, as month or period dummies do when"
             + " the exposure starts at a date for every unit, so its effect cannot be separated"
             + " from them. Leave those covariates out of this model (drop their columns before"
-            + " fitting) instead of dropping levels; a numeric time trend can stay."
+            + " fitting) instead of dropping levels, and name each one with this reason in the"
+            + " returned dict's 'note', for example {'note': "
+            + repr(str(design["rebuilt_by"][0]) + " left out: it rebuilds the exposure")
+            + "}; a numeric time trend can stay."
             + " Columns: " + repr(design["names"][:20])
         )
 

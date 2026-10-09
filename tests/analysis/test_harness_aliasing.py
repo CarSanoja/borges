@@ -171,3 +171,27 @@ def test_month_dummies_that_rebuild_a_dated_exposure_are_named(tmp_path: Path) -
     error = parse_error(done.stdout) or ""
     assert "is an exact linear combination of the covariates ['month']" in error
     assert "drop_first" not in error
+    assert "{'note': 'month left out: it rebuilds the exposure'}" in error
+
+
+NOTED = (
+    HEADER
+    + """
+    x = sm.add_constant(df[["new"]], has_constant="add")
+    fit = sm.OLS(df["y"], x).fit()
+    low, high = fit.conf_int().loc["new"]
+    return {"estimate": float(fit.params["new"]), "ci_low": float(low), "ci_high": float(high),
+            "p_value": float(fit.pvalues["new"]), "n": int(fit.nobs),
+            "note": "month left out: it rebuilds the exposure"}
+"""
+)
+
+
+def test_a_covariate_left_out_with_the_reason_in_the_note_passes(tmp_path: Path) -> None:
+    month = np.repeat([f"2025-0{m}" for m in range(1, 7)], 40)
+    frame = pd.DataFrame({"month": month, "new": (month >= "2025-04").astype(float)})
+    frame["y"] = -0.1 * frame["new"] + np.random.default_rng(4).normal(size=len(frame))
+    frame.to_parquet(tmp_path / "data.parquet")
+    with_ctx(tmp_path, ["month"])
+    done = run_model(tmp_path, NOTED)
+    assert done.returncode == 0, done.stdout
