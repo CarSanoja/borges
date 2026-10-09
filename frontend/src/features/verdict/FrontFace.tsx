@@ -1,6 +1,7 @@
 import type { RunSnapshot } from "../../shared/types/contracts";
 import { effectRange } from "./flipKind";
 import { isInconclusive } from "./agreementHeadline";
+import { ClaimBanner } from "./ClaimBanner";
 import { SearchNote } from "./SearchNote";
 import { StartingPoint } from "./StartingPoint";
 import { ResultStats } from "./ResultStats";
@@ -27,6 +28,7 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
 
   return (
     <div className="vc-face vc-face--front" aria-hidden={hidden} inert={hidden}>
+      <ClaimBanner check={snapshot.report?.claim_check} />
       {snapshot.report && (
         <Robustness
           report={snapshot.report}

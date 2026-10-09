@@ -5,6 +5,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
+from borges.analysis.claim_compare import check_claim
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
 from borges.analysis.model_spec.count_outcome import agree_count_specs
@@ -38,6 +39,7 @@ from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.pipeline_callbacks import coding_callbacks, replan_callback
 from borges.runs.pipeline_caveats import (
     analysis_caveats,
+    claim_caveats,
     default_departures,
     judge_caveats,
     merge_caveats,
@@ -234,6 +236,11 @@ class Pipeline:
         note = scale_note(self.garden)
         if note is not None:
             self.caveats.append(note)
-        self.report.caveats = merge_caveats(self.caveats, self.report.caveats)
+        self.report.claim_check = check_claim(
+            self.resolved.analysis, self.report.original_result, plan.decision_rule
+        )
+        self.report.caveats = merge_caveats(
+            claim_caveats(self.report.claim_check), self.caveats, self.report.caveats
+        )
         await narrate_stage(self, plan, self.report)
         return self.report

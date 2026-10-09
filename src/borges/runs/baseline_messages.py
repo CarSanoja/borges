@@ -18,8 +18,10 @@ UNRESOLVED = (
 )
 CONFIRMED_GAPS = (
     "Before the code was written, a comparison of the plan with your analysis listed {n} possible "
-    "difference{s}; an independent implementation of your analysis gives the same estimate, "
-    "interval and n as the starting point, so on this data {they} not change the original result."
+    "difference{s}; an independent implementation of your specification gives the same estimate, "
+    "interval and n as the starting point, so on this data {they} not change the original result. "
+    "This confirms Borges's own implementation of the specification, "
+    "not the numbers your text claims."
 )
 UNCHECKED = (
     "The starting point was not checked against an independent implementation of your analysis, "

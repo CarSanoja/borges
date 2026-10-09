@@ -1,7 +1,8 @@
 import type { ReferenceCheck } from "../../shared/types/contracts";
 
 const LINES: Record<ReferenceCheck, string> = {
-  agrees: "Checked: two independent implementations of your analysis give this same result.",
+  agrees:
+    "Checked: two independent implementations of your analysis give this same result. This confirms Borges's implementation of your specification, not the numbers your text claims.",
   repaired:
     "Repaired: the step-by-step code departed from your analysis and was fixed to match two independent implementations of it.",
   disagrees:

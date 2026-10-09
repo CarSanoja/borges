@@ -171,6 +171,33 @@ export interface PiiSummary {
   note: string;
 }
 
+export interface ClaimedResult {
+  estimate: number | null;
+  kind: "coefficient" | "marginal" | "ratio" | "generic";
+  p_operator: string | null;
+  p_value: number | null;
+  significant: boolean | null;
+  ci_low: number | null;
+  ci_high: number | null;
+  direction: "positive" | "negative" | "none" | null;
+  quote: string;
+}
+
+export interface ClaimCheck {
+  claimed: ClaimedResult;
+  term: string | null;
+  reproduced_estimate: number;
+  reproduced_p_value: number;
+  reproduced_ci_low: number;
+  reproduced_ci_high: number;
+  n: number;
+  alpha: number;
+  agrees: boolean | null;
+  differences: string[];
+  same_scale: boolean;
+  sentence: string;
+}
+
 export interface Report {
   question: string;
   original_verdict: string;
@@ -193,6 +220,7 @@ export interface Report {
   search?: SearchSummary | null;
   coding?: CodingSummary | null;
   agents?: RunAgents | null;
+  claim_check?: ClaimCheck | null;
 }
 
 export interface Garden {

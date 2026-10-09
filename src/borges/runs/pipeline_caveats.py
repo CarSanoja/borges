@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from borges.analysis.claim_models import ClaimCheck
 from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.garden.degenerate import DEGENERATE_REASON
 from borges.garden.mirror import MIRROR_REASON
@@ -86,6 +87,12 @@ def report_caveats(
     if mirrored:
         caveats.append(mirrored)
     return caveats
+
+
+def claim_caveats(check: ClaimCheck | None) -> list[str]:
+    if check is None or check.agrees is not False:
+        return []
+    return [check.sentence]
 
 
 GAP_PREFIX = "The starting point may not be exactly your analysis"

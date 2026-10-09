@@ -234,3 +234,19 @@
   min-height: 12rem;
   color: var(--paper-500);
 }
+
+.vc-claim {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--vermilion);
+  border-left-width: 4px;
+  border-radius: 4px;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+}
+
+.vc-claim strong {
+  display: block;
+  color: var(--vermilion);
+  font-weight: 700;
+}

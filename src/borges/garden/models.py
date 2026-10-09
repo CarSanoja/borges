@@ -4,6 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from borges.analysis.claim_models import ClaimCheck
 from borges.analysis.models import AnalysisResult, CodingSummary, StepTrace
 from borges.fleet.models import RunAgents
 
@@ -130,6 +131,7 @@ class Report(BaseModel):
     search: SearchSummary | None = None
     coding: CodingSummary | None = None
     agents: RunAgents | None = None
+    claim_check: ClaimCheck | None = None
 
 
 class Garden(BaseModel):
