@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from borges.analysis.models import AnalysisResult
 from borges.garden.estimand import estimand_detail
-from borges.garden.measure import measure_caveats, reported_measure, shared_measure
+from borges.garden.measure import (
+    location_measure,
+    measure_caveats,
+    reported_measure,
+    shared_measure,
+)
 from tests.garden.synthetic import garden_of, option, plan_of, step_of, trace, universe
 
 PLAN = plan_of(
@@ -91,3 +96,22 @@ def test_a_binomial_glm_is_read_with_its_link() -> None:
     assert measured(model="GLM", family="Binomial", link="Log") == "risk ratio"
     assert measured(model="GLM", family="Binomial", link="Probit") is None
     assert measured(model="GLM", family="Binomial") == "odds ratio"
+
+
+def test_a_median_regression_beside_a_mean_is_an_estimand_change() -> None:
+    plan = plan_of(step_of("m", "model", option("ols", True), option("qr", label="Median")))
+    gap = AnalysisResult(estimate=-503.0, ci_low=-1197.0, ci_high=192.0, p_value=0.16, n=1500)
+    median = AnalysisResult(estimate=-1230.0, ci_low=-1976.0, ci_high=-484.0, p_value=0.001, n=1500)
+    found = garden_of(
+        plan,
+        universe(plan, {}, gap, traces=[trace("m", model="OLS")]),
+        universe(plan, {"m": "qr"}, median, traces=[trace("m", model="QuantReg")]),
+    )
+    baseline, quantile = found.universes.values()
+    assert location_measure(baseline) == "conditional mean"
+    detail = estimand_detail(baseline, quantile)
+    assert detail is not None and detail.startswith(
+        "estimates a conditional quantile (the median unless another quantile is set) where the "
+        "original analysis estimates a conditional mean"
+    )
+    assert estimand_detail(baseline, baseline) is None

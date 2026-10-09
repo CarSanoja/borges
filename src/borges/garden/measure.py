@@ -6,6 +6,10 @@ outcome a rate ratio is a risk ratio, another measure of the association, so its
 odds ratio is partly the change of measure. A binomial GLM is read with its link: a bank option at
 6525b47 fitted a complementary log-log link, whose exponentiated coefficient is a hazard ratio,
 and was reported as an odds ratio because only the family was read.
+
+A difference model is read the same way: a user's pay-gap run on 9 October fitted OLS (the
+conditional mean) by default, and the reported flip was a median regression, another quantity
+that the judge accepted because it "may reveal a significant difference".
 """
 
 from __future__ import annotations
@@ -26,6 +30,12 @@ RATIO_MEASURES = {
     "GeneralizedPoisson": "rate ratio",
 }
 FAMILY_MODELS = ("GLM", "GEE")
+LOCATION_MEASURES = {
+    "OLS": "conditional mean",
+    "WLS": "conditional mean",
+    "GLS": "conditional mean",
+    "QuantReg": "conditional quantile (the median unless another quantile is set)",
+}
 LINK_MEASURES = {
     ("Binomial", "Logit"): "odds ratio",
     ("Binomial", "Log"): "risk ratio",
@@ -56,6 +66,16 @@ def reported_measure(universe: Universe) -> str | None:
     return None
 
 
+def location_measure(universe: Universe) -> str | None:
+    if universe.result is None:
+        return None
+    for trace in reversed(universe.traces):
+        design = trace.design
+        if design and design.get("model"):
+            return LOCATION_MEASURES.get(str(design["model"]))
+    return None
+
+
 def shared_measure(garden: Garden) -> str | None:
     found = {reported_measure(u) for u in garden.universes.values() if u.result is not None}
     return found.pop() if len(found) == 1 else None
@@ -67,11 +87,18 @@ def _a(measure: str) -> str:
 
 def measure_detail(baseline: Universe, universe: Universe) -> str | None:
     before, after = reported_measure(baseline), reported_measure(universe)
+    if before is not None and after is not None and before != after:
+        return (
+            f"reports {_a(after)} where the original analysis reports {_a(before)}: another "
+            "measure of the association, so this is an estimand change, not a re-analysis of the "
+            "same quantity"
+        )
+    before, after = location_measure(baseline), location_measure(universe)
     if before is None or after is None or before == after:
         return None
     return (
-        f"reports {_a(after)} where the original analysis reports {_a(before)}: another measure "
-        "of the association, so this is an estimand change, not a re-analysis of the same quantity"
+        f"estimates {_a(after)} where the original analysis estimates {_a(before)}: another "
+        "quantity, so this is an estimand change, not a re-analysis of the same quantity"
     )
 
 
