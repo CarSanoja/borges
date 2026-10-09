@@ -12,14 +12,36 @@ from borges.llm.client import LLMClient, LLMError
 
 REL_TOL = 1e-3
 ABS_TOL = 1e-6
+CRITICAL_VALUE_RATIO = 1.15
 FEEDBACK_CHARS = 600
 
 
-def same_result(a: AnalysisResult, b: AnalysisResult) -> bool:
-    if a.n != b.n:
+def _close(x: float, y: float) -> bool:
+    return math.isclose(x, y, rel_tol=REL_TOL, abs_tol=ABS_TOL)
+
+
+def _critical_value_only(a: AnalysisResult, b: AnalysisResult) -> bool:
+    """Both intervals around the same estimate, one stretched evenly: a t critical value on one
+    side and the normal 1.96 on the other. The fertility_social held-out attempts (9 October
+    2026) gave the published cell as +1.2425 [+0.5443, +1.9408] and as +1.2425 [+0.5471,
+    +1.9380], p and n equal, and counted it as a disagreement; t on 9 or more degrees of
+    freedom is within CRITICAL_VALUE_RATIO of 1.96."""
+    halves = (
+        (a.estimate - a.ci_low, b.estimate - b.ci_low),
+        (a.ci_high - a.estimate, b.ci_high - b.estimate),
+    )
+    if any(x <= 0 or y <= 0 for x, y in halves):
         return False
-    pairs = ((a.estimate, b.estimate), (a.ci_low, b.ci_low), (a.ci_high, b.ci_high))
-    return all(math.isclose(x, y, rel_tol=REL_TOL, abs_tol=ABS_TOL) for x, y in pairs)
+    low, high = (x / y for x, y in halves)
+    ratio = max(low, 1 / low)
+    return math.isclose(low, high, rel_tol=REL_TOL) and ratio <= CRITICAL_VALUE_RATIO
+
+
+def same_result(a: AnalysisResult, b: AnalysisResult) -> bool:
+    if a.n != b.n or not _close(a.estimate, b.estimate):
+        return False
+    bounds = _close(a.ci_low, b.ci_low) and _close(a.ci_high, b.ci_high)
+    return bounds or _critical_value_only(a, b)
 
 
 def describe(result: AnalysisResult) -> str:

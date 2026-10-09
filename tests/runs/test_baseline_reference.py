@@ -15,6 +15,16 @@ def test_results_agree_only_with_the_same_n_and_nearly_the_same_numbers() -> Non
     assert not same_result(A, A.model_copy(update={"ci_high": -0.51}))
 
 
+def test_a_t_interval_and_a_normal_interval_on_the_same_fit_agree() -> None:
+    t_interval = AnalysisResult(estimate=1.2425, ci_low=0.5443, ci_high=1.9407, p_value=5e-4, n=303)
+    normal = t_interval.model_copy(update={"ci_low": 0.5471, "ci_high": 1.9379})
+    assert same_result(t_interval, normal)
+    wider = t_interval.model_copy(update={"ci_low": 0.3, "ci_high": 2.185})
+    assert not same_result(t_interval, wider)
+    shifted = t_interval.model_copy(update={"ci_low": 0.5471, "ci_high": 1.9408})
+    assert not same_result(t_interval, shifted)
+
+
 def scripted(monkeypatch, outcomes: dict[int, AnalysisResult | None]) -> list[int]:
     asked: list[int] = []
 
