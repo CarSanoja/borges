@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from borges.analysis.models import ColumnProfile, DatasetProfile
 from borges.armor.pii import TOKEN, find_pii
-from borges.armor.pii_names import PERSON_NAME_KIND, is_name_header, values_look_like_names
+from borges.armor.pii_names import (
+    PERSON_NAME_KIND,
+    is_name_header,
+    is_role_name_header,
+    values_look_like_names,
+)
 
 NAME_TOKEN = TOKEN.format(kind=PERSON_NAME_KIND)
 FREE_TEXT_WORDS = 5
@@ -33,7 +38,9 @@ def is_name_column(profile: DatasetProfile, column: ColumnProfile) -> bool:
         return False
     if is_name_header(column.name):
         return True
-    return values_look_like_names(column_values(profile, column), column.n_unique, profile.n_rows)
+    values = column_values(profile, column)
+    role = is_role_name_header(column.name)
+    return values_look_like_names(values, column.n_unique, profile.n_rows, role)
 
 
 def person_name_columns(profile: DatasetProfile) -> set[str]:

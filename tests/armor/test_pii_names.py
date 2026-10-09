@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from borges.armor.pii_names import is_name_header, is_name_value, values_look_like_names
+from borges.armor.pii_names import (
+    is_name_header,
+    is_name_value,
+    is_role_name_header,
+    values_look_like_names,
+)
 
 
 @pytest.mark.parametrize(
@@ -42,3 +47,16 @@ def test_unique_name_like_values_are_names_but_repeated_ones_are_not() -> None:
     assert values_look_like_names(sample, n_unique=1500, n_rows=1500)
     assert not values_look_like_names(["New York", "Los Angeles", "San Diego"], 3, 1500)
     assert not values_look_like_names(sample[:2], n_unique=1500, n_rows=1500)
+
+
+def test_a_person_named_by_role_may_repeat() -> None:
+    partners = [
+        f"{first} {last}"
+        for first in ("Ana", "Luis", "Marta")
+        for last in ("Gil", "Rey", "Paz", "Sol")
+    ]
+    values = partners * 75
+    assert is_role_name_header("partner_name") and is_role_name_header("nombre_cliente")
+    assert not is_role_name_header("product_name") and not is_role_name_header("name")
+    assert not values_look_like_names(values, 12, 900)
+    assert values_look_like_names(values, 12, 900, by_role=True)

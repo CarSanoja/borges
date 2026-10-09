@@ -30,6 +30,7 @@ PHONE = re.compile(
     r"|(?<![\w.+-])(?:\+\d{1,3}[ .-]?)?\(\d{2,4}\)[ .-]?\d{2,4}[ .-]\d{2,4}(?![\w-])"
     r"|(?<![\w.])\+\d{9,15}(?![\w])"
 )
+MEDICAL_RECORD = re.compile(r"(?<![A-Za-z0-9])(?:MRN|NHC)[-:# ]?\d{5,12}(?!\d)", re.IGNORECASE)
 IPV4 = re.compile(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)")
 IPV6 = re.compile(
     r"(?<![\w:])(?:(?:[0-9A-Fa-f]{1,4}:){7}[0-9A-Fa-f]{1,4}"
@@ -68,6 +69,7 @@ DETECTORS: tuple[Detector, ...] = (
     Detector("curp", CURP, check.curp_valid),
     Detector("rfc", RFC, check.rfc_valid),
     Detector("dni_nie", DNI, check.dni_valid),
+    Detector("medical_record", MEDICAL_RECORD),
     Detector("phone", PHONE, phone_valid),
     Detector("ip_address", IPV4, check.ipv4_valid),
     Detector("ip_address", IPV6),
@@ -83,6 +85,7 @@ KINDS = (
     "curp",
     "rfc",
     "ip_address",
+    "medical_record",
     "date_of_birth",
     "person_name",
 )

@@ -11,6 +11,7 @@ const KIND_LABELS: Record<string, string> = {
   rfc: "RFC",
   ip_address: "IP addresses",
   date_of_birth: "dates of birth",
+  medical_record: "medical record numbers",
   person_name: "person names",
 };
 

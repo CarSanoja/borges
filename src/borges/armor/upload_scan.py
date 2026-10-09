@@ -7,7 +7,12 @@ from pandas.api import types as pdt
 from pydantic import BaseModel, Field
 
 from borges.armor.pii import find_pii
-from borges.armor.pii_names import PERSON_NAME_KIND, is_name_header, values_look_like_names
+from borges.armor.pii_names import (
+    PERSON_NAME_KIND,
+    is_name_header,
+    is_role_name_header,
+    values_look_like_names,
+)
 
 SCAN_VALUES_PER_COLUMN = 2000
 LONG_NUMBER = 10**12
@@ -53,7 +58,7 @@ def scan_column(series: pd.Series, name: str) -> PiiColumn | None:
     sampled = _sample(series)
     kinds: Counter[str] = Counter()
     names = is_name_header(name) or values_look_like_names(
-        sampled, int(series.nunique(dropna=True)), len(series)
+        sampled, int(series.nunique(dropna=True)), len(series), is_role_name_header(name)
     )
     for text in sampled:
         found = find_pii(text, name)

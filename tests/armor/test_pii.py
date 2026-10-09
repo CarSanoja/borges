@@ -20,6 +20,8 @@ from borges.armor.pii import count_pii, find_pii, is_dob_column, redact_pii
         ("rfc HEGG560427ABC", "rfc"),
         ("host 192.168.1.10", "ip_address"),
         ("host 2001:0db8:85a3:0000:0000:8a2e:0370:7334", "ip_address"),
+        ("chart MRN-4821937", "medical_record"),
+        ("historia NHC 0012345", "medical_record"),
     ],
 )
 def test_each_kind_is_detected_and_redacted(text: str, kind: str) -> None:
@@ -38,6 +40,7 @@ def test_each_kind_is_detected_and_redacted(text: str, kind: str) -> None:
         "12345678A",
         "1,234,567",
         '"ci_low":-1.5531274261561,"p":0.21645021645021753',
+        "visit V100023",
     ],
 )
 def test_lookalikes_are_not_flagged(text: str) -> None:
