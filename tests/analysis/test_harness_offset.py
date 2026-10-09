@@ -74,3 +74,9 @@ def test_a_model_with_the_offset_passes(workdir: Path) -> None:
 def test_the_offset_intent_is_read_from_the_spec(spec: str, wanted: bool) -> None:
     option = Option(id="o", label="Poisson", rationale="r", spec=spec, is_default=True)
     assert wants_offset(option) is wanted
+
+
+def test_exposure_names_the_treatment_outside_a_count_model() -> None:
+    spec = "Fit PHReg with outcome=time_col, event=readmitted, exposure=new_protocol"
+    option = Option(id="o", label="Cox PH model", rationale="r", spec=spec, is_default=True)
+    assert wants_offset(option) is False
