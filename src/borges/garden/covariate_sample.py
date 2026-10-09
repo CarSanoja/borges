@@ -27,6 +27,7 @@ import re
 
 from borges.analysis.models import AnalysisPlan
 from borges.garden.models import Garden, Universe
+from borges.garden.repeated_units import fitted_unit
 
 SHARE = 0.8
 
@@ -119,6 +120,12 @@ def baseline_sample_caveats(plan: AnalysisPlan, garden: Garden) -> list[str]:
     rows, fitted = baseline.traces[-1].rows_before, baseline.result.n
     if not rows or fitted >= SHARE * rows:
         return []
+    unit = fitted_unit(plan, garden)
+    if unit is not None:
+        return [
+            f"The original analysis fits one row per {unit.name} ({fitted:,} rows from the "
+            f"{rows:,} that reach its model), so its unit of analysis is {unit.name}."
+        ]
     text = _read_columns(plan, garden)
     lost = rows - fitted
     missing = [

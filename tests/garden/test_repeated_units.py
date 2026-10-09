@@ -51,3 +51,10 @@ def test_no_repeated_units_and_no_finished_baseline_get_no_caveat() -> None:
     assert repeated_unit_caveats(make_plan(), garden_with("HC3")) == []
     assert repeated_unit_caveats(plan_with_unit(), garden_with("HC3", "failed")) == []
     assert repeated_unit_caveats(plan_with_unit(), Garden()) == []
+
+
+def test_a_model_that_fits_one_row_per_unit_gets_no_caveat() -> None:
+    plan = make_plan()
+    unit = RepeatedUnit(name="user_id", n_units=100, rows_per_unit=1.44)
+    plan.dataset = plan.dataset.model_copy(update={"repeated_units": [unit]})
+    assert repeated_unit_caveats(plan, garden_with("HC3")) == []

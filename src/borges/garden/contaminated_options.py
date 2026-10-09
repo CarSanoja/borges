@@ -34,8 +34,8 @@ def contaminated_options(plan: AnalysisPlan, garden: Garden) -> list[NoopOption]
                     label=option.label,
                     reason=(
                         f"re-includes {after.rows_after - before.rows_after} rows that the "
-                        f"baseline option '{step.default.label}' excluded and that the column notes "
-                        f"mark as invalid ({', '.join(words)}){plan_reason(plan, step.id)}"
+                        f"baseline option '{step.default.label}' excluded and that the column "
+                        f"notes mark as invalid ({', '.join(words)}){plan_reason(plan, step.id)}"
                     ),
                 )
             )
