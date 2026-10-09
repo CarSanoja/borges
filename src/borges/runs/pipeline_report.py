@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from borges.analysis.claim_compare import check_claim
 from borges.analysis.models import AnalysisPlan
-from borges.garden.aliased import aliased_caveats, tangled_caveats
+from borges.garden.aliased import aliased_caveats, rebuilt_caveats, tangled_caveats
 from borges.garden.covariate_sample import baseline_sample_caveats, covariate_sample_caveats
 from borges.garden.discrete_quantile import discrete_quantile_caveats
 from borges.garden.duplicate_rows import duplicate_row_caveats
@@ -34,6 +34,7 @@ def assemble_report(pipeline: Pipeline, plan: AnalysisPlan) -> Report:
         [
             *aliased_caveats(pipeline.garden),
             *tangled_caveats(pipeline.garden),
+            *rebuilt_caveats(pipeline.garden),
             *scaled_outcome_caveats(pipeline.garden),
             *baseline_sample_caveats(plan, pipeline.garden),
             *covariate_sample_caveats(plan, pipeline.garden),

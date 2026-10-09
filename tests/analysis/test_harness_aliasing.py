@@ -9,7 +9,7 @@ import pytest
 import statsmodels.api as sm
 
 from borges.analysis.harness import parse_error, parse_output
-from borges.analysis.model_spec.render_design import ALIAS_NOTE
+from borges.analysis.model_spec.render_design import ALIAS_NOTE, REBUILT_NOTE
 from tests.analysis.test_harness_design import HEADER, run_model
 
 FIT = (
@@ -195,3 +195,18 @@ def test_a_covariate_left_out_with_the_reason_in_the_note_passes(tmp_path: Path)
     with_ctx(tmp_path, ["month"])
     done = run_model(tmp_path, NOTED)
     assert done.returncode == 0, done.stdout
+
+
+def test_a_covariate_that_rebuilds_the_exposure_is_left_out_with_a_note(tmp_path: Path) -> None:
+    month = np.repeat([f"2025-0{m}" for m in range(1, 7)], 40)
+    frame = pd.DataFrame({"month": month, "new": (month >= "2025-04").astype(float)})
+    frame["y"] = -0.1 * frame["new"] + np.random.default_rng(5).normal(size=len(frame))
+    frame.to_parquet(tmp_path / "data.parquet")
+    with_ctx(tmp_path, ["month"])
+    done = run_model(
+        tmp_path,
+        NOTED.replace(',\n            "note": "month left out: it rebuilds the exposure"', ""),
+    )
+    assert done.returncode == 0, done.stdout
+    traces, _ = parse_output(done.stdout)
+    assert traces[0].note == REBUILT_NOTE + "month"

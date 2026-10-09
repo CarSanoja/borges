@@ -128,6 +128,7 @@ def frame_lines(spec: ModelSpecOutput) -> list[str]:
 ALIAS_TOLERANCE = 1e-7
 ALIAS_NOTE = "aliased covariates dropped: "
 TANGLED_NOTE = "; covariates that rebuild the exposure with them dropped: "
+REBUILT_NOTE = "covariates that rebuild the exposure by themselves left out: "
 ALIAS_LINES = [
     "    protected = ['const', *map(str, core.columns)]",
     "    basis = np.zeros((len(exog), 0))",

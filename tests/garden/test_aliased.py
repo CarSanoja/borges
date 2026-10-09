@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from borges.analysis.models import StepTrace
-from borges.garden.aliased import aliased_caveats, tangled_caveats
+from borges.garden.aliased import aliased_caveats, rebuilt_caveats, tangled_caveats
 from borges.garden.models import Garden, Universe
 
 
@@ -67,3 +67,12 @@ def test_a_renamed_repeat_is_named_by_its_column() -> None:
     repeated, combined = aliased_caveats(garden)
     assert "put contact_missing in its design twice" in repeated and "_repeat" not in repeated
     assert "(education_tertiary)" in combined and "contact_missing" not in combined
+
+
+def test_a_covariate_left_out_for_rebuilding_the_exposure_is_named() -> None:
+    garden = Garden()
+    garden.add(universe("u1", "covariates that rebuild the exposure by themselves left out: month"))
+    garden.add(universe("u2", ""))
+    [caveat] = rebuilt_caveats(garden)
+    assert caveat.startswith("In 1 universes the model left out month: by itself it rebuilds")
+    assert aliased_caveats(garden) == [] and tangled_caveats(garden) == []

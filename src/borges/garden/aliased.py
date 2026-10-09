@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from borges.analysis.model_spec.render_design import ALIAS_NOTE, TANGLED_NOTE
+from borges.analysis.model_spec.render_design import ALIAS_NOTE, REBUILT_NOTE, TANGLED_NOTE
 from borges.analysis.models import StepTrace
 from borges.garden.models import Garden
 
@@ -84,4 +84,28 @@ def tangled_caveats(garden: Garden) -> list[str]:
         f"In {universes} universes the covariates {', '.join(names)} were also dropped: together "
         "with an aliased covariate they rebuild the exposure, and adjusting for the parts of the "
         "exposure would change what its coefficient measures."
+    ]
+
+
+def rebuilt_caveats(garden: Garden) -> list[str]:
+    names: set[str] = set()
+    universes = 0
+    for universe in garden.universes.values():
+        left = [
+            name
+            for trace in universe.traces
+            if trace.note.startswith(REBUILT_NOTE)
+            for name in trace.note[len(REBUILT_NOTE) :].split(";")[0].split(", ")
+            if name
+        ]
+        if left:
+            universes += 1
+            names.update(left)
+    if not universes:
+        return []
+    return [
+        f"In {universes} universes the model left out {', '.join(sorted(names))}: by itself it "
+        "rebuilds the exposure (as month dummies do for an exposure that starts at a date), so "
+        "the exposure's effect cannot be separated from it and those universes are not adjusted "
+        "for it."
     ]

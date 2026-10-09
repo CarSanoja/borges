@@ -120,7 +120,7 @@ __FINGERPRINT__
                 _check_main_effects(df, reported)
                 _check_thin_cells(reported)
                 _check_few_clusters(reported)
-                ignored = _ignored_covariates(design, ctx, df, trace["note"])
+                ignored = _left_out(design, ctx, df, trace)
                 if __DESIGN_CHECK__ and ignored:
                     raise ValueError(_ignored_error(ignored, design))
                 if design["aliased"]:
