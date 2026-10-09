@@ -17,6 +17,7 @@ from borges.garden.models import Report
 from borges.garden.outcome_scale import scale_note
 from borges.garden.repeated_units import repeated_unit_caveats
 from borges.garden.scaled_outcome import scaled_outcome_caveats
+from borges.garden.threshold_interval import threshold_interval_caveats
 from borges.runs.pipeline_caveats import claim_caveats, judge_caveats, merge_caveats, report_caveats
 
 if TYPE_CHECKING:
@@ -49,6 +50,7 @@ def assemble_report(pipeline: Pipeline, plan: AnalysisPlan) -> Report:
             *repeated_unit_caveats(plan, pipeline.garden),
             *duplicate_row_caveats(plan),
             *likelihood_caveats(plan, pipeline.garden),
+            *threshold_interval_caveats(plan.decision_rule, pipeline.report.original_result),
         ]
     )
     note = scale_note(pipeline.garden)
