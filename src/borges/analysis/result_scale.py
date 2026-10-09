@@ -4,9 +4,17 @@ import re
 
 from borges.analysis.models import AnalysisResult, DecisionRule
 
-PERCENTAGE_POINTS = re.compile(r"percentage[\s-]*points?|\bpps?\b", re.IGNORECASE)
+PERCENTAGE_POINTS = re.compile(
+    r"percentage[\s-]*points?|\bpps?\b|puntos?\s+porcentuales?", re.IGNORECASE
+)
 PROPORTION_WORDS = re.compile(
-    r"proportion|probabilit|risk difference|rate difference|absolute (lift|difference|effect)",
+    r"proportion|probabilit|risk difference|rate difference|absolute (lift|difference|effect)"
+    r"|proporci[oó]n|probabilidad|diferencia de (?:riesgos?|tasas)",
+    re.IGNORECASE,
+)
+RATIO_WORDS = re.compile(
+    r"ratio|relative risk|riesgo relativo|cociente"
+    r"|raz[oó]n de (?:tasas|momios|odds|riesgos?|probabilidades|incidencias?|peligros?)",
     re.IGNORECASE,
 )
 SCALED_KEYS = ("estimate", "ci_low", "ci_high")
@@ -17,13 +25,17 @@ def detect_scale(metric: str) -> float:
     return PERCENT_SCALE if PERCENTAGE_POINTS.search(metric) else 1.0
 
 
+def mentions_ratio(metric: str) -> bool:
+    return RATIO_WORDS.search(metric) is not None
+
+
 def is_proportion_rule(rule: DecisionRule) -> bool:
-    return PROPORTION_WORDS.search(rule.metric) is not None and "ratio" not in rule.metric.lower()
+    return PROPORTION_WORDS.search(rule.metric) is not None and not mentions_ratio(rule.metric)
 
 
 def reads_probability(metric: str) -> bool:
     words = PROPORTION_WORDS.search(metric) or PERCENTAGE_POINTS.search(metric)
-    return words is not None and "ratio" not in metric.lower()
+    return words is not None and not mentions_ratio(metric)
 
 
 def scale_error(raw: dict[str, object] | AnalysisResult, scale: float) -> str | None:

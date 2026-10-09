@@ -3,7 +3,13 @@ from __future__ import annotations
 import pytest
 
 from borges.analysis.models import AnalysisPlan, AnalysisResult
-from borges.analysis.result_scale import apply_scale, convert, detect_scale, scale_error
+from borges.analysis.result_scale import (
+    apply_scale,
+    convert,
+    detect_scale,
+    reads_probability,
+    scale_error,
+)
 from tests.analysis.fakes import make_plan
 
 
@@ -63,3 +69,20 @@ def test_plan_without_the_field_defaults_to_scale_one() -> None:
     data = make_plan().model_dump(mode="json")
     data.pop("result_scale")
     assert AnalysisPlan.model_validate(data).result_scale == 1.0
+
+
+@pytest.mark.parametrize(
+    ("metric", "scale", "probability"),
+    [
+        ("efecto en la probabilidad de fraude, en puntos porcentuales", 100.0, True),
+        ("diferencia en la proporción de aprobados", 1.0, True),
+        ("diferencia de riesgos de impago", 1.0, True),
+        ("razón de momios de impago", 1.0, False),
+        ("cambio medio del puntaje de lectura", 1.0, False),
+    ],
+)
+def test_spanish_metrics_are_read_on_their_scale(
+    metric: str, scale: float, probability: bool
+) -> None:
+    assert detect_scale(metric) == scale
+    assert reads_probability(metric) is probability

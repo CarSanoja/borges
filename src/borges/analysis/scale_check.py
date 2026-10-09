@@ -5,17 +5,15 @@ from collections.abc import Callable
 from typing import Any
 
 from borges.analysis.models import DecisionRule
-from borges.analysis.result_scale import detect_scale, reads_probability
-
-RATIO_WORDS = ("ratio",)
+from borges.analysis.result_scale import detect_scale, mentions_ratio, reads_probability
 
 
 def is_ratio_rule(rule: DecisionRule) -> bool:
-    return rule.threshold == 1.0 and any(word in rule.metric.lower() for word in RATIO_WORDS)
+    return rule.threshold > 0 and mentions_ratio(rule.metric)
 
 
 def is_difference_rule(rule: DecisionRule) -> bool:
-    return rule.threshold == 0.0 and not any(word in rule.metric.lower() for word in RATIO_WORDS)
+    return rule.threshold == 0.0 and not mentions_ratio(rule.metric)
 
 
 def ratio_shaped(estimate: float, low: float, high: float) -> bool:
@@ -52,7 +50,8 @@ def scale_check(rule: DecisionRule) -> Callable[[dict[str, Any]], str | None] | 
         if min(estimate, low) > 0:
             return None
         return (
-            f"the decision rule compares the {rule.metric} with 1.0, so estimate, ci_low and "
+            f"the decision rule compares the {rule.metric} with {rule.threshold:g}, so estimate, "
+            f"ci_low and "
             f"ci_high must be ratios, which are always positive; got estimate {estimate:.4g} "
             f"and interval [{low:.4g}, {high:.4g}], which looks like a log-scale coefficient: "
             f"return exp(coefficient) and exp() of both interval limits"

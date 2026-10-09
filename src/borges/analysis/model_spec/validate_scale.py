@@ -21,7 +21,7 @@ def scale_problems(spec: ModelSpecOutput, rule: DecisionRule | None) -> list[str
     if is_ratio_rule(rule) and (
         spec.family == "ols" or spec.report in ("coefficient", "marginal_effect")
     ):
-        return ["the decision rule compares a ratio with 1.0, so report a ratio"]
+        return [f"the decision rule compares a ratio with {rule.threshold:g}, so report a ratio"]
     if spec.family in COUNT_FAMILIES and spec.report == "rate_ratio" and is_difference_rule(rule):
         return [
             "the decision rule compares a difference with 0, which a rate ratio does not report; "

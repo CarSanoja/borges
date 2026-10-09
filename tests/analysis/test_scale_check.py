@@ -93,3 +93,21 @@ async def test_smoke_attempt_turns_a_wrong_scale_into_an_error(
     step, option = make_step()
     _, error, _, _ = await smoke_core._attempt(config, None, step, option, None)  # type: ignore[arg-type]
     assert error is not None and "log-scale coefficient" in error
+
+
+@pytest.mark.parametrize(
+    ("metric", "threshold"),
+    [
+        ("riesgo relativo de impago", 1.0),
+        ("razón de tasas de excepciones, método nuevo frente al anterior", 0.8),
+        ("relative risk of default", 1.0),
+        ("rate ratio of exceptions per item tested", 0.8),
+    ],
+)
+def test_a_log_coefficient_fails_any_ratio_rule(metric: str, threshold: float) -> None:
+    rule = DecisionRule(metric=metric, comparator=Comparator.LT, threshold=threshold)
+    check = scale_check(rule)
+    assert check is not None
+    error = check(_result(-0.36, -0.42, -0.30))
+    assert error is not None and f"with {threshold:g}, so estimate" in error
+    assert check(_result(0.70, 0.66, 0.74)) is None
