@@ -1,3 +1,5 @@
+import { authHeaders } from "./apiKey";
+import { streamWithHeaders } from "./fetchStream";
 import type { RunEvent, RunEventType } from "../types/contracts";
 
 export const EVENT_TYPES: readonly RunEventType[] = [
@@ -25,6 +27,10 @@ export function subscribeEvents(
   onEvent: (event: RunEvent) => void,
   onError?: (error: Event) => void,
 ): () => void {
+  const headers = authHeaders();
+  if (Object.keys(headers).length > 0) {
+    return streamWithHeaders(url, headers, new Set(EVENT_TYPES), TERMINAL, onEvent, onError);
+  }
   const source = new EventSource(url);
   const listeners = EVENT_TYPES.map((type) => {
     const listener = (message: MessageEvent<string>) => {

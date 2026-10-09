@@ -20,7 +20,9 @@ type Action =
 const MAX_MOCK_DELAY_MS = 650;
 
 export const RUN_GONE_MESSAGE =
-  "This run no longer exists on this server (runs are cleared on redeploy). Watch the recorded run instead.";
+  "This run does not exist, or it was started with an API key and only that key can open it. Runs on this demo server are cleared when it is redeployed.";
+
+export const LOST_MESSAGE = "Connection to the run was lost.";
 
 export const CASE_GONE_MESSAGE = "This case does not exist on this server.";
 
@@ -46,7 +48,7 @@ function reduce(snapshot: RunSnapshot, action: Action): RunSnapshot {
       return initialSnapshot(action.runId);
     case "connection_lost":
       if (snapshot.status !== "running" && snapshot.status !== "queued") return snapshot;
-      return { ...snapshot, status: "failed", error: "Connection to the run was lost." };
+      return { ...snapshot, status: "failed", error: LOST_MESSAGE };
     case "run_gone":
       if (snapshot.status !== "running" && snapshot.status !== "queued") return snapshot;
       return { ...snapshot, status: "failed", error: RUN_GONE_MESSAGE };

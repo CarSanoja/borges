@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { buildSampleRun } from "../../fixtures/sampleRun";
 import { RunPage } from "./RunPage";
 
 class FakeEventSource {
@@ -92,6 +93,39 @@ describe("RunPage (live source)", () => {
     );
     expect(screen.queryByText("Connection to the run was lost.")).toBeNull();
     expect(screen.queryByText(/Walking the garden/)).toBeNull();
+  });
+
+  it("tells an anonymous visitor the run may be private to an API key", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Unknown run", { status: 404 })));
+    render(<RunPage source={{ kind: "live", runId: "r_private" }} onHome={() => undefined} />);
+    await act(async () => {
+      FakeEventSource.instances[0]?.drop();
+    });
+    expect(await screen.findByText(/started with an API key and only that key can open it/)).toBeInTheDocument();
+    expect(screen.getByText(/cleared when it is redeployed/)).toBeInTheDocument();
+  });
+
+  it("follows a keyed run live in the same session", async () => {
+    window.sessionStorage.setItem("borges.apiKey", "bk_mine");
+    const started = buildSampleRun("r_keyed")[0]!;
+    const fetchMock = vi.fn().mockImplementation(async () => {
+      const encoder = new TextEncoder();
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode(`event: ${started.type}\ndata: ${JSON.stringify(started)}\n\n`));
+        },
+      });
+      return new Response(body, { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<RunPage source={{ kind: "live", runId: "r_keyed" }} onHome={() => undefined} />);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+    expect(FakeEventSource.instances).toHaveLength(0);
+    expect(fetchMock.mock.calls[0]![1].headers.Authorization).toBe("Bearer bk_mine");
+    expect(screen.queryByRole("heading", { name: "Run not found" })).toBeNull();
+    window.sessionStorage.clear();
   });
 
   it("renders a not-found page for an unknown case replay", async () => {

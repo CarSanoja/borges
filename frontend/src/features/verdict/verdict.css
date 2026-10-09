@@ -94,6 +94,12 @@
   color: var(--vermilion);
 }
 
+.vc-null {
+  color: var(--paper-300);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
 .vc-rule {
   color: var(--paper-300);
   font-family: var(--font-display);

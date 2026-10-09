@@ -6,6 +6,7 @@ import { StartingPoint } from "./StartingPoint";
 import { ResultStats } from "./ResultStats";
 import { Robustness } from "./Robustness";
 import { activeFlip, activeRule, exploredCount, originalResult } from "./verdictModel";
+import { nullResultSentence } from "./nullResult";
 import { ruleInWords } from "./verdictFormat";
 
 interface Props {
@@ -22,6 +23,7 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
   const done = snapshot.status === "completed" && !flip;
   const untested = done && (snapshot.report?.n_universes ?? 0) <= 1;
   const clean = done && !untested;
+  const nullSentence = nullResultSentence(snapshot);
 
   return (
     <div className="vc-face vc-face--front" aria-hidden={hidden} inert={hidden}>
@@ -37,6 +39,11 @@ export function FrontFace({ snapshot, verdict, hidden }: Props) {
       <h2 className="vc-verdict vc-verdict--gold">{verdict}</h2>
       {result && <ResultStats result={result} tone="gold" threshold={rule?.threshold ?? 0} />}
       {rule && <p className="vc-rule">{ruleInWords(rule)}</p>}
+      {nullSentence && (
+        <p className="vc-null" data-testid="vc-null">
+          {nullSentence}
+        </p>
+      )}
       <StartingPoint check={snapshot.report?.search?.reference} />
       {flip && !hidden && <p className="vc-hint">Borges found a fork that changes this verdict.</p>}
       {clean && <p className="vc-clean">No defensible flip found</p>}

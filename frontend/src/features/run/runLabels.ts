@@ -32,6 +32,10 @@ export function modeLabel(snapshot: RunSnapshot): string | null {
   return snapshot.llm === "scripted" ? `Scripted replay · ${sandboxes}` : `Live on Nemotron · ${sandboxes}`;
 }
 
+export function stageLabel(stage: StageName): string {
+  return STAGE_LABELS[stage];
+}
+
 export function currentStage(snapshot: RunSnapshot): StageName | null {
   const active = STAGE_ORDER.filter((name) => snapshot.stages[name] === "started");
   return active.length ? (active[active.length - 1] ?? null) : null;

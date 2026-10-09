@@ -141,6 +141,23 @@
   background: var(--vermilion-soft);
 }
 
+.run-failure {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.run-failure__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.run-failure__details pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: var(--space-2) 0 0;
+  font-size: 0.8rem;
+}
+
 .run-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 460px);

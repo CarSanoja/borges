@@ -11,11 +11,12 @@ import { RecordingBanner } from "../recording/RecordingBanner";
 import { AgentsUsed } from "./AgentsUsed";
 import { RunCaveats } from "./RunCaveats";
 import { RunMemory } from "./RunMemory";
+import { FailurePanel } from "./FailurePanel";
 import { RunHeader } from "./RunHeader";
 import { hasTrace } from "./hasTrace";
 import { useCaseCard } from "./useCaseCard";
 import { NotFound } from "../notfound/NotFound";
-import { CASE_GONE_MESSAGE, isNotFound, useRun, type RunSource } from "./useRun";
+import { CASE_GONE_MESSAGE, LOST_MESSAGE, RUN_GONE_MESSAGE, isNotFound, useRun, type RunSource } from "./useRun";
 import "./run.css";
 import "./runResponsive.css";
 import "./skipLink.css";
@@ -44,7 +45,7 @@ export function RunPage({ source, onHome, replayControl = null, holdVerdict = fa
         message={
           isCase
             ? "No case with that id exists on this server. The recorded runs below are always available."
-            : "This run does not exist on this server. Runs are cleared on redeploy; the recorded runs below are always available."
+            : `${RUN_GONE_MESSAGE} The recorded runs below are always available.`
         }
       />
     );
@@ -71,10 +72,14 @@ export function RunPage({ source, onHome, replayControl = null, holdVerdict = fa
         />
       )}
       {replayControl && <div className="run-replay-control">{replayControl}</div>}
-      {snapshot.error && (
-        <p className="run-error" role="alert">
-          {snapshot.error}
-        </p>
+      {snapshot.error && snapshot.status === "failed" && snapshot.error !== LOST_MESSAGE ? (
+        <FailurePanel snapshot={snapshot} />
+      ) : (
+        snapshot.error && (
+          <p className="run-error" role="alert">
+            {snapshot.error}
+          </p>
+        )
       )}
       <section className="run-hero" aria-label="Garden and verdict">
         <div className="run-garden">
