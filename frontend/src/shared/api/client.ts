@@ -102,6 +102,7 @@ export interface UploadResult {
   upload_id: string;
   profile: { name: string; n_rows: number; columns: unknown[] };
   pii?: PiiSummary;
+  dropped_columns?: { column: string; reason: string }[];
 }
 
 export async function uploadDataset(file: File): Promise<UploadResult> {

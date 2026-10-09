@@ -67,6 +67,24 @@ describe("UploadCard personal data summary", () => {
     await waitFor(() => expect(onOpenRun).toHaveBeenCalledWith("r_1"));
   });
 
+  it("names the empty columns it left out and waits for a confirmation", async () => {
+    const user = userEvent.setup();
+    const onOpenRun = vi.fn();
+    vi.mocked(client.uploadDataset).mockResolvedValue({
+      upload_id: "u".repeat(32),
+      profile: PROFILE,
+      pii: { columns: [], total_detections: 0, note: "" },
+      dropped_columns: [{ column: "notes", reason: "every value is empty" }],
+    });
+    render(<UploadCard health={HEALTH} onOpenRun={onOpenRun} />);
+    await fill(user);
+    await user.click(screen.getByRole("button", { name: "Start the analysis" }));
+    expect(await screen.findByTestId("dropped-columns")).toHaveTextContent("notes every value is empty");
+    expect(client.createRun).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Start the analysis without these columns" }));
+    await waitFor(() => expect(onOpenRun).toHaveBeenCalledWith("r_1"));
+  });
+
   it("shows the refusal message when Armor rejects the upload", async () => {
     const user = userEvent.setup();
     vi.mocked(client.uploadDataset).mockRejectedValue(new Error("Armor refused the run: column_name"));

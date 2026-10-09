@@ -2,6 +2,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { createRun, uploadDataset, type UploadResult } from "../../shared/api/client";
 import type { Health } from "../../shared/types/contracts";
 import { UploadCost } from "./UploadCost";
+import { DroppedColumns } from "./DroppedColumns";
 import { PiiSummary } from "./PiiSummary";
 import { buildRequest, EMPTY_FORM, validateForm, type UploadForm } from "./uploadRequest";
 import { UPLOAD_SCOPE, useUploadScope } from "./useUploadScope";
@@ -53,7 +54,7 @@ export function UploadCard({ health, onOpenRun }: Props) {
     setError(null);
     try {
       const upload = await uploadDataset(file);
-      if (upload.pii && upload.pii.total_detections > 0) {
+      if ((upload.pii && upload.pii.total_detections > 0) || upload.dropped_columns?.length) {
         setPending(upload);
         setBusy(false);
         return;
@@ -136,11 +137,14 @@ export function UploadCard({ health, onOpenRun }: Props) {
           </fieldset>
         </form>
       )}
-      {pending?.pii && (
+      {pending && (
         <>
-          <PiiSummary pii={pending.pii} />
+          {pending.pii && <PiiSummary pii={pending.pii} />}
+          <DroppedColumns dropped={pending.dropped_columns ?? []} />
           <button type="button" className="btn btn-primary" disabled={busy} onClick={confirm}>
-            Start the analysis with these values redacted
+            {pending.pii && pending.pii.total_detections > 0
+              ? "Start the analysis with these values redacted"
+              : "Start the analysis without these columns"}
           </button>
         </>
       )}

@@ -11,6 +11,7 @@ const KIND_LABELS: Record<string, string> = {
   rfc: "RFC",
   ip_address: "IP addresses",
   date_of_birth: "dates of birth",
+  person_name: "person names",
 };
 
 export function kindLabel(kind: string): string {
