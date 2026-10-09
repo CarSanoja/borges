@@ -7,6 +7,7 @@ from typing import Any
 
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
+from borges.analysis.column_names import match_notes, unmatched_caveat
 from borges.analysis.model_spec.count_outcome import agree_count_specs
 from borges.analysis.models import AnalysisPlan, CodingSummary
 from borges.analysis.planner import plan_analysis
@@ -119,11 +120,10 @@ class Pipeline:
         resolved = self.resolved
         async with self.stage("profiling"):
             frame = load_dataframe(resolved.data)
+            notes, unmatched = match_notes(resolved.column_notes, frame.columns)
+            self.caveats.extend(filter(None, [unmatched_caveat(unmatched)]))
             profile = await asyncio.to_thread(
-                profile_dataframe,
-                frame,
-                resolved.dataset_name,
-                column_notes=resolved.column_notes,
+                profile_dataframe, frame, resolved.dataset_name, column_notes=notes
             )
             profile = recall_profile(self, profile)
             if resolved.blind_notes:

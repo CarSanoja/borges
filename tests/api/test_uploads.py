@@ -126,8 +126,8 @@ def test_column_names_are_normalised_and_deduplicated(tmp_path) -> None:
     store = UploadStore(tmp_path)
     upload_id, _ = store.put(df.to_csv(index=False).encode(), "d.csv")
     assert stored_columns(store, upload_id) == [
-        "age_years_",
-        "age_years__2",
+        "age_years",
+        "age_years_2",
         "unnamed_2",
         "_9lives",
     ]
@@ -154,7 +154,7 @@ def test_semicolon_decimal_comma_bom_upload_is_accepted(tmp_path) -> None:
     upload_id, profile = store.put(content, "export.csv")
     assert profile.n_rows == 60
     frame = pd.read_parquet(io.BytesIO(store.get(upload_id)[0]))
-    assert list(frame.columns) == ["id", "ingresos", "a_o"]
+    assert list(frame.columns) == ["id", "ingresos", "anio"]
     assert frame["ingresos"].iloc[1] == 1.5
 
 

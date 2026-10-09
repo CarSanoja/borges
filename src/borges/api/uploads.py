@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 
 from borges.analysis import profile as profile_module
-from borges.analysis.code_guard_rules import FORBIDDEN_MODULES, FORBIDDEN_NAMES
+from borges.analysis.column_names import safe_identifier
 from borges.analysis.models import DatasetProfile
 from borges.api.table_reader import read_table
 from borges.armor.profile_guard import guard_profile
@@ -18,18 +18,6 @@ MAX_BYTES = 20 * 1024 * 1024
 MIN_COLUMNS = 2
 MIN_ROWS = 20
 _ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
-
-
-def _safe_identifier(raw: object) -> str:
-    text = re.sub(r"[^a-z0-9_]", "_", str(raw).lower())
-    text = re.sub(r"_{2,}", "_", text)
-    if not text.strip("_"):
-        return "column"
-    if text[0].isdigit():
-        text = f"_{text}"
-    if text in FORBIDDEN_NAMES or text in FORBIDDEN_MODULES:
-        text = f"{text}_col"
-    return text
 
 
 def drop_empty_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, list[dict[str, str]]]:
@@ -43,7 +31,7 @@ def normalise_columns(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, str]]:
     names: list[str] = []
     mapping: dict[str, str] = {}
     for original in df.columns:
-        base = _safe_identifier(original)
+        base = safe_identifier(original)
         candidate = base
         counter = 2
         while candidate in seen:
