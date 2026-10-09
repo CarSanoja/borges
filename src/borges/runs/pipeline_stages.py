@@ -92,7 +92,7 @@ async def run_uniform_sample(
 ) -> None:
     garden = pipeline.garden
     noops = excluded_options(plan, garden)
-    seed = seed_for(pipeline.emitter.run_id)
+    seed = seed_for(plan, noops)
     kept, new, kind = grid_draws(plan, noops, garden, runner.remaining, seed)
     if kind == "sample" and len(kept) < MIN_SAMPLE:
         return

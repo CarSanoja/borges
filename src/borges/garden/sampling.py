@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import json
 import random
 import zlib
 from typing import Literal
@@ -23,8 +24,16 @@ def grid_options(plan: AnalysisPlan, noops: list[NoopOption]) -> dict[str, list[
     }
 
 
-def seed_for(run_id: str) -> int:
-    return zlib.crc32(run_id.encode())
+def seed_for(plan: AnalysisPlan, noops: list[NoopOption]) -> int:
+    """The seed comes from the plan's grid, so the same plan draws the same sample on any machine
+    and a rerun of a case quotes the same share; it is shown in the note so the draw can be
+    repeated. A seed from the run id drew another sample on every run of a scripted case."""
+    options = grid_options(plan, noops)
+    specs = {
+        step.id: [[o.id, o.spec] for o in step.options if o.id in options[step.id]]
+        for step in plan.decision_steps
+    }
+    return zlib.crc32(json.dumps(specs, sort_keys=True).encode())
 
 
 def full_grid(plan: AnalysisPlan, noops: list[NoopOption]) -> list[dict[str, str]]:

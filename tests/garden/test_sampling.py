@@ -79,7 +79,7 @@ def test_the_sample_needs_a_minimum_of_draws_to_count() -> None:
 def test_the_whole_grid_is_enumerated_when_it_fits_the_budget() -> None:
     p = plan()
     garden = garden_of(p, universe(p, {}, result(1.0)))
-    kept, new, kind = grid_draws(p, [], garden, 10, seed_for("r_1"))
+    kept, new, kind = grid_draws(p, [], garden, 10, seed_for(p, []))
     assert kind == "grid" and len(kept) == 6 and len(new) == 5
     assert {choice_key(c) for c in kept} == {choice_key(c) for c in full_grid(p, [])}
 
@@ -87,7 +87,14 @@ def test_the_whole_grid_is_enumerated_when_it_fits_the_budget() -> None:
 def test_a_grid_larger_than_the_budget_is_sampled_with_the_run_seed() -> None:
     p = plan()
     garden = garden_of(p, universe(p, {}, result(1.0)))
-    kept, new, kind = grid_draws(p, [], garden, 2, seed_for("r_1"))
+    kept, new, kind = grid_draws(p, [], garden, 2, seed_for(p, []))
     assert kind == "sample" and len(new) <= 2
-    assert kept == affordable_prefix(draw_grid(p, [], seed=seed_for("r_1")), garden, 2)[0]
-    assert seed_for("r_1") != seed_for("r_2")
+    assert kept == affordable_prefix(draw_grid(p, [], seed=seed_for(p, [])), garden, 2)[0]
+
+
+def test_the_seed_is_the_plan_s_so_a_rerun_draws_the_same_sample() -> None:
+    p = plan()
+    assert seed_for(p, []) == seed_for(plan(), [])
+    other = p.model_copy(deep=True)
+    other.decision_steps[0].options[-1].spec = "another spec"
+    assert seed_for(other, []) != seed_for(p, [])
