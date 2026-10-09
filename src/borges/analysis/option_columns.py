@@ -5,6 +5,9 @@ exist; the judge scored the option 0.6 and it failed later in the sandbox with a
 error (r_20261009T003732_8fbd3d). A statecrime WLS option promising population weights ran as plain
 OLS. The names an option sets in its ctx entries, and the weights it promises, are checked against
 the profiled columns (case-insensitive: the upload lower-cases them) before the option is judged.
+A name built from known columns is a term, not an invented column: the first live runs with the
+check rejected I(tenure_years**2) and female:level in a pay-gap run and age_sq in an election run
+(r_20261009T015255_0aaa01, r_20261009T015255_663c50).
 """
 
 from __future__ import annotations
@@ -28,6 +31,8 @@ WEIGHT_PROMISE = re.compile(
     re.IGNORECASE,
 )
 WEIGHT_HINTS = ("weight", "wt", "pop", "freq")
+NON_WORD = re.compile(r"[^a-z0-9_]+")
+TRAILING_DIGITS = re.compile(r"(?<=[a-z])\d+(?=_)")
 
 
 def known_columns(plan: AnalysisPlan, option: Option | None = None) -> set[str]:
@@ -53,13 +58,24 @@ def _named_columns(spec: str) -> list[str]:
     return names
 
 
+def _segments(text: str) -> str:
+    joined = "_" + NON_WORD.sub("_", text.lower()) + "_"
+    return TRAILING_DIGITS.sub("", joined)
+
+
+def built_from_known(name: str, known: set[str]) -> bool:
+    padded = _segments(name)
+    return any(_segments(column) in padded for column in known if column)
+
+
 def missing_columns(plan: AnalysisPlan, option: Option) -> list[str]:
     """Columns the option names that are not in the data, in order of first mention."""
     known = known_columns(plan, option)
     missing: list[str] = []
     for name in _named_columns(option.spec):
-        if name.lower() not in known and name not in missing:
-            missing.append(name)
+        if name.lower() in known or built_from_known(name, known) or name in missing:
+            continue
+        missing.append(name)
     return missing
 
 

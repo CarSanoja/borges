@@ -22,6 +22,14 @@ def test_covariates_that_are_not_in_the_data_are_named() -> None:
     )
 
 
+def test_terms_built_from_known_columns_are_not_invented() -> None:
+    spec = (
+        "ctx['covariates'] = ['I(age**2)', 'age:educ', 'age_sq', 'age2', 'log_rate_marriage', "
+        "'wage_index']"
+    )
+    assert missing_columns(PLAN, proposed(spec)) == ["wage_index"]
+
+
 def test_names_match_whatever_their_case() -> None:
     spec = "Set ctx['covariates'] = ['EDUC', 'Age']; return df"
     assert missing_columns(PLAN, proposed(spec)) == []
