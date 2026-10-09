@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Callable
 
 from borges.analysis.model_spec.request import template_family
 from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
-from borges.analysis.smoke_types import Outcome, Replan, Replanned
+from borges.analysis.smoke_types import Admit, Outcome, Replan, Replanned
 from borges.analysis.step_replan import propose_options
 from borges.llm.client import LLMClient, LLMError
 from borges.llm.gather import gather_cancelling
@@ -24,11 +24,14 @@ def make_replan(
     on_coded: OnCoded | None,
     summary: CodingSummary | None,
     refused: Callable[[str, Option], bool] | None = None,
+    admit: Admit | None = None,
 ) -> Replan:
     async def replan(step: Step, outcomes: list[Outcome]) -> Replanned | None:
         proposed = await propose_options(llm, plan, step, outcomes)
         if proposed is not None and refused is not None:
             proposed = [o for o in proposed if not refused(step.id, o)] or None
+        if proposed is not None and admit is not None:
+            proposed = await admit(step, proposed) or None
         if proposed is None:
             return None
         candidate = step.model_copy(update={"options": proposed})

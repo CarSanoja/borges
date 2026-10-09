@@ -18,7 +18,7 @@ Screen = Callable[[str, list[Option]], Awaitable[list[Option]]]
 JUDGE_FAILED = "judge failed"
 
 
-async def _judge_alternative(
+async def judge_alternative(
     llm: LLMClient,
     plan: AnalysisPlan,
     emitter: RunEmitter,
@@ -86,7 +86,7 @@ async def _refill_step(
     if screen is not None:
         options = await screen(step.id, options)
     judged = await gather_cancelling(
-        _judge_alternative(llm, plan, emitter, step, option, ledger, memory) for option in options
+        judge_alternative(llm, plan, emitter, step, option, ledger, memory) for option in options
     )
     kept = [option for option, _ in judged if option is not None]
     summary.options_dropped_by_judge += len(judged) - len(kept)
@@ -119,7 +119,7 @@ async def judge_plan_options(
         return
     before = {step.id: len(step.options) for step in plan.steps}
     outcomes = await gather_cancelling(
-        _judge_alternative(llm, plan, emitter, step, option, ledger, memory, _origin(option))
+        judge_alternative(llm, plan, emitter, step, option, ledger, memory, _origin(option))
         for step, option in targets
     )
     replaced: dict[tuple[str, str], Option | None] = {}
@@ -157,7 +157,7 @@ async def judge_plan_options(
             summary,
             plan.step(step_id),
             reason,
-            lambda step, option: _judge_alternative(
+            lambda step, option: judge_alternative(
                 llm, plan, emitter, step, option, ledger, memory
             ),
         )

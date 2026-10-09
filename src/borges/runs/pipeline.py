@@ -36,6 +36,7 @@ from borges.runs.pipeline_stages import (
     MAX_COMBINATIONS_PER_LEVEL,
 )
 from borges.runs.plan_judging import judge_plan_options
+from borges.runs.replan_judging import admit_replans
 from borges.runs.runner import publish_plan
 from borges.runtime.context import RunContext
 from borges.runtime.stage_checkpoints import CODED_KEY, PLAN_KEY, coded_payload, plan_payload
@@ -160,6 +161,7 @@ class Pipeline:
             result_scale=plan.result_scale,
             metric=plan.decision_rule.metric,
             refused=self.judged.refused,
+            admit=admit_replans(self, plan),
         )
         self.smoke = smoke
         async with self.stage("coding"):

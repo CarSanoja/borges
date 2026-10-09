@@ -25,7 +25,8 @@ class ScriptedLLM:
 
     Hand-built fixtures hold no verdicts on the conventional options, so a scripted run does
     not ask the judge about them (judges_defaults); a live run always does. Nor do they hold
-    Armor's second-stage reviews of dataset text (reviews_text).
+    Armor's second-stage reviews of dataset text (reviews_text). A re-plan's options are judged
+    only when the fixtures hold that verdict (holds), so older recordings replay unchanged.
     """
 
     judges_defaults = False
@@ -35,6 +36,9 @@ class ScriptedLLM:
         self.fixtures_dir = fixtures_dir
         self.latency_s = latency_s
         self.totals = UsageTotals()
+
+    def holds(self, key: str) -> bool:
+        return (self.fixtures_dir / fixture_name(key)).is_file()
 
     def _load(self, key: str) -> dict[str, Any]:
         path = self.fixtures_dir / fixture_name(key)

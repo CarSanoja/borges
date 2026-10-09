@@ -21,6 +21,8 @@ class CountingLLM:
         self.calls = calls
         self.totals: UsageTotals = inner.totals
         self.judges_defaults: bool = getattr(inner, "judges_defaults", True)
+        if hasattr(inner, "holds"):
+            self.holds = inner.holds
 
     async def complete(self, role: Any, messages: Any, **kwargs: Any) -> Any:
         self.calls[role.value] += 1

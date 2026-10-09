@@ -17,6 +17,7 @@ Repair = Callable[[Step, Option, str, int], Awaitable[tuple[str, str | None, str
 Recode = Callable[[Step, Option, list[str]], Awaitable[tuple[str, str | None, str]]]
 Rewrite = Callable[[Step, Option, Option, str], Awaitable[tuple[str, str | None, str]]]
 OnReplan = Callable[[str, list[str], list[str]], Awaitable[None]]
+Admit = Callable[[Step, list[Option]], Awaitable[list[Option]]]
 Check = Callable[[dict[str, Any] | None], str | None]
 
 
@@ -70,6 +71,7 @@ class SmokeConfig:
     metric: str = ""
     state: SmokeState = field(default_factory=SmokeState)
     refused: Callable[[str, Option], bool] | None = None
+    admit: Admit | None = None
 
 
 @dataclass

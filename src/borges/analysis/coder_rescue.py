@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from borges.analysis.coder_replan import Generate, OnCoded, make_replan
-from borges.analysis.models import AnalysisPlan, CodingSummary, Option, Step
-from borges.analysis.smoke_types import OnReplan, Outcome
+from borges.analysis.models import AnalysisPlan, CodingSummary, Step
+from borges.analysis.smoke_types import Outcome, SmokeConfig
 from borges.llm.client import LLMClient, LLMError
 
 
@@ -16,8 +14,7 @@ async def replan_uncoded_step(
     generate: Generate,
     on_coded: OnCoded | None,
     summary: CodingSummary | None,
-    on_replan: OnReplan | None,
-    refused: Callable[[str, Option], bool] | None = None,
+    smoke: SmokeConfig | None = None,
 ) -> bool:
     outcomes = [
         Outcome(
@@ -30,13 +27,17 @@ async def replan_uncoded_step(
         )
         for option in step.options
     ]
-    replan = make_replan(llm, coded, generate, on_coded, summary, refused)
+    refused = smoke.refused if smoke is not None else None
+    admit = smoke.admit if smoke is not None else None
+    replan = make_replan(llm, coded, generate, on_coded, summary, refused, admit)
     replanned = await replan(step, outcomes)
     if replanned is None or not replanned.options:
         return False
     coded.step(step.id).options = replanned.options
-    if on_replan is not None:
-        await on_replan(step.id, [o.id for o in step.options], [o.id for o in replanned.options])
+    if smoke is not None and smoke.on_replan is not None:
+        await smoke.on_replan(
+            step.id, [o.id for o in step.options], [o.id for o in replanned.options]
+        )
     return True
 
 
