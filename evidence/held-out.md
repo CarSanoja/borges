@@ -197,10 +197,19 @@ crash, the interval comparison and the refill below).
 
 | Run | Starting point | Smallest flip | What it showed |
 |---|---|---|---|
-| r_20261009T074441_47e3f5 | +1.2735, n 301: not the published cell, and the report says so | none | The fidelity check was cut off at 1500 tokens (Super answers it now that Ultra is withdrawn); raised to 4000 |
+| r_20261009T074441_47e3f5 | +1.2735, n 301: not the published cell, and the report says so | none | The fidelity check was cut off at 1500 tokens (Super answers it now that Ultra is withdrawn); raised to 2048, the judge's ceiling in the gateway policy (4000 was refused by the gateway on the next run) |
 | r_20261009T074442_630a07 | the published cell, confirmed by two implementations | none in 7 universes | The refill ran live: two new model options, one accepted; it failed its smoke run because its code put the outcome among the regressors. The harness now names that instead of a "degenerate interval"; the planner and coder now write and code a range [7, 14] as a range |
 | r_20261009T074443_86006a | the published cell | **false**: -1.026, p .009, n 225 | An adversary filter recounted cycle_day as days to ovulation; the repair of a reversed column negated it, leaving it 13-14 days off the default's origin, and the next step's windows then picked the luteal phase. A whole-number column that follows the default's but sits more than 1.5 SD away is now refused as counting from another origin |
 
 The third run is the most serious finding of the day: a reported flip that is an artefact of two
 steps reading one column with two meanings. The check that now refuses it was confirmed on that
 run's smoke sample (cycle_day 13.0 days off, spread 4.8).
+
+Two more runs at the commit with those checks (r_20261009T080549_01083a,
+r_20261009T080551_3b9e20) both started from the published cell; in the second the default filter
+could not be coded, the refill's option took its place, and the report says so. The second
+reported a flip, "committed = Relationship == 3" (p .577), that counts married women as single: a
+second false flip. The judge had accepted it at 0.6. The judge and the planner now keep each group
+of an ordered answer a run of neighbouring answers. Asked again live, the judge rejected that
+option (0.2) and accepted married-only and dating-as-committed (0.6 each), the latter the coding
+that flips the published cell in Steegen's grid.
