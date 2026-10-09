@@ -47,6 +47,23 @@ A rerun of the clinic case after the template fix still gave the old answer
 written for the same option. A memory now counts only when the latest approved version of its
 agent wrote it, and the next rerun dropped 22 stale entries.
 
+The review-hours case was rerun three more times after the fixes, because a correct answer once
+is not a correct product:
+
+- r_20261009T101518_df1978: the planner's default filled missing review hours with 0 (−0.00085,
+  biased toward zero, with "blank when not logged" in the column notes), and an adversary option,
+  "manager fixed effects via demeaning", put the hours minus each manager's mean beside the hours
+  themselves. With both in the model the reported coefficient is the effect of the managers'
+  means, the comparison the option meant to remove, and it came out as the minimal flip.
+- r_20261009T102422_ac9695, after the fixes below: the judge rejected filling with 0 (0.2) and
+  the original analysis dropped those rows (−0.00471, correct), and the report named the 195
+  engagements left out. The flip was now "no covariates", accepted at 0.6 although the judge's own
+  reason said it "leaves confounding in the estimate".
+- r_20261009T102930_e204b8, after the confounder rule: −0.00471, robustness 1.0, no flip. The
+  same "no covariates" option, judged again on that plan, scores 0.3; the adjusted ones keep 0.9
+  and 0.8. The randomised fee-waiver case, rerun as a control (r_20261009T102930_f3f450), still
+  accepts the unadjusted comparison at 0.9 "because the exposure was assigned at random".
+
 ## What changed
 
 Each gap was fixed at its root, with a unit test and, where it applies, an end-to-end harness test:
@@ -82,6 +99,15 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
   intercept, a failed PHReg call gets a repair hint (`analysis/harness_phreg.py`), and a position
   found from the term's name passes the coefficient guard.
 - **A moved origin is refused only for a column some option cuts** (`analysis/smoke_origin.py`).
+- **The rows the original analysis leaves out are named.** When its data steps keep less than
+  95 % of the uploaded rows, a caveat names each step and how many rows it drops
+  (`garden/filtered_rows.py`).
+- **The exposure beside its own demeaned copy fails the step** (`analysis/harness_within_copy.py`):
+  two regressors whose difference is constant within groups, one of them centred in each group.
+- **A missing exposure or outcome is dropped, not filled with a constant**, unless the notes say a
+  blank stands for that value; the judge scores such a fill below 0.3.
+- **Dropping a named confounder is below acceptance in a causal question** on observational data
+  (score under 0.6); with a randomised exposure the unadjusted comparison stays.
 
 ## Still open
 
@@ -94,8 +120,10 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
 - A planner alternative can contradict its own rationale (fertility_social, "committed = 1 if
   Relationship == 1" for "single is answer 1 only"); the orientation check refuses it, so the
   result is not wrong, but the alternative is lost.
-- Rows a filter drops for a missing exposure are not described in the report: the review-hours
-  case left out 13 % of engagements, most of them complex clients, and the caveats do not say so.
+- The planner still proposes filling a missing exposure with 0 as its default at times; the judge
+  rejects it and the original analysis falls back to the best accepted option.
+- A percent outcome (0 to 100) under a rule in percentage points lost a WLS alternative to the unit
+  check; the check now tells the code to divide by 100, tested but not yet seen in a live run.
 - Restoring the registry seed and publishing again reuses version numbers; a server that had
   imported the first seed keeps the old definition under that number and refuses live runs as
   "unpublished" until the change is approved in its own registry.
