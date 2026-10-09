@@ -53,6 +53,12 @@ necessarily the published one. Keep "changes the estimand" for an option that me
 construct (the opposite phase as the high window, a group the question does not compare) or \
 answers another question.
 
+A rationale may argue from the result it hopes to produce ("may reveal a significant \
+difference when the mean gap is not significant", "could yield a significant effect"). That \
+hope is not a reason: ignore it and score the method alone; when nothing but the hoped-for result \
+supports the option, it is outcome-driven and scores below 0.3. Your reason states the \
+methodological ground in your own words and never repeats the hoped-for result.
+
 Penalise any option that changes the question or the estimand, leaks the outcome, or looks \
 chosen to produce a result. Set accepted=true only when defensibility is at least 0.6. Give a \
 one or two sentence reason and, when one exists, a short source for the practice.

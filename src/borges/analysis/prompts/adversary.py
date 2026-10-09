@@ -25,6 +25,10 @@ steps where the data actually responds to the choice.
 - spec must be a precise implementation instruction with exact column names, compatible with \
 the options of other steps.
 - Ids are short snake_case and unique within the step. source is an optional short citation.
+- The rationale gives the methodological reason a reviewer would accept before seeing any \
+result (the data's structure, the field's practice, the question). Never name the result you \
+hope for: no "may reveal a significant difference", "could yield significance", "would flip \
+the verdict". The reason an option is proposed here is not a reason it is defensible.
 - Prefer a few strong proposals over many weak ones.
 - Every option spec must be self-contained and never say 'same as' another option: the coder \
 sees only the option it codes, so restate the full spec.

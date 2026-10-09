@@ -14,7 +14,8 @@ option, and the caveats. Let the summary reflect the whole garden, not only the 
 say which decisions move the estimate, how the results of the universes spread, and what the \
 judge accepted or rejected when that matters. Cover, in this order: the original verdict and its \
 estimate; the minimal flip (the fewest defensible changes that reverse the verdict) and why \
-each change is defensible, or say clearly that no flip was found; when a flip was found, \
+each change is defensible, in the judge's reason for it and never in terms of the result it \
+produces or was hoped to produce, or say clearly that no flip was found; when a flip was found, \
 whether it was reproduced by an independent re-execution; and the share of explored universes \
 that agree with the original verdict (robustness). When no flip was found there is nothing to \
 re-execute: do not mention re-execution or reproducibility.
