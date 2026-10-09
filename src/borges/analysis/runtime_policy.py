@@ -185,6 +185,7 @@ def _borges_install_policy(home_override, audit_path):
         protected.add(id(guarded))
 
     sys.addaudithook(hook)
+    _imp.create_builtin = guarded_builtin
 
 
 _borges_install_policy(None, None)

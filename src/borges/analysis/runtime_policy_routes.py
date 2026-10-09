@@ -6,7 +6,9 @@ builds, _posixsubprocess and _interpreters among them) is created by _imp.create
 raises no audit event, so importlib.import_module brought back the original fork_exec and the
 sub-interpreters, whose code runs outside the hook. Its creation is routed through the hook,
 which keeps the original and refuses the blocked modules; the name is read from the spec before
-the hook, so no object of the step's code is called inside it.
+the hook, so no object of the step's code is called inside it. The replacement is put in place
+only after the hook is installed: before that, a module compiled into the interpreter (_opcode,
+which dis imports on Linux) would find no hook to create it.
 """
 
 
@@ -57,5 +59,4 @@ def _borges_guard_builtins(imp, blocked_modules, deny, audit):
         audit("borges.create_builtin", str_(spec.name), box)
         return box[0]
 
-    imp.create_builtin = guarded
     return create, guarded
