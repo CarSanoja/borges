@@ -11,6 +11,7 @@ from borges.garden.duplicate_rows import duplicate_row_caveats
 from borges.garden.failed_caveat import failed_caveat, untested_decision_caveats
 from borges.garden.hc_variant import hc_variant_caveats
 from borges.garden.influence import build_report
+from borges.garden.likelihood_question import likelihood_caveats
 from borges.garden.models import Report
 from borges.garden.outcome_scale import scale_note
 from borges.garden.repeated_units import repeated_unit_caveats
@@ -45,6 +46,7 @@ def assemble_report(pipeline: Pipeline, plan: AnalysisPlan) -> Report:
             *untested_decision_caveats(plan, pipeline.garden),
             *repeated_unit_caveats(plan, pipeline.garden),
             *duplicate_row_caveats(plan),
+            *likelihood_caveats(plan, pipeline.garden),
         ]
     )
     note = scale_note(pipeline.garden)
