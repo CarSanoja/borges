@@ -150,3 +150,33 @@ same sample. Its answer was computed and its rule written in its README before a
 on Nebius Token Factory with the ConTree backend, memory off so no attempt reuses another's
 code or verdicts, and no code change until all five are counted. The results follow below as
 they come, pass or fail.
+
+### Result: failed (9 October 2026, five attempts at `3410f7b`, $0.55 in all)
+
+| Attempt | Run | Starting point | Smallest flip |
+|---|---|---|---|
+| 1 | r_20261009T071159_5f1d22 | +1.2425, p .0005, n 303: the published cell | Three changes (married only as committed, adjust for the three religiosity items, HC3 errors): +0.7295, p .0567, n 303, reproduced |
+| 2 | r_20261009T071201_8c331b | +0.4920, p .0246, n 303: wrong, the scale was built with Abortion not reversed; the report says the starting point could not be confirmed | From the wrong starting point: married only and a narrower window, +0.3085, p .2084 |
+| 3 | r_20261009T071203_783130 | none: the run failed | none |
+| 4 | r_20261009T071205_467cac | the published cell | none: the plan offered no alternative for any step (5 universes) |
+| 5 | r_20261009T071207_1fb342 | the published cell | none in 12 universes; the plan did not offer the coding that flips (dating women as committed) |
+
+- (a) the published starting point in at least 4 of 5: **3 of 5. Fails.**
+- (b) no wrong starting point reported as checked: **5 of 5.** Attempt 2's report says its starting
+  point could not be confirmed.
+- (c) a confirmed smallest flip in at least 3 of 5: **at most 1** (attempt 1; attempt 2 starts
+  from a wrong cell, and 3, 4 and 5 report none). **Fails.**
+
+The user-analysis path does not pass its held-out test. What the five attempts show:
+
+- The failed run is a harness fault: the check that names the collinear columns of a design
+  crashed on an empty null space (`zero-size array to reduction operation maximum`).
+- Attempts 1, 4 and 5 started from the published cell, yet their reports say it "could not be
+  confirmed" or "does not match": the independent implementations agree on the estimate, the
+  p-value and n, and differ only in the third decimal of the interval (+0.5443 against +0.5471),
+  which the comparison counted as a disagreement.
+- Two plans in five did not offer the alternatives that flip the published cell (the coding of
+  dating women, the fertility windows, the cycle-day count), so no flip could be found.
+
+These are recorded as found. Fixes made after this count do not change it, and the next held-out
+claim needs a new case.

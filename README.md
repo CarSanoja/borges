@@ -69,7 +69,9 @@ In three lines:
 If you bring your own analysis in plain words, it is the starting point: the plan's default path
 implements it, a second model checks that before anything runs, and the judge may dispute it but
 not replace it. The question is then how fragile *your* analysis is
-(`cases/fertility_published`).
+(`cases/fertility_published`). This path failed its held-out test on 9 October: on a published
+analysis it was not developed on, it started from the published cell in 3 of 5 attempts and
+found a confirmed flip in 1 (`evidence/held-out.md`).
 
 Built for the [Nebius x NVIDIA Global AI Hackathon](https://nebiusglobalaihackathon.devpost.com/)
 on **NVIDIA Nemotron 3** served by **Nebius Token Factory**. Every analysis step runs as a
