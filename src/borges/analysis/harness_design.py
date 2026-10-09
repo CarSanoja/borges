@@ -104,7 +104,9 @@ DESIGN_SOURCE = """
     def _alias_split(x, names, scaled, rank, frame_columns, allowed, exposure=None):
         if rank >= x.shape[1]:
             return [], False
-        _, sv_all, vt = _np.linalg.svd(scaled, full_matrices=False)
+        short = max(0, scaled.shape[1] - scaled.shape[0])
+        padded = _np.vstack([scaled, _np.zeros((short, scaled.shape[1]))])
+        _, sv_all, vt = _np.linalg.svd(padded, full_matrices=False)
         null = vt[sv_all <= sv_all.max() * max(scaled.shape) * _np.finfo(float).eps]
         involved = [str(names[i]) for i in range(x.shape[1]) if _np.abs(null[:, i]).max() > 1e-6]
         free = all(
@@ -170,6 +172,7 @@ DESIGN_SOURCE = """
                     "helper": model_id in _helpers,
                     "model": model_name,
                     "columns": int(x.shape[1]),
+                    "observations": int(x.shape[0]),
                     "rank": rank,
                     "condition": None if not _math.isfinite(cond) else cond,
                     "deficient": bool(

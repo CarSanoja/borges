@@ -64,6 +64,15 @@ DESIGN_ERRORS_SOURCE = """
             return []
 
     def _design_error(design, df=None):
+        if design["columns"] > design.get("observations", design["columns"]):
+            return (
+                "the model's design has " + str(design["columns"]) + " columns but only "
+                + str(design["observations"]) + " rows reach the model, so it cannot be"
+                + " estimated: a column with a value for almost every row (an identifier, a date"
+                + " or a free-text answer) must not be dummy-coded or put in C(...), and the steps"
+                + " before the model must not leave fewer rows than the model has terms."
+                + " Columns: " + repr(design["names"][:20])
+            )
         if design.get("rebuilt_by"):
             return _rebuilt_error(design)
         cond = design["condition"]
