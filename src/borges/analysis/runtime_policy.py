@@ -16,19 +16,16 @@ from borges.analysis.runtime_policy_paths import (
     _borges_under_any,
     _borges_walk,
 )
+from borges.analysis.runtime_policy_routes import _borges_close_routes, _borges_guard_builtins
 
 
 def _borges_install_policy(home_override, audit_path):
+    import _imp
     import ctypes
     import os
     import signal
     import subprocess
     import sys
-
-    try:
-        import _posixsubprocess
-    except ImportError:
-        _posixsubprocess = None
 
     del ctypes
     root_real = _borges_walk(os.getcwd(), True)
@@ -65,6 +62,7 @@ def _borges_install_policy(home_override, audit_path):
     )
 
     protected = set()
+    create_builtin, guarded_builtin = _borges_guard_builtins(_imp, blocked_modules, deny, sys.audit)
 
     def check(
         event,
@@ -82,6 +80,7 @@ def _borges_install_policy(home_override, audit_path):
         open_allowed=open_allowed,
         write_allowed=write_allowed,
         limit_ok=limit_ok,
+        create_builtin=create_builtin,
         audit_fd=audit_fd,
         write=os.write,
         type_=type,
@@ -102,6 +101,9 @@ def _borges_install_policy(home_override, audit_path):
                 deny(event)
             if name.partition(".")[0] in blocked_modules:
                 deny(event + " " + name)
+            return
+        if event == "borges.create_builtin":
+            create_builtin(args)
             return
         if event == "open":
             flags = args[2] if len_(args) > 2 and type_(args[2]) is int_ else 0
@@ -158,19 +160,7 @@ def _borges_install_policy(home_override, audit_path):
 
     refuse = _borges_refuse
 
-    for module, names in (
-        (os, ("setsid", "setpgid", "setpgrp")),
-        (signal, ("signal", "setitimer", "alarm", "set_wakeup_fd")),
-        (sys.modules.get("posix"), ("setsid", "setpgid", "setpgrp")),
-        (sys.modules.get("_signal"), ("signal", "setitimer", "alarm", "set_wakeup_fd")),
-        (getattr(sys, "monitoring", None), ("use_tool_id", "set_events", "set_local_events")),
-        (getattr(sys, "monitoring", None), ("register_callback",)),
-        (_posixsubprocess, ("fork_exec",)),
-        (subprocess, ("_fork_exec",)),
-    ):
-        for name in names:
-            if module is not None and hasattr(module, name):
-                setattr(module, name, refuse)
+    _borges_close_routes(os, signal, subprocess, sys, refuse)
 
     for guarded in (
         _borges_text,
@@ -189,6 +179,8 @@ def _borges_install_policy(home_override, audit_path):
         check,
         hook,
         refuse,
+        create_builtin,
+        guarded_builtin,
     ):
         protected.add(id(guarded))
 

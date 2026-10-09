@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,10 @@ ROUTES = {
         "'_posixsubprocess', _posixsubprocess.__spec__.origin)\n"
         "m = importlib.util.module_from_spec(spec)\nspec.loader.exec_module(m)"
     ),
+    "imp_create_builtin": (
+        "import _imp, importlib.machinery\nm = _imp.create_builtin("
+        "importlib.machinery.ModuleSpec('_posixsubprocess', None, origin='built-in'))"
+    ),
     "imp_create_dynamic": (
         "import _imp, _posixsubprocess\nm = _imp.create_dynamic(_posixsubprocess.__spec__)"
     ),
@@ -51,6 +56,8 @@ ROUTES = {
         "m.fork_exec = m._fork_exec"
     ),
 }
+BUILTIN = "_posixsubprocess" in sys.builtin_module_names
+FROM_FILE = pytest.mark.skipif(BUILTIN, reason="compiled into the interpreter, no file to load")
 
 
 def route_code(route: str) -> str:
@@ -76,7 +83,13 @@ async def test_fork_exec_cannot_spawn_a_process(backend: LocalBackend, tmp_path:
     assert "runtime policy denied" in error
 
 
-@pytest.mark.parametrize("route", list(ROUTES))
+@pytest.mark.parametrize(
+    "route",
+    [
+        pytest.param(route, marks=FROM_FILE) if route == "extension_file_loader" else route
+        for route in ROUTES
+    ],
+)
 async def test_routes_back_to_the_original_fork_exec_are_closed(
     backend: LocalBackend, tmp_path: Path, route: str
 ) -> None:

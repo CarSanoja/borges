@@ -60,6 +60,47 @@ def apply(df, ctx):
     return df
 """
 
+SUBINTERPRETER = """
+import os
+
+
+def apply(df, ctx):
+    __CREATE__
+    m.run_string(m.create(), "import os; os.system('touch __OUTSIDE__')")
+    return df
+"""
+
+CREATES = {
+    "import_statement": "import _interpreters as m",
+    "import_module": "import importlib\n    m = importlib.import_module('_interpreters')",
+    "create_builtin": (
+        "import _imp, importlib.machinery\n"
+        "    m = _imp.create_builtin("
+        "importlib.machinery.ModuleSpec('_interpreters', None, origin='built-in'))"
+    ),
+}
+
+ALLOWED_BUILTIN = """
+import _imp
+import importlib.machinery
+
+
+def apply(df, ctx):
+    spec = importlib.machinery.ModuleSpec("_symtable", None, origin="built-in")
+    if _imp.create_builtin(spec) is None:
+        raise RuntimeError("an allowed builtin module could not be created")
+    return df
+"""
+
+TAMPER = """
+import _imp
+
+
+def apply(df, ctx):
+    _imp.create_builtin.__defaults__ = (None, list)
+    return df
+"""
+
 
 @pytest.fixture
 def backend(tmp_path: Path) -> LocalBackend:
@@ -93,3 +134,38 @@ async def test_directory_descriptors_outside_the_working_directory_are_refused(
     assert result.exit_code != 0, (result.stdout, result.stderr)
     assert error is not None
     assert "runtime policy denied open for reading" in error
+
+
+@pytest.mark.parametrize("route", list(CREATES))
+async def test_a_sub_interpreter_cannot_be_created(
+    backend: LocalBackend, tmp_path: Path, route: str
+) -> None:
+    """Code in a sub-interpreter runs outside the audit hook; on Linux builds _interpreters is
+    compiled into the interpreter, and importlib.import_module created it with no audit event."""
+    outside = tmp_path / "escaped.txt"
+    code = SUBINTERPRETER.replace("__CREATE__", CREATES[route])
+    result, error = await run_step(backend, code.replace("__OUTSIDE__", str(outside)))
+    assert not outside.exists()
+    assert result.exit_code != 0
+    assert error is not None and "runtime policy denied" in error
+
+
+@pytest.mark.parametrize("module", ["_testinternalcapi", "_interpchannels"])
+async def test_the_interpreter_internals_cannot_be_imported(
+    backend: LocalBackend, module: str
+) -> None:
+    code = f"import importlib\n\n\ndef apply(df, ctx):\n    importlib.import_module({module!r})\n"
+    result, error = await run_step(backend, code + "    return df\n")
+    assert result.exit_code != 0
+    assert error is not None and "runtime policy denied" in error
+
+
+async def test_an_allowed_builtin_module_is_still_created(backend: LocalBackend) -> None:
+    result, error = await run_step(backend, ALLOWED_BUILTIN)
+    assert result.exit_code == 0, error
+
+
+async def test_the_guard_on_builtin_creation_cannot_be_rewired(backend: LocalBackend) -> None:
+    result, error = await run_step(backend, TAMPER)
+    assert result.exit_code != 0
+    assert error is not None and "runtime policy denied" in error

@@ -37,7 +37,28 @@ _BORGES_BLOCKED_EVENTS = frozenset(
         "resource.prlimit",
     }
 )
-_BORGES_BLOCKED_MODULES = frozenset({"cffi", "_cffi_backend", "_posixsubprocess"})
+_BORGES_BLOCKED_MODULES = frozenset(
+    {
+        "cffi",
+        "_cffi_backend",
+        "_posixsubprocess",
+        "_interpreters",
+        "_interpchannels",
+        "_interpqueues",
+        "_xxsubinterpreters",
+        "_xxinterpchannels",
+        "_xxinterpqueues",
+        "_testcapi",
+        "_testinternalcapi",
+        "_testlimitedcapi",
+        "_testexternalinspection",
+        "_testsinglephase",
+        "_testmultiphase",
+        "_testimportmultiple",
+        "_testbuffer",
+        "_xxtestfuzz",
+    }
+)
 _BORGES_TAMPER_ATTRS = frozenset({"__code__", "__defaults__", "__kwdefaults__", "__closure__"})
 _BORGES_FRAME_ATTRS = frozenset({"tb_frame", "gi_frame", "gi_code", "f_code", "__code__"})
 _BORGES_SECRET_PROC = frozenset({"environ", "mem", "maps", "smaps", "pagemap", "mountinfo"})

@@ -28,6 +28,7 @@ _POLICY_PARTS = (
     "runtime_policy_paths.py",
     "runtime_policy_config.py",
     "runtime_policy_access.py",
+    "runtime_policy_routes.py",
     "runtime_policy.py",
 )
 _SIBLING_IMPORT = re.compile(
