@@ -35,3 +35,16 @@ def test_an_unreadable_registry_fails_closed(settings: Settings, monkeypatch) ->
 
     monkeypatch.setattr(locations, "open_store", boom)
     assert ApprovalCheck(settings).approved("judge", "abc") is False
+
+
+def test_a_version_superseded_by_a_newer_approved_one_no_longer_counts(settings: Settings) -> None:
+    judge = build_fleet(settings).get("judge")
+    store = open_store(settings)
+    current = store.by_definition("judge", judge.definition_sha)
+    store.publish(
+        "judge", "99.0.0", "f" * 64, {}, "major", "newer judge", "tester", state="approved"
+    )
+    check = ApprovalCheck(settings)
+    assert current is not None and current.state == "approved"
+    assert check.approved("judge", judge.definition_sha) is False
+    assert check.approved("judge", "f" * 64) is True

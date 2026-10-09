@@ -590,7 +590,8 @@ which runs) and `/memory` lists counts with a forget button for keyed callers.
 - Tenants: the caller's key name; anonymous callers share `public-demo`, which stores curated cases run
   as they are, unencrypted unless `BORGES_MEMORY_KEY` is set. Named tenants are stored only with the key.
 - Retrieval: exact signature, then the same schema on another dataset (verdicts), then similarity above
-  the threshold. A memory written by an agent version that is no longer approved is ignored.
+  the threshold. A memory counts only when the agent's latest approved version wrote it: code or a
+  verdict from an older or retired version is ignored.
 - Erasure: `DELETE /api/memory?dataset=<fp>` (scope `memory:write`), `borges memory forget --tenant T
   [--dataset FP]`. Notes: `POST /api/memory/notes`, `borges memory note`. `borges memory fingerprint
   --case ID` prints a case's fingerprint.
