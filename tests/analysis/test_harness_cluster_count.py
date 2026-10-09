@@ -27,18 +27,30 @@ ROBUST = OWN_CLUSTERS.replace(
 )
 
 
-def frame(days: int) -> pd.DataFrame:
+USE_T = OWN_CLUSTERS.replace(
+    'cov_kwds={"groups": df["day"]}', 'cov_kwds={"groups": df["day"]}, use_t=True'
+)
+
+
+def frame(days: int, assigned: bool = False) -> pd.DataFrame:
     rng = np.random.default_rng(3)
     data = pd.DataFrame({"day": np.arange(275) % days, "high": rng.integers(0, 2, 275)})
+    if assigned:
+        data["high"] = data["day"] % 2
     data["rel"] = rng.normal(5, 2, len(data))
     return data.astype(float)
 
 
 def run(
-    tmp_path: Path, days: int, code: str, full_data_checks: bool, cluster_by: str | None = None
+    tmp_path: Path,
+    days: int,
+    code: str,
+    full_data_checks: bool,
+    cluster_by: str | None = None,
+    assigned: bool = False,
 ):
     (tmp_path / "state").mkdir(exist_ok=True)
-    frame(days).to_parquet(tmp_path / "state" / "df.parquet")
+    frame(days, assigned).to_parquet(tmp_path / "state" / "df.parquet")
     (tmp_path / "state" / "ctx.json").write_text(json.dumps({}))
     option = Option(
         id="m", label="OLS", rationale="r", spec="OLS.", code=code, cluster_by=cluster_by
@@ -74,3 +86,33 @@ def test_the_smoke_run_and_reproduce_skip_the_check(tmp_path: Path) -> None:
 
 def test_robust_errors_without_clusters_pass(tmp_path: Path) -> None:
     assert run(tmp_path, 13, ROBUST, full_data_checks=True).returncode == 0
+
+
+def test_an_exposure_assigned_to_ten_clusters_asks_for_t_not_for_robust_errors(
+    tmp_path: Path,
+) -> None:
+    done = run(tmp_path, 10, OWN_CLUSTERS, full_data_checks=True, assigned=True)
+    error = parse_error(done.stdout) or ""
+    assert done.returncode != 0
+    assert "assigned to whole clusters" in error
+    assert "use_t=True" in error and "9 degrees of freedom" in error
+    assert "use robust errors" not in error
+
+
+def test_an_exposure_assigned_to_ten_clusters_passes_with_t_on_nine_degrees(
+    tmp_path: Path,
+) -> None:
+    assert run(tmp_path, 10, USE_T, full_data_checks=True, assigned=True).returncode == 0
+
+
+def test_the_cluster_hook_asks_for_t_below_thirty_clusters(tmp_path: Path) -> None:
+    done = run(tmp_path, 10, ROBUST, full_data_checks=True, cluster_by="day", assigned=True)
+    assert done.returncode == 0, done.stdout
+
+
+def test_t_does_not_rescue_clustering_on_a_unit_the_exposure_varies_within(
+    tmp_path: Path,
+) -> None:
+    done = run(tmp_path, 13, USE_T, full_data_checks=True)
+    assert done.returncode != 0
+    assert "clustered on only 13 groups" in (parse_error(done.stdout) or "")

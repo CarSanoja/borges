@@ -18,6 +18,7 @@ binomial score of theta is weighted the same way.
 
 from __future__ import annotations
 
+from borges.analysis.harness_cluster_count import SMALL_SAMPLE_CLUSTERS
 from borges.analysis.model_spec.render_count_margins import count_margin_lines
 from borges.analysis.model_spec.render_design import design_term
 from borges.analysis.model_spec.render_mixed import mixed_lines
@@ -35,7 +36,8 @@ AT_BOUND = ", at the lower bound: no overdispersion, so the model is in effect a
 
 def _fit_arguments(spec: ModelSpecOutput) -> str:
     if spec.cov_type == "cluster":
-        return 'cov_type="cluster", cov_kwds={"groups": groups}'
+        few = f"len(np.unique(groups)) < {SMALL_SAMPLE_CLUSTERS}"
+        return f'cov_type="cluster", cov_kwds={{"groups": groups}}, use_t=bool({few})'
     return f'cov_type="{spec.cov_type}"'
 
 

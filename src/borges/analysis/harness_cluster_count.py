@@ -10,11 +10,19 @@ depending on the design, so the harness refuses fewer than 20, few in every read
 band above it to the judge. The check reads the fit the reported estimate came from, so it applies
 whether the harness or the option's own code asked for the clustering, and it applies to the full
 data only, because the smoke run samples rows and can drop small clusters.
+
+An exposure assigned to whole clusters is the other case. A K-12 run (r_20261009T065046_af1a24)
+had a curriculum adopted by 5 of 10 schools: the baseline clustered by school and this check
+failed it with "use robust errors", which ignore the schools and gave p = 0.004 where clustering
+gives 0.20. When the exposure is the same on every row of each cluster the clustering stays, with
+t critical values on G - 1 degrees of freedom (use_t=True; the template and the cluster hook ask
+for them below SMALL_SAMPLE_CLUSTERS), or the model is fitted on one row per cluster.
 """
 
 from __future__ import annotations
 
 MIN_CLUSTERS = 20
+SMALL_SAMPLE_CLUSTERS = 30
 
 CLUSTER_COUNT_SOURCE = """
     def _cluster_count(fit):
@@ -25,15 +33,48 @@ CLUSTER_COUNT_SOURCE = """
             groups = min(groups) if groups else None
         return int(groups) if groups is not None else None
 
+    def _assigned_by_cluster(fit, exog, index):
+        kwds = getattr(fit, "cov_kwds", None)
+        groups = kwds.get("groups") if isinstance(kwds, dict) else None
+        try:
+            codes = _pd.factorize(_np.asarray(groups).ravel())[0]
+            column = _np.asarray(exog, dtype=float)[:, index]
+        except Exception:
+            return False
+        if codes.shape[0] != column.shape[0]:
+            return False
+        frame = _pd.DataFrame({"group": codes, "exposure": column})
+        return bool((frame.groupby("group")["exposure"].nunique() <= 1).all())
+
+    def _small_sample_t(fit, groups):
+        df = getattr(fit, "df_resid_inference", None)
+        return bool(getattr(fit, "use_t", False)) and df is not None and df <= groups - 1
+
     def _check_few_clusters(estimate):
         if not __FULL_DATA_CHECKS__ or not isinstance(estimate, (int, float)):
             return
-        for _, _, names, model_id in reversed(_designs):
+        for _, exog, names, model_id in reversed(_designs):
             if model_id in _helpers:
                 continue
-            if _exposure_index(_fits.get(model_id), estimate, len(names)) is None:
+            index = _exposure_index(_fits.get(model_id), estimate, len(names))
+            if index is None:
                 continue
-            groups = _cluster_count(_results.get(model_id))
+            fit = _results.get(model_id)
+            groups = _cluster_count(fit)
+            if groups is not None and groups < __MIN_CLUSTERS__ and _assigned_by_cluster(
+                fit, exog, index
+            ):
+                if _small_sample_t(fit, groups):
+                    return
+                raise ValueError(
+                    "the exposure is the same on every row of each of the " + str(groups)
+                    + " clusters (it was assigned to whole clusters), so errors that ignore the"
+                    + " clusters are too narrow, and so is a cluster-robust interval on normal"
+                    + " critical values with this few clusters: keep the clustering and use t"
+                    + " critical values on " + str(groups - 1) + " degrees of freedom,"
+                    + " .fit(cov_type='cluster', cov_kwds={'groups': groups}, use_t=True), or fit"
+                    + " one row per cluster (the cluster means)"
+                )
             if groups is not None and groups < __MIN_CLUSTERS__:
                 raise ValueError(
                     "the errors are clustered on only " + str(groups) + " groups: with fewer than "

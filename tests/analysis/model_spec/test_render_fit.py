@@ -97,3 +97,28 @@ def test_quasi_poisson_with_a_sandwich_covariance_is_refused() -> None:
     spec = make_spec("quasipoisson", report="rate_ratio", cov_type="HC0")
     assert any("ignores that scale" in p for p in validate_spec(spec, ["y_count", "x"]))
     assert not validate_spec(make_spec("quasipoisson", report="rate_ratio"), ["y_count", "x"])
+
+
+def _clustered(groups: int) -> tuple[dict, object]:
+    rng = np.random.default_rng(17)
+    g = np.arange(300) % groups
+    data = pd.DataFrame({"g": g, "x": (g % 2).astype(float)})
+    data["y_cont"] = 0.5 * data["x"] + rng.normal(size=300) + rng.normal(size=groups)[g]
+    spec = make_spec("ols", cov_type="cluster", cluster="g")
+    namespace: dict = {}
+    exec(render_code(spec), namespace)
+    got = namespace["estimate"](data, {})
+    exog = sm.add_constant(data[["x"]])
+    return got, (sm.OLS(data["y_cont"], exog), {"groups": data["g"]})
+
+
+def test_ten_clusters_get_t_critical_values_on_nine_degrees_of_freedom() -> None:
+    got, (model, kwds) = _clustered(10)
+    reference = model.fit(cov_type="cluster", cov_kwds=kwds, use_t=True)
+    assert got["p_value"] == pytest.approx(float(reference.pvalues["x"]), rel=1e-6)
+
+
+def test_forty_clusters_keep_normal_critical_values() -> None:
+    got, (model, kwds) = _clustered(40)
+    reference = model.fit(cov_type="cluster", cov_kwds=kwds)
+    assert got["p_value"] == pytest.approx(float(reference.pvalues["x"]), rel=1e-6)

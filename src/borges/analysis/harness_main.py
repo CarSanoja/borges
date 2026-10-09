@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from borges.analysis.harness_cell_check import CELL_CHECK_SOURCE, MIN_CELL_ROWS
 from borges.analysis.harness_cluster import CLUSTER_MODELS, CLUSTER_SOURCE
-from borges.analysis.harness_cluster_count import CLUSTER_COUNT_SOURCE, MIN_CLUSTERS
+from borges.analysis.harness_cluster_count import (
+    CLUSTER_COUNT_SOURCE,
+    MIN_CLUSTERS,
+    SMALL_SAMPLE_CLUSTERS,
+)
 from borges.analysis.harness_covariates import COVARIATES_SOURCE
 from borges.analysis.harness_design import (
     DESIGN_CONDITION_LIMIT,
@@ -27,7 +31,7 @@ from borges.analysis.harness_rebuild import REBUILD_SOURCE
 from borges.analysis.harness_result_checks import RESULT_CHECKS_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 from borges.analysis.harness_validate import VALIDATE_SOURCE
-from borges.analysis.model_spec.render_design import ALIAS_NOTE
+from borges.analysis.model_spec.render_alias import ALIAS_NOTE
 
 _TEMPLATE = """
 
@@ -231,6 +235,7 @@ MAIN_TEMPLATE = (
     .replace("__MIN_CELL_ROWS__", repr(MIN_CELL_ROWS))
     .replace("__MIN_CLUSTERS__", repr(MIN_CLUSTERS))
     .replace("__CLUSTER__", CLUSTER_SOURCE.strip("\n"))
+    .replace("__SMALL_SAMPLE_CLUSTERS__", repr(SMALL_SAMPLE_CLUSTERS))
     .replace("__CLUSTER_MODELS__", repr(CLUSTER_MODELS))
     .replace("__FINGERPRINT__", FINGERPRINT_SOURCE.strip("\n"))
     .replace("__DESIGN_CONDITION_LIMIT__", repr(DESIGN_CONDITION_LIMIT))

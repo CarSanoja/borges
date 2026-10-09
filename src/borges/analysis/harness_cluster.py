@@ -58,6 +58,8 @@ CLUSTER_SOURCE = """
                 groups = _cluster_groups(self, frame, unit)
                 kwargs["cov_type"] = "cluster"
                 kwargs["cov_kwds"] = {"groups": groups}
+                if len(_np.unique(groups)) < __SMALL_SAMPLE_CLUSTERS__:
+                    kwargs["use_t"] = True
                 _clustered.append(type(self).__name__)
                 return original(self, *args, **kwargs)
 
