@@ -32,6 +32,7 @@ from borges.analysis.harness_rebuild import REBUILD_SOURCE
 from borges.analysis.harness_result_checks import RESULT_CHECKS_SOURCE
 from borges.analysis.harness_split_half import SPLIT_HALF_SOURCE
 from borges.analysis.harness_validate import VALIDATE_SOURCE
+from borges.analysis.harness_within_copy import WITHIN_COPY_SOURCE, WITHIN_MIN_ROWS
 from borges.analysis.model_spec.render_alias import ALIAS_NOTE
 
 _TEMPLATE = """
@@ -125,6 +126,7 @@ __FINGERPRINT__
                 _check_offset(design)
                 _check_weights(design)
                 _check_main_effects(df, reported)
+                _check_within_copy(reported)
                 _check_thin_cells(reported)
                 _check_few_clusters(reported)
                 ignored = _left_out(design, ctx, df, trace)
@@ -230,6 +232,7 @@ MAIN_TEMPLATE = (
                 COVARIATES_SOURCE,
                 OUTCOME_SOURCE,
                 RESULT_CHECKS_SOURCE,
+                WITHIN_COPY_SOURCE,
             )
         ),
     )
@@ -237,6 +240,7 @@ MAIN_TEMPLATE = (
     .replace("__LOG_LINK_MODELS__", repr(LOG_LINK_MODELS))
     .replace("__PRODUCT_MAX_COLUMNS__", repr(PRODUCT_MAX_COLUMNS))
     .replace("__MIN_CELL_ROWS__", repr(MIN_CELL_ROWS))
+    .replace("__WITHIN_MIN_ROWS__", repr(WITHIN_MIN_ROWS))
     .replace("__MIN_CLUSTERS__", repr(MIN_CLUSTERS))
     .replace("__CLUSTER__", CLUSTER_SOURCE.strip("\n"))
     .replace("__SMALL_SAMPLE_CLUSTERS__", repr(SMALL_SAMPLE_CLUSTERS))
