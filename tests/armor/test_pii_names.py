@@ -22,14 +22,16 @@ def test_other_headers_are_not_names(header: str | None) -> None:
 
 
 @pytest.mark.parametrize(
-    "value", ["Maria Lopez", "Juan de la Cruz", "Anne-Marie O'Neil", "John Q. Public Smith"]
+    "value",
+    ["Maria Lopez", "Juan de la Cruz", "Anne-Marie O'Neil", "John Q. Public Smith", "Juan Perez0"],
 )
 def test_capitalised_alphabetic_words_are_names(value: str) -> None:
     assert is_name_value(value)
 
 
 @pytest.mark.parametrize(
-    "value", ["Sales", "new york city", "Room 12", "Maria", "A B C D E", "Alpha Beta 7"]
+    "value",
+    ["Sales", "new york city", "Room 12", "Maria", "A B C D E", "Alpha Beta 7", "Galaxy S21"],
 )
 def test_other_strings_are_not_names(value: str) -> None:
     assert not is_name_value(value)

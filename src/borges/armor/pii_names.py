@@ -45,7 +45,10 @@ def is_name_header(column: str | None) -> bool:
 
 def _capitalised_word(word: str) -> bool:
     letters = WORD_PUNCTUATION.sub("", word)
-    return bool(letters) and letters.isalpha() and word[0].isupper()
+    stem = letters.rstrip("0123456789")
+    if stem != letters and not any(c.islower() for c in stem):
+        return False
+    return bool(stem) and stem.isalpha() and word[0].isupper()
 
 
 def is_name_value(text: str) -> bool:
