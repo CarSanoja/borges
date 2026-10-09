@@ -1,7 +1,0 @@
-commit b5c9510 Landing: point to the repeats, bill uploads when live models exist, and say an upload needs a key before submit
-started 2026-10-06T00:12:00Z
-typecheck: clean
- Test Files  66 passed (66)
-      Tests  296 passed (296)
-build exit 0
-finished 2026-10-06T00:12:12Z
