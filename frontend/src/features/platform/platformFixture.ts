@@ -33,7 +33,7 @@ export function samplePlatform(): PlatformStatus {
       pillar("gateway", "Agent Gateway", { policy_sha: "b".repeat(64), agents: { judge: {} }, run_max_cost_usd: 0.5 }, "curl -s localhost:8000/api/policy", [
         { label: "Policy", path: "/api/policy" },
       ]),
-      pillar("armor", "Model Armor", { screens: ["a", "b"], pii_kinds: ["email"], corpus: { detected: 93, attacks: 93, false_positives: 0 } }, "uv run pytest tests/armor/test_corpus.py -s", [
+      pillar("armor", "Model Armor", { screens: ["a", "b"], pii_kinds: ["email"], corpus: { detected: 93, attacks: 93, false_positives: 0, blind_held_out: { caught: 19, attacks: 70, false_positives: 0, benign: 70, second_stage_caught: 33 }, fresh_held_out: { caught: 40, attacks: 70, false_positives: 2, benign: 70 } } }, "uv run pytest tests/armor/test_corpus.py -s", [
         { label: "Trace", path: "/api/runs" },
       ]),
       pillar("observability", "Agent Observability", { exporter: "local", audit_chain: { ok: true, records: 4, anchor_present: false } }, "borges audit verify global", [

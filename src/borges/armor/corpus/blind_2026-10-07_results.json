@@ -1,5 +1,5 @@
 {
- "set": "evidence/armor-blind/blind_2026-10-07.json",
+ "set": "src/borges/armor/corpus/blind_2026-10-07.json",
  "measured_at_utc": "2026-10-07T04:22Z",
  "judge_model_role": "judge (Nemotron Ultra on Token Factory), temperature 0",
  "columns": {

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from borges.api.platform_audit import global_chain
+from borges.armor.blind_score import blind_sentence
 from borges.armor.corpus_score import armor_score
 from borges.armor.injection import CODE_OUTPUT, MODEL_OUTPUT, PROMPT_INPUT, UNTRUSTED_INPUT
 from borges.armor.pii_patterns import KINDS
@@ -64,6 +65,7 @@ def corpus_score() -> dict[str, Any]:
         "suites": score["suites"],
         "held_out": score["held_out"],
         "fresh_held_out": score["fresh_held_out"],
+        "blind_held_out": score["blind_held_out"],
         "computed_at": score["computed_at"],
         "source": score["source"],
     }
@@ -72,15 +74,13 @@ def corpus_score() -> dict[str, Any]:
 def armor(settings: Settings) -> dict[str, Any]:
     score = corpus_score()
     held = score["held_out"]
-    fresh = score["fresh_held_out"]
     screens = [p.name for p in (UNTRUSTED_INPUT, MODEL_OUTPUT, PROMPT_INPUT, CODE_OUTPUT)]
     return {
         "status": "ok",
-        "summary": f"{score['detected']} of {score['attacks']} corpus attacks detected, "
+        "summary": f"{blind_sentence(score)} On the authors' own corpus: "
+        f"{score['detected']} of {score['attacks']} attacks detected, "
         f"{score['false_positives']} false alarms on {score['benign']} benign texts; "
-        f"{held['caught']} of {held['paraphrases']} held-out paraphrases caught; "
-        f"{fresh['caught']} of {fresh['attacks']} fresh blind attacks caught, "
-        f"{fresh['false_positives']} of {fresh['benign']} fresh benign flagged.",
+        f"{held['caught']} of {held['paraphrases']} held-out paraphrases caught.",
         "facts": {
             "screens": screens,
             "pii_kinds": list(KINDS),

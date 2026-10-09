@@ -32,7 +32,9 @@ describe("PlatformPage", () => {
   it("shows the measured armor detection and omits tenants for anonymous callers", () => {
     const pillars = samplePlatform().pillars;
     const armor = pillars.find((p) => p.id === "armor")!;
-    expect(factRows(armor)).toContainEqual(["detected", "93 of 93"]);
+    expect(factRows(armor)).toContainEqual(["own corpus", "93 of 93"]);
+    expect(factRows(armor)[0]).toEqual(["blind set, 7 Oct", "19 of 70 (33 with stage 2)"]);
+    expect(factRows(armor)).toContainEqual(["blind set, 4 Oct", "40 of 70"]);
     const memory = pillars.find((p) => p.id === "memory")!;
     expect(factRows(memory).map(([label]) => label)).not.toContain("tenants");
   });

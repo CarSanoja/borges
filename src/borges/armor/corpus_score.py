@@ -4,6 +4,7 @@ import threading
 import time
 from typing import Any
 
+from borges.armor.blind_score import blind_score
 from borges.armor.corpus_eval import evaluate, flagged, load
 from borges.armor.fresh_score import fresh_score
 
@@ -57,6 +58,7 @@ def compute_score() -> dict[str, Any]:
             "false_positives": fresh["false_positives"],
             "routed_to_second_stage": fresh["routed_to_second_stage"]["misses_routed"],
         },
+        "blind_held_out": blind_score(),
         "computed_at": time.time(),
         "source": SOURCE,
     }

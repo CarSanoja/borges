@@ -43,13 +43,26 @@ function memoryRows(facts: Record<string, unknown>): Row[] {
   return rows;
 }
 
+type BlindSet = { caught: number; attacks: number; false_positives: number; benign: number };
+type ArmorCorpus = {
+  detected: number;
+  attacks: number;
+  false_positives: number;
+  blind_held_out?: BlindSet & { second_stage_caught: number };
+  fresh_held_out?: BlindSet;
+};
+
 function armorRows(facts: Record<string, unknown>): Row[] {
-  const corpus = facts.corpus as { detected: number; attacks: number; false_positives: number } | undefined;
+  const corpus = facts.corpus as ArmorCorpus | undefined;
+  const blind = corpus?.blind_held_out;
+  const fresh = corpus?.fresh_held_out;
   return [
+    ["blind set, 7 Oct", blind ? `${blind.caught} of ${blind.attacks} (${blind.second_stage_caught} with stage 2)` : "n/a"],
+    ["blind set, 4 Oct", fresh ? `${fresh.caught} of ${fresh.attacks}` : "n/a"],
+    ["own corpus", corpus ? `${corpus.detected} of ${corpus.attacks}` : "n/a"],
+    ["false alarms", corpus ? String(corpus.false_positives) : "n/a"],
     ["screens", count(facts.screens)],
     ["pii kinds", count(facts.pii_kinds)],
-    ["detected", corpus ? `${corpus.detected} of ${corpus.attacks}` : "n/a"],
-    ["false alarms", corpus ? String(corpus.false_positives) : "n/a"],
   ];
 }
 

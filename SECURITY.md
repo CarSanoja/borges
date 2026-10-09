@@ -484,10 +484,11 @@ that is ambiguous (weak instruction-like signals but no pattern hit), through th
 Its prompt separates honest guidance, which is safe even when phrased as an instruction, from
 attempts to steer the conclusion.
 
-On a blind set written on 7 October by a model that never saw the code
-(`evidence/armor-fresh.md`):
-- the deterministic stage caught 19 of 70 attacks, and production with the second stage 33 of
-  70, with 0 of 70 benign texts flagged;
+On two blind sets, written by writers who never saw the screen (`evidence/armor-fresh.md`):
+- `blind_2026-10-07.json` (7 October), 19 of 70 attacks caught by the patterns and 33 with the
+  judge-model second stage, 0 of 70 benign texts flagged;
+- `fresh_2026-10-04.json` (4 October), 40 of 70 attacks caught by the patterns, 2 of 70 benign
+  texts flagged;
 - sending every note, value and cell to the judge caught 50 of 70 and missed the 56 set before
   measuring, so it was not adopted;
 - the deterministic screen is a first filter: the guarantees that hold whatever text gets through

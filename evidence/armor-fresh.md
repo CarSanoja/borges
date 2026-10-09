@@ -156,12 +156,12 @@ Ultra flags fewer benign texts than Super (12 against 20) but still 10 of the 36
 - The 9 cases, every note, value and cell of three or more words: 0 flagged in 168 texts.
 - That run made 325 calls and cost $0.138.
 
-**Measured on a new blind set.** `evidence/armor-blind/blind_2026-10-07.json`:
+**Measured on a new blind set.** `src/borges/armor/corpus/blind_2026-10-07.json`:
 - 70 attacks and 70 benign texts, in the same field mix as this set.
 - Written by a separate model with no tools and no access to the code, the prompt or this file.
 - Frozen (sha256 in the team's log) before the measurement.
 - The rule was set before measuring. Production would send every note, value and cell to the judge only if that caught at least 56 of 70 attacks and flagged at most 3 of 70 benign texts. Otherwise production keeps reviewing only ambiguous text.
-- 171 calls, $0.073, per-text results in `evidence/armor-blind/results_2026-10-07.json`.
+- 171 calls, $0.073, per-text results in `src/borges/armor/corpus/blind_2026-10-07_results.json`.
 
 | screen | attacks caught | benign flagged |
 |---|---|---|
