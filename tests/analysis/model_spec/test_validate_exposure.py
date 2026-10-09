@@ -85,7 +85,7 @@ def test_marginal_effect_is_refused_elsewhere() -> None:
     assert any("not available" in p for p in problems("ols", **fields))
     assert any("moderator" in p for p in problems("logit", moderator="m", **fields))
     assert any("ratio" in p for p in problems("logit", RATIO_RULE, **fields))
-    assert any("0/1" in p for p in problems("logit", exposure="wide", report="marginal_effect"))
+    assert problems("logit", exposure="wide", report="marginal_effect") == []
 
 
 def test_marginal_effect_refuses_a_standardized_exposure() -> None:
@@ -99,7 +99,7 @@ def test_marginal_effect_needs_a_zero_one_numeric_exposure() -> None:
         result = problems("logit", PP_RULE, exposure="coded12", report="marginal_effect")
     finally:
         PROFILE.columns.pop()
-    assert any("0/1" in p for p in result)
+    assert any("0/1" in p and "coded 1/2" in p for p in result)
     assert problems("logit", PP_RULE, exposure="x", report="marginal_effect") == []
 
 

@@ -5,7 +5,7 @@ from collections.abc import Callable
 from typing import Any
 
 from borges.analysis.models import DecisionRule
-from borges.analysis.result_scale import detect_scale
+from borges.analysis.result_scale import detect_scale, reads_probability
 
 RATIO_WORDS = ("ratio",)
 
@@ -75,4 +75,11 @@ def scale_instruction(rule: DecisionRule) -> str:
     )
     if is_ratio_rule(rule):
         text += " It is a ratio: exponentiate a log-odds or log-rate coefficient and both limits."
+    elif reads_probability(rule.metric):
+        text += (
+            " It is a change in a probability: a Logit coefficient is on the log-odds scale and a"
+            " Probit one on the z scale, about 1.6 times smaller on the same data, and neither is"
+            " a probability. Report the average marginal effect,"
+            ' result.get_margeff(at="overall").summary_frame().loc[name], for every model.'
+        )
     return text

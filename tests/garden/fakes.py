@@ -164,6 +164,7 @@ def install_fake_harness(monkeypatch: pytest.MonkeyPatch) -> None:
             option: Option,
             design_check: bool = True,
             standardised: bool = False,
+            probability: bool = False,
             full_data_checks: bool = False,
             row_key: str | None = None,
         ) -> str:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from borges.analysis import harness
 from borges.analysis.model_spec.validate_standardized import reads_standardised
 from borges.analysis.models import AnalysisResult, Step
+from borges.analysis.result_scale import reads_probability
 from borges.analysis.row_key import row_key
 from borges.garden.executor import GardenExecutor
 from borges.garden.executor_errors import SANDBOX_FAILED, failure_detail
@@ -25,6 +26,7 @@ async def run_on_root(
         design_check=executor.design_check,
         full_data_checks=executor.full_data_checks,
         standardised=reads_standardised(executor.plan.decision_rule.metric),
+        probability=reads_probability(executor.plan.decision_rule.metric),
         row_key=row_key(executor.plan.dataset),
     )
     files = {harness.step_filename(step.id, option.id): script.encode()}

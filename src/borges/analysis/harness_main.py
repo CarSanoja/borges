@@ -134,6 +134,7 @@ __FINGERPRINT__
                     trace["note"] = (alias + "; " + trace["note"] if trace["note"] else alias)[:500]
             result = _validate(raw_result)
             _check_standardised_outcome(reported)
+            _check_probability_scale(reported)
             _use_model_rows(df, reported, result, trace)
             _check_copied_units(df, design, result)
             _check_model_cuts(df, result)

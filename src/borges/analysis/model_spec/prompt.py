@@ -59,8 +59,9 @@ only, no random slopes, crossed or nested effects.
 when the decision rule asks for a standardised coefficient, z-score the outcome, the exposure \
 and any moderator.
 - report: "coefficient", "odds_ratio" (logit only), "rate_ratio" (count families only) or \
-"marginal_effect" (no moderator): for logit, the average marginal effect of a 0/1 exposure on the \
-probability scale, the right report when the decision rule is a difference in proportions; for \
+"marginal_effect" (no moderator): for logit, the average marginal effect of the exposure on the \
+probability scale (from 0 to 1 for a 0/1 exposure, the average slope per unit for a numeric one), \
+the right report when the decision rule is a difference in proportions or a probability; for \
 the count families, the average number of additional events per unit of a numeric exposure, the \
 right report when the decision rule asks for additional counts (deaths, cards, calls) rather than \
 a ratio. Never compute additional counts from exp(intercept).

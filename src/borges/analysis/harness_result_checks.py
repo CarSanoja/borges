@@ -11,6 +11,11 @@ total back onto every session and fitted 21,624 session rows for 15,000 users: e
 once per session and the run said SHIP (p < 0.001) where one row per user gives p = 0.07. When the
 outcome and the exposure are both constant within an identifier the fitted rows repeat, the rows
 are copies of one unit, and the step fails so the repair fits one row per unit.
+
+An audit run (r_20261009T083215_3c1abc) read the effect of review hours on the probability of a
+restatement from a logit coefficient and its alternative from a probit one; the two scales differ
+by about 1.6, and the summary called the gap the effect "roughly halving". Under a rule that reads
+a probability, a Logit, Probit or binomial GLM coefficient fails the step.
 """
 
 from __future__ import annotations
@@ -65,6 +70,26 @@ _SOURCE = """
                 + " unit, so each counts once per row; fit one row per " + unit
                 + " (data = df.drop_duplicates(" + unit + ")) or aggregate with"
                 + " groupby(...).agg(...) instead of merging the totals back"
+            )
+
+    def _check_probability_scale(estimate):
+        if not (__DESIGN_CHECK__ and __PROBABILITY__):
+            return
+        for name, model_id in _reporting_models(estimate):
+            family = getattr(_endogs.get(model_id), "family", None)
+            link = type(getattr(family, "link", None)).__name__.lower()
+            binomial = type(family).__name__ == "Binomial" and link != "identity"
+            if name not in ("Logit", "Probit") and not binomial:
+                return
+            scale = "z" if "probit" in (name + link).lower() else "log-odds"
+            raise ValueError(
+                "the decision rule reads a change in a probability, but the estimate is the "
+                + name + " coefficient, on the " + scale + " scale: it is no probability, and a"
+                + " logit and a probit coefficient differ by about 1.6 on the same data. Report"
+                + " the average marginal effect: row ="
+                + " fit.get_margeff(at='overall').summary_frame().loc[<exposure>], with"
+                + " row['dy/dx'], row['Conf. Int. Low'], row['Cont. Int. Hi.'] and"
+                + " row['Pr(>|z|)']"
             )
 
     def _check_standardised_outcome(estimate):

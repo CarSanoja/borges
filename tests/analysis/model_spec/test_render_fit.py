@@ -56,6 +56,25 @@ def test_marginal_effect_is_the_difference_of_mean_predicted_probabilities() -> 
     assert got["n"] == len(data) and got["extra"]["std_err"] > 0
 
 
+def test_a_numeric_exposure_gets_its_average_slope_on_the_probability_scale() -> None:
+    data = experiment()
+    spec = make_spec(
+        "logit",
+        outcome="converted",
+        exposure="age",
+        covariates=["region"],
+        report="marginal_effect",
+    )
+    assert validate_spec(spec, list(data.columns), None, None) == []
+    namespace: dict = {}
+    exec(render_code(spec), namespace)
+    got = namespace["estimate"](data, {})
+    fit = sm.Logit(data["converted"], sm.add_constant(data[["age", "region"]])).fit(disp=0)
+    density = fit.predict() * (1 - fit.predict())
+    assert got["estimate"] == pytest.approx(float(fit.params["age"] * density.mean()), abs=1e-6)
+    assert got["estimate"] < fit.params["age"] and got["ci_low"] < got["estimate"] < got["ci_high"]
+
+
 def test_odds_ratio_and_coefficient_reports_are_unchanged_for_a_text_exposure() -> None:
     data = experiment()
     spec = make_spec("logit", outcome="converted", exposure="variant", exposure_level="treatment")

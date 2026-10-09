@@ -23,9 +23,16 @@ def column_levels(column: ColumnProfile) -> list[str]:
 
 
 def _binary_problems(name: str | None, column: ColumnProfile) -> list[str]:
+    """A two-valued exposure is coded 0/1; a numeric one with more values gets its average slope.
+
+    An audit run (r_20261009T083215_3c1abc) asked for the effect of one more review hour on the
+    probability of a restatement: the template refused hours with 438 values, the free code
+    reported the logit coefficient and its probit alternative the probit one, and the summary read
+    their 1.6-fold scale gap as the effect "roughly halving".
+    """
     low, high = column.summary.get("min"), column.summary.get("max")
-    if column.n_unique > 2 or (low is not None and high is not None and (low, high) != (0, 1)):
-        return [f"marginal_effect needs a 0/1 exposure; '{name}' has {column.n_unique} values"]
+    if column.n_unique == 2 and low is not None and high is not None and (low, high) != (0, 1):
+        return [f"marginal_effect needs a 0/1 exposure; '{name}' is coded {low:g}/{high:g}"]
     return []
 
 

@@ -21,6 +21,11 @@ def is_proportion_rule(rule: DecisionRule) -> bool:
     return PROPORTION_WORDS.search(rule.metric) is not None and "ratio" not in rule.metric.lower()
 
 
+def reads_probability(metric: str) -> bool:
+    words = PROPORTION_WORDS.search(metric) or PERCENTAGE_POINTS.search(metric)
+    return words is not None and "ratio" not in metric.lower()
+
+
 def scale_error(raw: dict[str, object] | AnalysisResult, scale: float) -> str | None:
     if scale == 1.0:
         return None

@@ -65,6 +65,17 @@ def test_percentage_point_instruction_asks_for_a_proportion() -> None:
     assert "exactly that scale" not in text
 
 
+def test_a_probability_rule_asks_for_the_marginal_effect_of_a_logit_or_probit() -> None:
+    rule = DecisionRule(
+        metric="effect of one more review hour on the probability of a restatement",
+        comparator=Comparator.LT,
+        threshold=0.0,
+    )
+    text = scale_instruction(rule)
+    assert "log-odds" in text and "Probit" in text and "get_margeff" in text
+    assert "get_margeff" not in scale_instruction(ODDS)
+
+
 def make_step() -> tuple[Step, Option]:
     option = Option(id="o", label="l", rationale="r", spec="s", is_default=True, code="x")
     step = Step(id="s", title="t", kind="model", description="d", options=[option])

@@ -4,6 +4,7 @@ import json
 
 from borges.analysis import harness
 from borges.analysis.model_spec.validate_standardized import reads_standardised
+from borges.analysis.result_scale import reads_probability
 from borges.runs.models import RunSnapshot
 
 SCRIPT_TEMPLATE = '''#!/usr/bin/env python3
@@ -97,7 +98,10 @@ def build_script(snapshot: RunSnapshot, universe_id: str, filename: str) -> str:
                 "option": option.id,
                 "filename": harness.step_filename(step.id, option.id),
                 "source": harness.render_step(
-                    step, option, standardised=reads_standardised(plan.decision_rule.metric)
+                    step,
+                    option,
+                    standardised=reads_standardised(plan.decision_rule.metric),
+                    probability=reads_probability(plan.decision_rule.metric),
                 ),
             }
         )

@@ -38,11 +38,13 @@ def workdir(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def run(workdir: Path, code: str, standardised: bool) -> subprocess.CompletedProcess:
+def run(
+    workdir: Path, code: str, standardised: bool = False, probability: bool = False
+) -> subprocess.CompletedProcess:
     option = Option(id="o", label="l", rationale="r", spec="s", is_default=True, code=code)
     step = Step(id="model", title="t", kind="model", description="d", options=[option])
     path = workdir / "step.py"
-    path.write_text(render_step(step, option, standardised=standardised))
+    path.write_text(render_step(step, option, standardised=standardised, probability=probability))
     return subprocess.run(
         [sys.executable, str(path)], cwd=workdir, capture_output=True, text=True, timeout=120
     )
@@ -104,3 +106,49 @@ def test_one_row_per_user_passes(workdir: Path) -> None:
     sessions(workdir)
     code = PER_USER.replace("DATA", "df.drop_duplicates('user_id')")
     assert run(workdir, code, standardised=False).returncode == 0
+
+
+BINARY = """
+import statsmodels.formula.api as smf
+
+
+def estimate(df, ctx):
+    data = df.dropna()
+    data = data.assign(b=(data["y"] > 0).astype(float))
+    fit = smf.FAMILY("b ~ x + c", data=data).fit(disp=0)
+    REPORT
+"""
+COEFFICIENT = (
+    'low, high = fit.conf_int().loc["x"]\n'
+    '    return {"estimate": float(fit.params["x"]), "ci_low": float(low), "ci_high": float(high),'
+    ' "p_value": float(fit.pvalues["x"]), "n": int(fit.nobs)}'
+)
+MARGIN = (
+    'row = fit.get_margeff(at="overall").summary_frame().loc["x"]\n'
+    '    return {"estimate": float(row["dy/dx"]), "ci_low": float(row["Conf. Int. Low"]),'
+    ' "ci_high": float(row["Cont. Int. Hi."]), "p_value": float(row["Pr(>|z|)"]),'
+    ' "n": int(fit.nobs)}'
+)
+
+
+def binary(family: str, report: str) -> str:
+    return BINARY.replace("FAMILY", family).replace("REPORT", report)
+
+
+@pytest.mark.parametrize(("family", "scale"), [("logit", "log-odds"), ("probit", "z scale")])
+def test_a_logit_or_probit_coefficient_fails_under_a_probability_rule(
+    workdir: Path, family: str, scale: str
+) -> None:
+    done = run(workdir, binary(family, COEFFICIENT), probability=True)
+    assert done.returncode == 1
+    error = parse_error(done.stdout)
+    assert error is not None and "reads a change in a probability" in error
+    assert scale in error and "get_margeff" in error
+
+
+def test_the_marginal_effect_passes_under_a_probability_rule(workdir: Path) -> None:
+    assert run(workdir, binary("probit", MARGIN), probability=True).returncode == 0
+
+
+def test_a_logit_coefficient_passes_when_the_rule_reads_no_probability(workdir: Path) -> None:
+    assert run(workdir, binary("logit", COEFFICIENT)).returncode == 0
