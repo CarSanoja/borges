@@ -6,6 +6,11 @@ from borges.analysis.prompts.replan import _columns_at, _reads
 
 REASON_CHARS = 400
 
+JUDGED = "A methods judge rejected every alternative you proposed for this step"
+FAILED = (
+    "Every alternative you proposed for this step failed when its code ran on the data or did "
+    "not do what its spec says"
+)
 SYSTEM = """You are a senior statistician completing one step of an analysis plan. A methods \
 judge rejected every alternative you proposed for this step, so it keeps a single option and the \
 analysis can no longer show whether the result depends on that choice.
@@ -36,7 +41,7 @@ Return only JSON with an "options" list matching the requested schema."""
 
 
 def build_refill_messages(
-    plan: AnalysisPlan, step: Step, rejected: list[tuple[Option, str]]
+    plan: AnalysisPlan, step: Step, rejected: list[tuple[Option, str]], failed: bool = False
 ) -> list[dict[str, str]]:
     current = [{"id": o.id, "label": o.label, "spec": o.spec} for o in step.options]
     refused = [
@@ -53,4 +58,10 @@ def build_refill_messages(
         f"Current option: {compact_json(current)}\n"
         f"Rejected alternatives and the judge's reasons: {compact_json(refused)}"
     )
-    return messages(SYSTEM, user)
+    if not failed:
+        return messages(SYSTEM, user)
+    system = SYSTEM.replace(JUDGED, FAILED).replace(
+        "meets the judge's objections to the rejected ones", "avoids what made the lost ones fail"
+    )
+    lost = user.replace("Rejected alternatives and the judge's", "Lost alternatives and the")
+    return messages(system, lost.replace('"judge_reason"', '"reason"'))

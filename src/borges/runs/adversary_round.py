@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from borges.analysis.adversary import propose_options
 from borges.analysis.coder import _smoke_repair, code_option
 from borges.analysis.judge import judge_option
@@ -50,13 +52,14 @@ async def _smoke(
     return True, None
 
 
-async def _judge_and_code(
+async def judge_and_code(
     llm: LLMClient,
     plan: AnalysisPlan,
     emitter: RunEmitter,
     proposal: Proposal,
     smoke: SmokeConfig | None = None,
     memory: RunMemory | None = None,
+    origin: Literal["planner", "adversary"] = "adversary",
 ) -> tuple[str, Option] | None:
     step = plan.step(proposal.step_id)
     option = expand_option(plan, step, proposal.option)
@@ -73,7 +76,7 @@ async def _judge_and_code(
             defensibility=0.0,
             accepted=False,
             reason=f"judge failed: {exc}",
-            origin="adversary",
+            origin=origin,
         )
         await emitter.emit("option.judged", rejected.model_dump(mode="json"))
         return None
@@ -83,7 +86,7 @@ async def _judge_and_code(
         defensibility=judgement.defensibility,
         accepted=judgement.accepted,
         reason=judgement.reason,
-        origin="adversary",
+        origin=origin,
     )
     await emitter.emit("option.judged", judged.model_dump(mode="json"))
     if not judgement.accepted:
@@ -142,7 +145,7 @@ async def run_adversary_round(
         payload = {"step_id": proposal.step_id, "option": proposal.option.model_dump(mode="json")}
         await emitter.emit("option.proposed", payload)
     outcomes = await gather_cancelling(
-        _judge_and_code(llm, plan, emitter, p, smoke, memory) for p in proposals
+        judge_and_code(llm, plan, emitter, p, smoke, memory) for p in proposals
     )
     accepted = [o for o in outcomes if o is not None]
     for step_id, option in accepted:

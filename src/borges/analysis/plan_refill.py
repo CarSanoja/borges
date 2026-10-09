@@ -15,12 +15,13 @@ MAX_REFILL_OPTIONS = 2
 Rejected = list[tuple[Option, str]]
 
 
-def refill_key(step_id: str) -> str:
-    return f"planner:refill:{step_id}"
+def refill_key(step_id: str, failed: bool = False) -> str:
+    return f"planner:refill{'-code' if failed else ''}:{step_id}"
 
 
 def collapsed_steps(plan: AnalysisPlan, before: dict[str, int]) -> list[Step]:
-    """Steps the judge left with one option, when that leaves the plan too few branching steps."""
+    """Steps the judge or the coder left with one option, when that leaves the plan too few
+    branching steps."""
     was = sum(1 for count in before.values() if count > 1)
     now = sum(1 for step in plan.steps if len(step.options) > 1)
     if was < MIN_BRANCHING_STEPS or now >= MIN_BRANCHING_STEPS:
@@ -33,13 +34,15 @@ def _signature(spec: str) -> str:
 
 
 async def propose_refill(
-    llm: LLMClient, plan: AnalysisPlan, step: Step, rejected: Rejected
+    llm: LLMClient, plan: AnalysisPlan, step: Step, rejected: Rejected, failed: bool = False
 ) -> list[Option]:
-    """New non-default alternatives for a step whose alternatives the judge all rejected."""
-    messages = build_refill_messages(plan, step, rejected)
+    """New non-default alternatives for a step whose alternatives the judge all rejected, or
+    (failed) whose alternatives all failed to run."""
+    messages = build_refill_messages(plan, step, rejected, failed)
+    key = refill_key(step.id, failed)
     try:
         response = await llm.complete(
-            Role.PLANNER, messages, key=refill_key(step.id), schema=ReplanOutput, max_tokens=4096
+            Role.PLANNER, messages, key=key, schema=ReplanOutput, max_tokens=4096
         )
         planned = ReplanOutput.model_validate(response.parsed)
     except (LLMError, ValidationError):

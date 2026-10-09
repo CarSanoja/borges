@@ -96,3 +96,15 @@ async def test_a_refill_that_builds_its_result_under_another_name_is_left_out() 
     llm = FakeLLM({"planner:refill:a": out})
     options = await propose_refill(llm, plan, step, [(make_option("a1"), "no")])
     assert [o.id for o in options] == ["asinh"]
+
+
+async def test_alternatives_lost_to_failed_code_are_asked_for_again_as_lost_not_rejected() -> None:
+    plan = wide_plan({"a": 1, "m": 1})
+    lost = [(make_option("a1"), "its code failed")]
+    llm = FakeLLM({"planner:refill-code:a": planned(("a_new", "another cut-off", False))})
+    options = await propose_refill(llm, plan, plan.step("a"), lost, failed=True)
+    assert [o.id for o in options] == ["a_new"]
+    system, user = (m["content"] for m in llm.calls[0].messages)
+    assert "failed when its code ran on the data" in system
+    assert "methods judge rejected" not in system and "judge's objections" not in system
+    assert "Lost alternatives and the reasons" in user and '"reason":"its code failed"' in user

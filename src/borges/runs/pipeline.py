@@ -22,6 +22,7 @@ from borges.garden.executor import GardenExecutor
 from borges.garden.models import Flip, Garden, Report, SearchSummary
 from borges.llm.client import LLMClient, UsageTotals
 from borges.memory.run_memory import RunMemory
+from borges.runs.coded_refill import refill_coded
 from borges.runs.emitter import RunEmitter
 from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
@@ -178,6 +179,7 @@ class Pipeline:
                 smoke=smoke,
                 summary=self.coding,
             )
+            await refill_coded(self, planned, plan)
             agree_count_specs(plan)
             seed_cluster_options(plan)
             await publish_plan(self.emitter, plan)
