@@ -42,9 +42,9 @@ DEFAULT_ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.CODER: LIGHTNING,
     Role.REPAIRER: SUPER,
     Role.ADVERSARY: SUPER,
-    Role.JUDGE: ULTRA,
+    Role.JUDGE: SUPER,
     Role.REVIEWER: SUPER,
-    Role.NARRATOR: ULTRA,
+    Role.NARRATOR: SUPER,
 }
 
 

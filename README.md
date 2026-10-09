@@ -543,9 +543,9 @@ when text gets through. Details and limits are in `SECURITY.md`.
 | Planner, adversary, judge, repairer | `nvidia/nemotron-3-super-120b-a12b` |
 | Reviewer: checks every option's code, adversary options included, against its spec, the estimator it names and the effects observed in the smoke run | `nvidia/nemotron-3-super-120b-a12b` |
 | Coder (Nano and Super are allowed alternatives through `BORGES_CODER_MODEL`, never fallbacks) | `nvidia/Nemotron-3_5-Lightning` |
-| Narrator | `nvidia/Nemotron-3-Ultra-550b-a55b` while it was served, `nvidia/nemotron-3-super-120b-a12b` since 9 October 2026 |
+| Narrator | `nvidia/nemotron-3-super-120b-a12b` (the judge and the narrator ran on `nvidia/Nemotron-3-Ultra-550b-a55b` until 9 October 2026) |
 
-Token Factory stopped serving `nvidia/Nemotron-3-Ultra-550b-a55b` on 9 October 2026 (UTC): the model id answers 404. The gateway treats a 404 as a missing model, opens that model's circuit breaker and moves to the next model in `policy/gateway.json`, so the judge and the narrator now run on Super. The recordings made before that date keep the model that produced them.
+Token Factory stopped serving `nvidia/Nemotron-3-Ultra-550b-a55b` on 9 October 2026 (UTC): the model id answers 404. The gateway treats a 404 as a missing model, opens that model's circuit breaker and moves to the next model in `policy/gateway.json`; since then Super is the judge's and the narrator's first model, so a run no longer spends a call on the 404. The recordings made before that date keep the model that produced them.
 
 Details: [ARCHITECTURE.md](ARCHITECTURE.md). Product definition and the end-to-end
 definition of done: [PRODUCT.md](PRODUCT.md).

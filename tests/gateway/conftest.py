@@ -14,7 +14,6 @@ from borges.identity.run_identity import mint_run_identity
 from borges.llm.client import (
     LIGHTNING,
     SUPER,
-    ULTRA,
     LLMResponse,
     ModelSpec,
     Role,
@@ -75,7 +74,7 @@ ROLE_MODELS: dict[Role, ModelSpec] = {
     Role.ADVERSARY: SUPER,
     Role.JUDGE: SUPER,
     Role.REVIEWER: SUPER,
-    Role.NARRATOR: ULTRA,
+    Role.NARRATOR: SUPER,
 }
 
 

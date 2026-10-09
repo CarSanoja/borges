@@ -47,10 +47,10 @@ async def test_all_roles_pass_and_are_reported() -> None:
 
 
 async def test_missing_model_id_fails() -> None:
-    client = SmokeClient(IDS[:2], *[clean() for _ in Role])
+    client = SmokeClient(IDS[:1], *[clean() for _ in Role])
     report = await run_smoke(client)
     assert not report.ok
-    assert report.missing_models == IDS[2:]
+    assert report.missing_models == IDS[1:]
 
 
 async def test_reasoning_with_thinking_disabled_fails() -> None:

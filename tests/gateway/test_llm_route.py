@@ -276,13 +276,13 @@ async def test_a_model_the_provider_no_longer_serves_falls_back_and_is_skipped(
 ) -> None:
     gateway = make_gateway()
     llm = FakeLLM([Status(404)])
-    routed = await ask(gateway, llm, Role.NARRATOR)
-    assert routed.fallback and routed.model == SUPER.id
-    assert [c["model"] for c in llm.calls] == [ULTRA.id, SUPER.id]
-    assert gateway.breakers.states()[ULTRA.id] == "open"
-    assert audit.of("gateway.model_missing")[0]["model"] == ULTRA.id
-    again = await ask(gateway, llm, Role.NARRATOR)
-    assert again.model == SUPER.id and [c["model"] for c in llm.calls][-1] == SUPER.id
+    routed = await ask(gateway, llm, Role.PLANNER)
+    assert routed.fallback and routed.model == ULTRA.id
+    assert [c["model"] for c in llm.calls] == [SUPER.id, ULTRA.id]
+    assert gateway.breakers.states()[SUPER.id] == "open"
+    assert audit.of("gateway.model_missing")[0]["model"] == SUPER.id
+    again = await ask(gateway, llm, Role.PLANNER)
+    assert again.model == ULTRA.id and [c["model"] for c in llm.calls][-1] == ULTRA.id
     assert len(llm.calls) == 3
 
 

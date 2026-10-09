@@ -58,7 +58,7 @@
       "max_sample_rows": 5
     },
     "judge": {
-      "models": ["nvidia/Nemotron-3-Ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
+      "models": ["nvidia/nemotron-3-super-120b-a12b"],
       "max_tokens": 2048,
       "max_calls_per_run": 400,
       "max_cost_usd_per_run": 0.25,
@@ -74,7 +74,7 @@
       "egress": "profile_only"
     },
     "narrator": {
-      "models": ["nvidia/Nemotron-3-Ultra-550b-a55b", "nvidia/nemotron-3-super-120b-a12b"],
+      "models": ["nvidia/nemotron-3-super-120b-a12b"],
       "max_tokens": 4096,
       "max_calls_per_run": 10,
       "max_cost_usd_per_run": 0.1,
