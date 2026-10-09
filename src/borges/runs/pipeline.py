@@ -5,7 +5,6 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from borges.analysis.claim_compare import check_claim
 from borges.analysis.coder import code_plan
 from borges.analysis.coder_smoke import SmokeConfig
 from borges.analysis.model_spec.count_outcome import agree_count_specs
@@ -18,18 +17,8 @@ from borges.analysis.smoke_review import llm_reviewer
 from borges.armor.report import ArmorReport
 from borges.config import Settings
 from borges.fleet.models import RunAgents
-from borges.garden.aliased import aliased_caveats, tangled_caveats
-from borges.garden.covariate_sample import baseline_sample_caveats, covariate_sample_caveats
-from borges.garden.discrete_quantile import discrete_quantile_caveats
-from borges.garden.duplicate_rows import duplicate_row_caveats
 from borges.garden.executor import GardenExecutor
-from borges.garden.failed_caveat import failed_caveat, untested_decision_caveats
-from borges.garden.hc_variant import hc_variant_caveats
-from borges.garden.influence import build_report
 from borges.garden.models import Flip, Garden, Report, SearchSummary
-from borges.garden.outcome_scale import scale_note
-from borges.garden.repeated_units import repeated_unit_caveats
-from borges.garden.scaled_outcome import scaled_outcome_caveats
 from borges.llm.client import LLMClient, UsageTotals
 from borges.memory.run_memory import RunMemory
 from borges.runs.emitter import RunEmitter
@@ -37,17 +26,11 @@ from borges.runs.inputs import ResolvedRun
 from borges.runs.judged_ledger import JudgedLedger
 from borges.runs.pipeline_armor import ArmorStage
 from borges.runs.pipeline_callbacks import coding_callbacks, replan_callback
-from borges.runs.pipeline_caveats import (
-    analysis_caveats,
-    claim_caveats,
-    default_departures,
-    judge_caveats,
-    merge_caveats,
-    report_caveats,
-)
+from borges.runs.pipeline_caveats import analysis_caveats, default_departures
 from borges.runs.pipeline_data import load_dataframe
 from borges.runs.pipeline_finish import narrate_stage, verify_stage
 from borges.runs.pipeline_memory import finish_memory, prefill_code, recall_profile
+from borges.runs.pipeline_report import assemble_report
 from borges.runs.pipeline_search import search_garden
 from borges.runs.pipeline_stages import (
     MAX_COMBINATIONS_PER_LEVEL,
@@ -211,36 +194,6 @@ class Pipeline:
             await finish_memory(self, plan, announce=True)
         finally:
             await finish_memory(self, plan, announce=False)
-        self.caveats.extend(self.armor.caveats())
-        self.report = build_report(plan, self.garden, self.flip)
-        self.report.search = self.search
-        self.report.coding = self.coding if self.coding.options else None
-        failed = failed_caveat(plan, self.garden)
-        threshold = plan.decision_rule.threshold
-        self.caveats.extend(report_caveats(self.report, self.flip, threshold, failed))
-        self.caveats.extend(judge_caveats(self.coding))
-        self.caveats.extend(
-            [
-                *aliased_caveats(self.garden),
-                *tangled_caveats(self.garden),
-                *scaled_outcome_caveats(self.garden),
-                *baseline_sample_caveats(plan, self.garden),
-                *covariate_sample_caveats(plan, self.garden),
-                *discrete_quantile_caveats(self.garden, self.flip and self.flip.universe_id),
-                *hc_variant_caveats(self.garden),
-                *untested_decision_caveats(plan, self.garden),
-                *repeated_unit_caveats(plan, self.garden),
-                *duplicate_row_caveats(plan),
-            ]
-        )
-        note = scale_note(self.garden)
-        if note is not None:
-            self.caveats.append(note)
-        self.report.claim_check = check_claim(
-            self.resolved.analysis, self.report.original_result, plan.decision_rule
-        )
-        self.report.caveats = merge_caveats(
-            claim_caveats(self.report.claim_check), self.caveats, self.report.caveats
-        )
+        self.report = assemble_report(self, plan)
         await narrate_stage(self, plan, self.report)
         return self.report
