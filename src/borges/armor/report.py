@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 Action = Literal["refuse", "quarantine", "redact", "drop", "block"]
+MEMORY_FIELD = "memory:"
 Kind = Literal["injection", "tool_poisoning", "pii"]
 
 ARMOR_PRINCIPAL = "armor://borges/screen"
@@ -66,9 +67,18 @@ class ArmorReport:
                 "the analysis code still reads the raw columns."
             )
         dropped = self.of("drop")
-        if dropped:
+        remembered = [d for d in dropped if d.field.startswith(MEMORY_FIELD)]
+        options = len(dropped) - len(remembered)
+        if options:
             lines.append(
-                f"Armor dropped {len(dropped)} model-proposed option(s) that tried to steer "
+                f"Armor dropped {options} model-proposed option(s) that tried to steer "
                 "the result or the code."
+            )
+        if remembered:
+            lines.append(
+                f"Armor kept {len(remembered)} remembered entr"
+                f"{'y' if len(remembered) == 1 else 'ies'} from earlier runs out of every prompt "
+                "because they read as steering the result or the code; this run's own options "
+                "were not affected."
             )
         return lines
