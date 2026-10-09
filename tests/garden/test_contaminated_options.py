@@ -9,11 +9,12 @@ def filter_plan():
         step_of(
             "rows",
             "filter",
-            option("clean", True, label="Exclude internal and short sessions"),
+            option("clean", True, code="df[~df.is_internal]", label="Exclude internal sessions"),
             option("all", label="Keep all records"),
             option("internal", label="Exclude internal only"),
         ),
         step_of("model", "model", option("ols", True), option("logit")),
+        notes={"is_internal": "True for internal staff or test users, not genuine customers"},
     )
 
 

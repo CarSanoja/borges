@@ -13,7 +13,10 @@ INVALID_ROWS = re.compile(
 )
 
 
-def default_text(plan: AnalysisPlan, step_id: str) -> str:
+def user_text(plan: AnalysisPlan, step_id: str) -> str:
+    """What the user wrote about the rows: the notes of the columns the default code reads and
+    the question; the planner's label and rationale never count (run r_20261009T003247_06812b:
+    "may indicate data quality issues or bots" was read as the user's notes marking bots)."""
     default = plan.step(step_id).default
     notes = [
         column.note
@@ -22,7 +25,16 @@ def default_text(plan: AnalysisPlan, step_id: str) -> str:
         and default.code
         and re.search(rf"\b{re.escape(column.name)}\b", default.code)
     ]
-    return " ".join([default.label, default.rationale, default.spec, *notes])
+    return " ".join([plan.question, *notes])
+
+
+def invalid_words(plan: AnalysisPlan, step_id: str) -> list[str]:
+    return sorted({m.lower() for m in INVALID_ROWS.findall(user_text(plan, step_id))})
+
+
+def plan_reason(plan: AnalysisPlan, step_id: str) -> str:
+    rationale = plan.step(step_id).default.rationale.strip().rstrip(".")
+    return f"; the plan's default drops these rows because {rationale}" if rationale else ""
 
 
 def _rows_after(garden: Garden, change: Change, flip_universe_id: str) -> tuple[int, int] | None:
@@ -47,13 +59,13 @@ def contamination_reason(
         rows = _rows_after(garden, change, flip_universe_id)
         if rows is None or rows[1] <= rows[0]:
             continue
-        words = sorted({m.lower() for m in INVALID_ROWS.findall(default_text(plan, step.id))})
+        words = invalid_words(plan, step.id)
         if not words:
             continue
         return (
             f"{step.title}: '{change.to_label}' re-includes {rows[1] - rows[0]} rows that the "
-            f"baseline option '{step.default.label}' excluded and that the plan's own notes mark "
-            f"as invalid ({', '.join(words)}); this is a contaminated-analysis flip, not a "
-            "finding about the question"
+            f"baseline option '{step.default.label}' excluded and that the notes you wrote mark "
+            f"as invalid ({', '.join(words)}){plan_reason(plan, step.id)}; this is a "
+            "contaminated-analysis flip, not a finding about the question"
         )
     return None
