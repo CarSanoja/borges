@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 from borges.analysis.models import AnalysisPlan, DecisionRule
 from borges.analysis.planner import plan_analysis
-from borges.analysis.planner_fidelity import UNCHECKED
+from borges.analysis.planner_fidelity import FIDELITY_TOKENS, UNCHECKED
 from borges.analysis.schemas import PlannerOutput
 from borges.llm.client import Role
 from borges.runs.pipeline_caveats import analysis_caveats
@@ -104,3 +107,8 @@ async def test_without_an_analysis_nothing_is_checked() -> None:
     llm, result = await plan({"planner": output("r2")}, analysis="")
     assert not [c.key for c in llm.calls if c.key.startswith("fidelity")]
     assert result.analysis_gaps == []
+
+
+def test_the_fidelity_check_asks_for_no_more_tokens_than_the_gateway_allows_the_judge() -> None:
+    policy = json.loads((Path(__file__).parents[2] / "policy" / "gateway.json").read_text())
+    assert policy["agents"]["judge"]["max_tokens"] >= FIDELITY_TOKENS

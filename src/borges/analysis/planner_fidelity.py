@@ -8,7 +8,10 @@ measures the fragility of an analysis nobody brought. A second model reads the a
 default specs side by side and lists what differs; the planner is asked to fix those, twice at
 most, and what still differs is reported. On the first recording with the check, Ultra listed every
 part, matches included ("Matches analysis."), so each comparison carries a differs flag and only
-the differences count.
+the differences count. It lists every part of a long analysis, so on 9 Oct, with Super standing in
+for the withdrawn Ultra, answers reached 1461 of 1500 tokens and one was cut off, which left the
+starting point unchecked. FIDELITY_TOKENS is the judge's ceiling in policy/gateway.json: 4000 was
+denied by the gateway on the next live run.
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ from borges.analysis.prompts.planner import build_retry_messages
 from borges.analysis.schemas import PlannerOutput
 from borges.llm.client import LLMClient, LLMError, Role
 
-FIDELITY_TOKENS = 1500
+FIDELITY_TOKENS = 2048
 FIDELITY_RETRIES = 2
 UNCHECKED = "the starting point could not be checked against your analysis"
 Ask = Callable[[list[dict[str, str]], str], Awaitable[PlannerOutput]]
