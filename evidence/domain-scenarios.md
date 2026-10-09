@@ -66,6 +66,9 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
   answer is found, and the default is not yet the full risk profile.
 - Captions, caveats and labels stay in English when the question is in another language; only
   the summary is translated.
+- A planner alternative can contradict its own rationale (fertility_social, "committed = 1 if
+  Relationship == 1" for "single is answer 1 only"); the orientation check refuses it, so the
+  result is not wrong, but the alternative is lost.
 
 ## Reproduce
 

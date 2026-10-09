@@ -180,3 +180,27 @@ The user-analysis path does not pass its held-out test. What the five attempts s
 
 These are recorded as found. Fixes made after this count do not change it, and the next held-out
 claim needs a new case.
+
+### After the count: what the failures were, and three more runs
+
+Not held out: run after the count on the same case, to find causes, at `ac8df41` (the fixes for the
+crash, the interval comparison and the refill below).
+
+- The crash (attempt 3): the design was wider than its rows, so the alias check's null space was
+  empty. Fixed: such a design fails with "N columns but only M rows reach the model".
+- The starting point "could not be confirmed" (attempts 1, 4, 5): the same fit reported with a t
+  interval and with a normal interval. Fixed: two intervals around the same estimate that differ
+  only by the critical value are the same result.
+- The plan without alternatives (attempt 4): the judge left three steps with alternatives and
+  coding failures left one. Fixed: steps the coder leaves with one option are refilled, judged,
+  coded and smoke-run.
+
+| Run | Starting point | Smallest flip | What it showed |
+|---|---|---|---|
+| r_20261009T074441_47e3f5 | +1.2735, n 301: not the published cell, and the report says so | none | The fidelity check was cut off at 1500 tokens (Super answers it now that Ultra is withdrawn); raised to 4000 |
+| r_20261009T074442_630a07 | the published cell, confirmed by two implementations | none in 7 universes | The refill ran live: two new model options, one accepted; it failed its smoke run because its code put the outcome among the regressors. The harness now names that instead of a "degenerate interval"; the planner and coder now write and code a range [7, 14] as a range |
+| r_20261009T074443_86006a | the published cell | **false**: -1.026, p .009, n 225 | An adversary filter recounted cycle_day as days to ovulation; the repair of a reversed column negated it, leaving it 13-14 days off the default's origin, and the next step's windows then picked the luteal phase. A whole-number column that follows the default's but sits more than 1.5 SD away is now refused as counting from another origin |
+
+The third run is the most serious finding of the day: a reported flip that is an artefact of two
+steps reading one column with two meanings. The check that now refuses it was confirmed on that
+run's smoke sample (cycle_day 13.0 days off, spread 4.8).
