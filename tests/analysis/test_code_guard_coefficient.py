@@ -38,6 +38,7 @@ def test_the_fertility_incident_is_flagged_on_both_reads() -> None:
         "est = res.params.values[1]",
         "coeffs = res.params\nest = coeffs[3]",
         "ci = res.conf_int()\nlow = ci.iloc[3, 0]",
+        "i = names.index('treated')\ni = 2\nest = res.params.iloc[i]",
     ],
 )
 def test_reading_a_term_by_position_is_flagged(line: str) -> None:
@@ -53,6 +54,8 @@ def test_reading_a_term_by_position_is_flagged(line: str) -> None:
         "low = res.conf_int()[0]['beauty']",
         "low = res.conf_int().iloc[:, 0]['beauty']",
         "first = df.iloc[0]\nvalue = rows[3]",
+        "i = fit.model.exog_names.index('treated')\nci = fit.conf_int()\nlow = ci.iloc[i, 0]",
+        "est = res.params.iloc[res.params.index.get_loc('treated')]",
     ],
 )
 def test_reading_a_term_by_name_passes(line: str) -> None:
