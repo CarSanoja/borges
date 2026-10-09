@@ -59,7 +59,8 @@ def test_aliasing_that_involves_the_exposure_still_fails(workdir: Path) -> None:
     with_ctx(workdir, ["double_x"])
     done = run_model(workdir, FIT)
     assert done.returncode == 1
-    assert "rank-deficient or collinear" in (parse_error(done.stdout) or "")
+    error = parse_error(done.stdout) or ""
+    assert "the exposure 'x' is an exact linear combination of the covariates ['double_x']" in error
 
 
 def test_an_all_zero_ctx_covariate_is_dropped_like_lm_does(workdir: Path) -> None:
@@ -143,3 +144,30 @@ def test_a_glm_names_its_aliased_column_once(workdir: Path) -> None:
     assert done.returncode == 0, done.stdout
     traces, _ = parse_output(done.stdout)
     assert traces[0].note == ALIAS_NOTE + "elapsed"
+
+
+DATED = (
+    HEADER
+    + """
+    months = pd.get_dummies(df["month"], prefix="month", drop_first=True, dtype=float)
+    x = sm.add_constant(pd.concat([df[["new"]], months], axis=1), has_constant="add")
+    fit = sm.OLS(df["y"], x).fit()
+    low, high = fit.conf_int().loc["new"]
+    return {"estimate": float(fit.params["new"]), "ci_low": float(low), "ci_high": float(high),
+            "p_value": float(fit.pvalues["new"]), "n": int(fit.nobs)}
+"""
+)
+
+
+def test_month_dummies_that_rebuild_a_dated_exposure_are_named(tmp_path: Path) -> None:
+    rng = np.random.default_rng(3)
+    month = np.repeat([f"2025-0{m}" for m in range(1, 7)], 40)
+    frame = pd.DataFrame({"month": month, "new": (month >= "2025-04").astype(float)})
+    frame["y"] = -0.1 * frame["new"] + rng.normal(size=len(frame))
+    frame.to_parquet(tmp_path / "data.parquet")
+    with_ctx(tmp_path, [])
+    done = run_model(tmp_path, DATED)
+    assert done.returncode == 1
+    error = parse_error(done.stdout) or ""
+    assert "is an exact linear combination of the covariates ['month']" in error
+    assert "drop_first" not in error

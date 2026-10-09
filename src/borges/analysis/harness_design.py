@@ -177,6 +177,9 @@ DESIGN_SOURCE = """
                         and (rank < x.shape[1] or dead or cond > __DESIGN_CONDITION_LIMIT__)
                     ),
                     "aliased": aliased if aliased_only else [],
+                    "rebuilt_by": []
+                    if aliased_only or rank >= x.shape[1]
+                    else _rebuilding(scaled, names, exposure, frame_columns),
                     "dead": dead,
                     "intercept": intercept,
                     "terms": terms,
