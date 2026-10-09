@@ -87,7 +87,8 @@ records by value is a decision of a filter step and the code guard rejects it.
 standard errors when fitted, `.fit(disp=0, cov_type="HC1")`: their results have no \
 get_robustcov_results. For an average marginal effect write \
 `result.get_margeff(at="overall").summary_frame().loc[name]` and read its "dy/dx", "Pr(>|z|)", \
-"Conf. Int. Low" and "Cont. Int. Hi." entries: the margins leave out the constant, so a \
+"Conf. Int. Low" and "Cont. Int. Hi." entries (statsmodels spells the upper bound that way; \
+"Conf. Int. High" does not exist): the margins leave out the constant, so a \
 position taken from params points at the wrong row.
 - Return estimate, ci_low and ci_high on the natural scale of the estimator: a difference in \
 proportions as a proportion (-0.0014, never -0.14), a ratio as a ratio, a coefficient as fitted. \

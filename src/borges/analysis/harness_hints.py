@@ -118,6 +118,12 @@ HINTS_SOURCE = r"""
                 + " model.fit(disp=0, cov_type='HC1'), or cov_type='cluster' with"
                 + " cov_kwds={'groups': ...}"
             )
+        if isinstance(exc, KeyError) and exc.args and "Int." in str(exc.args[0]):
+            return (
+                " | the columns of get_margeff(...).summary_frame() are 'dy/dx', 'Std. Err.', 'z',"
+                + " 'Pr(>|z|)', 'Conf. Int. Low' and 'Cont. Int. Hi.': statsmodels spells the"
+                + " upper bound that way"
+            )
         if not isinstance(exc, IndexError):
             return ""
         import linecache as _linecache

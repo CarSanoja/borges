@@ -183,6 +183,10 @@ def estimate(df, ctx):
             'result.get_margeff(at="overall").margeff[result.params.index.get_loc("t")]',
             "summary_frame().loc[name]",
         ),
+        (
+            'result.get_margeff(at="overall").summary_frame().loc["t", "Conf. Int. High"]',
+            "'Cont. Int. Hi.': statsmodels spells",
+        ),
     ],
 )
 def test_the_discrete_model_mistakes_of_a_fraud_run_get_their_fix(
