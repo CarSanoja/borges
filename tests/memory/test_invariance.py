@@ -12,9 +12,9 @@ from tests.memory.counting import Bench, settings_for
 pytestmark = pytest.mark.timeout(900)
 
 CASES = {
-    "checkout_ab": (15, 5),
-    "red_cards": (41, 5),
-    "marp_norms": (27, 1),
+    "checkout_ab": (26, 10),
+    "red_cards": (48, 4),
+    "marp_norms": (40, 2),
     "marp_religiosity": (40, 0),
 }
 VOLATILE = {

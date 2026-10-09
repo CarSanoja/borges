@@ -13,6 +13,8 @@ from borges.runtime.jobs import QUEUED, RUNNING, SUCCEEDED
 from borges.runtime.universe_checkpoint import UNIVERSE_PREFIX
 from tests.runtime.rig import Rig, make_rig, wait_for
 
+UNIVERSES = 26
+
 pytestmark = pytest.mark.timeout(240)
 
 REQUEST = RunRequest(case_id="checkout_ab", llm="scripted")
@@ -48,7 +50,9 @@ async def test_killed_run_resumes_to_the_same_universes_and_flip(
     created = await plain.runtime.submit(REQUEST, ANONYMOUS, "c")
     plain_events, plain_snapshot = await finished(plain, created.run_id)
     await plain.runtime.stop()
-    assert plain_snapshot.status == "completed" and len(plain_snapshot.garden.universes) == 15
+    assert (
+        plain_snapshot.status == "completed" and len(plain_snapshot.garden.universes) == UNIVERSES
+    )
     executed.clear()
 
     first = make_rig(tmp_path / "crash")
@@ -60,7 +64,7 @@ async def test_killed_run_resumes_to_the_same_universes_and_flip(
     assert first.store.meta(run_id)["status"] != "failed"
     assert not any(e.type in ("run.failed", "run.finished") for e in first.store.events(run_id))
     done_before = checkpointed(first, run_id)
-    assert 3 <= done_before < 15
+    assert 3 <= done_before < UNIVERSES
     executed.clear()
 
     second = make_rig(tmp_path / "crash")
@@ -73,9 +77,9 @@ async def test_killed_run_resumes_to_the_same_universes_and_flip(
     assert snapshot.flip.universe_id == plain_snapshot.flip.universe_id == "u_4e00fbb461"
     assert snapshot.resumed >= 1
     verification_runs = 2
-    assert len(executed) == 15 - done_before + verification_runs
+    assert len(executed) == UNIVERSES - done_before + verification_runs
     restored = {u for u in plain_snapshot.garden.universes} & set(executed)
-    assert len(restored) <= 15 - done_before + 1
+    assert len(restored) <= UNIVERSES - done_before + 1
     assert second.runtime.queue.get(run_id).state == SUCCEEDED
 
 

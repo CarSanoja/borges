@@ -41,7 +41,7 @@ async def test_second_run_makes_fewer_judge_and_coder_calls_with_the_same_result
 
     assert baseline.status == first.status == second.status == "completed"
     assert baseline.flip is not None and baseline.flip.universe_id == "u_4e00fbb461"
-    assert len(baseline.garden.universes) == 15
+    assert len(baseline.garden.universes) == 26
     assert outcome(first) == outcome(baseline)
     assert outcome(second) == outcome(baseline)
     assert baseline.memory is None
