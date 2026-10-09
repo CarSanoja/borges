@@ -1,21 +1,23 @@
-# Domain scenarios: twelve analyses a user would bring, with a planted answer
+# Domain scenarios: sixteen analyses a user would bring, with a planted answer
 
 On 9 October 2026 Borges was run live (Nemotron on Nebius Token Factory, ConTree sandboxes) on
-twelve synthetic datasets from four domains: an audit firm's internal reviews, a hospital
+sixteen synthetic datasets from four domains: an audit firm's internal reviews, a hospital
 department, a K-12 district and a retail bank. The audit firm, *Northbridge Assurance LLP*, is
 fictional, and so are every name, e-mail address (on `.example`) and account number in the data.
 
 Each dataset hides a known answer and a trap a real analyst meets. The answer was computed with
 statsmodels before any run (`evidence/domains/truth.json`). Each request (`*.request.json`) is
 what a user would type: a question, a decision rule, column notes and, in two cases, the memo of
-an earlier analysis. Four cases ask in Spanish.
+an earlier analysis. Five cases ask in Spanish.
 
 The first four target confounding: the answer changes once the right covariates are in the model.
 The second four target the design: nested units, a question about how likely something is asked
 of a count, an exposure given to whole schools, and a Spanish CSV with a rare outcome. The last
 four are edge cases: a numeric exposure with values missing for the riskiest rows, a 2 % outcome
 with a site that never used the treatment, 24 students measured twice in long format, and a
-rollout staggered across branches over a trend.
+rollout staggered across branches over a trend. The last four test inputs: yes/no flags typed by
+hand, a time to readmission censored at 90 days, an outcome already in percent under a rule in
+percentage points, and a European CSV with thousands dots and decimal commas.
 
 ## Results
 
@@ -35,6 +37,10 @@ rollout staggered across branches over a trend.
 | Clinic: does a new anticoagulant raise major bleeds? 2 % bleed; the rural site never stocks it and has no bleeds | +2.4 points without the rural site (+1.33 log odds) | Run failed (r_20261009T083216_35c688) | The 200-row smoke sample held no bleed, so every model of the outcome failed | Correct: MORE BLEEDS, +2.4 points [1.3, 3.5] (r_20261009T083806_4e3faa) |
 | K-12: did a summer reading program raise scores? (Spanish; 24 students before and after, long format) | +4.375 paired, p 8.7e-7; p 0.20 if the pairs are ignored | Refused at upload: 48 rows, "needs at least 50" | The floor's reason, that fewer rows "cannot be told apart from noise", is false for a paired design | Correct: +4.375, p 8.7e-7, n 24, summary in Spanish (r_20261009T083806_696661) |
 | Bank: did a new call-centre script cut complaints? (Spanish; staggered across 30 branches, rising trend) | −3.0; −0.41, p 0.26 if months are pooled | Correct: −3.049 with branch and month fixed effects (r_20261009T083216_fcaffe) | None | — |
+| Audit: do controls walkthroughs cut material findings? Flags typed as Yes, yes, YES , Y, No, N | −0.080 on the probability; riskier engagements get more walkthroughs | Correct: −0.082 (r_20261009T085133_89649e) | None | — |
+| Clinic: does a discharge protocol delay readmission? Time censored at 90 days, 66 % never readmitted | log hazard ratio −0.545 (Cox); +7.0 days if the censoring is ignored | Run failed (r_20261009T085134_fe4c15); two more attempts failed as each gap below was fixed | A Cox option ran as an OLS of the days; the planner wrote R's Surv() and a statsmodels API that does not exist; the harness refused PHReg for having no intercept; the coefficient guard refused positions found by name; "exposure=new_protocol" read as an offset | Correct: PROTOCOL DELAYS READMISSION, −0.5449, p 4e-6, equal to the Cox fit (r_20261009T093901_079f20) |
+| K-12: did tutoring raise the percent of proficient students? Outcome 0-100, rule in percentage points | +6.27 points adjusted | Correct: +6.2702 (r_20261009T085134_43c1c4) | None | — |
+| Bank: does a fee waiver raise the average balance? (Spanish; `;` CSV with 1.234,56 and dd/mm/yyyy dates) | +404 euros adjusted for income, randomised waiver | Correct: +404.107 (r_20261009T085134_401637), but the check added this morning for a moved origin refused a days-since-sign-up covariate counted from another date | The moved-origin check applied to every column, not only to columns the plan cuts | Correct, the covariate kept and reported as a no-op (r_20261009T092811_a0e3b8) |
 
 A rerun of the clinic case after the template fix still gave the old answer
 (r_20261009T070254_637cec): memory reused the model code that the previous coder version had
@@ -71,6 +77,11 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
   rule with the code for the marginal effect (`analysis/model_spec/validate_exposure.py`,
   `analysis/harness_result_checks.py`).
 - **A table needs 20 rows, not 50** (`api/uploads.py`).
+- **Cox models run with statsmodels' PHReg.** The planner and the coder are told how it is called,
+  a Cox option no longer falls to the OLS template, the harness does not ask a Cox model for an
+  intercept, a failed PHReg call gets a repair hint (`analysis/harness_phreg.py`), and a position
+  found from the term's name passes the coefficient guard.
+- **A moved origin is refused only for a column some option cuts** (`analysis/smoke_origin.py`).
 
 ## Still open
 
@@ -83,6 +94,11 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
 - A planner alternative can contradict its own rationale (fertility_social, "committed = 1 if
   Relationship == 1" for "single is answer 1 only"); the orientation check refuses it, so the
   result is not wrong, but the alternative is lost.
+- Rows a filter drops for a missing exposure are not described in the report: the review-hours
+  case left out 13 % of engagements, most of them complex clients, and the caveats do not say so.
+- Restoring the registry seed and publishing again reuses version numbers; a server that had
+  imported the first seed keeps the old definition under that number and refuses live runs as
+  "unpublished" until the change is approved in its own registry.
 
 ## Reproduce
 
@@ -90,6 +106,7 @@ Each gap was fixed at its root, with a unit test and, where it applies, an end-t
 uv run python evidence/domains/confounding_cases.py
 uv run python evidence/domains/design_cases.py
 uv run python evidence/domains/edge_cases.py
+uv run python evidence/domains/input_cases.py
 ```
 
 Each writes its CSVs next to the script and updates `truth.json`. Upload a CSV and post its

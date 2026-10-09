@@ -1,0 +1,17 @@
+{
+ "question": "Do control walkthroughs reduce the chance of a material finding on an engagement?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "difference in the probability of a material finding, walkthrough minus no walkthrough",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "WALKTHROUGHS CUT FINDINGS",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "control_walkthrough": "whether the team did a controls walkthrough; typed by hand, so Yes/yes/Y and No/N all appear",
+  "risk_tier": "engagement risk tier set at acceptance, before planning",
+  "material_finding": "whether the engagement ended with a material finding"
+ }
+}

@@ -1,0 +1,18 @@
+{
+ "question": "Did the tutoring program raise the share of proficient students in a class?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "difference in the percentage of proficient students, in percentage points",
+  "comparator": "gt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "TUTORING RAISES PROFICIENCY",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "pct_proficient": "percent of the class scoring proficient this spring, 0 to 100",
+  "pct_proficient_last_year": "same class cohort, previous spring, 0 to 100",
+  "pct_free_lunch": "percent of students on free lunch, 0 to 100",
+  "tutoring_program": "1 = the class had the tutoring program; poorer classes were prioritised"
+ }
+}

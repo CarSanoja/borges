@@ -190,5 +190,58 @@
    ],
    "trap": "staggered rollout by branch and month with an upward trend: comparing months mixes the trend into the effect"
   }
+ },
+ "audit_text_flags": {
+  "file": "northbridge_walkthroughs.csv",
+  "truth": {
+   "adjusted_ame": [
+    -0.07962263145696273,
+    3.942657380163467e-05
+   ],
+   "adjusted_logodds": -0.732166724540071,
+   "trap": "outcome and exposure are text with inconsistent case and spaces; riskier engagements get more walkthroughs"
+  }
+ },
+ "clinic_survival": {
+  "file": "clinic_time_to_readmission.csv",
+  "truth": {
+   "planted_log_hazard_ratio": -0.5,
+   "cox_log_hr": [
+    -0.5448749695082864,
+    4.065980083752844e-06
+   ],
+   "naive_ols_days": [
+    7.014996472245718,
+    0.00010915337718636461
+   ],
+   "censored_share": 0.6644444444444444,
+   "trap": "time to readmission censored at 90 days; most patients are never readmitted"
+  }
+ },
+ "k12_percent": {
+  "file": "k12_proficiency_percent.csv",
+  "truth": {
+   "planted_points": 5.0,
+   "adjusted_points": [
+    6.270150808109015,
+    5.224931271536125e-13
+   ],
+   "raw_points": [
+    5.349523809523815,
+    0.004608010947254137
+   ],
+   "trap": "the outcome is already in percent (0-100); the rule asks for percentage points; poorer classes get the program"
+  }
+ },
+ "bank_eu_format": {
+  "file": "banco_exencion_eu.csv",
+  "truth": {
+   "planted_euros": 350.0,
+   "adjusted_euros": [
+    404.10699531107446,
+    4.709710693601779e-21
+   ],
+   "trap": "semicolon CSV with thousands dots and decimal commas (1.234,56) and dd/mm/yyyy dates"
+  }
  }
 }

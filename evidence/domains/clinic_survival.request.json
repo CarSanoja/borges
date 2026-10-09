@@ -1,0 +1,16 @@
+{
+ "question": "Does the new discharge protocol delay readmission?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "log hazard ratio of readmission, new protocol versus usual care",
+  "comparator": "lt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "PROTOCOL DELAYS READMISSION",
+  "negative_label": "NO CLEAR EFFECT"
+ },
+ "column_notes": {
+  "days_followed": "days from discharge to readmission, or to the end of the 90-day follow-up when the patient was not readmitted",
+  "readmitted": "1 = readmitted within the follow-up, 0 = followed for 90 days without readmission"
+ }
+}

@@ -1,0 +1,17 @@
+{
+ "question": "¿La exención de comisión aumenta el saldo medio de los clientes?",
+ "llm": "nebius",
+ "decision_rule": {
+  "metric": "diferencia en el saldo medio mensual en euros, con exención menos sin exención",
+  "comparator": "gt",
+  "threshold": 0,
+  "alpha": 0.05,
+  "positive_label": "LA EXENCIÓN SUBE EL SALDO",
+  "negative_label": "SIN EFECTO CLARO"
+ },
+ "column_notes": {
+  "exencion_comision": "1 = se le asignó al azar la exención de la comisión de mantenimiento",
+  "saldo_medio": "saldo medio mensual en euros",
+  "ingreso_mensual": "ingreso mensual declarado en euros"
+ }
+}
