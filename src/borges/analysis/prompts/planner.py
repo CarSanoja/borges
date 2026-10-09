@@ -82,6 +82,15 @@ different model families (for example OLS against logistic regression or a GLM, 
 fit against cluster-robust or mixed effects); two options that differ only in covariates or in \
 the covariance estimator are not two model families. Every dummy-coded categorical covariate \
 drops one level (drop_first=True) so the design matrix stays full rank.
+- When the question compares groups at equal values of named characteristics (the same risk \
+profile, the same qualifications, holding experience constant), the default covariate set holds \
+every column that the data or the column notes describe as part of those characteristics; a \
+smaller set is an alternative, never the default.
+- When the exposure switches on at a date for every unit (a before/after comparison, a policy \
+or protocol introduced in a given month), add an adjustment option with a linear time trend: \
+the months since the first date as one numeric covariate, so a trend that was already under way \
+does not load on the exposure. Month dummies are collinear with an exposure defined by date and \
+are not that option.
 - When the question names a group, phase, status or score that must be constructed from raw \
 columns (a category computed from dates or timestamps, a status collapsed from a multi-level \
 answer, a composite of several items), each construction is its own transform or feature step. \

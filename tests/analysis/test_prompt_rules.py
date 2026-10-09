@@ -233,3 +233,17 @@ def test_judge_rejects_no_op_alternatives_against_the_conventional_spec() -> Non
 def test_planner_forbids_dummy_fixed_effects_for_identifiers_with_many_levels() -> None:
     assert "never dummy fixed effects" in PLANNER_SYSTEM
     assert "Cluster the standard errors on them or aggregate to that unit" in PLANNER_SYSTEM
+
+
+def test_planner_defaults_to_the_named_profile_and_offers_a_trend_for_dated_exposures() -> None:
+    text = " ".join(PLANNER_SYSTEM.split())
+    assert "the default covariate set holds every column" in text
+    assert "linear time trend" in text and "Month dummies are collinear" in text
+
+
+def test_judge_keeps_a_pre_exposure_confounder_in_the_same_estimand() -> None:
+    from borges.analysis.prompts.judge import SYSTEM as JUDGE_SYSTEM
+
+    text = " ".join(JUDGE_SYSTEM.split())
+    assert "plausible pre-exposure confounder" in text
+    assert "a mediator, or a consequence of the outcome" in text
