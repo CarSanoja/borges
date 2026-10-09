@@ -37,6 +37,8 @@ SINGLE_FLIPS = {
     ("damages", "linear_2013"),
 }
 
+pytestmark = pytest.mark.timeout(600)
+
 
 @pytest.fixture(scope="module")
 def case() -> CaseSpec:

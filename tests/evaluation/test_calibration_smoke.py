@@ -3,8 +3,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from borges.evaluation.calibration_grid import smoke_cells
 from borges.evaluation.calibration_study import result_document, run_study
+
+pytestmark = pytest.mark.timeout(600)
 
 
 def test_smoke_study_runs_two_datasets_from_the_data(tmp_path: Path) -> None:
