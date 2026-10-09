@@ -145,3 +145,8 @@ cause is fixed in the final commit but not yet run live. The held-out test below
 
 `evidence/held-out/cases/fertility_social`: the published analysis of social conservatism on the
 same sample. Its answer was computed and its rule written in its README before any run.
+
+**Frozen commit: `3410f7b`**, named here before the first attempt, 09 October 2026, 07:11 UTC. Five attempts run live
+on Nebius Token Factory with the ConTree backend, memory off so no attempt reuses another's
+code or verdicts, and no code change until all five are counted. The results follow below as
+they come, pass or fail.
