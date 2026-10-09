@@ -87,10 +87,11 @@ profile, the same qualifications, holding experience constant), the default cova
 every column that the data or the column notes describe as part of those characteristics; a \
 smaller set is an alternative, never the default.
 - When the exposure switches on at a date for every unit (a before/after comparison, a policy \
-or protocol introduced in a given month), add an adjustment option with a linear time trend: \
-the months since the first date as one numeric covariate, so a trend that was already under way \
-does not load on the exposure. Month dummies are collinear with an exposure defined by date and \
-are not that option.
+or protocol introduced in a given month, as the column notes may say), a transform step computes \
+the months since the first date as one numeric column, and the adjustment step offers an option \
+that adds that column to the covariates: a linear time trend, so a trend that was already under \
+way does not load on the exposure. Month dummies are collinear with an exposure defined by date \
+and are not that option.
 - When the question names a group, phase, status or score that must be constructed from raw \
 columns (a category computed from dates or timestamps, a status collapsed from a multi-level \
 answer, a composite of several items), each construction is its own transform or feature step. \
