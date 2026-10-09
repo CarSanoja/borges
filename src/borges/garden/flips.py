@@ -5,6 +5,7 @@ from typing import Literal
 from borges.analysis.models import AnalysisPlan, AnalysisResult, Comparator, DecisionRule
 from borges.garden.contamination import contamination_reason
 from borges.garden.duplicates import excluded_options
+from borges.garden.effect_question import effect_question
 from borges.garden.estimand import estimand_detail
 from borges.garden.models import Change, Flip, Garden, Universe
 from borges.garden.noop import has_noop, noop_pairs
@@ -39,7 +40,9 @@ def _build(plan: AnalysisPlan, garden: Garden, universe: Universe, changes: list
         baseline_verdict=baseline.verdict,
         flipped_verdict=universe.verdict,
         kind=flip_kind(plan.decision_rule, baseline.result, universe.result),
-        estimand_change=estimand_detail(baseline, universe, {c.name for c in plan.dataset.columns}),
+        estimand_change=estimand_detail(
+            baseline, universe, {c.name for c in plan.dataset.columns}, effect_question(plan)
+        ),
         contaminated=reason is not None,
         contamination_reason=reason,
     )

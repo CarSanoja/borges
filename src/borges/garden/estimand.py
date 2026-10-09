@@ -4,6 +4,7 @@ import os
 import re
 
 from borges.analysis.models import AnalysisPlan
+from borges.garden.effect_question import effect_question
 from borges.garden.measure import measure_detail
 from borges.garden.models import EstimandChange, Garden, Universe
 from borges.garden.noop import single_universe
@@ -133,7 +134,7 @@ def _count_detail(baseline: Universe, universe: Universe, before: int, after: in
 
 
 def estimand_detail(
-    baseline: Universe, universe: Universe, columns: set[str] | None = None
+    baseline: Universe, universe: Universe, columns: set[str] | None = None, effect: bool = False
 ) -> str | None:
     scale = (
         scale_detail(baseline, universe)
@@ -141,7 +142,7 @@ def estimand_detail(
         or exposure_detail(baseline, universe, columns)
         or measure_detail(baseline, universe)
     )
-    if scale is not None:
+    if scale is not None or effect:
         return scale
     before, after = design_terms(baseline), design_terms(universe)
     floor = 1
@@ -172,13 +173,16 @@ def estimand_changes(plan: AnalysisPlan, garden: Garden) -> list[EstimandChange]
     if baseline is None:
         return []
     columns = {c.name for c in plan.dataset.columns}
+    effect = effect_question(plan)
     found: list[EstimandChange] = []
     for step in plan.decision_steps:
         for option in step.options:
             if option.id == step.default.id:
                 continue
             single = single_universe(garden, step.id, option.id)
-            detail = estimand_detail(baseline, single, columns) if single is not None else None
+            detail = (
+                estimand_detail(baseline, single, columns, effect) if single is not None else None
+            )
             if detail is not None:
                 found.append(
                     EstimandChange(

@@ -53,6 +53,16 @@ necessarily the published one. Keep "changes the estimand" for an option that me
 construct (the opposite phase as the high window, a group the question does not compare) or \
 answers another question.
 
+When the question asks what the exposure does (whether it reduced, caused, improved or worked) or \
+compares groups at equal values of other variables (the same risk profile, holding a factor \
+constant), adjusting for a variable measured before the exposure that plausibly drives both the \
+exposure and the outcome estimates the same effect without that confounding: it is not a change \
+of the estimand, even when the conventional option, the step's title or the user's own analysis \
+is unadjusted, because an unadjusted comparison of observational data keeps the confounding in \
+the estimate. Score it by whether the variable is a plausible pre-exposure confounder. Adjusting \
+for a variable the exposure itself changes (a mediator, or a consequence of the outcome) does \
+change the estimand.
+
 A rationale may argue from the result it hopes to produce ("may reveal a significant \
 difference when the mean gap is not significant", "could yield a significant effect"). That \
 hope is not a reason: ignore it and score the method alone; when nothing but the hoped-for result \
