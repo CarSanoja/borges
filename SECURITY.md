@@ -456,12 +456,16 @@ estimand or a step description stops the run. Coder and repairer output is scree
 armor-out hook and the AST code guard remains the hard boundary for code.
 
 **3. Personal data.** E-mail, phone numbers, payment cards (Luhn and issuer prefix), IBANs
-(mod 97), US SSNs, Spanish DNI/NIE (check letter), Mexican CURP (check digit) and RFC, IP
-addresses, and dates of birth in columns whose name says so. It is redacted to
+(mod 97), US SSNs (by shape, so an invalid serial is redacted too), Spanish DNI/NIE (check
+letter), Mexican CURP (check digit) and RFC, IP addresses, dates of birth in columns whose name
+says so, and person names (a column whose header says so, such as `full_name` or `apellidos`,
+or whose values read as two to four capitalised words with high uniqueness). It is redacted to
 `[redacted:<kind>]` in every profile value and sample row a model reads, in every model output
 (report, narrative, events) and in audit reasons; the upload response lists the columns that
 contain personal data with counts and never values, and the upload screen shows it before the
-run starts. The analysis code in the sandbox still reads the raw columns.
+run starts. The analysis code in the sandbox still reads the raw columns, but the row keys a
+run stores to compare universes never come from a personal-data or free-text column: a frame
+whose only unique column is a name stores no keys.
 
 **Screening comes first.** `POST /api/runs` screens the question, the decision rule and any
 column notes in the request right after the scope check and before the live-mode, key, budget

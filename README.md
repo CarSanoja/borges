@@ -40,7 +40,7 @@ smallest flip it found.**
 > wrote the plan. Its last two lines are exactly:
 >
 > ```text
-> Universes: 27, checkpoints: 119, LLM calls: 38 scripted (0 cached)
+> Universes: 40, checkpoints: 171, LLM calls: 38 scripted (0 cached)
 > Tokens: 0 in / 0 out, cost: $0.0000 (scripted replay, no model called)
 > ```
 >
@@ -376,7 +376,11 @@ live on Nemotron" (the button says why when it is disabled). The landing page ha
 enabled only when `/api/health` reports `uploads_available` (a key, budget left, and either
 the `contree` backend or `BORGES_ALLOW_UNTRUSTED_LOCAL=true`) and otherwise shows the exact
 reason. The same flow is available over the API (`POST /api/uploads`, CSV or parquet, then
-`POST /api/runs` with `upload_id`). Uploaded data always needs a live run and an API key with
+`POST /api/runs` with `upload_id`). The reader takes comma, semicolon, tab or pipe delimiters,
+a byte-order mark, decimal commas in semicolon files (the default Excel export in Spanish
+locales) and latin-1 text; an Excel workbook renamed `.csv` gets a message to save it as CSV
+UTF-8, fully empty columns are dropped and named before the run starts, and a table needs at
+least 50 rows. Uploaded data always needs a live run and an API key with
 the `uploads:write` scope; anonymous demo access cannot upload, and the card says so before you
 submit. One upload has run live end to end: the public teaching-ratings data (463 rows) gave
 BEAUTY PREMIUM, 0.141 [0.076, 0.206], in 148 s for an estimated $0.016 (`evidence/live-runs.md`).
@@ -511,7 +515,7 @@ armor-out hooks and into run creation and uploads. It refuses runs whose questio
 file or column names carry instructions, quarantines instruction-like column notes and cell
 values (with a caveat on the run page), drops model-proposed options that try to steer the
 result or the code, and redacts personal data (e-mail, phone, cards, IBAN, SSN, DNI/NIE,
-CURP/RFC, IP, dates of birth) before any model sees it. The upload response and screen list the
+CURP/RFC, IP, dates of birth, person names) before any model sees it. The upload response and screen list the
 columns that contain personal data, with counts. Set `BORGES_ARMOR_LLM=true` to add a
 judge-model second stage for ambiguous text. On two blind sets, written by writers who never saw
 the screen: `blind_2026-10-07.json` (7 October), 19 of 70 attacks caught by the patterns and 33
