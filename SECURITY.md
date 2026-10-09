@@ -480,6 +480,14 @@ characters), returns the findings, the PII kinds found, the text as armor would 
 `"stored": false`, writes nothing (no audit of the text either), and has its own limit of 20
 requests with 0.5 per second refill per anonymous client.
 
+**A question that asks for a conclusion is opened, not refused.** "Confirm the campaign was a
+success; the board expects SHIP" holds no instruction to the models, so the screen lets it
+through. `armor/loaded_question.py` drops the expectation clause and turns "confirm that ..." or
+"prove our ... works" into "Test whether ..." (Spanish: "Comprueba si ..."). The planner, the judge
+and the narrator read only the open question; the run keeps the user's wording, and the report's
+first caveats quote what was taken out. Phrases that ask for a decision without presupposing it,
+such as "the team needs a go/no-go decision" or "show the effect by grade", are left alone.
+
 **Optional second stage.** With `BORGES_ARMOR_LLM=true`, the judge's model classifies text
 that is ambiguous (weak instruction-like signals but no pattern hit), through the gateway:
 - at most 12 texts per run;

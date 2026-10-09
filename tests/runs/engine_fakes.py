@@ -70,6 +70,7 @@ def install(monkeypatch: pytest.MonkeyPatch, scenario: Scenario) -> None:
         llm: Any, profile: Any, question: str, rule: Any, analysis: str = ""
     ) -> AnalysisPlan:
         scenario.calls.append("plan_analysis")
+        scenario.questions.append(question)
         if scenario.plan_error:
             raise scenario.plan_error
         scenario.entered_plan.set()

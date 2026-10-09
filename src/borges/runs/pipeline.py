@@ -14,6 +14,7 @@ from borges.analysis.profile import blind_profile, profile_dataframe
 from borges.analysis.scale_check import scale_check
 from borges.analysis.seeded_options import seed_cluster_options
 from borges.analysis.smoke_review import llm_reviewer
+from borges.armor.loaded_question import loaded_caveat, open_question
 from borges.armor.report import ArmorReport
 from borges.config import Settings
 from borges.fleet.models import RunAgents
@@ -130,8 +131,10 @@ class Pipeline:
             self.armor_stage.record(resolved.armor)
             profile = await self.armor_stage.profile(profile)
         async with self.stage("planning"):
+            question, loaded = open_question(resolved.question)
+            self.caveats.extend(filter(None, [loaded_caveat(resolved.question, question, loaded)]))
             plan = await plan_analysis(
-                self.llm, profile, resolved.question, resolved.decision_rule, resolved.analysis
+                self.llm, profile, question, resolved.decision_rule, resolved.analysis
             )
             self.caveats.extend(analysis_caveats(plan))
             plan = await self.armor_stage.plan(plan)

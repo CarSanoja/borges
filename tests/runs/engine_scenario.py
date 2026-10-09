@@ -34,6 +34,7 @@ class Scenario:
     combination_choices: list[dict[str, str]] = field(default_factory=list)
     executors: list[FakeExecutor] = field(default_factory=list)
     calls: list[str] = field(default_factory=list)
+    questions: list[str] = field(default_factory=list)
     combination_calls: list[tuple[int, int]] = field(default_factory=list)
 
 
