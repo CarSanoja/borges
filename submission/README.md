@@ -13,13 +13,14 @@ audio: [borges-demo.mp4](borges-demo.mp4), 2:03, 1920×1080. Its edit manifest i
 | Full Python suite on the working tree | 4,029 passed, 6 skipped, 2 live tests deselected, 40m53s |
 | Haiku transport/budget regression tests added afterwards | 3 passed |
 | Frontend | 359 passed; typecheck and production build passed |
+| Frontend dependency audit | 0 reported vulnerabilities after patching Vite to 8.3.3 and jsdom's Undici dependency to 8.12.2; all 359 frontend tests, typecheck and build passed again |
 | Ruff | All checks passed; 1,276 files formatted |
 | Production Docker build and startup | Passed, healthy, non-root process |
 | Packaged HTTP checks | All nine historical recordings served; fresh scripted checkout completed, verified flip; POST returned in 0.034s |
 | Historical Nemotron checkout reproduction | MATCH on estimate, interval, p-value, n and verdict |
 | Final Haiku engine validation | checkout: 19 universes, 0 failed; red cards: 18 universes, 0 failed, reproduced significance flip; both final narratives completed |
 | Haiku estimated spend, including initial attempts and connection probe | $0.0712583, from reported tokens and published prices; $0.50 total cap |
-| Git history secret scan | 725 commits scanned; one inspected synthetic redaction-test token allowlisted by exact fingerprint; no remaining findings |
+| Git history secret scan | 728 commits scanned; one inspected synthetic redaction-test token allowlisted by exact fingerprint; no remaining findings |
 | Browser QA | Desktop and responsive 390px reviewed; flipping-universe drawer opened and closed with Escape; screenshots in `assets/screenshots/submission/` |
 
 The full Python run started before the three new transport tests were added; those three were
@@ -30,6 +31,11 @@ the Nebius account. No historical recording was relabelled.
 
 Machine-readable results are in [packaged HTTP checks](../evidence/test-suite/packaged-2026-10-25.json)
 and [Haiku validation](../evidence/test-suite/haiku-2026-10-25.json).
+The dependency fixes were also rebuilt into Docker and passed the
+[packaged HTTP checks again](../evidence/test-suite/packaged-security-2026-10-26.json).
+The [dependency audit](../evidence/test-suite/frontend-audit-2026-10-26.json) includes development
+dependencies, and [the patch record](../evidence/test-suite/dependency-fixes-2026-10-26.json)
+links the advisories and exact versions.
 
 ## Run the NVIDIA delivery configuration
 

@@ -1,0 +1,86 @@
+{
+  "checked_at": "2026-10-26T10:59:03.416627+00:00",
+  "url": "http://127.0.0.1:18483",
+  "status": "pass",
+  "health": {
+    "status": "ok",
+    "llm": "scripted",
+    "llm_live_available": false,
+    "live_unavailable_reason": "no_key",
+    "uploads_available": false,
+    "uploads_unavailable_reason": "Uploaded datasets run live and this server has no NEBIUS_API_KEY.",
+    "backend": "local",
+    "spend_usd": 0.0,
+    "spend_cap_usd": 5.0,
+    "est_cost_per_live_run_usd": 0.07,
+    "max_cost_per_live_run_usd": 0.5,
+    "anon_live_quota": {
+      "applies": true,
+      "per_client_per_day": 2,
+      "remaining": 2,
+      "resets_at": null,
+      "global_per_hour": 6,
+      "global_remaining": 6,
+      "est_cost_per_run_usd": 0.07
+    },
+    "queue_depth": 0,
+    "active_workers": 0,
+    "oldest_job_age_s": null,
+    "dead_letter_count": 0
+  },
+  "recordings": [
+    {
+      "case": "bank_marketing_calls",
+      "events": 123,
+      "status": "pass"
+    },
+    {
+      "case": "checkout_ab",
+      "events": 162,
+      "status": "pass"
+    },
+    {
+      "case": "fertility_published",
+      "events": 189,
+      "status": "pass"
+    },
+    {
+      "case": "fertility_religiosity",
+      "events": 222,
+      "status": "pass"
+    },
+    {
+      "case": "hurricanes",
+      "events": 151,
+      "status": "pass"
+    },
+    {
+      "case": "marp_norms",
+      "events": 241,
+      "status": "pass"
+    },
+    {
+      "case": "marp_religiosity",
+      "events": 113,
+      "status": "pass"
+    },
+    {
+      "case": "red_cards",
+      "events": 183,
+      "status": "pass"
+    },
+    {
+      "case": "teaching_ratings",
+      "events": 154,
+      "status": "pass"
+    }
+  ],
+  "scripted": {
+    "run_id": "r_20261026T105903_fffc5f",
+    "llm": "scripted",
+    "status": "pass",
+    "create_seconds": 0.019,
+    "elapsed_seconds": 22.163,
+    "flip_reproduced": true
+  }
+}

@@ -27,7 +27,7 @@
   "haiku": "haiku-2026-10-25.json",
   "historical_nemotron_reproduce": "MATCH",
   "history_scan": {
-    "commits": 725,
+    "commits": 728,
     "reviewed_synthetic_fixture_findings": 1,
     "remaining_findings": 0
   },
@@ -55,5 +55,16 @@
       96,
       122
     ]
+  },
+  "security_patch": {
+    "vite": "8.3.3",
+    "undici": "8.12.2",
+    "frontend_audit": "frontend-audit-2026-10-26.json",
+    "reported_vulnerabilities": 0,
+    "frontend_tests_passed": 359,
+    "typecheck": "pass",
+    "build": "pass",
+    "docker_image": "sha256:d73839ad89b0297143233965bc581bfddf86f0fb161bd345e4ae23566b7e4f51",
+    "packaged_http": "packaged-security-2026-10-26.json"
   }
 }

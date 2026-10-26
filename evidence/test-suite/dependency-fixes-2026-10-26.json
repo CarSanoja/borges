@@ -1,0 +1,39 @@
+{
+  "checked_at": "2026-10-26",
+  "changes": {
+    "vite": {
+      "from": "8.3.2",
+      "to": "8.3.3"
+    },
+    "undici": {
+      "from": "8.11.2",
+      "to": "8.12.2",
+      "scope": "jsdom test dependency, constrained override on affected 8.x versions"
+    }
+  },
+  "github_alerts_addressed": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "additional_audit_advisories": [
+    "GHSA-4qv8-2p9j-2685",
+    "GHSA-f72v-6w45-q472",
+    "GHSA-xjj6-f33q-929c"
+  ],
+  "audit": "frontend-audit-2026-10-26.json",
+  "frontend_validation": {
+    "tests_passed": 359,
+    "test_files": 78,
+    "typecheck": "pass",
+    "production_build": "pass"
+  },
+  "primary_sources": [
+    "https://github.com/vitejs/vite/releases/tag/v8.3.3",
+    "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
+    "https://github.com/advisories/GHSA-xjj6-f33q-929c"
+  ]
+}
