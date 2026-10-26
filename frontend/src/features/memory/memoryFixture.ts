@@ -8,7 +8,7 @@ export function sampleSummary(overrides: Partial<MemorySummary> = {}): MemorySum
     encrypted: false,
     note: "Shared by all visitors, curated cases only, stored unencrypted.",
     totals: { verdict: 7, code: 11, adversary: 1, note: 0 },
-    datasets: [{ dataset: "4738630f2e50aabbccdd", last_used: 1, verdict: 7, code: 11, adversary: 1, note: 0 }],
+    datasets: [{ dataset: "4738630f2e50aabbccdd", label: "New checkout A/B test", last_used: 1, verdict: 7, code: 11, adversary: 1, note: 0 }],
     limits: {
       verdict: { ttl_days: 90, max_rows: 2000 },
       code: { ttl_days: 30, max_rows: 1000 },

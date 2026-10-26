@@ -23,6 +23,7 @@ describe("MemoryPage", () => {
     render(<MemoryPage />);
     expect(await screen.findByText(/stored unencrypted/)).toBeInTheDocument();
     expect(screen.getByText("4738630f2e50")).toBeInTheDocument();
+    expect(screen.getByText("New checkout A/B test")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Forget" })).not.toBeInTheDocument();
     expect(screen.getByText(/memory:write scope/)).toBeInTheDocument();
   });

@@ -509,6 +509,7 @@ export interface MemoryUsed {
 
 export interface MemoryDataset {
   dataset: string;
+  label?: string | null;
   last_used: number;
   verdict: number;
   code: number;

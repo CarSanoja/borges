@@ -10,6 +10,7 @@ from borges.config import Settings
 from borges.identity.deps import get_principal
 from borges.identity.principal import Principal
 from borges.memory import service
+from borges.memory.case_labels import with_case_labels
 from borges.memory.repository import MemoryUnavailable
 from borges.memory.tenant import resolve_mode, tenant_of
 
@@ -29,7 +30,7 @@ class NoteRequest(BaseModel):
 
 @router.get("/memory")
 def memory_summary(settings: SettingsDep, principal: PrincipalDep) -> dict[str, Any]:
-    return service.describe(settings, principal.id)
+    return with_case_labels(service.describe(settings, principal.id), settings.borges_cases_dir)
 
 
 @router.delete("/memory")

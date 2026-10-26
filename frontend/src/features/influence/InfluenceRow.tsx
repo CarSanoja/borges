@@ -14,7 +14,9 @@ export function InfluenceRow({ item, scale, baselineEstimate = null }: Props) {
   const immaterial = isImmaterialShift(item.max_abs_delta, context);
   return (
     <li className="ib-row" data-flips={flips} data-material={!immaterial}>
-      <span className="ib-title">{item.title}</span>
+      <span className="ib-title" title={item.title}>
+        {item.title}
+      </span>
       <span className="ib-track" aria-hidden="true">
         <span className="ib-fill" style={{ width: `${(share * 100).toFixed(1)}%` }} />
       </span>

@@ -83,3 +83,15 @@
 .run-memory p {
   margin: 0 0 var(--space-2);
 }
+
+.memory-dataset {
+  display: block;
+  font-weight: 500;
+  color: var(--paper-100);
+}
+
+.memory-fingerprint {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

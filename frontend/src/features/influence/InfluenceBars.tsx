@@ -16,12 +16,13 @@ export function InfluenceBars({ snapshot }: Props) {
   );
   const scale = items.reduce((max, item) => Math.max(max, item.max_abs_delta), 0);
   const baselineEstimate = snapshot.report?.original_result.estimate ?? null;
+  const metric = snapshot.decision_rule?.metric;
 
   return (
     <section className="panel ib" aria-label="Decision influence">
       <header className="ib-head">
         <span className="eyebrow">Decision influence</span>
-        <span className="ib-unit">max shift in estimate</span>
+        <span className="ib-unit">{metric ? `largest move of the estimate, in ${metric}` : "largest move of the estimate"}</span>
       </header>
       {items.length === 0 ? (
         <p className="ib-empty">Influence appears as the first forks finish.</p>

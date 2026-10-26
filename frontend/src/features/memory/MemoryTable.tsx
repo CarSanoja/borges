@@ -29,8 +29,9 @@ export function MemoryTable({ summary, canForget, onForget }: Props) {
       <tbody>
         {summary.datasets.map((row) => (
           <tr key={row.dataset}>
-            <th scope="row" className="mono" title={row.dataset}>
-              {shortFingerprint(row.dataset)}
+            <th scope="row" title={row.dataset}>
+              <span className="memory-dataset">{row.label ?? "Uploaded dataset"}</span>
+              <span className="memory-fingerprint mono">{shortFingerprint(row.dataset)}</span>
             </th>
             {KINDS.map((kind) => (
               <td key={kind} className="mono">
