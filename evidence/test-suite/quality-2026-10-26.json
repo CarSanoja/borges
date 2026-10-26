@@ -37,7 +37,23 @@
     "public_demo_url": null,
     "youtube_url": null,
     "devpost_submitted": false,
-    "video_state": "Draft assembled; final ElevenLabs audio requested by owner"
+    "video_state": "Final MP4 assembled with owner-provided ElevenLabs audio; public YouTube upload pending"
   },
-  "staged_secret_scan": "pass"
+  "staged_secret_scan": "pass",
+  "video": {
+    "file": "submission/borges-demo.mp4",
+    "duration_seconds": 123.2,
+    "resolution": "1920x1080",
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "audio_source": "Owner-provided ElevenLabs Eric narration",
+    "sha256": "2280e7c3219007e395926f760a184be6a4e161ed95e50a12ab6d65306d3e00e1",
+    "video_and_audio_duration_match": true,
+    "visual_qa_seconds": [
+      10,
+      64,
+      96,
+      122
+    ]
+  }
 }

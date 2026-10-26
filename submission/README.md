@@ -2,8 +2,9 @@
 
 Track: **Best Apps and Agents**. Copy-ready description: [devpost.md](devpost.md).
 Required platform feedback: [feedback.md](feedback.md). Narration: [video-script.md](video-script.md).
-Clean ElevenLabs input: [voiceover.txt](voiceover.txt). The current MP4 is a temporary assembly;
-the owner will supply the final ElevenLabs audio before the video is published.
+Clean ElevenLabs input: [voiceover.txt](voiceover.txt). Final video with the owner's ElevenLabs
+audio: [borges-demo.mp4](borges-demo.mp4), 2:03, 1920×1080. Its edit manifest is
+[video-edit.json](video-edit.json).
 
 ## Quality round, 25–26 October 2026
 

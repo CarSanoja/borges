@@ -4,9 +4,9 @@ Target length: 2:30 to 2:50. English narration. Use the actual application and k
 recording's date and model labels visible. The historical replay is a recorded live run;
 the new Haiku validation is a separate test, not a new Nemotron recording.
 
-The owner will generate the final audio in ElevenLabs from [voiceover.txt](voiceover.txt).
-The existing MP4 is a temporary assembly for editing; replace its synthetic local voice before
-publication and fit the shots to the supplied audio.
+The owner generated the final ElevenLabs audio from [voiceover.txt](voiceover.txt), using Eric.
+The final [MP4](borges-demo.mp4) uses that supplied audio and actual application captures.
+Its duration is 2:03, below the three-minute submission limit.
 
 ## 0:00–0:25 — The problem
 

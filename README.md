@@ -14,7 +14,7 @@ smallest flip it found.**
 > sign, p crosses 0.05).
 >
 > - Hosted demo: TODO-OWNER (URL, none exists yet)
-> - Video: TODO-OWNER (link, not recorded yet)
+> - Video: [2:03 demo with ElevenLabs narration](submission/borges-demo.mp4); public YouTube link pending upload.
 > - Final quality round and delivery configuration: [submission package](submission/README.md).
 > - Offline, no key, from a fresh clone (Python 3.13 and [uv](https://docs.astral.sh/uv/)):
 >
@@ -93,7 +93,7 @@ Be clear about this before reading further. The source of truth for every live n
 | What is real | The data, the option code, the sandbox execution and every statistic. `borges reproduce --source live` re-executed the baseline and the flip (or the farthest universe) of all six recordings on macOS: 11 of 12 MATCH. The twelfth, a median regression recorded on ConTree's Linux, differs by 4e-6 relative, with the same p-value, n and verdict. MATCH proves the recorded code is deterministic. Correctness was checked separately: an auditor that did not read the code refitted every baseline and flip from the specs and the raw data, and all agree to 2e-7 (`evidence/refit.md`). That refit caught one wrong headline, bank's, which was fixed and recorded again. The two 7 October recordings reproduce 4 of 4 MATCH, and a refit caught a wrong coefficient in an earlier fertility recording, which was discarded (`evidence/live-runs.md`) |
 | BLADE benchmark | Ran live on 4 October: mean F1 over 12 datasets 0.468 (planner arm) and 0.480 (adversary arm), one repeat each. The 0.012 difference is smaller than the gap between the two committed tables, and one repeat cannot show it is more than noise (`evidence/blade/README.md`) |
 | Domain scenarios | **Nineteen synthetic datasets with a planted answer** (a fictional audit firm, a clinic, a K-12 district, a bank; six asked in Spanish; edge cases such as a numeric exposure under a rule on a probability, a 2 % outcome, 24 students measured twice, a staggered rollout, a censored time to readmission, hand-typed yes/no flags, a European CSV, accented headers, a threshold of half a point and a rate ratio below 0.8) ran live on 9 October. First runs: 9 of 19 right. The gaps they exposed were fixed at the root and rerun: 18 of 19 right; the clinic case with a pre-existing time trend still overstates the effect about twofold (`evidence/domain-scenarios.md`). On 9 October Token Factory stopped serving Nemotron Ultra (404); the gateway falls back to Super for the judge and the narrator |
-| Hosted public demo | **None yet**: no public URL, no video |
+| Hosted public demo | **None yet**: no public application URL. The final 2:03 video is in `submission/borges-demo.mp4`, awaiting public YouTube upload |
 | Outside users | None. Nobody outside the project has used it, and no head-to-head against another tool exists |
 
 The scripted recordings (`cases/*/recorded/events.jsonl`) still list the configured role model

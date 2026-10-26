@@ -1,0 +1,45 @@
+{
+  "audio_source": "Owner-supplied ElevenLabs narration, Eric - Smooth, Trustworthy",
+  "audio_sha256": "09932b01a60c0ff169eb92caadf39f45749f0172ab0597b3cd0d222c3a725c59",
+  "audio_duration_seconds": 121.808938,
+  "video_duration_seconds": 123.2,
+  "resolution": "1920x1080",
+  "source": "Actual browser captures of the packaged Borges app; historical Nemotron checkout replay",
+  "scenes": [
+    {
+      "start": 0,
+      "end": 16.3,
+      "scene": "Problem and landing page"
+    },
+    {
+      "start": 16.3,
+      "end": 50.9,
+      "scene": "Recorded live analysis animation, slowed for narration"
+    },
+    {
+      "start": 50.9,
+      "end": 63.7,
+      "scene": "Direction flip and original result"
+    },
+    {
+      "start": 63.7,
+      "end": 75.9,
+      "scene": "Universe details and reproduction command"
+    },
+    {
+      "start": 75.9,
+      "end": 87.0,
+      "scene": "Report and limits"
+    },
+    {
+      "start": 87.0,
+      "end": 105.9,
+      "scene": "Actual NVIDIA agent registry, Super and Lightning"
+    },
+    {
+      "start": 105.9,
+      "end": 123.2,
+      "scene": "Closing product view"
+    }
+  ]
+}
