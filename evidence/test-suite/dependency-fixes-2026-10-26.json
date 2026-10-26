@@ -9,6 +9,14 @@
       "from": "8.11.2",
       "to": "8.12.2",
       "scope": "jsdom test dependency, constrained override on affected 8.x versions"
+    },
+    "certifi": {
+      "from": "2026.7.22",
+      "to": "2026.10.19"
+    },
+    "opentelemetry": {
+      "from": "1.45.0 / 0.66b0",
+      "to": "1.45.1 / 0.66b1"
     }
   },
   "github_alerts_addressed": [
@@ -17,7 +25,9 @@
     3,
     4,
     5,
-    6
+    6,
+    7,
+    8
   ],
   "additional_audit_advisories": [
     "GHSA-4qv8-2p9j-2685",
@@ -34,6 +44,16 @@
   "primary_sources": [
     "https://github.com/vitejs/vite/releases/tag/v8.3.3",
     "https://github.com/advisories/GHSA-587h-7wmj-h5pm",
-    "https://github.com/advisories/GHSA-xjj6-f33q-929c"
-  ]
+    "https://github.com/advisories/GHSA-xjj6-f33q-929c",
+    "https://github.com/advisories/GHSA-xcq7-p3pf-p88h",
+    "https://github.com/advisories/GHSA-6q48-6c7w-9gw2"
+  ],
+  "python_audit": "python-audit-2026-10-26.json",
+  "python_packages_audited": 78,
+  "python_regression_log": "dependency-regressions-2026-10-26.log",
+  "python_packaged_http": "packaged-python-patch-2026-10-26.json",
+  "python_regressions": {
+    "passed": 978,
+    "seconds": 340.55
+  }
 }

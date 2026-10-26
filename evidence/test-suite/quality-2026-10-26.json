@@ -64,7 +64,17 @@
     "frontend_tests_passed": 359,
     "typecheck": "pass",
     "build": "pass",
-    "docker_image": "sha256:d73839ad89b0297143233965bc581bfddf86f0fb161bd345e4ae23566b7e4f51",
-    "packaged_http": "packaged-security-2026-10-26.json"
+    "docker_image": "sha256:245c93bacb467819eb9871fdc871aac05738eb256768ef65a7dfe6f16d0ba9fd",
+    "packaged_http": "packaged-python-patch-2026-10-26.json",
+    "certifi": "2026.10.19",
+    "opentelemetry": "1.45.1 / 0.66b1",
+    "python_audit": "python-audit-2026-10-26.json",
+    "python_packages_audited": 78,
+    "python_known_vulnerabilities": 0,
+    "python_regression_log": "dependency-regressions-2026-10-26.log",
+    "python_regressions": {
+      "passed": 978,
+      "seconds": 340.55
+    }
   }
 }

@@ -14,6 +14,8 @@ audio: [borges-demo.mp4](borges-demo.mp4), 2:03, 1920×1080. Its edit manifest i
 | Haiku transport/budget regression tests added afterwards | 3 passed |
 | Frontend | 359 passed; typecheck and production build passed |
 | Frontend dependency audit | 0 reported vulnerabilities after patching Vite to 8.3.3 and jsdom's Undici dependency to 8.12.2; all 359 frontend tests, typecheck and build passed again |
+| Python dependency audit | 78 packages, 0 known vulnerabilities after patching Certifi to 2026.10.19 and the OpenTelemetry 1.45.1 / 0.66b1 family |
+| Python regressions after those patches | 978 passed across API, telemetry, gateway, fleet, identity, runtime, the end-to-end API path and Haiku transport tests |
 | Ruff | All checks passed; 1,276 files formatted |
 | Production Docker build and startup | Passed, healthy, non-root process |
 | Packaged HTTP checks | All nine historical recordings served; fresh scripted checkout completed, verified flip; POST returned in 0.034s |
@@ -23,8 +25,11 @@ audio: [borges-demo.mp4](borges-demo.mp4), 2:03, 1920×1080. Its edit manifest i
 | Git history secret scan | 728 commits scanned; one inspected synthetic redaction-test token allowlisted by exact fingerprint; no remaining findings |
 | Browser QA | Desktop and responsive 390px reviewed; flipping-universe drawer opened and closed with Escape; screenshots in `assets/screenshots/submission/` |
 
-The full Python run started before the three new transport tests were added; those three were
-run separately afterwards. Live Nebius calls now return 401 with the local credential. The
+The full Python run started before the three new transport tests and the final dependency
+patches; the transport tests and a targeted API, telemetry, gateway, fleet, identity and runtime
+regression run were checked afterwards. Its full output is in
+[the regression log](../evidence/test-suite/dependency-regressions-2026-10-26.log).
+Live Nebius calls now return 401 with the local credential. The
 historical Nemotron recordings remain intact. Haiku validation tests the actual analysis
 pipeline with a temporary, budgeted provider; it does not certify the current availability of
 the Nebius account. No historical recording was relabelled.
@@ -36,6 +41,9 @@ The dependency fixes were also rebuilt into Docker and passed the
 The [dependency audit](../evidence/test-suite/frontend-audit-2026-10-26.json) includes development
 dependencies, and [the patch record](../evidence/test-suite/dependency-fixes-2026-10-26.json)
 links the advisories and exact versions.
+The [Python audit](../evidence/test-suite/python-audit-2026-10-26.json) covers all exported
+runtime, development and ConTree dependencies applicable to this platform, with no skipped
+packages. The rebuilt Python image passed the [HTTP checks again](../evidence/test-suite/packaged-python-patch-2026-10-26.json).
 
 ## Run the NVIDIA delivery configuration
 
