@@ -76,5 +76,25 @@
       "passed": 978,
       "seconds": 340.55
     }
+  },
+  "remote_ci": {
+    "source_commit": "a36eb2d8dcb5ee313eae8132cf06161fadaa36cc",
+    "run_id": 40313176628,
+    "url": "https://github.com/CarSanoja/borges/actions/runs/40313176628",
+    "conclusion": "success",
+    "platform": "ubuntu-latest",
+    "python": {
+      "passed": 4034,
+      "skipped": 4,
+      "deselected": 2,
+      "seconds": 5916.21
+    },
+    "frontend": {
+      "test_files": 78,
+      "passed": 359,
+      "typecheck": "pass",
+      "production_build": "pass"
+    },
+    "lint": "pass"
   }
 }

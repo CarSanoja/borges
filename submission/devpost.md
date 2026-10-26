@@ -74,6 +74,6 @@ pandas, statsmodels, React, TypeScript, D3, Docker. Apache-2.0.
 
 - Public demo: pending deployment.
 - Public YouTube video, under three minutes: pending upload.
-- Repository: https://github.com/CarSanoja/borges (must be public before submission).
+- Repository: https://github.com/CarSanoja/borges (public, Apache-2.0).
 - Judge instructions: `submission/README.md`.
 - Required platform feedback: `submission/feedback.md`.

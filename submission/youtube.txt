@@ -1,0 +1,18 @@
+TITLE
+Borges: Find the Analysis Choice That Flips Your Decision | Nebius x NVIDIA
+
+DESCRIPTION
+What if one defensible analysis choice changed your decision?
+
+Borges stress-tests a data conclusion by exploring alternative analyses in real sandboxes. It shows which paths agree, which choice changes the answer, and how to reproduce the result.
+
+This demo replays a recorded live run of NVIDIA Nemotron on Nebius Token Factory, executed with Token Factory Sandboxes (ConTree). In a synthetic checkout experiment with a planted data problem, excluding internal test sessions changes the estimated lift from +0.85 to -0.15 percentage points, reversing the decision from SHIP to DON'T SHIP.
+
+Explore the analysis paths, inspect the code and sandbox checkpoints, and reproduce the result from the open-source repository.
+
+Code: https://github.com/CarSanoja/borges
+License: Apache-2.0
+
+Built for the Nebius x NVIDIA Global AI Hackathon 2026.
+
+#Nebius #NVIDIA #Nemotron #OpenSource #AI

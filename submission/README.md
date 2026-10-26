@@ -16,6 +16,7 @@ audio: [borges-demo.mp4](borges-demo.mp4), 2:03, 1920×1080. Its edit manifest i
 | Frontend dependency audit | 0 reported vulnerabilities after patching Vite to 8.3.3 and jsdom's Undici dependency to 8.12.2; all 359 frontend tests, typecheck and build passed again |
 | Python dependency audit | 78 packages, 0 known vulnerabilities after patching Certifi to 2026.10.19 and the OpenTelemetry 1.45.1 / 0.66b1 family |
 | Python regressions after those patches | 978 passed across API, telemetry, gateway, fleet, identity, runtime, the end-to-end API path and Haiku transport tests |
+| Full Linux CI on the final application code (`a36eb2d8`) | 4,034 passed, 4 skipped, 2 live tests deselected; all 359 frontend tests, typecheck, lint and production build passed |
 | Ruff | All checks passed; 1,276 files formatted |
 | Production Docker build and startup | Passed, healthy, non-root process |
 | Packaged HTTP checks | All nine historical recordings served; fresh scripted checkout completed, verified flip; POST returned in 0.034s |
@@ -94,9 +95,10 @@ uv run borges reproduce --case checkout_ab --source live --universe u_fb948f9bb7
 
 ## Final publication steps
 
-- Make `CarSanoja/borges` public; it is currently private.
+- Public source: https://github.com/CarSanoja/borges. The owner authorized publication on 26 October; `main` requires a pull request and successful CI, with force pushes and deletion disabled.
 - Deploy the prepared Docker configuration and insert its HTTPS URL in the README and Devpost.
 - Upload the demo video publicly to YouTube and insert its link.
+  Copy-ready English title and description: [youtube.txt](youtube.txt).
 - Copy the description, testing instructions and feedback into Devpost; select the track and
   submit. The draft files are ready, but no Devpost submission has been made by this quality run.
 
