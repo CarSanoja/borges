@@ -1,0 +1,139 @@
+{
+  "checked_at": "2026-10-26T03:49:34.958117+00:00",
+  "source_commit": "64bfb200b1bd707e7096183ec584c193b6640fb9",
+  "purpose": "Initial adaptive-thinking attempt; overall incomplete, followed by strict no-thinking validation",
+  "total_cap_usd": 0.5,
+  "results": [
+    {
+      "case": "checkout_ab",
+      "run_id": "r_20261026T034616_d9f003",
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "status": "partial",
+      "report": {
+        "question": "Does the new checkout increase the conversion rate?",
+        "original_verdict": "DON'T SHIP",
+        "original_result": {
+          "estimate": -0.13555546207813673,
+          "ci_low": -0.4994232490628286,
+          "ci_high": 0.2283123249065551,
+          "p_value": 0.46528882822024253,
+          "n": 28707,
+          "metric": "",
+          "extra": {}
+        },
+        "minimal_flip": null,
+        "influences": [
+          {
+            "step_id": "drop_bot_sessions",
+            "title": "Very short, bot-like sessions",
+            "mean_abs_delta": 0.007164618397567574,
+            "max_abs_delta": 0.007164618397567574,
+            "flips": 0,
+            "n_alternatives": 1
+          },
+          {
+            "step_id": "adjustment_set",
+            "title": "Covariates adjusted for in the lift",
+            "mean_abs_delta": 0.0011965573999633966,
+            "max_abs_delta": 0.0013886820973530445,
+            "flips": 0,
+            "n_alternatives": 2
+          },
+          {
+            "step_id": "lift_model",
+            "title": "Estimate the treatment lift",
+            "mean_abs_delta": 2.3130935422610577e-07,
+            "max_abs_delta": 2.3130935422610577e-07,
+            "flips": 0,
+            "n_alternatives": 1
+          }
+        ],
+        "robustness": 1.0,
+        "n_universes": 12,
+        "n_flipped": 0,
+        "n_distinct_results": 12,
+        "robustness_basis": "design_weighted",
+        "robustness_beam": 1.0,
+        "robustness_design": 1.0,
+        "robustness_design_note": "the whole grid: 12 combinations, 12 distinct results; exact, not sampled, and independent of the beam search",
+        "robustness_low": null,
+        "robustness_high": null,
+        "robustness_rating": 1.0,
+        "robustness_rating_reason": null,
+        "noop_options": [],
+        "duplicate_options": [],
+        "estimand_changes": [],
+        "contaminated_flip": null,
+        "contaminated_flips": [],
+        "narrator_input_tokens": 3703,
+        "narrative": "",
+        "caveats": [
+          "The adversary stage failed and was skipped: adversary: output truncated at max_tokens",
+          "The 100% robustness estimate is the share of the analysis grid that agrees with the original verdict; it was sampled as follows: the whole grid: 12 combinations, 12 distinct results; exact, not sampled, and independent of the beam search. The universes the beam search explored are the ones closest to flipping, so their own agreement share leans toward flips and is not used as the estimate.",
+          "Narrative unavailable: narrator: output truncated at max_tokens"
+        ],
+        "n_attempted": 12,
+        "n_failed": 0,
+        "failed": [],
+        "search": {
+          "levels_explored": 3,
+          "max_combinations_per_level": 10,
+          "universe_budget": 40,
+          "universes_used": 12,
+          "budget_exhausted": false,
+          "sample_draws": 12,
+          "reference": null,
+          "reference_results": []
+        },
+        "coding": {
+          "options": 9,
+          "smoke_tested": 8,
+          "repaired_after_smoke": 0,
+          "failed": 1,
+          "steps_reviewed": 4,
+          "options_flagged": 0,
+          "options_dropped_by_review": 0,
+          "options_dropped_by_judge": 2,
+          "options_added_after_judge": 0,
+          "defaults_replaced": [],
+          "defaults_disputed": [],
+          "defaults_kept": [],
+          "options_dropped_by_armor": 0,
+          "options_recoded_by_output_check": 0
+        },
+        "agents": null,
+        "claim_check": null
+      },
+      "usage": {
+        "tokens_in": 104539,
+        "tokens_out": 21800,
+        "cost_usd": 0.021353900000000006,
+        "calls": 29,
+        "cached_calls": 0,
+        "by_model": {
+          "claude-haiku-5-5": 0.021353900000000006
+        }
+      },
+      "initial_harness_status": "pass"
+    },
+    {
+      "case": "red_cards",
+      "run_id": "r_20261026T034853_370961",
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "status": "fail",
+      "error": "LLMError: planner: output truncated at max_tokens",
+      "usage": {
+        "tokens_in": 6818,
+        "tokens_out": 8192,
+        "cost_usd": 0.0047778000000000004,
+        "calls": 1,
+        "cached_calls": 0,
+        "by_model": {
+          "claude-haiku-5-5": 0.0047778000000000004
+        }
+      }
+    }
+  ]
+}

@@ -6,6 +6,7 @@ runs
 .borges
 data/raw
 .env
+.env.*
 notes
 research
 .git

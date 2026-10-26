@@ -1,0 +1,6 @@
+{
+  "llm": "anthropic",
+  "model": "claude-haiku-5-5",
+  "case_id": "checkout_ab",
+  "run_id": "r_20261026T035142_9dc2bd"
+}

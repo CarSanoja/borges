@@ -1,0 +1,311 @@
+{
+  "checked_at": "2026-10-26T03:54:39.069522+00:00",
+  "source_commit": "64bfb200b1bd707e7096183ec584c193b6640fb9",
+  "purpose": "Live Haiku engine validation, separate from historical Nemotron recordings",
+  "total_cap_usd": 0.5,
+  "results": [
+    {
+      "case": "checkout_ab",
+      "run_id": "r_20261026T035142_9dc2bd",
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "status": "pass",
+      "report": {
+        "question": "Does the new checkout increase the conversion rate?",
+        "original_verdict": "DON'T SHIP",
+        "original_result": {
+          "estimate": -0.14132077356652908,
+          "ci_low": -0.4945812648577139,
+          "ci_high": 0.21193971772465575,
+          "p_value": 0.43299459768346305,
+          "n": 29587,
+          "metric": "",
+          "extra": {}
+        },
+        "minimal_flip": null,
+        "influences": [
+          {
+            "step_id": "bot_filter",
+            "title": "Whether to drop very short, bot-like sessions",
+            "mean_abs_delta": 0.009347620687176136,
+            "max_abs_delta": 0.012929929885959923,
+            "flips": 0,
+            "n_alternatives": 2
+          },
+          {
+            "step_id": "adjustment",
+            "title": "Covariates to adjust for",
+            "mean_abs_delta": 0.0013995327410470104,
+            "max_abs_delta": 0.001554973554773853,
+            "flips": 0,
+            "n_alternatives": 2
+          },
+          {
+            "step_id": "estimate",
+            "title": "Estimator for the conversion lift",
+            "mean_abs_delta": 2.463307335887066e-14,
+            "max_abs_delta": 4.926614671774132e-14,
+            "flips": 0,
+            "n_alternatives": 2
+          }
+        ],
+        "robustness": 1.0,
+        "n_universes": 19,
+        "n_flipped": 0,
+        "n_distinct_results": 18,
+        "robustness_basis": "design_weighted",
+        "robustness_beam": 1.0,
+        "robustness_design": 1.0,
+        "robustness_design_note": "the whole grid: 18 combinations, 18 distinct results; exact, not sampled, and independent of the beam search",
+        "robustness_low": null,
+        "robustness_high": null,
+        "robustness_rating": 1.0,
+        "robustness_rating_reason": null,
+        "noop_options": [
+          {
+            "step_id": "estimate",
+            "option_id": "logit_marginal",
+            "label": "Logit with average marginal effect",
+            "reason": "it gives the same result as the baseline in every universe it appears in (estimate, confidence interval and n equal to 6 significant digits), so it is not a different analysis"
+          }
+        ],
+        "duplicate_options": [],
+        "estimand_changes": [],
+        "contaminated_flip": null,
+        "contaminated_flips": [],
+        "narrator_input_tokens": 4629,
+        "narrative": "The original analysis estimated -0.141 (95% CI -0.495 to 0.212, p = 0.43, n = 29,587) and returned the verdict DON'T SHIP. No minimal flip was found: no defensible combination of choices reverses the verdict, so there is no flip to re-execute. The decisions that move the estimate are the bot filter and, to a much smaller degree, the covariate adjustment. Dropping sessions under 2 seconds or under 5 seconds shifts the estimate toward zero, to about -0.128 to -0.136, and widens or shifts the interval slightly. Adding platform or experiment day as covariates changes it by only about 0.001. The choice of estimator makes no visible difference: the logit average marginal effect reproduces the baseline exactly, and the small-sample linear probability model gives the same result as the baseline. Across the 18 distinct results from the 19 universes, the estimates stay within a narrow band around the baseline, and every confidence interval includes zero. The judge accepted the planner's main options: dropping internal sessions, keeping all session lengths, adjusting for platform, and the user-clustered linear probability model. It rejected keeping internal sessions, because that departs from the genuine-session estimand. Robustness: 100% of the analysis grid agrees with the original verdict and 0% reverses it.",
+        "caveats": [
+          "The option 'Winsorize session_seconds at the 1st and 99th percentiles' of the step 'How to handle extreme session lengths' failed its smoke run and is not in the analysis (line 8: np.percentile(...) returns NaN when the column has a missing value, and every comparison with NaN is False, so a threshold built from it marks no row; u).",
+          "19 universes ran but only 18 gave distinct results; universes with identical results are counted once in the robustness share.",
+          "The option 'Logit with average marginal effect' (estimate) is a no-op: it gives the same result as the baseline in every universe it appears in (estimate, confidence interval and n equal to 6 significant digits), so it is not a different analysis. It is excluded from the robustness share and from the flip search.",
+          "The 100% robustness estimate is the share of the analysis grid that agrees with the original verdict; it was sampled as follows: the whole grid: 18 combinations, 18 distinct results; exact, not sampled, and independent of the beam search. The universes the beam search explored are the ones closest to flipping, so their own agreement share leans toward flips and is not used as the estimate."
+        ],
+        "n_attempted": 19,
+        "n_failed": 0,
+        "failed": [],
+        "search": {
+          "levels_explored": 3,
+          "max_combinations_per_level": 10,
+          "universe_budget": 40,
+          "universes_used": 19,
+          "budget_exhausted": false,
+          "sample_draws": 18,
+          "reference": null,
+          "reference_results": []
+        },
+        "coding": {
+          "options": 9,
+          "smoke_tested": 9,
+          "repaired_after_smoke": 0,
+          "failed": 0,
+          "steps_reviewed": 5,
+          "options_flagged": 1,
+          "options_dropped_by_review": 1,
+          "options_dropped_by_judge": 2,
+          "options_added_after_judge": 0,
+          "defaults_replaced": [],
+          "defaults_disputed": [],
+          "defaults_kept": [],
+          "options_dropped_by_armor": 0,
+          "options_recoded_by_output_check": 0
+        },
+        "agents": null,
+        "claim_check": null
+      },
+      "usage": {
+        "tokens_in": 145863,
+        "tokens_out": 9923,
+        "cost_usd": 0.019547799999999997,
+        "calls": 41,
+        "cached_calls": 0,
+        "by_model": {
+          "claude-haiku-5-5": 0.019547799999999997
+        }
+      },
+      "artifacts": "evidence/haiku-validation/checkout_ab"
+    },
+    {
+      "case": "red_cards",
+      "run_id": "r_20261026T035257_6a3658",
+      "provider": "anthropic",
+      "model": "claude-haiku-5-5",
+      "status": "pass",
+      "report": {
+        "question": "Are soccer referees more likely to give red cards to dark-skin-toned players than to light-skin-toned players?",
+        "original_verdict": "NO CLEAR EVIDENCE",
+        "original_result": {
+          "estimate": 1.0772124597260608,
+          "ci_low": 0.9365352477459394,
+          "ci_high": 1.2390208336332222,
+          "p_value": 0.2975670705544402,
+          "n": 116160,
+          "metric": "",
+          "extra": {}
+        },
+        "minimal_flip": {
+          "universe_id": "u_ed7cf2ed71",
+          "changes": [
+            {
+              "step_id": "covariate_adjustment",
+              "step_title": "Choose covariates for adjustment",
+              "from_option": "minimal",
+              "to_option": "extended",
+              "to_label": "Minimal set plus height, weight, games and referee-country bias scores",
+              "rationale": "Adds physical and exposure controls plus country-level implicit and explicit bias, which may confound skin tone with referee attitudes.",
+              "source": "Standard observational confounder adjustment; Gelman & Hill style covariate selection for pre-exposure confounders.",
+              "defensibility": 0.8
+            }
+          ],
+          "baseline_result": {
+            "estimate": 1.0772124597260608,
+            "ci_low": 0.9365352477459394,
+            "ci_high": 1.2390208336332222,
+            "p_value": 0.2975670705544402,
+            "n": 116160,
+            "metric": "",
+            "extra": {}
+          },
+          "flipped_result": {
+            "estimate": 1.1788445981949445,
+            "ci_low": 1.0237969564026372,
+            "ci_high": 1.357373234998045,
+            "p_value": 0.022205192830894355,
+            "n": 115457,
+            "metric": "",
+            "extra": {}
+          },
+          "baseline_verdict": "NO CLEAR EVIDENCE",
+          "flipped_verdict": "BIAS DETECTED",
+          "reproduced": true,
+          "reproduce_command": "python steps/exclude_missing_skin_tone__rated_only.py && python steps/exposure_construction__mean_split_median.py && python steps/outlier_treatment__keep_all.py && python steps/covariate_adjustment__extended.py && python steps/estimate_red_card_model__logit_clustered.py",
+          "kind": "significance",
+          "estimand_change": "changes the covariates of the model (adds games, height, meanExp, meanIAT, weight): adjusting for another set of covariates answers a different conditional question, so this is an estimand change, not a re-analysis of the same quantity",
+          "contaminated": false,
+          "contamination_reason": null
+        },
+        "influences": [
+          {
+            "step_id": "covariate_adjustment",
+            "title": "Choose covariates for adjustment",
+            "mean_abs_delta": 0.09690451516161347,
+            "max_abs_delta": 0.10163213846888364,
+            "flips": 2,
+            "n_alternatives": 2
+          },
+          {
+            "step_id": "estimate_red_card_model",
+            "title": "Estimate the odds ratio of a red card by skin tone",
+            "mean_abs_delta": 0.04830166558087756,
+            "max_abs_delta": 0.09660333116175468,
+            "flips": 1,
+            "n_alternatives": 2
+          },
+          {
+            "step_id": "exposure_construction",
+            "title": "Construct the skin-tone exposure",
+            "mean_abs_delta": 0.04622534276541512,
+            "max_abs_delta": 0.04622534276541512,
+            "flips": 0,
+            "n_alternatives": 1
+          }
+        ],
+        "robustness": 0.6111111111111112,
+        "n_universes": 18,
+        "n_flipped": 7,
+        "n_distinct_results": 18,
+        "robustness_basis": "design_weighted",
+        "robustness_beam": 0.6111111111111112,
+        "robustness_design": 0.6111111111111112,
+        "robustness_design_note": "the whole grid: 18 combinations, 18 distinct results; exact, not sampled, and independent of the beam search",
+        "robustness_low": null,
+        "robustness_high": null,
+        "robustness_rating": 0.6111111111111112,
+        "robustness_rating_reason": null,
+        "noop_options": [],
+        "duplicate_options": [],
+        "estimand_changes": [
+          {
+            "step_id": "covariate_adjustment",
+            "option_id": "extended",
+            "label": "Minimal set plus height, weight, games and referee-country bias scores",
+            "detail": "changes the covariates of the model (adds games, height, meanExp, meanIAT, weight): adjusting for another set of covariates answers a different conditional question, so this is an estimand change, not a re-analysis of the same quantity"
+          },
+          {
+            "step_id": "covariate_adjustment",
+            "option_id": "adv_extended_no_scores",
+            "label": "Position, league, referee country plus player and game-exposure covariates",
+            "detail": "changes the covariates of the model (adds games, height, weight): adjusting for another set of covariates answers a different conditional question, so this is an estimand change, not a re-analysis of the same quantity"
+          },
+          {
+            "step_id": "estimate_red_card_model",
+            "option_id": "adv_poisson_clustered_rate",
+            "label": "Poisson rate model on red-card count with games exposure, clustered by player",
+            "detail": "reports a rate ratio where the original analysis reports an odds ratio: another measure of the association, so this is an estimand change, not a re-analysis of the same quantity"
+          }
+        ],
+        "contaminated_flip": null,
+        "contaminated_flips": [],
+        "narrator_input_tokens": 6492,
+        "narrative": "The original analysis estimated 1.08 (95% CI 0.937 to 1.24, p = 0.3, n = 116,160) and returned the verdict NO CLEAR EVIDENCE. The minimal flip changes Choose covariates for adjustment from \"Position, league and referee country\" to \"Minimal set plus height, weight, games and referee-country bias scores\". This flip changes the covariates of the model (adds games, height, meanExp, meanIAT, weight): adjusting for another set of covariates answers a different conditional question, so this is an estimand change, not a re-analysis of the same quantity. The judge accepted it because height, weight and referee-country bias scores are pre-exposure characteristics that could plausibly relate to both card rates and how raters perceive skin tone, so adjusting for them is a reasonable confounder-control choice. Under that set the estimate is 1.18 (95% CI 1.02 to 1.36, p = 0.022, n = 115,457), which reads as BIAS DETECTED. This flip was reproduced by an independent re-execution. Across the 18 explored universes, the estimate ranges from about 1.03 to 1.18. The covariate set is the choice that moves the estimate most, and the rater-averaging and model-estimator choices matter less. Several alternatives that switch the outcome measure to a Poisson rate ratio also reach BIAS DETECTED, but those are measure changes rather than pure reanalyses. The judge rejected the option of keeping only dyads with at most 20 games, and rejected trimming extreme referee-country scores, since neither had a field-based justification. Robustness: 61% of the analysis grid agrees with the original verdict and 39% reverses it.",
+        "caveats": [
+          "The original analysis's model receives 124,621 of the 146,028 uploaded rows (15% left out): 'Handle players without skin-tone ratings' drops 21,407. The verdict describes the rows kept; if the dropped rows differ from them, as rows with missing values often do, it may not hold for every row.",
+          "In 6 universes the model asked statsmodels for HC1 standard errors on a Logit fit; statsmodels computes HC0 (White) standard errors for such likelihood models whatever HC variant is asked, so those intervals and p-values are HC0, not the variant the option names.",
+          "The 61% robustness estimate is the share of the analysis grid that agrees with the original verdict; it was sampled as follows: the whole grid: 18 combinations, 18 distinct results; exact, not sampled, and independent of the beam search. The universes the beam search explored are the ones closest to flipping, so their own agreement share leans toward flips and is not used as the estimate.",
+          "The minimal flip changes the covariates of the model (adds games, height, meanExp, meanIAT, weight): adjusting for another set of covariates answers a different conditional question, so this is an estimand change, not a re-analysis of the same quantity.",
+          "The option 'Poisson rate model on red-card count with games exposure, clustered by player' (estimate_red_card_model) reports a rate ratio where the original analysis reports an odds ratio: its estimates are another measure of the association, so their distance from the original estimate is partly the change of measure, not only of the analysis."
+        ],
+        "n_attempted": 18,
+        "n_failed": 0,
+        "failed": [],
+        "search": {
+          "levels_explored": 1,
+          "max_combinations_per_level": 10,
+          "universe_budget": 40,
+          "universes_used": 18,
+          "budget_exhausted": false,
+          "sample_draws": 18,
+          "reference": null,
+          "reference_results": []
+        },
+        "coding": {
+          "options": 8,
+          "smoke_tested": 8,
+          "repaired_after_smoke": 1,
+          "failed": 0,
+          "steps_reviewed": 5,
+          "options_flagged": 0,
+          "options_dropped_by_review": 0,
+          "options_dropped_by_judge": 6,
+          "options_added_after_judge": 0,
+          "defaults_replaced": [],
+          "defaults_disputed": [],
+          "defaults_kept": [],
+          "options_dropped_by_armor": 0,
+          "options_recoded_by_output_check": 0
+        },
+        "agents": null,
+        "claim_check": null
+      },
+      "usage": {
+        "tokens_in": 175028,
+        "tokens_out": 16145,
+        "cost_usd": 0.0255753,
+        "calls": 44,
+        "cached_calls": 0,
+        "by_model": {
+          "claude-haiku-5-5": 0.0255753
+        }
+      },
+      "artifacts": "evidence/haiku-validation/red_cards"
+    }
+  ],
+  "source_dirty": true,
+  "validation_scope": "Actual analysis pipeline with Haiku; packaged API and runtime independently checked with scripted models.",
+  "total_validation_spend_usd": 0.0712583,
+  "connectivity_probe": {
+    "input_tokens": 15,
+    "output_tokens": 4,
+    "estimated_cost_usd": 3.5e-06
+  }
+}

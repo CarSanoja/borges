@@ -1,0 +1,23 @@
+services:
+  borges:
+    build: .
+    image: borges:submission
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      BORGES_LLM: nebius
+      BORGES_BACKEND: contree
+      BORGES_ALLOW_UNTRUSTED_LOCAL: "false"
+      BORGES_RUNS_DIR: /app/.borges/runs
+      BORGES_SPEND_CAP_USD: "5.00"
+      BORGES_RUN_CAP_USD: "0.50"
+      BORGES_REGISTRY_ENFORCE: "true"
+      BORGES_STORE_KEY_AUTOGEN: "true"
+      BORGES_MEMORY: "true"
+    volumes:
+      - borges-data:/app/.borges
+
+volumes:
+  borges-data:

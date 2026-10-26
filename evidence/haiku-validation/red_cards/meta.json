@@ -1,0 +1,6 @@
+{
+  "llm": "anthropic",
+  "model": "claude-haiku-5-5",
+  "case_id": "red_cards",
+  "run_id": "r_20261026T035257_6a3658"
+}

@@ -1,0 +1,480 @@
+{
+  "question": "Are soccer referees more likely to give red cards to dark-skin-toned players than to light-skin-toned players?",
+  "estimand": "Odds ratio of a red card per game (per referee-player dyad game exposure), comparing dark-skin-toned to light-skin-toned players, estimated from the dyad-level data with rater skin tone as the exposure and redCards as the outcome.",
+  "decision_rule": {
+    "metric": "odds ratio of a red card per game, dark vs light skin tone",
+    "comparator": "gt",
+    "threshold": 1.0,
+    "alpha": 0.05,
+    "positive_label": "BIAS DETECTED",
+    "negative_label": "NO CLEAR EVIDENCE"
+  },
+  "dataset": {
+    "name": "crowdstorming_dyads",
+    "n_rows": 146028,
+    "columns": [
+      {
+        "name": "playerShort",
+        "dtype": "category",
+        "n_missing": 0,
+        "n_unique": 2053,
+        "summary": {
+          "top_1": "djibril-cisse: 202",
+          "top_2": "john-arne-riise: 197",
+          "top_3": "javier-saviola: 196",
+          "top_4": "giorgios-karagounis: 195",
+          "top_5": "xavi: 188"
+        },
+        "note": "player id"
+      },
+      {
+        "name": "refNum",
+        "dtype": "int32",
+        "n_missing": 0,
+        "n_unique": 3147,
+        "summary": {
+          "mean": 1534.8274,
+          "std": 918.7366,
+          "min": 1.0,
+          "p50": 1604.0,
+          "max": 3147.0
+        },
+        "note": "referee id"
+      },
+      {
+        "name": "refCountry",
+        "dtype": "int32",
+        "n_missing": 0,
+        "n_unique": 161,
+        "summary": {
+          "mean": 29.6428,
+          "std": 27.4962,
+          "min": 1.0,
+          "p50": 21.0,
+          "max": 161.0
+        },
+        "note": "country id of the referee"
+      },
+      {
+        "name": "games",
+        "dtype": "int32",
+        "n_missing": 0,
+        "n_unique": 45,
+        "summary": {
+          "mean": 2.9212,
+          "std": 3.4136,
+          "min": 1.0,
+          "p50": 2.0,
+          "max": 47.0
+        },
+        "note": "number of games the player and this referee shared (one row per player-referee dyad); it is not the player's total games"
+      },
+      {
+        "name": "redCards",
+        "dtype": "int32",
+        "n_missing": 0,
+        "n_unique": 3,
+        "summary": {
+          "mean": 0.0126,
+          "std": 0.1129,
+          "min": 0.0,
+          "p50": 0.0,
+          "max": 2.0
+        },
+        "note": "number of red cards the referee gave this player across their shared games"
+      },
+      {
+        "name": "yellowCards",
+        "dtype": "int32",
+        "n_missing": 0,
+        "n_unique": 15,
+        "summary": {
+          "mean": 0.3854,
+          "std": 0.7953,
+          "min": 0.0,
+          "p50": 0.0,
+          "max": 14.0
+        },
+        "note": "number of yellow cards the referee gave this player across their shared games"
+      },
+      {
+        "name": "yellowReds",
+        "dtype": "int32",
+        "n_missing": 0,
+        "n_unique": 4,
+        "summary": {
+          "mean": 0.0114,
+          "std": 0.1079,
+          "min": 0.0,
+          "p50": 0.0,
+          "max": 3.0
+        },
+        "note": "number of second yellow cards (leading to a red) the referee gave this player across their shared games"
+      },
+      {
+        "name": "rater1",
+        "dtype": "float32",
+        "n_missing": 21407,
+        "n_unique": 5,
+        "summary": {
+          "mean": 0.2643,
+          "std": 0.2954,
+          "min": 0.0,
+          "p50": 0.25,
+          "max": 1.0
+        },
+        "note": "skin tone of the player rated by rater 1 from the photo, 0 very light to 1 very dark"
+      },
+      {
+        "name": "rater2",
+        "dtype": "float32",
+        "n_missing": 21407,
+        "n_unique": 5,
+        "summary": {
+          "mean": 0.3029,
+          "std": 0.293,
+          "min": 0.0,
+          "p50": 0.25,
+          "max": 1.0
+        },
+        "note": "skin tone of the player rated by rater 2 from the photo, 0 very light to 1 very dark"
+      },
+      {
+        "name": "position",
+        "dtype": "category",
+        "n_missing": 17726,
+        "n_unique": 12,
+        "summary": {
+          "top_1": "Center Back: 22466",
+          "top_2": "Center Forward: 18687",
+          "top_3": "Defensive Midfielder: 15753",
+          "top_4": "Goalkeeper: 12321",
+          "top_5": "Attacking Midfielder: 11817"
+        },
+        "note": "playing position of the player"
+      },
+      {
+        "name": "leagueCountry",
+        "dtype": "category",
+        "n_missing": 0,
+        "n_unique": 4,
+        "summary": {
+          "top_1": "England: 45701",
+          "top_2": "Germany: 39912",
+          "top_3": "Spain: 31977",
+          "top_4": "France: 28438"
+        },
+        "note": "country of the league the player plays in"
+      },
+      {
+        "name": "height",
+        "dtype": "float32",
+        "n_missing": 263,
+        "n_unique": 43,
+        "summary": {
+          "mean": 181.9359,
+          "std": 6.7387,
+          "min": 161.0,
+          "p50": 182.0,
+          "max": 203.0
+        },
+        "note": "player height in centimetres"
+      },
+      {
+        "name": "weight",
+        "dtype": "float32",
+        "n_missing": 2243,
+        "n_unique": 45,
+        "summary": {
+          "mean": 76.0757,
+          "std": 7.1409,
+          "min": 54.0,
+          "p50": 76.0,
+          "max": 100.0
+        },
+        "note": "player weight in kilograms"
+      },
+      {
+        "name": "meanIAT",
+        "dtype": "float32",
+        "n_missing": 163,
+        "n_unique": 154,
+        "summary": {
+          "mean": 0.3463,
+          "std": 0.0322,
+          "min": -0.0473,
+          "p50": 0.3366,
+          "max": 0.5738
+        },
+        "note": "mean implicit-bias (race IAT) score of the referee's country of origin"
+      },
+      {
+        "name": "meanExp",
+        "dtype": "float32",
+        "n_missing": 163,
+        "n_unique": 149,
+        "summary": {
+          "mean": 0.452,
+          "std": 0.2175,
+          "min": -1.375,
+          "p50": 0.3564,
+          "max": 1.8
+        },
+        "note": "mean explicit-bias score of the referee's country of origin"
+      }
+    ],
+    "sample_rows": [
+      {
+        "playerShort": "lucas-wilchez",
+        "refNum": 1,
+        "refCountry": 1,
+        "games": 1,
+        "redCards": 0,
+        "yellowCards": 0,
+        "yellowReds": 0,
+        "rater1": 0.25,
+        "rater2": 0.5,
+        "position": "Attacking Midfielder",
+        "leagueCountry": "Spain",
+        "height": 177.0,
+        "weight": 72.0,
+        "meanIAT": 0.3263914585,
+        "meanExp": 0.3959999979
+      },
+      {
+        "playerShort": "john-utaka",
+        "refNum": 2,
+        "refCountry": 2,
+        "games": 1,
+        "redCards": 0,
+        "yellowCards": 1,
+        "yellowReds": 0,
+        "rater1": 0.75,
+        "rater2": 0.75,
+        "position": "Right Winger",
+        "leagueCountry": "France",
+        "height": 179.0,
+        "weight": 82.0,
+        "meanIAT": 0.2033747286,
+        "meanExp": -0.2040816396
+      },
+      {
+        "playerShort": "abdon-prats",
+        "refNum": 3,
+        "refCountry": 3,
+        "games": 1,
+        "redCards": 0,
+        "yellowCards": 1,
+        "yellowReds": 0,
+        "rater1": null,
+        "rater2": null,
+        "position": null,
+        "leagueCountry": "Spain",
+        "height": 181.0,
+        "weight": 79.0,
+        "meanIAT": 0.3698935807,
+        "meanExp": 0.5882973075
+      },
+      {
+        "playerShort": "pablo-mari",
+        "refNum": 3,
+        "refCountry": 3,
+        "games": 1,
+        "redCards": 0,
+        "yellowCards": 0,
+        "yellowReds": 0,
+        "rater1": null,
+        "rater2": null,
+        "position": "Center Back",
+        "leagueCountry": "Spain",
+        "height": 191.0,
+        "weight": 87.0,
+        "meanIAT": 0.3698935807,
+        "meanExp": 0.5882973075
+      },
+      {
+        "playerShort": "ruben-pena",
+        "refNum": 3,
+        "refCountry": 3,
+        "games": 1,
+        "redCards": 0,
+        "yellowCards": 0,
+        "yellowReds": 0,
+        "rater1": null,
+        "rater2": null,
+        "position": "Right Midfielder",
+        "leagueCountry": "Spain",
+        "height": 172.0,
+        "weight": 70.0,
+        "meanIAT": 0.3698935807,
+        "meanExp": 0.5882973075
+      }
+    ],
+    "repeated_units": [
+      {
+        "name": "playerShort",
+        "n_units": 2053,
+        "rows_per_unit": 71.13
+      },
+      {
+        "name": "refNum",
+        "n_units": 3147,
+        "rows_per_unit": 46.4
+      }
+    ],
+    "duplicate_rows": 0
+  },
+  "steps": [
+    {
+      "id": "exclude_missing_skin_tone",
+      "title": "Handle players without skin-tone ratings",
+      "kind": "filter",
+      "description": "Skin tone is only available for players who were rated from photos; the choice is whether to keep only rated rows (required for the exposure) and whether to additionally require the other covariates used later.",
+      "options": [
+        {
+          "id": "rated_only",
+          "label": "Keep rows with both rater scores",
+          "rationale": "Rows with a missing exposure cannot enter the comparison; this is the minimal requirement.",
+          "spec": "Drop rows where rater1 or rater2 is missing (use the rows where both rater1 and rater2 are non-null). Create no new columns and write nothing to ctx. Return the filtered data frame.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": []
+    },
+    {
+      "id": "exposure_construction",
+      "title": "Construct the skin-tone exposure",
+      "kind": "transform",
+      "description": "Build a binary dark-vs-light exposure from the two raters' scores; the cut-off and rater combination are alternatives.",
+      "options": [
+        {
+          "id": "mean_split_median",
+          "label": "Average of raters, split at median",
+          "rationale": "Uses both raters and a data-driven split, common in this literature.",
+          "spec": "Compute skin_mean = (rater1 + rater2) / 2 per row. Compute the median of skin_mean over rows that have it. Set dark_skin = 1 where skin_mean is strictly greater than that median, else 0; write the median to ctx['skin_cut'] as a number. Return the data frame.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "mean_split_midpoint",
+          "label": "Average of raters, split at scale midpoint",
+          "rationale": "A fixed cut at the middle of the 0 to 1 scale avoids a data-dependent threshold.",
+          "spec": "Compute skin_mean = (rater1 + rater2) / 2 per row. Set dark_skin = 1 where skin_mean is strictly greater than 0.5, else 0 (rows with missing skin_mean stay missing). Write 0.5 to ctx['skin_cut']. Return the data frame.",
+          "is_default": false,
+          "origin": "planner",
+          "source": null,
+          "defensibility": 0.6,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": [
+        "dark_skin",
+        "skin_mean"
+      ]
+    },
+    {
+      "id": "outlier_treatment",
+      "title": "Treatment of extreme referee-country bias scores and extreme games",
+      "kind": "filter",
+      "description": "meanIAT, meanExp and games have extreme values; whether to keep them, trim the referee-country score or cap exposure days is a visible choice.",
+      "options": [
+        {
+          "id": "keep_all",
+          "label": "Keep all rows",
+          "rationale": "Extreme values are genuine observations in these columns; no trimming.",
+          "spec": "Do not remove any rows. Create no new columns and write nothing to ctx. Return the data frame unchanged.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": []
+    },
+    {
+      "id": "covariate_adjustment",
+      "title": "Choose covariates for adjustment",
+      "kind": "feature",
+      "description": "Alternative covariate sets; each writes the list of column names used by the model step.",
+      "options": [
+        {
+          "id": "minimal",
+          "label": "Position, league and referee country",
+          "rationale": "Adjusts for player role and league context that plausibly relate to card rates.",
+          "spec": "Write ctx['covariates'] = ['position', 'leagueCountry', 'refCountry']. Do not add or drop columns. Return the data frame. The model encodes these categorical columns with drop_first=True.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "extended",
+          "label": "Minimal set plus height, weight, games and referee-country bias scores",
+          "rationale": "Adds physical and exposure controls plus country-level implicit and explicit bias, which may confound skin tone with referee attitudes.",
+          "spec": "Write ctx['covariates'] = ['position', 'leagueCountry', 'refCountry', 'height', 'weight', 'games', 'meanIAT', 'meanExp']. Do not add or drop columns. Return the data frame. The model encodes categorical columns with drop_first=True. (minimal: Write ctx['covariates'] = ['position', 'leagueCountry', 'refCountry']. Do not add or drop columns. Return the data frame. The model encodes these categorical columns with drop_first=True.)",
+          "is_default": false,
+          "origin": "planner",
+          "source": "Standard observational confounder adjustment; Gelman & Hill style covariate selection for pre-exposure confounders.",
+          "defensibility": 0.8,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": [
+        "covariates"
+      ]
+    },
+    {
+      "id": "estimate_red_card_model",
+      "title": "Estimate the odds ratio of a red card by skin tone",
+      "kind": "model",
+      "description": "Alternative logistic estimators of the odds ratio of a red card for dark vs light skin tone, using the covariates in ctx['covariates']; the outcome is recorded as any red card or as a count per game.",
+      "options": [
+        {
+          "id": "logit_clustered",
+          "label": "Logistic regression on any red card, cluster-robust errors by player",
+          "rationale": "Matches the stated odds-ratio metric directly by modelling whether a dyad produced any red card; clustering by player accounts for repeated rows.",
+          "spec": "Create any_red = 1 where redCards is greater than 0, else 0. Fit statsmodels Logit with outcome any_red, regressors dark_skin plus the columns in ctx['covariates'] (categorical ones encoded with drop_first=True) and an intercept, using cov_type='cluster' with groups = playerShort codes. Estimate = exp(coefficient of dark_skin); ci_low and ci_high = exp of the 95% Wald interval bounds; p_value = two-sided p for dark_skin. Return these four numbers.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "logit_robust_hc1",
+          "label": "Logistic regression on any red card, heteroskedasticity-robust errors",
+          "rationale": "Gives the same odds-ratio scale with ordinary robust errors, a check on whether clustering by player changes the interval.",
+          "spec": "Create any_red = 1 where redCards is greater than 0, else 0. Fit statsmodels Logit with outcome any_red, regressors dark_skin plus the columns in ctx['covariates'] (categorical ones encoded with drop_first=True) and an intercept, using cov_type='HC1'. Estimate = exp(coefficient of dark_skin); ci_low and ci_high = exp of the 95% Wald interval bounds; p_value = two-sided p for dark_skin. Return these four numbers.",
+          "is_default": false,
+          "origin": "planner",
+          "source": "Cameron & Miller (2015), A Practitioner's Guide to Cluster-Robust Inference, J. Human Resources",
+          "defensibility": 0.9,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": [
+        "estimate"
+      ]
+    }
+  ],
+  "result_scale": 1.0,
+  "analysis": "",
+  "analysis_gaps": []
+}

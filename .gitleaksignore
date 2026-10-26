@@ -1,0 +1,2 @@
+# Synthetic token strings in the redaction regression test, inspected on 2026-10-25.
+a7d52686e16505f74442953f113456ac07ed792e:tests/telemetry/test_redaction.py:generic-api-key:17

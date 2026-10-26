@@ -1,0 +1,364 @@
+{
+  "question": "Does the new checkout increase the conversion rate?",
+  "estimand": "Difference in the share of sessions that convert, treatment minus control, in percentage points, across all genuine sessions in the 14-day experiment (ratio of converted sessions in treatment minus in control, times 100), with a two-sided 95% interval from a regression that clusters on user_id.",
+  "decision_rule": {
+    "metric": "conversion lift, treatment minus control (percentage points)",
+    "comparator": "gt",
+    "threshold": 0.0,
+    "alpha": 0.05,
+    "positive_label": "SHIP",
+    "negative_label": "DON'T SHIP"
+  },
+  "dataset": {
+    "name": "checkout_sessions",
+    "n_rows": 29926,
+    "columns": [
+      {
+        "name": "session_id",
+        "dtype": "int64",
+        "n_missing": 0,
+        "n_unique": 29926,
+        "summary": {
+          "mean": 14963.5,
+          "std": 8639.0364,
+          "min": 1.0,
+          "p50": 14963.5,
+          "max": 29926.0
+        },
+        "note": "unique id of the checkout session; one row per session"
+      },
+      {
+        "name": "user_id",
+        "dtype": "int64",
+        "n_missing": 0,
+        "n_unique": 16000,
+        "summary": {
+          "mean": 7984.5818,
+          "std": 4628.1564,
+          "min": 1.0,
+          "p50": 7972.0,
+          "max": 16000.0
+        },
+        "note": "id of the user; a user has 1 to 4 sessions and the variant is assigned per user"
+      },
+      {
+        "name": "day",
+        "dtype": "int8",
+        "n_missing": 0,
+        "n_unique": 14,
+        "summary": {
+          "mean": 6.4877,
+          "std": 4.0343,
+          "min": 0.0,
+          "p50": 6.0,
+          "max": 13.0
+        },
+        "note": "day of the 14-day experiment, integers 0 to 13"
+      },
+      {
+        "name": "variant",
+        "dtype": "str",
+        "n_missing": 0,
+        "n_unique": 2,
+        "summary": {
+          "top_1": "treatment: 15171",
+          "top_2": "control: 14755"
+        },
+        "note": "experiment arm, exactly 'treatment' or 'control'; the estimand is treatment minus control"
+      },
+      {
+        "name": "platform",
+        "dtype": "str",
+        "n_missing": 0,
+        "n_unique": 3,
+        "summary": {
+          "top_1": "web: 16149",
+          "top_2": "ios: 9249",
+          "top_3": "android: 4528"
+        },
+        "note": "platform of the session: web, ios or android"
+      },
+      {
+        "name": "is_internal",
+        "dtype": "bool",
+        "n_missing": 0,
+        "n_unique": 2,
+        "summary": {
+          "share_true": 0.0113
+        },
+        "note": "True for sessions of internal staff or test users, who are not genuine customers"
+      },
+      {
+        "name": "session_seconds",
+        "dtype": "float32",
+        "n_missing": 0,
+        "n_unique": 17050,
+        "summary": {
+          "mean": 117.5837,
+          "std": 131.9921,
+          "min": 0.2,
+          "p50": 78.51,
+          "max": 2516.6399
+        },
+        "note": "session length in seconds; very short sessions are bot-like"
+      },
+      {
+        "name": "converted",
+        "dtype": "int8",
+        "n_missing": 0,
+        "n_unique": 2,
+        "summary": {
+          "mean": 0.0311,
+          "std": 0.1735,
+          "min": 0.0,
+          "p50": 0.0,
+          "max": 1.0
+        },
+        "note": "1 if the session ended in a purchase, else 0; the outcome"
+      },
+      {
+        "name": "revenue",
+        "dtype": "float32",
+        "n_missing": 0,
+        "n_unique": 880,
+        "summary": {
+          "mean": 1.8326,
+          "std": 12.4278,
+          "min": 0.0,
+          "p50": 0.0,
+          "max": 380.01
+        },
+        "note": "revenue of the session; 0 unless converted is 1"
+      }
+    ],
+    "sample_rows": [
+      {
+        "session_id": 1,
+        "user_id": 1,
+        "day": 4,
+        "variant": "control",
+        "platform": "ios",
+        "is_internal": false,
+        "session_seconds": 146.6399993896,
+        "converted": 0,
+        "revenue": 0.0
+      },
+      {
+        "session_id": 2,
+        "user_id": 1,
+        "day": 10,
+        "variant": "control",
+        "platform": "ios",
+        "is_internal": false,
+        "session_seconds": 88.9000015259,
+        "converted": 0,
+        "revenue": 0.0
+      },
+      {
+        "session_id": 3,
+        "user_id": 1,
+        "day": 1,
+        "variant": "control",
+        "platform": "ios",
+        "is_internal": false,
+        "session_seconds": 174.3500061035,
+        "converted": 0,
+        "revenue": 0.0
+      },
+      {
+        "session_id": 4,
+        "user_id": 2,
+        "day": 5,
+        "variant": "treatment",
+        "platform": "ios",
+        "is_internal": false,
+        "session_seconds": 166.4199981689,
+        "converted": 0,
+        "revenue": 0.0
+      },
+      {
+        "session_id": 5,
+        "user_id": 3,
+        "day": 4,
+        "variant": "control",
+        "platform": "web",
+        "is_internal": false,
+        "session_seconds": 41.9799995422,
+        "converted": 0,
+        "revenue": 0.0
+      }
+    ],
+    "repeated_units": [
+      {
+        "name": "user_id",
+        "n_units": 16000,
+        "rows_per_unit": 1.87
+      }
+    ],
+    "duplicate_rows": 0
+  },
+  "steps": [
+    {
+      "id": "exclude_internal",
+      "title": "Whether to drop internal staff and test sessions",
+      "kind": "filter",
+      "description": "is_internal marks sessions of staff or test users who are not genuine customers, so including them can bias the lift. Keeping them is a legitimate choice only if the aim is all traffic.",
+      "options": [
+        {
+          "id": "drop_internal",
+          "label": "Drop internal sessions",
+          "rationale": "Only genuine customers are relevant to whether the checkout converts customers better.",
+          "spec": "Keep only rows where is_internal is False (drop rows where is_internal is True). Write nothing to ctx. Return the filtered frame.",
+          "is_default": true,
+          "origin": "planner",
+          "source": "Experiment hygiene convention",
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": []
+    },
+    {
+      "id": "bot_filter",
+      "title": "Whether to drop very short, bot-like sessions",
+      "kind": "filter",
+      "description": "session_seconds has a minimum of 0.2 s and the column note says very short sessions are bot-like. The threshold for bot-like is a judgement call.",
+      "options": [
+        {
+          "id": "keep_all_durations",
+          "label": "Keep all session lengths",
+          "rationale": "Does not assume any threshold; bots are assumed to be rare relative to the sample.",
+          "spec": "Keep all rows regardless of session_seconds. Write nothing to ctx. Return the frame unchanged.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "drop_under_2s",
+          "label": "Drop sessions under 2 seconds",
+          "rationale": "Removes implausibly fast sessions that cannot be genuine checkouts.",
+          "spec": "Keep only rows where session_seconds is at least 2.0. Write nothing to ctx. Return the filtered frame.",
+          "is_default": false,
+          "origin": "planner",
+          "source": "Common practice in online experiment data cleaning (bot/invalid traffic exclusion), e.g. Kohavi, Tang & Xu, Trustworthy Online Controlled Experiments (2020).",
+          "defensibility": 0.8,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": []
+    },
+    {
+      "id": "outlier_treatment",
+      "title": "How to handle extreme session lengths",
+      "kind": "transform",
+      "description": "session_seconds has extreme values far from the median. Trimming or winsorizing changes the covariate used for adjustment without changing the outcome.",
+      "options": [
+        {
+          "id": "no_trim_seconds",
+          "label": "Use session_seconds as recorded",
+          "rationale": "Keeps every observation; a log transform handles skew without discarding information.",
+          "spec": "Create session_log = log(session_seconds + 1) as a new column, using numpy.log1p. Write nothing to ctx. Return the frame with session_log added.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "winsor_seconds",
+          "label": "Winsorize session_seconds at the 1st and 99th percentiles",
+          "rationale": "Limits the leverage of extreme session lengths while keeping every row.",
+          "spec": "Create session_log = log(clip(session_seconds, p1, p99) + 1), where p1 and p99 are the 1st and 99th percentiles of session_seconds computed on the current frame, using numpy.percentile and numpy.clip. Write nothing to ctx. Return the frame with session_log added.",
+          "is_default": false,
+          "origin": "planner",
+          "source": "Winsorizing convention (Tukey 1977)",
+          "defensibility": 0.8,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": [
+        "session_log"
+      ]
+    },
+    {
+      "id": "adjustment",
+      "title": "Covariates to adjust for",
+      "kind": "feature",
+      "description": "The adjustment set is chosen here. Randomisation makes adjustment optional, but adjusting for pre-treatment covariates can tighten the interval.",
+      "options": [
+        {
+          "id": "no_adjustment",
+          "label": "No covariates",
+          "rationale": "Randomised assignment already balances the arms, so the simplest estimate is unbiased.",
+          "spec": "Set ctx['covariates'] to an empty list. Do not add or drop any columns. Return the frame unchanged.",
+          "is_default": true,
+          "origin": "planner",
+          "source": null,
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "platform_adjust",
+          "label": "Adjust for platform",
+          "rationale": "Platform is pre-treatment and strongly affects checkout conversion, so adjusting can reduce variance.",
+          "spec": "Set ctx['covariates'] to ['platform']. Do not add or drop any columns. Platform is dummy coded by the model step with drop_first=True. Return the frame unchanged.",
+          "is_default": false,
+          "origin": "planner",
+          "source": "Pre-treatment covariate adjustment in randomised experiments (e.g., Freedman 2008; Lin 2013) and CONSORT/ICH E9 guidance on covariate adjustment.",
+          "defensibility": 0.9,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": [
+        "covariates"
+      ]
+    },
+    {
+      "id": "estimate",
+      "title": "Estimator for the conversion lift",
+      "kind": "model",
+      "description": "Each option estimates treatment minus control conversion on the same outcome, converted, with a cluster-robust interval on user_id (16000 users, far above 30).",
+      "options": [
+        {
+          "id": "ols_cluster",
+          "label": "Linear probability model with user-clustered errors",
+          "rationale": "Gives the lift directly in probability units, which Borges scales to percentage points.",
+          "spec": "Fit statsmodels OLS of converted on an intercept, the indicator variant equal to treatment (1 for treatment, 0 for control), and the covariates in ctx['covariates'] (categorical covariates dummy coded with drop_first=True). Use cluster-robust standard errors clustered on user_id. Return the coefficient on the variant indicator as the estimate, with its 95% confidence interval and two-sided p-value.",
+          "is_default": true,
+          "origin": "planner",
+          "source": "Linear probability model; Abadie et al. on clustered SEs",
+          "defensibility": null,
+          "code": null,
+          "cluster_by": null
+        },
+        {
+          "id": "logit_marginal",
+          "label": "Logit with average marginal effect",
+          "rationale": "Models the probability non-linearly and averages the treatment effect over sessions, which stays on the lift scale.",
+          "spec": "Fit statsmodels Logit of converted on an intercept, the indicator variant equal to treatment (1 for treatment, 0 for control), and the covariates in ctx['covariates'] (categorical covariates dummy coded with drop_first=True), using cluster-robust standard errors clustered on user_id. Compute the average marginal effect of the variant indicator over all rows by predicting converted with variant set to 1 and to 0 and taking the mean difference. Return that average marginal effect as the estimate, with a 95% interval and two-sided p-value from the delta method on the cluster-robust covariance.",
+          "is_default": false,
+          "origin": "planner",
+          "source": "Average marginal effects (Ai and Norton 2003)",
+          "defensibility": 0.85,
+          "code": null,
+          "cluster_by": null
+        }
+      ],
+      "produces": [
+        "estimate, ci_low, ci_high, p_value"
+      ]
+    }
+  ],
+  "result_scale": 100.0,
+  "analysis": "",
+  "analysis_gaps": []
+}

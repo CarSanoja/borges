@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-10-26",
+  "base_commit": "64bfb200b1bd707e7096183ec584c193b6640fb9",
+  "working_tree_included_pending_changes": true,
+  "python": {
+    "passed": 4029,
+    "skipped": 6,
+    "deselected": 2,
+    "seconds": 2453.04
+  },
+  "additional_transport_tests": {
+    "passed": 3
+  },
+  "frontend": {
+    "passed": 359,
+    "files": 78,
+    "typecheck": "pass",
+    "production_build": "pass"
+  },
+  "ruff": "pass",
+  "docker": {
+    "build": "pass",
+    "healthy_startup": "pass",
+    "image_manifest": "sha256:5e09f2556090c7a8ba77498e343ec6c529784fd769dd5c2f8326f07cf8b520b7"
+  },
+  "packaged_http": "packaged-2026-10-25.json",
+  "haiku": "haiku-2026-10-25.json",
+  "historical_nemotron_reproduce": "MATCH",
+  "history_scan": {
+    "commits": 725,
+    "reviewed_synthetic_fixture_findings": 1,
+    "remaining_findings": 0
+  },
+  "nvidia_delivery": "compose.demo.yaml",
+  "publication": {
+    "repository_visibility": "private",
+    "public_demo_url": null,
+    "youtube_url": null,
+    "devpost_submitted": false,
+    "video_state": "Draft assembled; final ElevenLabs audio requested by owner"
+  },
+  "staged_secret_scan": "pass"
+}

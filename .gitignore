@@ -29,3 +29,4 @@ evidence/blade/*/matcher-cache/
 evidence/held-out/cases/*/data.parquet
 
 evidence/domains/*.csv
+submission/*-draft.mp4

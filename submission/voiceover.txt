@@ -1,0 +1,15 @@
+An AI analyst gives you one answer. But it also chooses which rows to keep, which variables to adjust for, and which model to fit. Another reasonable choice can change the decision. Borges shows those other paths, and the evidence behind them.
+
+Here is a synthetic checkout experiment with a planted data problem. This is a recorded live run of NVIDIA Nemotron on Nebius Token Factory. The original analysis says ship: a lift of zero point eight five percentage points.
+
+Nemotron proposes alternative analyses. Each choice forks a sandbox from the checkpoint before it. An adversary proposes more alternatives, and a separate judge checks whether they are defensible.
+
+Excluding internal test sessions changes the estimate to minus zero point one five percentage points. The decision becomes do not ship. This is a direction flip, rather than merely crossing a significance threshold.
+
+Open that path and you can inspect the actual code, the rows it used, and a command that reruns the analysis. A fresh execution matched this recording.
+
+Borges includes nine historical live Nemotron recordings. Other cases find no flip. A bounded search cannot prove that every possible analysis agrees, and the report says what it explored and which paths failed.
+
+Token Factory serves the NVIDIA models. Our delivery configuration uses Nemotron Super for reasoning, and Lightning for coding. The historical recordings preserve the models used at the time. Nebius Token Factory Sandboxes supplied branchable, virtual-machine-isolated execution in all nine recordings.
+
+Borges is a second opinion before you act on an analysis. Which paths agree? Which choice changes the answer? Can somebody else reproduce it? The code is Apache licensed, and the recorded examples can be checked offline.

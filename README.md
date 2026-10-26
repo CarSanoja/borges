@@ -15,6 +15,7 @@ smallest flip it found.**
 >
 > - Hosted demo: TODO-OWNER (URL, none exists yet)
 > - Video: TODO-OWNER (link, not recorded yet)
+> - Final quality round and delivery configuration: [submission package](submission/README.md).
 > - Offline, no key, from a fresh clone (Python 3.13 and [uv](https://docs.astral.sh/uv/)):
 >
 > ```bash
